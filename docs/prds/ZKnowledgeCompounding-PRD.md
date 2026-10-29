@@ -179,9 +179,9 @@ flowchart LR
 ## 9. 下一步
 
 - [x] **PRD v0.1 已认可（2026-10-28）**：核心问题模型、数据模型、架构方向、MVP 目标/非目标、成功度量框架达成对齐。
-- [x] **技术调研 + Spike 01–06（2026-10-29 完成）**：4 份 sealed 报告 + 6 个 spike 全 passed，MVP 技术栈与核心选型已落定（Postgres+pgvector / Ollama / Instructor / LangGraph / 自研 decay+蒸馏语义+结合算子+注意力调度）；Spike 06（context 拓扑装配）已验证 T4.1/T4.2 并回填架构 §5 D1/D2。详见架构文档 §6。
+- [x] **技术调研 + Spike 01–08（2026-10-29 完成）**：4 份 sealed 报告 + 8 个 spike 全 passed，MVP 技术栈与核心选型已落定（Postgres+pgvector / Ollama / Instructor / LangGraph / 自研 decay+蒸馏语义+结合算子+注意力调度）；Spike 06（context 拓扑装配，§5 D1/D2）、Spike 07（复利度量口径 + 引用埋点，§5 D3/D4）、Spike 08（到期分流规则，§5 D5 `review_queue`）均验证通过并回填架构 §5。详见架构文档 §6。
 - [x] **PRD↔架构校准 round 1（2026-10-29）**：回填范围/度量/术语/MVP 栈，锚定「双轨≠双时态」术语护栏，数据模型对齐架构 §5 schema，风险与未决同步。本文档升 v0.2，与架构 v0.9 对齐。
-- [ ] **剩余 spike（见架构 §9/§10）**：① 强模型（≥7B）蒸馏/结合质量复测；② ✅ **`context` 拓扑装配 spike（已完成，2026-10-29）** —— 见 `spikes/spike-06-context-assembly/README.md`（10 tests passed），T4.1/T4.2 验证通过、§5 D1/D2 已回填；③ ✅ **复利度量口径 + 引用埋点（已完成，2026-10-29）** —— 见 `spikes/spike-07-compounding-metrics/README.md`（9 tests passed），T7.1 五指标已定义可计算、T6.2 新增 `citation` 表 + `node.archived_at`（§5 D3/D4 已回填）；④ `review_interval` 自动设定；⑤ 到期条目「蒸馏 vs 归档」分流规则；⑥ DecisionRouter 在 7~14B 下的清晰项精度实测 + 混合置信度方案。
+- [ ] **剩余 spike（见架构 §9/§10）**：① 强模型（≥7B）蒸馏/结合质量复测；② ✅ **`context` 拓扑装配 spike（已完成，2026-10-29）** —— 见 `spikes/spike-06-context-assembly/README.md`（10 tests passed），T4.1/T4.2 验证通过、§5 D1/D2 已回填；③ ✅ **复利度量口径 + 引用埋点（已完成，2026-10-29）** —— 见 `spikes/spike-07-compounding-metrics/README.md`（9 tests passed），T7.1 五指标已定义可计算、T6.2 新增 `citation` 表 + `node.archived_at`（§5 D3/D4 已回填）；④ `review_interval` 自动设定；⑤ ✅ **到期条目「蒸馏 vs 归档」分流规则（已完成，2026-10-29）** —— 见 `spikes/spike-08-expiry-routing/README.md`（9 tests passed），三态分流（ARCHIVE/DISTILL/ABSTAIN）+ 注意力预算降级 + 孤儿强制弃权、§5 D5 新增 `review_queue` 表；⑥ DecisionRouter 在 7~14B 下的清晰项精度实测 + 混合置信度方案。
 - [ ] 选定最小垂直切片（MVP 垂直原型）入手顺序与验收门槛。
 - [ ] 进入「架构设计」或「最小垂直切片原型」。
 

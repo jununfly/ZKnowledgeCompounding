@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v0.1
 
-> 状态：**草案 v0.9**（v0.8 + 与 PRD v0.2 校准 round 1 + **Spike 06 context 拓扑装配已回填 §5（D1/D2）** + **Spike 07 复利度量口径已回填 §5（D3 `citation` 表 / D4 `node.archived_at`），见 §9 项 6 / §10 项 2-3**；待 zj 复核）
+> 状态：**草案 v0.9**（v0.8 + 与 PRD v0.2 校准 round 1 + **Spike 06 context 拓扑装配已回填 §5（D1/D2）** + **Spike 07 复利度量口径已回填 §5（D3 `citation` 表 / D4 `node.archived_at`）** + **Spike 08 到期分流已回填 §5（D5 `review_queue` 表），见 §9 项 6 / §10 项 2-3,5**；待 zj 复核）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -20,6 +20,7 @@
 | Spike 05 结合算子 | `spikes/spike-05-combine-operator/README.md` | 9 tests passed + e2e；RCS 漏斗 + 引用强制 + 级联撤销验证通过；**1.5B 产物为摘要堆砌（模型规模问题，记账）** |
 | Spike 06 context 拓扑装配 | `spikes/spike-06-context-assembly/README.md` | 10 tests passed；**§5 偏差回填**：D1 `scope` 实为 ENUM `context_scope`（比 `text` 严格）、D2 `member_nodes uuid[]` 弃用→改 `context_member` junction（带 `produced_by`+`weight`，接入级联撤销） |
 | Spike 07 复利度量口径 | `spikes/spike-07-compounding-metrics/README.md` | 9 tests passed；**§5 偏差回填**：D3 新增 `citation` 表（复用率双向溯源）、D4 `node.archived_at` 列；实现 5 个复利度量（连接密度/复用率/方法论产出/衰减可控/复利系数） |
+| Spike 08 到期分流规则 | `spikes/spike-08-expiry-routing/README.md` | 9 tests passed；**§5 偏差回填**：D5 仅新增 `review_queue` 表（规则本身无需新信号列，良性范围收敛）；三态分流（ARCHIVE/DISTILL/ABSTAIN）+ 注意力预算降级 + 孤儿强制弃权 |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
 
 ---
@@ -167,6 +168,20 @@ CREATE TABLE citation (
 CREATE INDEX cit_citing_idx ON citation (citing_node_id);
 CREATE INDEX cit_cited_idx  ON citation (cited_claim_id);
 CREATE INDEX cit_prod_idx   ON citation (produced_by);
+
+-- 到期分流人审网关（T5.x / D5）：让 ABSTAIN / DISTILL 结论可落地，与 spike 02/04 review gate 同构。
+-- 设计发现：分流规则本身无需任何新信号列（全部复用 decay_score/evidence_refs/edge/context_member），
+-- 故仅新增此操作性表。DISTILL 入队后由人/LLM 执行（MVP 不做自动蒸馏）。
+CREATE TABLE review_queue (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  node_id    uuid REFERENCES node(id) ON DELETE CASCADE,
+  action     text NOT NULL CHECK (action IN ('distill','archive','abstain')),
+  reason     text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  resolved   bool NOT NULL DEFAULT false
+);
+CREATE INDEX rq_node_idx ON review_queue (node_id);
+CREATE INDEX rq_open_idx ON review_queue (resolved) WHERE resolved = false;
 ```
 
 要点：
@@ -176,6 +191,7 @@ CREATE INDEX cit_prod_idx   ON citation (produced_by);
 - **有效复审节奏 = `SURFACE_THRESHOLD × review_interval`**（不是 `review_interval` 本身）→ 注意力需求 = `动态条目数 / (0.6 × interval)`，按 interval 直接算会低估约 40%。
 - **context 成员关系（spike 06 已定，回填 §9 项 6）**：`context.scope` 实际为 **ENUM `context_scope`**（`self_loop`/`higher_dim`，比 §5 草图 `text` 更严格，D1）；`member_nodes uuid[]` 数组列保留但**弃用**，成员关系改用 **`context_member` junction 表**（每行带 `produced_by` + `weight`），以接入 spike 04/05 固化的「可溯源 / 级联撤销」不变量（D2）。`context` 自身也带 `produced_by`/`tx_from`/`tx_to`，使一次装配（一个 transform → 一个 context + 其成员）可整体级联撤销。`transform(id)` 由 spike-04 ext schema 定义。
 - **引用埋点 + 衰减可控信号（spike 07 已定，回填 §9 项 ③）**：复用率无法仅用 `meta_claim.evidence_refs` 算出（其指向 claim 自身来源，方向相反），故新增 **`citation` 表**（后续条目 → claim 的引用，D3）构成双向溯源；`衰减可控` 的"已归档"分支需在 `node` 上加 **`archived_at` 列**（D4）。二者均带 `produced_by` 级联撤销，与既有不变量同构。据此实现五个复利度量（连接密度/复用率/方法论产出/衰减可控/复利系数），见 `spikes/spike-07-compounding-metrics/`。
+- **到期分流规则（spike 08 已定，回填 §9 项 ⑤）**：到期动态节点（`track='dynamic' AND decay_score≥0.9`）的分流为确定性三态——已捕获(`evidence_refs` 含该节点)→ARCHIVE；有连接/在 context 且未捕获→DISTILL；孤儿或注意力预算高压→ABSTAIN（交人审，绝不静默丢弃）。**关键发现（D5，良性范围收敛）**：规则仅需既有信号列，**无需新增信号列**，故 §5 仅新增操作性 **`review_queue` 表**（ABSTAIN/DISTILL 入队，与 spike 02/04 review gate 同构）。`attention_pressure` 真实来源、DISTILL 实际执行、孤儿 SLA 等仍 open。见 `spikes/spike-08-expiry-routing/`。
 - 该 schema 已在 **PostgreSQL 16 + pgvector** 实测通过（spike 01）：含 `vector(1024)`、enum 类型、`uuid[]` 上的 GIN 索引；静态轨 `decay_score` 恒为 0；`meta_claim` 缺少 `evidence_refs` 会被 schema 拒绝（溯源在存储层强制）。
 
 ## 6. 核心子系统与选型
@@ -263,7 +279,7 @@ CREATE INDEX cit_prod_idx   ON citation (produced_by);
 3. ✅ **模糊路由 vs DecisionRouter spike（已完成）** —— 见 `spikes/spike-03-vague-routing/README.md`（9 tests，1 expectedFailure）。结论：验证 Spike 02 收尾的两条候选修复。**两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）**；**DecisionRouter 主方案**——F1（模糊误提交=0）完美、F2 完美、覆盖 100%、编码器无关，契合 Ollama 栈（精度随模型规模可提，本环境仅 1.5B）；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，nomic(768d) 出现 1 误提交+2 互混 → 降级为互补/置信度信号源。选型表（§6）与未决②已同步。
 4. ✅ **蒸馏 spike（已完成）** —— 见 `spikes/spike-04-distill-loop/README.md`（9 tests passed）。Instructor+Ollama(qwen2.5-coder)+LangGraph interrupt/resume 全程无外部 API 跑通，checkpoint 落**同库 PG**（PostgresSaver，跨连接 resume 实测通过）。**§6.4 两条约束已作为 schema 级验收强制通过**：C1 双时态 append-only（修订=闭行+插行，历史行逐字段不变）、C2 produced_by 级联撤销（FK ON DELETE CASCADE，人工产物不受牵连）。**注意**：1.5B 蒸馏产物近复述而非元认知，印证 §8「本地小模型质量」风险——管线与约束已验证，语义质量走 provider seam 切强模型，属后续。
 5. ✅ **结合 spike（已完成）** —— 见 `spikes/spike-05-combine-operator/README.md`（9 tests passed + e2e 演示）。RCS 漏斗（逐源条件化摘要→重排→来源上限）+ 双层合并 + **引用强制**（幻觉引用剔除、零引用断言删除、全失效抛错——无引用的建模产物不允许存在）跑通；复用 spike-04 的 transform/produced_by 级联撤销。**人工评估结论（诚实记账）**：1.5B 产物为「带引用的摘要堆砌」（一源一 claim、global 层复述、无跨源断言）→ **语义质量不达标，与 spike-04 同源：模型规模问题非架构问题**，走 provider seam 切强模型，选型不推翻。
-6. **剩余 spike（与 PRD §9 对齐）**：① 强模型（≥7B）蒸馏/结合质量复测与质量口径定义（Spike 04/05）；② ✅ **`context` 拓扑装配 spike（已完成）** —— 见 `spikes/spike-06-context-assembly/README.md`（10 tests passed）。T4.1 发现（pgvector k-NN 可行，启发式过朴）+ T4.2 成员维护（junction 表 `context_member` 取代数组列，D1/D2 已回填 §5）；③ ✅ **复利度量口径 + 引用埋点（已完成）** —— 见 `spikes/spike-07-compounding-metrics/README.md`（9 tests passed）。T7.1 五指标（连接密度/复用率/方法论产出/衰减可控/复利系数）已定义并可计算，T6.2 新增 `citation` 表 + `node.archived_at`（D3/D4 已回填 §5）；④ `review_interval` 自动设定规则；⑤ 到期条目「蒸馏 vs 归档」分流规则；⑥ DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案。
+6. **剩余 spike（与 PRD §9 对齐）**：① 强模型（≥7B）蒸馏/结合质量复测与质量口径定义（Spike 04/05）；② ✅ **`context` 拓扑装配 spike（已完成）** —— 见 `spikes/spike-06-context-assembly/README.md`（10 tests passed）。T4.1 发现（pgvector k-NN 可行，启发式过朴）+ T4.2 成员维护（junction 表 `context_member` 取代数组列，D1/D2 已回填 §5）；③ ✅ **复利度量口径 + 引用埋点（已完成）** —— 见 `spikes/spike-07-compounding-metrics/README.md`（9 tests passed）。T7.1 五指标（连接密度/复用率/方法论产出/衰减可控/复利系数）已定义并可计算，T6.2 新增 `citation` 表 + `node.archived_at`（D3/D4 已回填 §5）；④ `review_interval` 自动设定规则；⑤ ✅ **到期条目「蒸馏 vs 归档」分流规则（已完成）** —— 见 `spikes/spike-08-expiry-routing/README.md`（9 tests passed）。三态分流（ARCHIVE/DISTILL/ABSTAIN）+ 注意力预算降级 + 孤儿强制弃权；规则不需新信号列（D5 仅新增 `review_queue` 表，良性范围收敛）；⑥ DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案。
 
 ---
 
@@ -286,7 +302,7 @@ CREATE INDEX cit_prod_idx   ON citation (produced_by);
 2. ✅ **`context` 拓扑装配 spike（已完成，2026-10-29）** —— T4.1/T4.2 验证通过（spike-06，10 tests passed），§5 D1/D2 偏差已回填，本条从 open 移除。
 3. ✅ **复利度量口径（T7.1）+ 引用埋点（T6.2）（已完成，2026-10-29）** —— 见 spike-07（9 tests passed），§5 D3/D4 已回填，本条从 open 移除。
 4. `review_interval` 自动设定规则。
-5. 到期条目「蒸馏 vs 归档」分流规则。
+5. ✅ **到期条目「蒸馏 vs 归档」分流规则（已完成，2026-10-29）** —— 见 spike-08（9 tests passed），§5 D5 已回填（`review_queue` 表），本条从 open 移除。
 6. DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案。
 
 > 以上均为"已识别未决"，非"被静默接受"。任何一方推进后同步回填两文档。
