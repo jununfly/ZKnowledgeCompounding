@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v0.1
 
-> 状态：**草案 v0.4**（四份技术调研收敛 + Spike 01 / Spike 02 结论已回填 + **Spike 02 真编码器复核已解决**，待 zj 校准）
+> 状态：**草案 v0.5**（四份技术调研收敛 + Spike 01 / Spike 02 结论已回填 + Spike 02 真编码器复核已解决 + **Spike 03 模糊路由 vs DecisionRouter 已验证**，待 zj 校准）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -15,6 +15,7 @@
 | 分流 / 结合算子（T0.1/T3.2） | `docs/research/combine-classify-2026-10-29-draft.md` | `3e35b70b…` |
 | Spike 01 双轨 schema + decay | `spikes/spike-01-dual-track-decay/README.md` | 18 tests passed |
 | Spike 02 双轨分流判定（含限定） | `spikes/spike-02-dual-track-routing/README.md` | 9 tests passed（结论带限定，见 §8）；**真编码器复核已完成（Ollama nomic/qwen3，HF 被墙改走本地栈）** |
+| Spike 03 模糊路由 vs DecisionRouter | `spikes/spike-03-vague-routing/README.md` | 9 tests（1 expectedFailure：nomic 3-way 不安全）；**推荐 DecisionRouter 作主方案** |
 
 ---
 
@@ -142,7 +143,7 @@ CREATE TABLE context (
 |---|---|---|---|
 | 存储 | **Postgres + pgvector**（本地/自托管） | 依赖最少、可离线、事务/PITR 成熟；与 Utopia 已验证形态一致 | Kuzu（图变核心）/ TerminusDB（需原生版本控制） |
 | 向量 | pgvector HNSW | 与元数据同库、可 JOIN | — |
-| 双轨分流 | **Semantic Router**（校准路由 + 双信号弃权） | 唯一提供校准阈值与"弃权返回 None"；spike 02 验证机制可行，且**经 Ollama 真编码器（nomic/qwen3）复核**确认相似度仍不可分模糊/确定，须双信号弃权；建议显式“模糊”路由或 DecisionRouter | Outlines（生成期约束）/ DSPy 优化器 / DecisionRouter |
+| 双轨分流 | **DecisionRouter（本地 LLM 直接判定轨道）** + Semantic Router（校准路由 + 双信号弃权）作候选预过滤 | spike 03 验证：**DecisionRouter 主方案**——编码器无关、F1（模糊误提交=0）与 F2（长模糊对抗句 0 进 dynamic）均完美、覆盖 100%；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，弱编码器（nomic 768d）出现 1 处模糊误提交+2 处轨道互混 → 仅作强编码器下的互补/置信度信号源，不作独立决策器 | Semantic Router（校准路由）/ Outlines / DSPy |
 | 本地推理 | **Ollama** | 唯一原生本地/离线运行时，OpenAI 兼容层 | 任意 OpenAI 兼容端点 |
 | 结构化抽取 | **Instructor**（Pydantic + 校验重试） | 唯一提供"文本→校验过的结构化对象"原语 | Outlines |
 | 编排 / 人审 | **LangGraph**（图 + PG checkpoint + interrupt/resume） | 唯一提供工作流内人审中断；checkpoint 落在同库 | 自研最小状态机 |
@@ -201,14 +202,15 @@ CREATE TABLE context (
 - **注意力预算不足** → 上线前按 `动态条目数 / (0.6 × interval)` 校验预算覆盖需求；不足时必须调大 interval 或减少动态条目，否则腐化无解（spike 实测 rot=100%）。
 - **已定（spike 01）**：decay 函数形态 = **线性**；阶梯衰减已否决，指数为备选。
 - **已定（spike 02）**：双轨分流**机制可行**——校准化路由 + 双信号弃权可正确分出明确条目（routed 准确率 100%、错判 0%、abstain 28.1%、8/8 模糊样本正确弃权）；弃权路径可转人工。**真编码器（Ollama nomic/qwen3）复核确认双信号弃权与单向偏差结论在真实语义嵌入下仍成立**（见 §8 限定 ④）。
-- **未决（spike 02 限定）**：① **已定**——真编码器（Ollama nomic/qwen3）下模糊/确定仍 OVERLAP，双信号弃权在真实嵌入下仍必要、阈值仍适用；② 采用**显式"模糊"路由**还是 **DecisionRouter** 决策模型（二选一，待定）；③ 静态/动态判定是否需要**时间词特征**（纯语义是否够，待定）；④ **已定**——真编码器复核已完成（经 Ollama，HF 被墙），量化结论不再仅限词法编码器。
+- **未决（spike 02 限定）**：① **已定**——真编码器（Ollama nomic/qwen3）下模糊/确定仍 OVERLAP，双信号弃权在真实嵌入下仍必要、阈值仍适用；② **已定（spike 03）**——采用 **DecisionRouter（本地 LLM 直接判定轨道）作主方案**，而非显式 3-way 模糊路由：spike 03 验证 DecisionRouter 编码器无关、F1/F2 安全属性完美、覆盖 100%；3-way 路由仅在 qwen3 级强编码器下安全，弱编码器引入危险误提交，故降级为 DecisionRouter 的候选预过滤/置信度信号源；③ 静态/动态判定是否需要**时间词特征**（纯语义是否够，待定）；④ **已定**——真编码器复核已完成（经 Ollama，HF 被墙），量化结论不再仅限词法编码器。
 - **未决（通用）**：`review_interval` 如何按条目自动设定（现为固定值）、注意力信号的加权方式（现仅按 decay 排序）、复利度量的最终口径、到期条目「蒸馏 vs 归档」的分流规则。
 
 ## 9. 下一步（spike 清单）
 
 1. ✅ **双轨 schema + decay spike（已完成）** —— 见 `spikes/spike-01-dual-track-decay/README.md`（18 tests passed）。结论：decay 选**线性**；**阶梯否决**（行动窗口 0）；不加调度 rot=100%、加调度后线性降至 0%；预算须覆盖 `n/(0.6×interval)`。DDL 已在 PG16+pgvector 实测通过，静态轨 decay 恒为 0，claim 无 evidence_refs 被拒。
 2. ✅ **分流 spike（已完成，真编码器复核已解决）** —— 见 `spikes/spike-02-dual-track-routing/README.md`（9 tests passed）。结论：校准路由 + **双信号弃权**机制可行（routed 准确率 100%、错判 0%、abstain 28.1%、8/8 模糊正确弃权）；**限定条件**见 §8：词法编码器下相似度不可分模糊/确定、0% 错判不可外推（长模糊句 3/3 误判为 dynamic 且单向偏差）。**真编码器复核（2026-10-29）经 Ollama 完成**（HF/FastEmbed(BGE) 被墙改走本地栈）：nomic-embed-text 与 qwen3-embedding 两模型均复现 OVERLAP 与 3/3 单向误判 → 上述结论在真实语义嵌入下仍成立，原「词法编码器上成立」限定撤销。建议下一步用**显式"模糊"路由或 DecisionRouter** 替代继续调阈值。
-3. **蒸馏 spike** —— Instructor + Ollama 跑通「条目 → 结构化 claim」全程无外部 API；LangGraph interrupt/resume 实现人审闭环并落 PG。
-4. **结合 spike** —— 一组相关条目按 RCS 漏斗产出带引用的建模产物，人工评估"是否真形成方法论而非摘要堆砌"。
+3. ✅ **模糊路由 vs DecisionRouter spike（已完成）** —— 见 `spikes/spike-03-vague-routing/README.md`（9 tests，1 expectedFailure）。结论：验证 Spike 02 收尾的两条候选修复。**两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）**；**DecisionRouter 主方案**——F1（模糊误提交=0）完美、F2 完美、覆盖 100%、编码器无关，契合 Ollama 栈（精度随模型规模可提，本环境仅 1.5B）；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，nomic(768d) 出现 1 误提交+2 互混 → 降级为互补/置信度信号源。选型表（§6）与未决②已同步。
+4. **蒸馏 spike** —— Instructor + Ollama 跑通「条目 → 结构化 claim」全程无外部 API；LangGraph interrupt/resume 实现人审闭环并落 PG。
+5. **结合 spike** —— 一组相关条目按 RCS 漏斗产出带引用的建模产物，人工评估"是否真形成方法论而非摘要堆砌"。
 
 > 本文件的选型均可被 spike 结果推翻；被推翻处应记录偏差，不得静默接受。
