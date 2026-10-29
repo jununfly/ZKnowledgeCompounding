@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v0.1
 
-> 状态：**草案 v0.6**（四份技术调研收敛 + Spike 01 / Spike 02 结论已回填 + Spike 02 真编码器复核已解决 + Spike 03 模糊路由 vs DecisionRouter 已验证 + **编排层选型复核（LangGraph 背书 / Cordis 定位为模式源）**，待 zj 校准）
+> 状态：**草案 v0.7**（四份技术调研收敛 + Spike 01–03 结论已回填 + 编排层选型复核 + Cordis 模式借鉴 + **Spike 04 蒸馏闭环已完成（§6.4 两约束作为验收通过）**，待 zj 校准）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -16,6 +16,7 @@
 | Spike 01 双轨 schema + decay | `spikes/spike-01-dual-track-decay/README.md` | 18 tests passed |
 | Spike 02 双轨分流判定（含限定） | `spikes/spike-02-dual-track-routing/README.md` | 9 tests passed（结论带限定，见 §8）；**真编码器复核已完成（Ollama nomic/qwen3，HF 被墙改走本地栈）** |
 | Spike 03 模糊路由 vs DecisionRouter | `spikes/spike-03-vague-routing/README.md` | 9 tests（1 expectedFailure：nomic 3-way 不安全）；**推荐 DecisionRouter 作主方案** |
+| Spike 04 蒸馏闭环 | `spikes/spike-04-distill-loop/README.md` | 9 tests passed；§6.4 两条约束（append-only / produced_by 级联）作为 schema 级验收通过；checkpoint 落同库 PG |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
 
 ---
@@ -221,7 +222,7 @@ CREATE TABLE context (
 1. ✅ **双轨 schema + decay spike（已完成）** —— 见 `spikes/spike-01-dual-track-decay/README.md`（18 tests passed）。结论：decay 选**线性**；**阶梯否决**（行动窗口 0）；不加调度 rot=100%、加调度后线性降至 0%；预算须覆盖 `n/(0.6×interval)`。DDL 已在 PG16+pgvector 实测通过，静态轨 decay 恒为 0，claim 无 evidence_refs 被拒。
 2. ✅ **分流 spike（已完成，真编码器复核已解决）** —— 见 `spikes/spike-02-dual-track-routing/README.md`（9 tests passed）。结论：校准路由 + **双信号弃权**机制可行（routed 准确率 100%、错判 0%、abstain 28.1%、8/8 模糊正确弃权）；**限定条件**见 §8：词法编码器下相似度不可分模糊/确定、0% 错判不可外推（长模糊句 3/3 误判为 dynamic 且单向偏差）。**真编码器复核（2026-10-29）经 Ollama 完成**（HF/FastEmbed(BGE) 被墙改走本地栈）：nomic-embed-text 与 qwen3-embedding 两模型均复现 OVERLAP 与 3/3 单向误判 → 上述结论在真实语义嵌入下仍成立，原「词法编码器上成立」限定撤销。建议下一步用**显式"模糊"路由或 DecisionRouter** 替代继续调阈值。
 3. ✅ **模糊路由 vs DecisionRouter spike（已完成）** —— 见 `spikes/spike-03-vague-routing/README.md`（9 tests，1 expectedFailure）。结论：验证 Spike 02 收尾的两条候选修复。**两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）**；**DecisionRouter 主方案**——F1（模糊误提交=0）完美、F2 完美、覆盖 100%、编码器无关，契合 Ollama 栈（精度随模型规模可提，本环境仅 1.5B）；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，nomic(768d) 出现 1 误提交+2 互混 → 降级为互补/置信度信号源。选型表（§6）与未决②已同步。
-4. **蒸馏 spike** —— Instructor + Ollama 跑通「条目 → 结构化 claim」全程无外部 API；LangGraph interrupt/resume 实现人审闭环并落 PG。
-5. **结合 spike** —— 一组相关条目按 RCS 漏斗产出带引用的建模产物，人工评估"是否真形成方法论而非摘要堆砌"。
+4. ✅ **蒸馏 spike（已完成）** —— 见 `spikes/spike-04-distill-loop/README.md`（9 tests passed）。Instructor+Ollama(qwen2.5-coder)+LangGraph interrupt/resume 全程无外部 API 跑通，checkpoint 落**同库 PG**（PostgresSaver，跨连接 resume 实测通过）。**§6.4 两条约束已作为 schema 级验收强制通过**：C1 双时态 append-only（修订=闭行+插行，历史行逐字段不变）、C2 produced_by 级联撤销（FK ON DELETE CASCADE，人工产物不受牵连）。**注意**：1.5B 蒸馏产物近复述而非元认知，印证 §8「本地小模型质量」风险——管线与约束已验证，语义质量走 provider seam 切强模型，属后续。
+5. **结合 spike** —— 一组相关条目按 RCS 漏斗产出带引用的建模产物，人工评估"是否真形成方法论而非摘要堆砌"；`transform.kind='combine'` 已预留，可直接复用 spike 04 的 produced_by 撤销机制。
 
 > 本文件的选型均可被 spike 结果推翻；被推翻处应记录偏差，不得静默接受。
