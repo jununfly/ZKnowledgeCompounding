@@ -1,0 +1,23 @@
+# Python virtual environments (venv at any level, incl. .venv / .venv-*/ variants)
+.venv/
+.venv*/
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# OS cruft
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+# Editors / IDE
+.idea/
+.vscode/
