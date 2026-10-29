@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v0.1
 
-> 状态：**草案 v0.8**（四份技术调研收敛 + 编排层选型复核 + Cordis 模式借鉴 + **Spike 01–05 全部完成**（schema+decay / 分流 / 模糊路由 / 蒸馏闭环 / 结合算子），待 zj 校准）
+> 状态：**草案 v0.9**（v0.8 + **与 PRD v0.2 校准 round 1**：新增 §10 校准 ledger、收敛未决为剩余 spike 清单、确认术语护栏(§2)与 PRD §2.0 一致、确认 PRD §4 概念模型与本文 §5 schema 不矛盾，待 zj 复核）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -225,6 +225,32 @@ CREATE TABLE context (
 3. ✅ **模糊路由 vs DecisionRouter spike（已完成）** —— 见 `spikes/spike-03-vague-routing/README.md`（9 tests，1 expectedFailure）。结论：验证 Spike 02 收尾的两条候选修复。**两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）**；**DecisionRouter 主方案**——F1（模糊误提交=0）完美、F2 完美、覆盖 100%、编码器无关，契合 Ollama 栈（精度随模型规模可提，本环境仅 1.5B）；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，nomic(768d) 出现 1 误提交+2 互混 → 降级为互补/置信度信号源。选型表（§6）与未决②已同步。
 4. ✅ **蒸馏 spike（已完成）** —— 见 `spikes/spike-04-distill-loop/README.md`（9 tests passed）。Instructor+Ollama(qwen2.5-coder)+LangGraph interrupt/resume 全程无外部 API 跑通，checkpoint 落**同库 PG**（PostgresSaver，跨连接 resume 实测通过）。**§6.4 两条约束已作为 schema 级验收强制通过**：C1 双时态 append-only（修订=闭行+插行，历史行逐字段不变）、C2 produced_by 级联撤销（FK ON DELETE CASCADE，人工产物不受牵连）。**注意**：1.5B 蒸馏产物近复述而非元认知，印证 §8「本地小模型质量」风险——管线与约束已验证，语义质量走 provider seam 切强模型，属后续。
 5. ✅ **结合 spike（已完成）** —— 见 `spikes/spike-05-combine-operator/README.md`（9 tests passed + e2e 演示）。RCS 漏斗（逐源条件化摘要→重排→来源上限）+ 双层合并 + **引用强制**（幻觉引用剔除、零引用断言删除、全失效抛错——无引用的建模产物不允许存在）跑通；复用 spike-04 的 transform/produced_by 级联撤销。**人工评估结论（诚实记账）**：1.5B 产物为「带引用的摘要堆砌」（一源一 claim、global 层复述、无跨源断言）→ **语义质量不达标，与 spike-04 同源：模型规模问题非架构问题**，走 provider seam 切强模型，选型不推翻。
-6. **剩余**：蒸馏/结合质量的强模型（≥7B）复测；`context` 表拓扑装配 spike；复利度量口径。
+6. **剩余 spike（与 PRD §9 对齐）**：① 强模型（≥7B）蒸馏/结合质量复测与质量口径定义（Spike 04/05）；② `context` 表拓扑装配 spike（T4.1/T4.2）；③ 复利度量口径（T7.1）+ 引用埋点（T6.2）；④ `review_interval` 自动设定规则；⑤ 到期条目「蒸馏 vs 归档」分流规则；⑥ DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案。
+
+---
+
+## 10. 与 PRD v0.2 校准 ledger（round 1 · 2026-10-29）
+
+本轮校准把 PRD 从「v0.1 研究待做」状态追平到「v0.2 研究已回填」，确保两份文档不矛盾、决策可追溯。对账结果：
+
+| PRD 章节 | 校准动作 | 与本文档一致性 |
+|---|---|---|
+| §2.0（新增）术语护栏 | 锚定「双轨≠双时态」 | 与本文 §2 完全一致 |
+| §2.3 注意力预算 | 回填 Spike 01 量化约束 | 与本文 §6.3 一致 |
+| §4 数据模型 | 概念模型 + 指向本文 §5 schema | 概念层（动静分离）与存储层（单表+track）是同一模型两视图，不矛盾 |
+| §5 系统架构 | 标注概念图、指向本文 §4 | 本文 §4 为权威详细图 |
+| §6/§7 选型与度量 | PRD 引用本文结论 | 一致 |
+| §8 风险 | 回填 Spike 02/03/04/05 风险 | 与本文 §8 一致 |
+| §9 下一步 | 研究标完成、列剩余 spike | 与本文 §9 剩余项一致 |
+
+**未闭合项（双方共同 open，不在此轮强行闭合）**：
+1. 强模型（≥7B）蒸馏/结合语义质量复测与质量口径定义（Spike 04/05）。
+2. `context` 拓扑装配 spike（T4.1/T4.2）。
+3. 复利度量口径（T7.1）+ 引用埋点（T6.2）。
+4. `review_interval` 自动设定规则。
+5. 到期条目「蒸馏 vs 归档」分流规则。
+6. DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案。
+
+> 以上均为"已识别未决"，非"被静默接受"。任何一方推进后同步回填两文档。
 
 > 本文件的选型均可被 spike 结果推翻；被推翻处应记录偏差，不得静默接受。
