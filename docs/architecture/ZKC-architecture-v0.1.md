@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v0.1
 
-> 状态：**草案 v0.5**（四份技术调研收敛 + Spike 01 / Spike 02 结论已回填 + Spike 02 真编码器复核已解决 + **Spike 03 模糊路由 vs DecisionRouter 已验证**，待 zj 校准）
+> 状态：**草案 v0.6**（四份技术调研收敛 + Spike 01 / Spike 02 结论已回填 + Spike 02 真编码器复核已解决 + Spike 03 模糊路由 vs DecisionRouter 已验证 + **编排层选型复核（LangGraph 背书 / Cordis 定位为模式源）**，待 zj 校准）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -16,6 +16,7 @@
 | Spike 01 双轨 schema + decay | `spikes/spike-01-dual-track-decay/README.md` | 18 tests passed |
 | Spike 02 双轨分流判定（含限定） | `spikes/spike-02-dual-track-routing/README.md` | 9 tests passed（结论带限定，见 §8）；**真编码器复核已完成（Ollama nomic/qwen3，HF 被墙改走本地栈）** |
 | Spike 03 模糊路由 vs DecisionRouter | `spikes/spike-03-vague-routing/README.md` | 9 tests（1 expectedFailure：nomic 3-way 不安全）；**推荐 DecisionRouter 作主方案** |
+| Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
 
 ---
 
@@ -146,7 +147,7 @@ CREATE TABLE context (
 | 双轨分流 | **DecisionRouter（本地 LLM 直接判定轨道）** + Semantic Router（校准路由 + 双信号弃权）作候选预过滤 | spike 03 验证：**DecisionRouter 主方案**——编码器无关、F1（模糊误提交=0）与 F2（长模糊对抗句 0 进 dynamic）均完美、覆盖 100%；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，弱编码器（nomic 768d）出现 1 处模糊误提交+2 处轨道互混 → 仅作强编码器下的互补/置信度信号源，不作独立决策器 | Semantic Router（校准路由）/ Outlines / DSPy |
 | 本地推理 | **Ollama** | 唯一原生本地/离线运行时，OpenAI 兼容层 | 任意 OpenAI 兼容端点 |
 | 结构化抽取 | **Instructor**（Pydantic + 校验重试） | 唯一提供"文本→校验过的结构化对象"原语 | Outlines |
-| 编排 / 人审 | **LangGraph**（图 + PG checkpoint + interrupt/resume） | 唯一提供工作流内人审中断；checkpoint 落在同库 | 自研最小状态机 |
+| 编排 / 人审 | **LangGraph**（图 + PG checkpoint + interrupt/resume） | 选型复核背书（2026-10-29）：唯一同时满足「checkpoint 落 PG 同库同 schema + 领域状态编辑级 HITL + 纯本地 Python 栈」；已知 gap 为无 durable execution（崩溃自动恢复），对人工驱动的蒸馏属 nice-to-have，非 blocker。Pydantic AI / Cordis 评估见 §6.4 与 §7 | 自研最小状态机 |
 | 蒸馏语义 | **ZKC 自研** | 无候选提供"去繁→元认知+topic+反向连接" | — |
 | 结合/建模 | **ZKC 自研程序**（复用 RCS 漏斗 + 双层合并） | 无候选产出建模/方法论产物 | DSPy 作为编程模型 |
 | 衰减 decay | **ZKC 自研 · 线性函数**（spike 01 已定） | 所有候选均无原生 TTL/腐化语义；spike 实测线性 rot=0%、行动窗口 6.3 天 | 指数（窗口更大但触发过晚） |
@@ -173,6 +174,15 @@ CREATE TABLE context (
 - **注意力预算是硬约束**：需求 = `动态条目数 / (0.6 × interval)`。预算低于需求时腐化**无解**（spike 实测 rot=100%），上线前必须反推校验。
 - 策略：**保守起步，宁少勿错**——错误推送比不推送更伤注意力。
 
+### 6.4 模式借鉴：Cordis / DeepSeek Harness（仅模式，不引入依赖）
+对编排层的选型复核（候选含 Pydantic AI、Agno、Temporal 等）结论：**LangGraph 维持为编排层**——ZKC 三硬约束（checkpoint 落 PG 同库同 schema、领域状态编辑级 HITL、纯本地 Python 栈）只有它同时满足；Pydantic AI 在 PG checkpoint（需自建 `BaseStatePersistence`）与 HITL 通用性上反而更弱。Cordis/dsh 经评估**不适合作为 ZKC 依赖**（见 §7），但作为**模式源**有三点可迁移：
+
+1. **append-only 事件流 = SSOT，context 从流投影** ↔ **ZKC 双时态同构**：Cordis 用工业级实现印证了 ZKC 双时态建模方向——`transaction_time` 对应事件流的追加记录，`valid_time` 对应从流投影出的当前视图。ZKC 已在 schema 自建双时态（§5），此同构是**背书而非新依赖**；实现上意味着双时态写入应保持 append-only（不改写历史行，只闭合 `valid_to`/`tx_to`），与事件流语义一致。
+2. **spatiotemporal composability（副作用可完全回滚）** → ZKC 的蒸馏 / 结合 / context 拓扑装配应借鉴：知识变换产物（claim、反向连接、context 边）须**可追溯、可撤销**——删除一个变换时其全部副作用随之撤走。落到数据模型：变换产物统一带 `produced_by`（变换实例 id），撤销按该 id 级联。
+3. **「一切皆插件」的可替换边界** → 印证 ZKC 既有 seam 设计（storage seam 可切 Kuzu/TerminusDB、encoder seam TF-IDF→Ollama、provider seam 本地→强模型）；蒸馏/结合算子按同样边界保持可替换，不让编排层渗透领域语义。
+
+**边界警示**：Cordis 的插件树 / patch 层级 / 事件流运行时对 ZKC 是**杀鸡用牛刀**——ZKC 蒸馏是确定的领域工作流（条目 → 结构化 claim → 人审 → 落 PG），需要的是被嵌入的领域工具（LangGraph），不是承载自己的通用 agent 平台。引入 dsh 会造成双栈分裂（Python 领域 + TS harness）且迫使 `decay_score`、`evidence_refs` 等一等公民语义塞进事件流抽象，丢失 schema 级校验。
+
 ## 7. 被拒绝 / 延后的选项（含拒绝理由）
 
 | 选项 | 决定 | 约束性理由 |
@@ -185,6 +195,7 @@ CREATE TABLE context (
 | Langfuse | 延后 | ClickHouse/Redis 重依赖；先用轻量 score 表 |
 | Electric / Automerge（多端同步） | 延后 | MVP 为单人单机 |
 | XTDB | 待带外验证 | 最强双时态候选，但 pinned 编译器无法解析其 submodule 树 |
+| Cordis / dsh（DeepSeek Harness）作为编排层依赖 | 拒绝，**重述为模式源**（见 §6.4） | 双栈分裂（Python 领域 + TS 运行时）；session 为自有 append-only 事件流，无法落 ZKC 的 PG 同库同 schema；HITL 仅轨迹级 resume/fork/replay，无领域状态编辑级中断；把 `decay_score`/`evidence_refs` 塞进事件流抽象会丢失 schema 级校验。可迁移的是模式：append-only 流↔双时态同构、副作用可回滚、插件化 seam |
 
 ## 8. 风险与未决
 
