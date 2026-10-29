@@ -1,0 +1,47 @@
+2026-10-29 13:38:16.055 | ERROR    | fastembed.common.model_management:download_model:712 - Could not download model from HuggingFace: _ssl.c:1015: The handshake operation timed out Falling back to other sources.
+2026-10-29 13:38:16.056 | ERROR    | fastembed.common.model_management:download_model:746 - Could not download model from either source, sleeping for 3.0 seconds, 2 retries left.
+2026-10-29 13:38:29.123 | ERROR    | fastembed.common.model_management:download_model:712 - Could not download model from HuggingFace: timed out Falling back to other sources.
+2026-10-29 13:38:29.125 | ERROR    | fastembed.common.model_management:download_model:746 - Could not download model from either source, sleeping for 9.0 seconds, 1 retries left.
+2026-10-29 13:38:48.177 | ERROR    | fastembed.common.model_management:download_model:712 - Could not download model from HuggingFace: 502 Bad Gateway Falling back to other sources.
+2026-10-29 13:38:48.181 | ERROR    | fastembed.common.model_management:download_model:746 - Could not download model from either source, sleeping for 27.0 seconds, 0 retries left.
+
+[TF-IDF (lexical)]
+  threshold=0.00 min_tokens=18
+  EVAL : abstain=28.1% misroute=0.0% coverage=71.9% acc_on_routed=100.0%
+  ambiguous abstained: 8/8
+  long-ambiguous false commits: 3/3
+
+loading FastEmbed model: BAAI/bge-small-zh-v1.5 ...
+Traceback (most recent call last):
+  File "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/spikes/spike-02-dual-track-routing/run_spike_real.py", line 93, in <module>
+    main()
+    ~~~~^^
+  File "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/spikes/spike-02-dual-track-routing/run_spike_real.py", line 73, in main
+    r = build(FastEmbedAdapter(model))
+              ~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/spikes/spike-02-dual-track-routing/run_spike_real.py", line 28, in __init__
+    self.enc = TextEmbedding(model)
+               ~~~~~~~~~~~~~^^^^^^^
+  File "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/spikes/spike-02-dual-track-routing/.venv/lib/python3.13/site-packages/fastembed/text/text_embedding.py", line 135, in __init__
+    self.model = EMBEDDING_MODEL_TYPE(
+                 ~~~~~~~~~~~~~~~~~~~~^
+        model_name=model_name,
+        ^^^^^^^^^^^^^^^^^^^^^^
+    ...<6 lines>...
+        **kwargs,
+        ^^^^^^^^^
+    )
+    ^
+  File "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/spikes/spike-02-dual-track-routing/.venv/lib/python3.13/site-packages/fastembed/text/onnx_embedding.py", line 274, in __init__
+    self._model_dir = self.download_model(
+                      ~~~~~~~~~~~~~~~~~~~^
+        self.model_description,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        specific_model_path=self._specific_model_path,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/spikes/spike-02-dual-track-routing/.venv/lib/python3.13/site-packages/fastembed/common/model_management.py", line 752, in download_model
+    raise ValueError(f"Could not load model {model.model} from any source.")
+ValueError: Could not load model BAAI/bge-small-zh-v1.5 from any source.

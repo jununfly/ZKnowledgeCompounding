@@ -1,0 +1,30 @@
+
+[TF-IDF (lexical)]
+  threshold=0.00 min_tokens=18
+  EVAL : abstain=28.1% misroute=0.0% coverage=71.9% acc_on_routed=100.0%
+  ambiguous abstained: 8/8
+  long-ambiguous false commits: 3/3
+
+loading Ollama model: nomic-embed-text ...
+
+[Ollama (nomic-embed-text)]
+  threshold=0.00 min_tokens=23
+  EVAL : abstain=53.1% misroute=20.0% coverage=46.9% acc_on_routed=80.0%
+  ambiguous abstained: 8/8
+  long-ambiguous false commits: 3/3
+
+--- separation with Ollama (nomic-embed-text) ---
+  score: ambiguous mean=0.792 clear mean=0.742
+  score: ambiguous max=0.894 clear min=0.563  OVERLAP
+
+loading Ollama model: qwen3-embedding ...
+
+[Ollama (qwen3-embedding)]
+  threshold=0.00 min_tokens=18
+  EVAL : abstain=28.1% misroute=0.0% coverage=71.9% acc_on_routed=100.0%
+  ambiguous abstained: 8/8
+  long-ambiguous false commits: 3/3
+
+--- separation with Ollama (qwen3-embedding) ---
+  score: ambiguous mean=0.659 clear mean=0.699
+  score: ambiguous max=0.765 clear min=0.477  OVERLAP

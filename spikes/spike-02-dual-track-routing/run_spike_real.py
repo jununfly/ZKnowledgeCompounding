@@ -13,18 +13,25 @@ from router import TfidfEncoder, DualTrackRouter, evaluate, _info_tokens
 
 
 class FastEmbedAdapter:
-    """Adapt semantic-router's FastEmbedEncoder to the encoder interface."""
+    """Adapt fastembed's TextEmbedding to the encoder interface.
+
+    NOTE: we use fastembed directly rather than semantic-router's FastEmbedEncoder
+    wrapper. The wrapper re-resolves the model from HuggingFace on every cold
+    start and, on this environment, hit an intermittent SSL EOF during re-download
+    instead of reusing the local cache. Direct fastembed reuses the cached model,
+    which is the behaviour we need for a repeatable verification run.
+    """
 
     def __init__(self, model: str):
-        from semantic_router.encoders import FastEmbedEncoder
+        from fastembed import TextEmbedding
         self.model = model
-        self.enc = FastEmbedEncoder(name=model)
+        self.enc = TextEmbedding(model)
 
     def fit(self, corpus):
         return self  # pre-trained; nothing to fit
 
     def encode(self, texts):
-        out = self.enc(list(texts))
+        out = list(self.enc.embed(list(texts)))
         return [{str(i): float(v) for i, v in enumerate(vec)} for vec in out]
 
 
