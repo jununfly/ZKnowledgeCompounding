@@ -1,0 +1,67 @@
+{
+  "markdownPath": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/docs/research/storage-lifecycle-2026-10-28-draft.md",
+  "htmlPath": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding/docs/research/storage-lifecycle-2026-10-28-draft.html",
+  "reportHash": "0e8de56113cebae5b6f243d9590e7db2d188f141a98ddb53b6ec9c7def25029d",
+  "publishCount": 1,
+  "evaluation": {
+    "reportHash": "0e8de56113cebae5b6f243d9590e7db2d188f141a98ddb53b6ec9c7def25029d",
+    "reportFamily": "technical-c4/v1",
+    "compilerVersion": "research/v1",
+    "healthy": true,
+    "correctness": {
+      "revisionPinned": true,
+      "provenanceComplete": true,
+      "criticalClaimsEvidence": true,
+      "scoringAxesSeparated": true,
+      "publishExactlyOnce": true,
+      "receiptConsistent": true
+    },
+    "evidenceCount": 27,
+    "unknownCount": 8,
+    "navigationFailureCount": 0,
+    "collection": {
+      "filesRead": 24,
+      "sourceBytesRead": 73003,
+      "durationMs": 19288,
+      "cacheHit": false
+    }
+  },
+  "qualityGate": {
+    "healthy": true,
+    "schema": "technical-research-quality-gate/v1",
+    "briefSchema": "technical-decision-brief/v1",
+    "reportFamily": "technical-c4/v1",
+    "checks": {
+      "decisionFrame": true,
+      "diagramCoverage": true,
+      "candidateScoresFromLedger": true,
+      "criticalClaimsEvidence": true,
+      "comparisonTraceability": true,
+      "recommendationTraceability": true,
+      "metricCoverage": true,
+      "riskRegisterCoverage": true,
+      "unknownsSurfaced": true
+    },
+    "counts": {
+      "concepts": 4,
+      "candidates": 5,
+      "cards": 5,
+      "claims": 8,
+      "comparisons": 5,
+      "recommendations": 2,
+      "metrics": 4,
+      "riskRegister": 5,
+      "ledgerEvidence": 27,
+      "ledgerUnknownCriteria": 8,
+      "graduationCriteria": 0,
+      "versionSkew": false
+    },
+    "brief": {
+      "schema": "technical-decision-brief/v1",
+      "stage": "problem-discovery",
+      "constraintCount": 3,
+      "optionCount": 3,
+      "goalCount": 3
+    }
+  }
+}

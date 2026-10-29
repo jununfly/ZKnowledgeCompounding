@@ -1,0 +1,159 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "fresh-collection",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "Semi-automatic distillation with human-in-the-loop (T3.1) and LLM orchestration / localization (T3.3) for ZKnowledgeCompounding: local inference runtimes, provider gateways, orchestration runtimes with human interrupts, human annotation/review, structured extraction, and LLM evaluation/observability",
+    "criteria": [
+      {
+        "id": "orchestration",
+        "question": "Does it orchestrate multi-step LLM/agent workflows (graph, state machine, durable execution)?",
+        "critical": true,
+        "keywords": [
+          "orchestrat",
+          "graph",
+          "state",
+          "durable",
+          "checkpoint",
+          "workflow"
+        ]
+      },
+      {
+        "id": "human_in_the_loop",
+        "question": "Does it support human-in-the-loop review, approval, interrupt/resume, or annotation of LLM outputs?",
+        "critical": true,
+        "keywords": [
+          "human",
+          "interrupt",
+          "approve",
+          "annotat",
+          "review",
+          "feedback"
+        ]
+      },
+      {
+        "id": "local_inference",
+        "question": "Does it run models locally / offline, or support local endpoints?",
+        "critical": true,
+        "keywords": [
+          "local",
+          "offline",
+          "ollama",
+          "self-host",
+          "privacy",
+          "gguf"
+        ]
+      },
+      {
+        "id": "structured_extraction",
+        "question": "Does it produce structured/validated outputs from LLMs (schema, retries)?",
+        "critical": true,
+        "keywords": [
+          "structured",
+          "schema",
+          "pydantic",
+          "json",
+          "validat",
+          "retry"
+        ]
+      },
+      {
+        "id": "provider_abstraction",
+        "question": "Does it unify multiple LLM providers behind one interface, including local ones?",
+        "critical": true,
+        "keywords": [
+          "provider",
+          "gateway",
+          "openai",
+          "router",
+          "fallback",
+          "unified"
+        ]
+      },
+      {
+        "id": "eval_observability",
+        "question": "Does it trace, evaluate, or score LLM pipeline outputs?",
+        "critical": false,
+        "keywords": [
+          "trace",
+          "eval",
+          "score",
+          "observ",
+          "metric",
+          "dataset"
+        ]
+      },
+      {
+        "id": "deployment_deps",
+        "question": "What are the deployment requirements and license?",
+        "critical": false,
+        "keywords": [
+          "docker",
+          "postgres",
+          "redis",
+          "license",
+          "mit",
+          "apache"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "ollama",
+        "name": "ollama"
+      },
+      {
+        "owner": "BerriAI",
+        "name": "litellm"
+      },
+      {
+        "owner": "langchain-ai",
+        "name": "langgraph"
+      },
+      {
+        "owner": "argilla-io",
+        "name": "argilla"
+      },
+      {
+        "owner": "instructor-ai",
+        "name": "instructor"
+      },
+      {
+        "owner": "langfuse",
+        "name": "langfuse"
+      }
+    ],
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 24,
+      "maxBytes": 1000000,
+      "deadlineMs": 120000
+    }
+  },
+  "briefFingerprint": "cb7d53e4af481f57f33f42b5047f5a66468adfc8f2c5649b738aa9e03ecc2979",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "authenticated",
+      "tokenConfigured": true
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 5000,
+      "remaining": 4957,
+      "resetAt": "2026-10-28T17:32:34Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "fresh-collection",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  }
+}

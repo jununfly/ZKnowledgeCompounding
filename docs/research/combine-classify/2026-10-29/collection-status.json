@@ -1,0 +1,158 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "fresh-collection",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "Dual-track classification / routing (T0.1) and combination-modeling operators (T3.2) for ZKnowledgeCompounding: calibrated semantic routing, constrained structured generation, multi-source synthesis into higher-level models, hierarchical graph community summaries, incremental knowledge updates, and local/offline execution on a PostgreSQL backend",
+    "criteria": [
+      {
+        "id": "classification_routing",
+        "question": "Does it classify or route inputs into categories with confidence, thresholds, or abstention?",
+        "critical": true,
+        "keywords": [
+          "classif",
+          "route",
+          "confidence",
+          "threshold",
+          "calibrat",
+          "intent"
+        ]
+      },
+      {
+        "id": "constrained_output",
+        "question": "Does it guarantee constrained/structured generation (schema, regex, grammar, literal)?",
+        "critical": true,
+        "keywords": [
+          "structured",
+          "schema",
+          "regex",
+          "grammar",
+          "literal",
+          "constrain"
+        ]
+      },
+      {
+        "id": "combination_synthesis",
+        "question": "Does it combine multiple sources into higher-level summaries, models, or synthesized answers?",
+        "critical": true,
+        "keywords": [
+          "summar",
+          "synthesis",
+          "combin",
+          "aggregat",
+          "community",
+          "report",
+          "merge"
+        ]
+      },
+      {
+        "id": "graph_context_topology",
+        "question": "Does it build a graph or hierarchical community structure to organise context?",
+        "critical": true,
+        "keywords": [
+          "graph",
+          "knowledge graph",
+          "community",
+          "hierarch",
+          "entity",
+          "relation"
+        ]
+      },
+      {
+        "id": "incremental_update",
+        "question": "Does it support incremental updates or deletion without full re-indexing?",
+        "critical": false,
+        "keywords": [
+          "incremental",
+          "update",
+          "delete",
+          "re-index",
+          "cache"
+        ]
+      },
+      {
+        "id": "local_offline",
+        "question": "Can it run locally or offline with local models/embeddings?",
+        "critical": true,
+        "keywords": [
+          "local",
+          "offline",
+          "ollama",
+          "air-gap",
+          "fastembed",
+          "embedding"
+        ]
+      },
+      {
+        "id": "storage_backend",
+        "question": "Which storage backends are supported, especially PostgreSQL?",
+        "critical": false,
+        "keywords": [
+          "postgres",
+          "postgres",
+          "storage",
+          "vector store",
+          "backend"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "stanfordnlp",
+        "name": "dspy"
+      },
+      {
+        "owner": "microsoft",
+        "name": "graphrag"
+      },
+      {
+        "owner": "HKUDS",
+        "name": "LightRAG"
+      },
+      {
+        "owner": "Future-House",
+        "name": "paper-qa"
+      },
+      {
+        "owner": "aurelio-labs",
+        "name": "semantic-router"
+      },
+      {
+        "owner": "dottxt-ai",
+        "name": "outlines"
+      }
+    ],
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 24,
+      "maxBytes": 1000000,
+      "deadlineMs": 120000
+    }
+  },
+  "briefFingerprint": "855be48f3ac5fdb11e4d7ee30044a38c5e566de321e9c63f26e1fb78fced7474",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "authenticated",
+      "tokenConfigured": true
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 5000,
+      "remaining": 4856,
+      "resetAt": "2026-10-28T17:32:34Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "fresh-collection",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  }
+}

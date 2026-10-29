@@ -1,0 +1,437 @@
+{
+  "schema": "zj-research-report-ir/v1",
+  "family": "technical-c4/v1",
+  "title": "ZKnowledgeCompounding P0 深挖：双轨分流判定（T0.1）与结合/建模算子（T3.2）",
+  "summary": "评估 6 个候选：Semantic Router、Outlines、GraphRAG、LightRAG、PaperQA2、DSPy。结论：T0.1 采用 Semantic Router 的校准语义路由并强制启用弃权（不确定转人工），标签语义由 ZKC 自定；T3.2 把结合算子实现为显式程序，复用 PaperQA2 的 RCS 漏斗（上下文摘要+重排+来源上限+引用）、LightRAG 的双层合并、GraphRAG 的层级汇总思路（仅借鉴模式，因其处于维护模式）。没有任何候选实现 ZKC 的双轨语义或建模产物，机制之外仍需自建。Semantic Router 与 LightRAG 均支持 PostgreSQL，与已定 substrate 收敛。",
+  "ledgerFingerprint": "855be48f3ac5fdb11e4d7ee30044a38c5e566de321e9c63f26e1fb78fced7474",
+  "concepts": [
+    {
+      "key": "decision-frame",
+      "value": "Choose the mechanisms for ZKC's dual-track classification (T0.1) and combination/modeling operator (T3.2), knowing both semantics are ZKC-owned and no candidate supplies them."
+    },
+    {
+      "key": "fit-model",
+      "value": "Coverage scored native / adapted / absent / unknown per topic; an unobserved capability is reported as unknown, never as absent. Sealed-ledger unknowns are footnoted rather than silently resolved."
+    },
+    {
+      "key": "ownership-model",
+      "value": "Candidates supply mechanisms only. ZKC owns the dual-track label definitions, the abstention policy, and the modeling-artifact contract (structure plus source citations)."
+    },
+    {
+      "key": "lifecycle-stage",
+      "value": "problem-discovery / selection phase for the ZKC transform layer; findings are point-in-time and pre-MVP."
+    }
+  ],
+  "diagrams": [
+    {
+      "kind": "landscape",
+      "title": "T0.1 / T3.2 landscape: ZKC semantics -> candidate mechanisms -> borrowed patterns",
+      "mermaid": "flowchart TD\n  ZKC[ZKC: 双轨分流 T0.1 + 结合建模 T3.2]\n  SR[Semantic Router 校准路由+弃权]\n  OU[Outlines 约束生成]\n  GR[GraphRAG 层级社区报告]\n  LR[LightRAG 双层合并]\n  PQ[PaperQA2 RCS 漏斗+引用]\n  DS[DSPy 可编程优化]\n  ZKC --> SR & OU & GR & LR & PQ & DS\n  SR --> R1[T0.1 机制]\n  PQ & LR & GR --> R2[T3.2 机制]\n  ZKC --> OWN[ZKC 自研: 标签语义 + 建模产物契约]"
+    },
+    {
+      "kind": "container",
+      "title": "Dual-track routing and combination operator on the Postgres substrate",
+      "mermaid": "flowchart LR\n  IN[新条目] --> RT[Semantic Router 路由\nstatic / dynamic / None]\n  RT -->|None| HU[人工判定]\n  RT -->|static| ST[静态轨 双时态]\n  RT -->|dynamic| DY[动态轨 decay 分数]\n  ST & DY --> CB[结合算子 T3.2\nRCS 漏斗 + 双层合并]\n  CB --> MA[建模/方法论产物\n带来源引用]\n  MA --> PG[(Postgres + pgvector\n路由索引 + 知识存储)]"
+    }
+  ],
+  "candidates": [
+    {
+      "repository": {
+        "owner": "stanfordnlp",
+        "name": "dspy"
+      },
+      "stars": 38833,
+      "topicMatch": 0,
+      "evidenceIds": [
+        "9099f94cf8d5ba223b328c6d",
+        "d1e563fca27b9baf81aa3ddc",
+        "3f1bb5e562c3ee4107162411"
+      ]
+    },
+    {
+      "repository": {
+        "owner": "microsoft",
+        "name": "graphrag"
+      },
+      "stars": 36474,
+      "topicMatch": 3,
+      "evidenceIds": [
+        "8f7d2b3bd768a286d5d486e1",
+        "98e439ab1c42a34737428b7c",
+        "83a0aab6b19415b8245fdba8"
+      ]
+    },
+    {
+      "repository": {
+        "owner": "HKUDS",
+        "name": "LightRAG"
+      },
+      "stars": 40391,
+      "topicMatch": 3,
+      "evidenceIds": [
+        "da5d72b377bc58694fef1988",
+        "36531411a743b22fac6b96ca",
+        "522e3473f9ce6473ad7acac4"
+      ]
+    },
+    {
+      "repository": {
+        "owner": "Future-House",
+        "name": "paper-qa"
+      },
+      "stars": 9490,
+      "topicMatch": 0,
+      "evidenceIds": [
+        "ba185f2805e1314a32253c60",
+        "7a56a4322d1624e0ce1e970d",
+        "240344e66849ba290ab95219"
+      ]
+    },
+    {
+      "repository": {
+        "owner": "aurelio-labs",
+        "name": "semantic-router"
+      },
+      "stars": 3982,
+      "topicMatch": 3,
+      "evidenceIds": [
+        "5e5655a252e65aaf021113d2",
+        "7f55270b020b3263d3e1396b",
+        "b1f0da66df25cbfcd5724be9"
+      ]
+    },
+    {
+      "repository": {
+        "owner": "dottxt-ai",
+        "name": "outlines"
+      },
+      "stars": 15989,
+      "topicMatch": 5,
+      "evidenceIds": [
+        "b6be887900d7acb987aa6db5",
+        "17d13fba63e558931ade48f6"
+      ]
+    }
+  ],
+  "cards": [
+    {
+      "title": "Semantic Router — calibrated semantic routing with abstention",
+      "summary": "Routes a request by semantic similarity to declared Routes, and can be calibrated with fit() so a confidence_threshold becomes a real probability and the router can return None (abstain) instead of guessing. Runs fully locally with FastEmbed, supports PostgreSQL production indexes, plus Chain (fast→slow fallthrough) and Merge. The strongest mechanism for ZKC's dual-track decision.",
+      "claimIds": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "title": "Outlines — constrained generation",
+      "summary": "Guarantees structured output during generation by taking an output type (Literal, Pydantic/JSON, regex, grammar) rather than parsing afterwards, across OpenAI / Ollama / vLLM / transformers / llama.cpp. Useful as the deterministic constrained-classification alternative to validate-after-generate approaches.",
+      "claimIds": [
+        "C3",
+        "C4"
+      ]
+    },
+    {
+      "title": "GraphRAG — hierarchical community summaries",
+      "summary": "Extracts entities, relationships and claims, runs hierarchical Leiden community detection, and generates community reports that merge many low-level sources into higher-level summaries with stable ids. Closest existing pattern to ZKC's 'combine many contexts into a higher-dimensional one' — but it is a research project in maintenance mode, so borrow the pattern, not the dependency.",
+      "claimIds": [
+        "C5",
+        "C6"
+      ]
+    },
+    {
+      "title": "LightRAG — dual-layer graph + vector with bounded merge summarisation",
+      "summary": "Dual-layer KG plus vector design: extraction LLM pulls entities/relations, LLM-written descriptions are merged under bounded source limits, and querying offers local (entity detail), global (relation chains), hybrid and default 'mix' (local+global+naive) modes. Local/air-gapped friendly with PostgreSQL as a recommended production backend.",
+      "claimIds": [
+        "C7",
+        "C8"
+      ]
+    },
+    {
+      "title": "PaperQA2 — evidence-grounded multi-source synthesis",
+      "summary": "Documented synthesis funnel: retrieve top-k, write a query-conditioned contextual summary per passage, re-score and filter, cap sources entering the prompt, and emit one answer with in-text citations. The closest pattern to ZKC's 'combine into a model while keeping provenance', and it echoes the Grounded-Claims finding from the coverage report.",
+      "claimIds": [
+        "C9",
+        "C10"
+      ]
+    },
+    {
+      "title": "DSPy — programming, not prompting",
+      "summary": "Compose modular AI systems in Python and optimise their prompts and weights instead of hand-tuning prompts; docs cover embeddings, a local interpreter and caching. Useful as the programming model for ZKC's own classification and combination operators rather than as an off-the-shelf feature.",
+      "claimIds": [
+        "C11"
+      ]
+    }
+  ],
+  "claims": [
+    {
+      "id": "C1",
+      "critical": true,
+      "text": "Semantic Router is a decision layer that routes a request by comparing its semantic meaning against declared Route objects (name, utterances, description, confidence_threshold, metadata) in vector space, and it is calibratable: fit() on labelled queries turns raw scores into probabilities, and a confidence_threshold lets the router return None when no route clears the bar, i.e. abstain instead of guessing.",
+      "evidenceIds": [
+        "5e5655a252e65aaf021113d2"
+      ]
+    },
+    {
+      "id": "C2",
+      "critical": true,
+      "text": "Semantic Router documents fully local execution with a local FastEmbed encoder and no API keys, and provides production index support backed by PostgreSQL; it also offers Chain (fast router that falls through to a slower one when unsure), Merge (averaging routers), hybrid sparse-plus-dense routing, and multi-modal routes.",
+      "evidenceIds": [
+        "7f55270b020b3263d3e1396b",
+        "b1f0da66df25cbfcd5724be9"
+      ]
+    },
+    {
+      "id": "C3",
+      "critical": true,
+      "text": "Outlines guarantees structured outputs during generation rather than repairing them afterwards: the caller passes the desired output type (Literal choices, JSON/Pydantic schema, regex, or grammar) and the same code runs across OpenAI, Ollama, vLLM, transformers and llama.cpp backends.",
+      "evidenceIds": [
+        "b6be887900d7acb987aa6db5",
+        "17d13fba63e558931ade48f6"
+      ]
+    },
+    {
+      "id": "C4",
+      "critical": false,
+      "text": "Outlines demonstrates classifying documents into predefined categories using a Literal type specification, which is the constrained-decoding equivalent of a multi-choice classifier. Note: the sealed ledger left its classification_routing criterion unverified.",
+      "evidenceIds": [
+        "b6be887900d7acb987aa6db5"
+      ]
+    },
+    {
+      "id": "C5",
+      "critical": true,
+      "text": "GraphRAG is a modular graph-based RAG pipeline: it extracts entities, relationships and claims from text units with LLMs, applies hierarchical Leiden community detection, and generates community reports that merge entities, relationships, claims and text units into higher-level summaries carrying stable ids; it also exposes local search over those artifacts.",
+      "evidenceIds": [
+        "8f7d2b3bd768a286d5d486e1",
+        "83a0aab6b19415b8245fdba8"
+      ]
+    },
+    {
+      "id": "C6",
+      "critical": false,
+      "text": "GraphRAG ships a dedicated cache package and is documented as a research project in maintenance mode rather than a supported product, so it should be treated as a pattern source rather than a runtime dependency.",
+      "evidenceIds": [
+        "98e439ab1c42a34737428b7c"
+      ]
+    },
+    {
+      "id": "C7",
+      "critical": false,
+      "text": "LightRAG adopts a dual-layer knowledge-graph plus vector architecture: an extraction LLM pulls entities and relations from chunks, LLM-written descriptions are merged into entity and relation records under bounded source limits, and querying offers local (entity-level detail), global (relation-chain abstraction), hybrid, and a default 'mix' mode that merges local, global and naive retrieval into one context for a stronger query LLM.",
+      "evidenceIds": [
+        "da5d72b377bc58694fef1988",
+        "36531411a743b22fac6b96ca"
+      ]
+    },
+    {
+      "id": "C8",
+      "critical": false,
+      "text": "LightRAG emphasises local and air-gapped operation (locally deployed embedding and reranking models, Ollama compatibility, offline deployment documentation) and documents asymmetric-embedding and semantic-chunking configuration, with PostgreSQL among its recommended production storage backends.",
+      "evidenceIds": [
+        "da5d72b377bc58694fef1988",
+        "522e3473f9ce6473ad7acac4"
+      ]
+    },
+    {
+      "id": "C9",
+      "critical": true,
+      "text": "PaperQA2 performs evidence-grounded synthesis through a documented funnel: retrieve top-k passages (evidence_k), have a summary LLM write a query-conditioned contextual summary for each, re-score and filter those summaries with a relevance cutoff, cap the sources entering the final prompt (answer_max_sources), and generate a single answer carrying in-text citations back to the sources.",
+      "evidenceIds": [
+        "ba185f2805e1314a32253c60",
+        "7a56a4322d1624e0ce1e970d"
+      ]
+    },
+    {
+      "id": "C10",
+      "critical": false,
+      "text": "PaperQA2's package metadata and documentation describe an agentic RAG pipeline with metadata-aware embeddings, LLM-based re-ranking and contextual summarisation, and support for swapping in local or self-hosted models through LiteLLM (including Ollama and Sentence-Transformers).",
+      "evidenceIds": [
+        "240344e66849ba290ab95219",
+        "ba185f2805e1314a32253c60"
+      ]
+    },
+    {
+      "id": "C11",
+      "critical": false,
+      "text": "DSPy is positioned as a framework for programming rather than prompting language models, letting you build modular AI systems by composing Python and then optimise their prompts and weights; its documentation covers embeddings, a local interpreter and response caching, plus a community ecosystem of systems built with it.",
+      "evidenceIds": [
+        "9099f94cf8d5ba223b328c6d",
+        "d1e563fca27b9baf81aa3ddc",
+        "3f1bb5e562c3ee4107162411"
+      ]
+    },
+    {
+      "id": "C12",
+      "critical": false,
+      "text": "No candidate implements ZKC's own semantics: none classifies items into ZKC's static (fact-type, long-lived) versus dynamic (survival-type, fast-decaying) tracks, and none emits a systematic model or methodology artifact. They supply the mechanisms (calibrated routing, constrained classification, multi-source synthesis, hierarchical summarisation) while the semantics remain ZKC's work.",
+      "evidenceIds": [
+        "5e5655a252e65aaf021113d2",
+        "8f7d2b3bd768a286d5d486e1"
+      ]
+    }
+  ],
+  "comparisons": [
+    {
+      "id": "comp-t01-mechanism",
+      "text": "T0.1 分流机制有三条可选路线：**Semantic Router**（向量空间语义路由 + fit() 校准 + 阈值 + **弃权返回 None**，可完全本地 FastEmbed 运行，生产索引可用 PostgreSQL）、**Outlines**（生成期用 Literal/grammar 约束，保证输出合法，跨 Ollama/vLLM/transformers）、**DSPy**（类型化 classifier 模块 + 优化器，可随标注数据自我改进）。ZKC 需要的是「静态/动态/不确定」三路判定，因此**首选 Semantic Router**：它的校准阈值 + 弃权能力正好对应「判不准就不要猜」这一要求。Outlines 可作为「生成期约束」的补充（与 Instructor 的「生成后校验重试」互补）。",
+      "claimIds": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C11"
+      ]
+    },
+    {
+      "id": "comp-t01-abstention",
+      "text": "T0.1 最关键的设计不是分类准确率，而是**弃权能力**。此前的调研已确认：错判会污染生命周期（把动态信息当静态会让它长期滞留，反之会让它过早腐化）。Semantic Router 的 fit() 把分数校准为真实概率，并允许返回 None（即「这些路由都不匹配」），从而把不确定的条目转交人工或更慢的模型（Chain 的快速→慢速回退）。这是 ZKC 双轨分流**必须**具备的安全属性，而 Outlines/DSPy 本身不提供。",
+      "claimIds": [
+        "C1",
+        "C2"
+      ]
+    },
+    {
+      "id": "comp-t32-combine",
+      "text": "T3.2 结合/建模算子的三种可借鉴模式：**GraphRAG** 的层级社区报告（把实体/关系/claim/文本单元合并成更高层摘要，带 stable id）——最接近 ZKC「多个自闭环 context → 更高维共享 context」，但项目处于维护模式，**只借鉴模式不引入依赖**；**LightRAG** 的双层合并（local 实体细节 + global 关系链，mix 模式三者合一）——更轻量、可增量、本地友好；**PaperQA2** 的 RCS（query 条件下的上下文摘要 + LLM 重排 + top-N 来源漏斗）——提供「去繁 + 有界综合」的具体漏斗参数。三者互补，都只是机制。",
+      "claimIds": [
+        "C5",
+        "C6",
+        "C7",
+        "C9"
+      ]
+    },
+    {
+      "id": "comp-t32-provenance",
+      "text": "T3.2 必须带溯源：PaperQA2 的 in-text citations 与「先摘要后综合」的漏斗，和上一份覆盖调研中 OpenWiki 的 Grounded Claims 是同一思路——**综合产物必须能回溯到来源条目**。ZKC 的结合算子产出（建模/方法论）应同样携带来源引用，否则无法被复用和检验，也就无法形成复利。",
+      "claimIds": [
+        "C9",
+        "C10"
+      ]
+    },
+    {
+      "id": "comp-substrate-convergence",
+      "text": "Substrate 收敛信号：Semantic Router 提供 **PostgreSQL 生产索引**，LightRAG 把 **PostgreSQL 作为生产推荐后端**（单后端即可服务 KV/向量/图/文档状态四类存储）。两个独立候选都收敛到 Postgres，与已定的 Postgres+pgvector substrate 形成强协同——T0.1 路由索引与 T3.2 知识存储可以落在同一个 Postgres 实例，无需引入额外数据库。",
+      "claimIds": [
+        "C2",
+        "C8"
+      ]
+    },
+    {
+      "id": "comp-semantics-gap",
+      "text": "语义缺口确认：没有任何候选实现 ZKC 自己的语义——没有静态/动态双轨分类，也没有产出「系统性建模/方法论」产物。它们只提供机制（校准路由、约束分类、多源综合、层级汇总）。因此 T0.1 的**标签定义**与 T3.2 的**建模产物契约**必须由 ZKC 自己写清，工具只承担机制部分。这与前三份报告「差异化必须自建」的结论一致。",
+      "claimIds": [
+        "C12"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "rec-t01",
+      "text": "T0.1 双轨分流：采用 **Semantic Router** 作为判定机制——声明 static / dynamic 两条 Route，用 fit() 在标注样本上校准阈值，并**强制启用弃权**（低于阈值返回 None，转人工或经 Chain 回退到更慢的模型）。标签语义（什么算静态、什么算动态）由 ZKC 自己定义并写成可测试的判据。Outlines 作为「生成期约束分类」的备选/补充（与 Instructor 的生成后校验重试互补），DSPy 留待后续用标注数据优化分类器。路由索引直接用 **PostgreSQL**，落在已定 substrate 同库。**硬性要求：必须支持弃权，绝不允许强行二选一。**",
+      "comparisonIds": [
+        "comp-t01-mechanism",
+        "comp-t01-abstention",
+        "comp-substrate-convergence"
+      ]
+    },
+    {
+      "id": "rec-t32",
+      "text": "T3.2 结合/建模算子：把结合算子实现为一个**显式的程序**（DSPy 或 LangGraph），内部复用三种已验证模式——① **PaperQA2 的 RCS 漏斗**（query 条件下的上下文摘要 → LLM 重排 → top-N 来源上限），实现「去繁」与有界综合；② **LightRAG 的双层合并**（local 实体级细节 + global 关系链），覆盖「自闭环 ↔ 更高维」两个层次；③ **GraphRAG 的层级汇总思路**（仅借鉴模式，不引入依赖，因其处于维护模式）。产出必须是**带来源引用的结构化建模/方法论产物**（用 Instructor 约束结构），而非一段自由文本。成本护栏：限制进入综合的来源数、缓存上下文摘要、支持增量更新。",
+      "comparisonIds": [
+        "comp-t32-combine",
+        "comp-t32-provenance",
+        "comp-semantics-gap"
+      ]
+    },
+    {
+      "id": "rec-validate",
+      "text": "动手验证清单：(1) **分流 spike** —— 用 Semantic Router 建 static/dynamic 双路由，本地 FastEmbed 跑通，标注 30 条样本校准阈值，测出「弃权率」与「错判率」，确认弃权路径真的能转人工；(2) **结合 spike** —— 取一组相关静态+动态条目，按 RCS 漏斗产出一份带引用的建模产物，人工评估「是否真的形成了方法论而非摘要堆砌」；(3) **成本护栏** —— 记录每次综合的 LLM 调用数与延迟，确认在来源上限与摘要缓存下的可接受区间。",
+      "comparisonIds": [
+        "comp-t01-abstention",
+        "comp-t32-combine",
+        "comp-t32-provenance"
+      ]
+    }
+  ],
+  "metrics": [
+    {
+      "key": "abstention-supported",
+      "definition": "candidates supporting calibrated confidence with an explicit abstain (return-none) path",
+      "unit": "count",
+      "method": "inspection for calibration fit, probability thresholds and a none-of-these outcome",
+      "condition": "required safety property for dual-track routing",
+      "expected": "1 (semantic-router)"
+    },
+    {
+      "key": "combination-pattern-native",
+      "definition": "candidates combining multiple sources into a higher-level synthesized artifact",
+      "unit": "count",
+      "method": "inspection for summarisation, merging or synthesis across sources",
+      "condition": "pattern sources for the T3.2 operator",
+      "expected": "3 (graphrag, lightrag, paper-qa)"
+    },
+    {
+      "key": "dual-track-semantics-native",
+      "definition": "candidates implementing ZKC's static/dynamic semantics or a methodology artifact",
+      "unit": "count",
+      "method": "inspection for dual-track labels and modeling/methodology output",
+      "condition": "confirms the semantics must be built in-house",
+      "expected": "0"
+    },
+    {
+      "key": "postgres-backend-candidates",
+      "definition": "candidates offering PostgreSQL as a supported production backend",
+      "unit": "count",
+      "method": "inspection of documented storage/index backends",
+      "condition": "convergence with the chosen substrate",
+      "expected": "2 (semantic-router, lightrag)"
+    }
+  ],
+  "riskRegister": [
+    {
+      "risk": "Semantic Router's 1.x line is young and has already shipped breaking changes, removing the older SemanticRouter, HybridRouter, dynamic routes and LLM classes.",
+      "trigger": "Building ZKC's routing on the current API and upgrading freely.",
+      "impact": "Breaking rework of the classification seam.",
+      "mitigation": "Pin the semantic-router version and restrict usage to the documented v1 surface (Route, IndexedRouter, Chain, Merge), upgrading only against a routing regression test on the labelled sample set.",
+      "residualRisk": "Further 1.x breaking changes can still land before 2.x stabilises.",
+      "owner": "zjj (architecture)"
+    },
+    {
+      "risk": "GraphRAG is a research project in maintenance mode, not a supported product, yet its community-report idea is the most tempting pattern to copy wholesale.",
+      "trigger": "Importing GraphRAG as a runtime dependency for the combination operator.",
+      "impact": "Core transform depends on an unmaintained project that accepts no new features or PRs.",
+      "mitigation": "Import only the idea: re-implement hierarchical merging as a documented pattern on the existing Ollama + Instructor + LangGraph stack, and add no GraphRAG dependency to the build.",
+      "residualRisk": "Re-implementing the hierarchical summarisation idea carries its own design and tuning effort.",
+      "owner": "zjj (architecture)"
+    },
+    {
+      "risk": "A misclassified item poisons its lifecycle: treating dynamic as static leaves it lingering, and static as dynamic lets it decay prematurely.",
+      "trigger": "Routing items into the wrong track without an abstain path.",
+      "impact": "The decay and attention signals computed downstream are wrong, so compounding value is lost.",
+      "mitigation": "Require calibrated abstention (return None) with a human fallback, log every routing decision with its confidence, and re-classify periodically so earlier mistakes are corrected.",
+      "residualRisk": "Some misroutes will still pass the threshold until the labelled set grows.",
+      "owner": "zj (product owner)"
+    },
+    {
+      "risk": "The combination operator is LLM-expensive: one contextual summary per source plus a re-rank pass scales with the number of combined items.",
+      "trigger": "Combining large item sets without budget controls.",
+      "impact": "Cost and latency grow faster than the value of the resulting model.",
+      "mitigation": "Cap the sources entering synthesis, cache contextual summaries keyed by item and question, and reuse cached summaries on incremental updates instead of regenerating.",
+      "residualRisk": "Very broad syntheses will still exceed a comfortable budget.",
+      "owner": "zjj (architecture)"
+    },
+    {
+      "risk": "Treating a synthesized summary as ZKC's 'modeling / methodology' output would ship an answer instead of a reusable model.",
+      "trigger": "Accepting the retrieval-synthesis result as the T3.2 deliverable.",
+      "impact": "ZKC's compounding transform degrades into summarisation and never produces reusable methodology.",
+      "mitigation": "Write an explicit artifact contract for the modeling output (typed structure, required fields, mandatory source citations and a review checklist) and have the pipeline reject synthesis results that do not satisfy it.",
+      "residualRisk": "Deciding whether an artifact is genuinely methodology still requires human review.",
+      "owner": "zj (product owner)"
+    }
+  ],
+  "graduationCriteria": [],
+  "informationGaps": {
+    "status": "has-gaps",
+    "rationale": "Has information gaps: the sealed ledger left 7 criteria unknown, namely storage_backend for dspy and outlines, classification_routing, incremental_update and local_offline for outlines, and constrained_output and graph_context_topology for semantic-router; those cells rest on documentation inspection and require hands-on validation before they are treated as verified."
+  }
+}
