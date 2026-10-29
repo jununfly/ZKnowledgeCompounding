@@ -90,29 +90,45 @@ false commits on long-ambiguous: 3/3
   而不是继续调阈值。
 - 若采用 semantic-router，可用其 `fit()` 做概率校准并按 `confidence_threshold` 弃权（与本项目逻辑同构）。
 
+## 真编码器复核结果（2026-10-29，已解决未决项①）
+
+HuggingFace / FastEmbed(BGE) 在本环境被 `SSL EOF` / 超时 / 502 阻断（见环境说明），改用 ZKC MVP 栈的 **Ollama 本地嵌入** 作为真实语义编码器复核，结果与词法编码器一致：
+
+| 编码器 | 模糊/确定相似度分离 | 长模糊误判 | routed 准确率 |
+|---|---|---|---|
+| TF-IDF（词法，基线） | OVERLAP | 3/3 误判为 dynamic | 100% |
+| Ollama nomic-embed-text（768 维） | **OVERLAP**（模糊 max 0.894 > 明确 min 0.563） | 3/3 | 80% |
+| Ollama qwen3-embedding（4096 维） | **OVERLAP**（模糊 max 0.765 > 明确 min 0.477） | 3/3 | 100% |
+
+运行：
+```bash
+.venv/bin/python run_spike_ollama.py nomic-embed-text qwen3-embedding
+```
+
+**确认的三个结论（真编码器下仍成立）**：
+1. 「相似度不可分模糊/确定」**不是词法编码器假象**——两个独立真实模型均 OVERLAP，双信号弃权在真编码器下仍必要。
+2. 长模糊句单向误判为 dynamic **三编码器一致复现（3/3）** → 单向偏差真实存在，信息量门不可靠。
+3. 「0% 错判不可外推」获佐证：nomic 下 routed 准确率降至 80%、错判 20% → EVAL 集短模糊偏差使结论偏乐观。
+
+→ 原「词法编码器上成立」限定**撤销**，改为「真实语义编码器下同样成立」。
+
 ## 未决
 
-- 真实语义编码器（FastEmbed/BGE）下，模糊与确定的分布是否会分开——本 spike 用的是词法编码器，结论需在真编码器上复核。
+- ✅（已解决）真实语义编码器下模糊/确定分布是否分开 → 见上，结论：仍 OVERLAP，双信号弃权必要。
 - 静态/动态的判定是否还需要时间特征（如"本周转下周转"等时间词），而非纯语义。
 
 ## 环境说明（重要，影响本 spike 的结论强度）
 
 | 步骤 | 结果 |
 |---|---|
-| `pip install semantic-router[fastembed]` | ✅ **成功**（耗时 ~50 分钟，网络很慢）→ `semantic-router 1.1.1`、`fastembed 0.9.1` |
+| `pip install semantic-router[fastembed]` | ✅ 成功（耗时 ~50 分钟）→ `semantic-router 1.1.1`、`fastembed 0.9.1` |
 | `import semantic_router` | ✅ 成功 |
-| FastEmbed 本地模型初始化 | ❌ **失败** —— `FileNotFoundError: No usable temporary directory`；沙箱拦截了 `tempfile` 所需的文件删除操作 |
+| FastEmbed(BGE) 经 HuggingFace 加载 | ❌ **被墙** —— `SSL EOF` / 超时 / 502，重试 40 次均失败；`run_spike_real.py` 保留作 HF 路径证据 |
+| Ollama 本地嵌入（nomic-embed-text / qwen3-embedding） | ✅ **成功**（Ollama 0.33.3 已装，正是 ZKC MVP 栈）→ 真编码器复核走 `run_spike_ollama.py` |
 
-→ 因此**本 spike 的量化结果仍基于无依赖 TF-IDF 词法编码器**，真语义编码器（FastEmbed/BGE）下的复核**未能在本环境完成**。
-`run_spike_real.py` 已写好（同一套 ZKC 校准/弃权逻辑，仅替换编码器为 `FastEmbedAdapter`），
-在无该沙箱限制的环境下执行即可直接复核：
+→ 真编码器复核已通过 Ollama 完成，结论见上「真编码器复核结果」。若日后 HF 可达，亦可 `.venv/bin/python run_spike_real.py BAAI/bge-small-zh-v1.5` 复算交叉验证。
 
-```bash
-.venv/bin/python run_spike_real.py BAAI/bge-small-zh-v1.5
-```
-
-**在真编码器复核完成前，"相似度无法区分模糊与确定"这一发现应视为"在词法编码器上成立"，
-不宜直接外推到真实语义嵌入。**
+**「相似度无法区分模糊与确定」现已在真实语义编码器（Ollama nomic/qwen3）下确认成立，原「词法编码器上成立」限定撤销。**
 
 其他：
-- `python3 -m venv .venv` 在工作区创建了 `.venv`（约 280M）；最初在根目录，后由 zj 手动移至 `spikes/.venv`，该路径已被仓库级 `.gitignore` 的 `.venv*/` 规则排除，不会进提交。
+- `python3 -m venv .venv` 在工作区创建了 `.venv`（约 280M）；后由 zj 手动移至 `spikes/spike-02-dual-track-routing/.venv`，该路径已被仓库级 `.gitignore` 的 `.venv*/` 规则排除，不会进提交。
