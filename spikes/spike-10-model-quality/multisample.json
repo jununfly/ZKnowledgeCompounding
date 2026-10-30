@@ -1,0 +1,138 @@
+{
+  "1.5b": {
+    "model": "1.5b",
+    "policy": "resilient",
+    "n_requested": 3,
+    "n_ok": 3,
+    "errors": [],
+    "pass_count": 0,
+    "verbatim_rate": {
+      "values": [
+        0.553,
+        0.689,
+        0.649
+      ],
+      "median": 0.649,
+      "min": 0.553,
+      "max": 0.689
+    },
+    "overlap": {
+      "values": [
+        0.551,
+        0.702,
+        0.656
+      ],
+      "median": 0.656,
+      "min": 0.551,
+      "max": 0.702
+    },
+    "cross_source_rate": {
+      "values": [
+        0.2,
+        0.0,
+        0.0
+      ],
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.2
+    },
+    "n_claims": {
+      "values": [
+        5,
+        4,
+        4
+      ],
+      "median": 4,
+      "min": 4,
+      "max": 5
+    },
+    "n_cross_source": {
+      "values": [
+        1,
+        0,
+        0
+      ],
+      "median": 0,
+      "min": 0,
+      "max": 1
+    },
+    "citation_hit": {
+      "values": [
+        0.8,
+        1.0,
+        1.0
+      ],
+      "median": 1.0,
+      "min": 0.8,
+      "max": 1.0
+    }
+  },
+  "4b": {
+    "model": "4b",
+    "policy": "resilient",
+    "n_requested": 3,
+    "n_ok": 3,
+    "errors": [],
+    "pass_count": 2,
+    "verbatim_rate": {
+      "values": [
+        0.075,
+        0.1,
+        0.103
+      ],
+      "median": 0.1,
+      "min": 0.075,
+      "max": 0.103
+    },
+    "overlap": {
+      "values": [
+        0.0,
+        0.057,
+        0.078
+      ],
+      "median": 0.057,
+      "min": 0.0,
+      "max": 0.078
+    },
+    "cross_source_rate": {
+      "values": [
+        1.0,
+        0.333,
+        1.0
+      ],
+      "median": 1.0,
+      "min": 0.333,
+      "max": 1.0
+    },
+    "n_claims": {
+      "values": [
+        2,
+        3,
+        2
+      ],
+      "median": 2,
+      "min": 2,
+      "max": 3
+    },
+    "n_cross_source": {
+      "values": [
+        2,
+        1,
+        2
+      ],
+      "median": 2,
+      "min": 1,
+      "max": 2
+    },
+    "citation_hit": {
+      "values": [
+        0.5,
+        1.0,
+        0.75
+      ],
+      "median": 0.75,
+      "min": 0.5,
+      "max": 1.0
+    }
+  }
+}

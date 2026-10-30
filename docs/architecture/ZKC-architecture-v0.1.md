@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v0.1
 
-> 状态：**草案 v1.1**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照，结论带强限定，见 §8）**，见 §9 项 6 / §10 项 1-5；待 zj 复核）
+> 状态：**草案 v1.1**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）**，见 §9 项 6 / §10 项 1-5；待 zj 复核）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -22,7 +22,7 @@
 | Spike 07 复利度量口径 | `spikes/spike-07-compounding-metrics/README.md` | 9 tests passed；**§5 偏差回填**：D3 新增 `citation` 表（复用率双向溯源）、D4 `node.archived_at` 列；实现 5 个复利度量（连接密度/复用率/方法论产出/衰减可控/复利系数） |
 | Spike 08 到期分流规则 | `spikes/spike-08-expiry-routing/README.md` | 9 tests passed；**§5 偏差回填**：D5 仅新增 `review_queue` 表（规则本身无需新信号列，良性范围收敛）；三态分流（ARCHIVE/DISTILL/ABSTAIN）+ 注意力预算降级 + 孤儿强制弃权 |
 | Spike 09 `review_interval` 自动设定 | `spikes/spike-09-review-interval/README.md` | 44 tests passed（切片 A 22 + 切片 B 22）；**§5 偏差回填**：D6 `node.baseline_interval` + `node.interval_source`（人工设定豁免自动化）、D7 `interval_adjustment` 审计表（带 `produced_by` 可整体回滚）、D8 `attention_observation.labeled_completed`（L3 标注率闸门）；新增 §6.5 三层规则（L1 基线 / L2 预算归一化 / L3 AIMD 反馈）与 §6.5.1（`budget_per_day` 统计估计）；**实测发现**：decay-only 反馈恒为 no-op、收敛目标 `H/0.6`、低估固化而非无限塌陷 |
-| Spike 10 强模型质量复测 + 质量口径 | `spikes/spike-10-model-quality/README.md` | 四臂复跑（1.5B+旧重试 / 1.5B+新重试 / 9B / 4B）+ 8 tests（重试策略，stub 客户端）。**质量口径已定义**（复述率 / 拼接复述 overlap / 跨源率 / 引用命中 / 结构完整）；**换世代显著降低复述率，但跨源综合仍不达标**（各臂跨源 claim 绝对数仅 0–1 条）；**结论带强限定**（采样噪声可翻转单次结果、比率指标可被少发 claim 刷高、幻觉自动测不了）；16GB 上 9B 会 swap（常驻 10–12GB）→ 迭代默认改 4B |
+| Spike 10 强模型质量复测 + 质量口径 | `spikes/spike-10-model-quality/README.md` | 四臂复跑（1.5B+旧重试 / 1.5B+新重试 / 9B / 4B）+ 8 tests（重试策略，stub 客户端）+ **多次采样（1.5B/4B 各 3 次）已收口**。**质量口径已定义**（复述率 / 拼接复述 overlap / 跨源率 / 引用命中 / 结构完整）；**换世代显著降低复述率（区间不重叠，高置信）**；**跨源综合仍未解决（高置信）**：4B 仅 2/3 通过，唯一失败 ncross=1 踩 ≥2 门槛，证明为随机失败；**修重试非瓶颈（高置信）**：1.5B+新重试仍 0/3；**结论原带强限定项已升级为高置信**（采样噪声翻转、少发 claim 刷比率、幻觉自动测不了三项已记账并部分收口）；16GB 上 9B 会 swap（常驻 10–12GB）→ 迭代默认改 4B；跨源综合剩余缺口定位为**算子/提示层**问题（强制 ≥2 跨源断言），非换更大模型 |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
 
 ---
@@ -236,7 +236,7 @@ CREATE TABLE attention_observation (
 | 向量 | pgvector HNSW | 与元数据同库、可 JOIN | — |
 | 双轨分流 | **DecisionRouter（本地 LLM 直接判定轨道）** + Semantic Router（校准路由 + 双信号弃权）作候选预过滤 | spike 03 验证：**DecisionRouter 主方案**——编码器无关、F1（模糊误提交=0）与 F2（长模糊对抗句 0 进 dynamic）均完美、覆盖 100%；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，弱编码器（nomic 768d）出现 1 处模糊误提交+2 处轨道互混 → 仅作强编码器下的互补/置信度信号源，不作独立决策器 | Semantic Router（校准路由）/ Outlines / DSPy |
 | 本地推理 | **Ollama 0.40+（Apple silicon 走 MLX）** | 唯一原生本地/离线运行时，OpenAI 兼容层 | 任意 OpenAI 兼容端点 |
-| 蒸馏/结合模型 | **`qwen3.5:4b-mlx`（迭代默认）；`qwen3.5:9b-mlx` 为可选上限** | spike 10 实测：4B 与 9B 质量近乎持平，而 9B 在 16GB 上常驻 10–12GB 并触发 swap（单次蒸馏 4.7 分钟）→ 9B 不作为默认。详见 §8 | 云端强模型（provider seam） |
+| 蒸馏/结合模型 | **`qwen3.5:4b-mlx`（迭代默认）；`qwen3.5:9b-mlx` 为可选上限** | spike 10 实测（含 1.5B/4B 各 3 次多次采样）：1.5B 复述率高、跨源综合 0/3 不可用；4B 复述率降至 0.10、跨源综合 2/3 通过（1/3 因 ncross=1 踩门槛失败，需算子层强制 ≥2 跨源断言）；9B 在 16GB 常驻 10–12GB 触发 swap（单次蒸馏 4.7 分钟）→ 9B 不作为默认。详见 §8 | 云端强模型（provider seam） |
 | 结构化抽取 | **Instructor**（Pydantic + 校验重试） | 唯一提供"文本→校验过的结构化对象"原语 | Outlines |
 | 编排 / 人审 | **LangGraph**（图 + PG checkpoint + interrupt/resume） | 选型复核背书（2026-10-29）：唯一同时满足「checkpoint 落 PG 同库同 schema + 领域状态编辑级 HITL + 纯本地 Python 栈」；已知 gap 为无 durable execution（崩溃自动恢复），对人工驱动的蒸馏属 nice-to-have，非 blocker。Pydantic AI / Cordis 评估见 §6.4 与 §7 | 自研最小状态机 |
 | 蒸馏语义 | **ZKC 自研** | 无候选提供"去繁→元认知+topic+反向连接" | — |
