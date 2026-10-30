@@ -21,3 +21,6 @@ build/
 # Editors / IDE
 .idea/
 .vscode/
+
+# WorkBuddy project-local data (not a temp cache; keep out of VCS)
+.workbuddy/
