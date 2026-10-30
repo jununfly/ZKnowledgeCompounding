@@ -1,0 +1,75 @@
+{
+  "1.5b": {
+    "model": "1.5b",
+    "n_requested": 3,
+    "n_ok": 3,
+    "errors": [],
+    "pass_count": 0,
+    "completion_fired_count": 3,
+    "n_cross_final_values": [
+      0,
+      0,
+      0
+    ],
+    "verbatim_rate": {
+      "values": [
+        0.588,
+        0.687,
+        0.656
+      ],
+      "median": 0.656,
+      "min": 0.588,
+      "max": 0.687
+    },
+    "overlap": {
+      "values": [
+        0.64,
+        0.745,
+        0.675
+      ],
+      "median": 0.675,
+      "min": 0.64,
+      "max": 0.745
+    },
+    "cross_source_rate": {
+      "values": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "median": 0.0,
+      "min": 0.0,
+      "max": 0.0
+    },
+    "n_claims": {
+      "values": [
+        4,
+        4,
+        4
+      ],
+      "median": 4,
+      "min": 4,
+      "max": 4
+    },
+    "n_cross_source": {
+      "values": [
+        0,
+        0,
+        0
+      ],
+      "median": 0,
+      "min": 0,
+      "max": 0
+    },
+    "citation_hit": {
+      "values": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "median": 1.0,
+      "min": 1.0,
+      "max": 1.0
+    }
+  }
+}
