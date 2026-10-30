@@ -132,7 +132,7 @@ HuggingFace / FastEmbed(BGE) 在本环境被 `SSL EOF` / 超时 / 502 阻断（�
 
 ## 下一步：模糊处理方案（已由 Spike 03 验证）
 
-Spike 02 收尾建议的二选一（显式「模糊」路由 / DecisionRouter）——**已由 `spikes/spike-03-vague-routing/` 验证并选定 DecisionRouter 作主方案**。结论：两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）；DecisionRouter 编码器无关、F1（模糊误提交=0）与 F2 完美、覆盖 100%；3-way 路由仅在 qwen3 级强编码器下安全，弱编码器（nomic 768d）出现危险误提交，故降级为互补/置信度信号源。详见 Spike 03 README 与架构文档 v0.5 §6/§8/§9。
+Spike 02 收尾建议的二选一（显式「模糊」路由 / DecisionRouter）——**已由 `spikes/spike-03-vague-routing/` 验证并选定 DecisionRouter 作主方案**。结论：两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）；DecisionRouter 编码器无关、F1（模糊误提交=0）与 F2 完美、覆盖 100%；3-way 路由仅在 qwen3 级强编码器下安全，弱编码器（nomic 768d）出现危险误提交，故降级为互补/置信度信号源。详见 Spike 03 README 与架构文档 v1.2 §6/§8/§9。
 
 其他：
 - `python3 -m venv .venv` 在工作区创建了 `.venv`（约 280M）；后由 zj 手动移至 `spikes/spike-02-dual-track-routing/.venv`，该路径已被仓库级 `.gitignore` 的 `.venv*/` 规则排除，不会进提交。

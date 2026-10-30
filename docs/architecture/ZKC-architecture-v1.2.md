@@ -1,4 +1,4 @@
-# ZKnowledgeCompounding · 架构设计 v0.1
+# ZKnowledgeCompounding · 架构设计 v1.2
 
 > 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §9 项 6 / §10 项 1-5；待 zj 复核）
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
