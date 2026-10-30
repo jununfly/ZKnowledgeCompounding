@@ -1,0 +1,5 @@
+原子事实：安全评审要求所有权限判断必须在客户端完成。
+判定：contradicted
+Evidence: [s1]
+Overall: contradicted
+Reason: 来源 [s1] 明确指出安全评审要求所有权限判断必须在服务端完成，与 claim 中的“客户端”直接冲突。

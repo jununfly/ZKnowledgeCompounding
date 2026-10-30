@@ -45,6 +45,16 @@ Spike 12 §5 已证：`qwen3.5:4b-mlx` 在本机 16GB 上 **~110–130s/条 + �
 2. 字面 rubric 自动预过滤 + 人工兜底
 3. 纯人工（judge 完全后置，绝不静默 auto-pass）
 
+### 1.2 实证结果（2026-10-30 · Spike 13b-probe）
+
+**本地 7B–9B 在 16GB 本机被实证否决** → 降级链落到 **第 2 级（字面 rubric + 人工）**。
+
+- `qwen3.5:9b-mlx`（8.9GB）单条判定 **~6min/条**（decode ~0.4 tok/s，运行期系统空闲内存仅 ~90MB，疑似内存压力拖慢）；Ollama 日志交叉印证单次 4m11s / 5m0s 超时 / 2m47s。
+- **不吐 JSON**：输出结构化自然语言（`Label: contradicted` / `Evidence: [s1]` / `Overall: contradicted`），`parse_judgment` 报 `no-json-block-in-output`。
+- **能力本身成立**：g6 矛盾被正确识别（claim「客户端」vs 来源「服务端」→ contradicted）且引用正确来源 `[s1]`——与 Spike 12 的 4B 同款（能力有、卡速度+格式）。
+- 结论：速度属**硬件绑定**，本机不解决则本地 LLM judge 不可用；格式可修（定制 parser / 强制 JSON 模式）但救不了速度。
+- **MVP 忠实度闸门 = human-in-the-loop（§3/§4）+ 字面 rubric 预过滤**（Spike 10/11 verbatim/overlap/citation_hit，快且可自动化）。自动 LLM 预过滤层在本机暂时缺席，直至更快 judge（更快硬件 / 离盒 / 云端 opt-in）就位——届时 `judge.py` + `run_spike12.py` 零改动可启用（能力已验证）。
+
 ---
 
 ## 2. 接入点总览

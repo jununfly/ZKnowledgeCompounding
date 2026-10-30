@@ -63,14 +63,14 @@ def make_client():
     return OpenAI(base_url=OLLAMA_BASE, api_key="ollama", timeout=300)
 
 
-def make_llm_fn(client, temperature: float = 0.2, max_attempts: int = 2):
+def make_llm_fn(client, temperature: float = 0.2, max_attempts: int = 2, model: str = MODEL):
     """Raw completion + defensive JSON parse (instructor JSON-mode hangs here)."""
     def fn(prompt: str, system: str) -> Judgment:
         last_err: Exception | None = None
         for attempt in range(max_attempts):
             try:
                 resp = client.chat.completions.create(
-                    model=MODEL,
+                    model=model,
                     messages=[{"role": "system", "content": system},
                               {"role": "user", "content": prompt}],
                     temperature=temperature, stream=False, timeout=300,
@@ -98,18 +98,20 @@ def main():
     ap.add_argument("--samples", type=int, default=3)
     ap.add_argument("--temperature", type=float, default=0.2)
     ap.add_argument("--max-attempts", type=int, default=2)
+    ap.add_argument("--model", default=MODEL, help="judge model tag in Ollama")
+    ap.add_argument("--limit", type=int, default=None, help="cap number of golden examples")
     ap.add_argument("--out", default="multisample12.json")
     args = ap.parse_args()
 
     client = make_client()
-    fn = make_llm_fn(client, args.temperature, args.max_attempts)
+    fn = make_llm_fn(client, args.temperature, args.max_attempts, args.model)
     samples = []
     for i in range(args.samples):
         print(f"--- sample {i + 1}/{args.samples} ---", file=sys.stderr)
         # evaluate manually so we get per-example timing
         rows = []
         call_times = []
-        for ex in judge.GOLDEN:
+        for ex in (judge.GOLDEN[:args.limit] if args.limit else judge.GOLDEN):
             try:
                 j, dt = _timed_judge(fn, ex)
                 call_times.append(dt)
@@ -148,7 +150,7 @@ def main():
               f"median_call={rep['call_time_median_s']}s", file=sys.stderr)
 
     ok = [s for s in samples if "accuracy" in s]
-    summary = {"model": MODEL, "n_requested": args.samples, "n_ok": len(ok), "samples": samples}
+    summary = {"model": args.model, "n_requested": args.samples, "n_ok": len(ok), "samples": samples}
     for key in ("accuracy", "dangerous_false_negative_rate", "hallucination_catch_rate",
                 "call_time_median_s", "empty_atomic_fallback"):
         vals = [s[key] for s in ok if s.get(key) is not None]
