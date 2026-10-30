@@ -1,0 +1,171 @@
+{
+  "D iteration 4B   + fixed retry": {
+    "model": "qwen3.5:4b-mlx",
+    "policy": "resilient",
+    "distill": {
+      "draft": {
+        "statement": "未经正式清算机制的技术妥协，其长期熵增成本将指数级超越短期收益。",
+        "level": "tradeoff",
+        "confidence": 0.95,
+        "topic": "技术债务与工程决策",
+        "reasoning": "Entry 1 量化了短期收益与长期成本的对比（省 4 天 vs 耗 2 周）。Entry 2 揭示了临时方案演变为长期债务的结构必然性。Entry 3 引入了正式清算机制作为缓解熵增的手段。综合三者，得出元认知结论：缺乏正式问责机制的技术妥协，其长期熵增成本将指数级超越短期收益。"
+      },
+      "retry": {
+        "n_attempts": 1,
+        "prompt_growth": 0,
+        "policy": "resilient"
+      },
+      "scores": {
+        "verbatim_rate": 0.067,
+        "overlap": 0.0,
+        "abstraction": 0.933,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "statement": true,
+          "level": true,
+          "topic": true,
+          "reasoning": true,
+          "confidence": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true
+        },
+        "all_pass": true
+      }
+    },
+    "combine": {
+      "artifact": {
+        "title": "短期交付与长期维护的显性化权衡方法论",
+        "kind": "methodology",
+        "claims": [
+          {
+            "statement": "短期绕过将演变为长期系统负担",
+            "level": "principle",
+            "confidence": 0.95,
+            "evidence_ids": [
+              "s3",
+              "s1"
+            ]
+          },
+          {
+            "statement": "压测前置可显著降低后期维护成本",
+            "level": "pattern",
+            "confidence": 0.9,
+            "evidence_ids": [
+              "s4"
+            ]
+          },
+          {
+            "statement": "技术债显性化是可控权衡的关键机制",
+            "level": "tradeoff",
+            "confidence": 0.85,
+            "evidence_ids": [
+              "s5"
+            ]
+          }
+        ],
+        "local": [
+          "临时绕过都会变长期负担",
+          "应优先保障长期维护，避免短期交付压力导致后期返工成本远超初期节省的时间",
+          "应将压测前置至设计评审阶段，早期识别瓶颈可大幅降低长期维护成本",
+          "团队应将短期绕过写入技术债台账并设定清理时间"
+        ],
+        "global": [
+          "短期交付与长期维护呈负相关，隐性成本显性化是平衡核心",
+          "前置验证（如压测）与债务记账共同构成闭环控制机制",
+          "避免短期妥协导致后期高代价返工，需建立跨阶段的成本评估视角"
+        ],
+        "methodology_steps": [
+          "识别交付中的临时绕过行为并记录为技术债",
+          "在评审阶段进行压测以提前发现瓶颈",
+          "计算长期维护成本与短期节省时间的对比",
+          "制定清理计划并纳入迭代周期"
+        ],
+        "evidence_refs": [
+          "s1",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "_dropped_claims": 0
+      },
+      "report": {
+        "query": "短期交付压力与长期维护成本之间，应当如何权衡？",
+        "kept": [
+          {
+            "id": "s3",
+            "title": "复盘：临时绕过都会变长期负担",
+            "summary": "短期交付不应妥协于临时绕过，否则将增加长期维护成本并演变为系统负担。",
+            "score": 1.0
+          },
+          {
+            "id": "s1",
+            "title": "A 项目：鉴权被安全评审打回",
+            "summary": "应优先保障长期维护，避免短期交付压力导致后期返工成本远超初期节省的时间。",
+            "score": 0.95
+          },
+          {
+            "id": "s4",
+            "title": "C 项目：压测前置到设计阶段",
+            "summary": "应将压测前置至设计评审阶段，早期识别瓶颈可大幅降低长期维护成本，避免上线后的高代价风险。",
+            "score": 0.9
+          },
+          {
+            "id": "s5",
+            "title": "团队约定：技术债必须记账",
+            "summary": "团队应将短期绕过写入技术债台账并设定清理时间，使隐性成本显性化，从而在交付与维护间实现可控权衡。",
+            "score": 0.85
+          }
+        ],
+        "dropped": [
+          {
+            "id": "s2",
+            "title": "B 项目：第三方 SDK 强制升级",
+            "score": 0.6
+          }
+        ],
+        "kept_ids": [
+          "s3",
+          "s1",
+          "s4",
+          "s5"
+        ],
+        "quality": {
+          "local_empty": false,
+          "global_empty": true,
+          "dropped_claims": 0
+        }
+      },
+      "scores": {
+        "n_claims": 3,
+        "verbatim_rate": 0.155,
+        "overlap": 0.024,
+        "citation_hit": 0.5,
+        "cross_source_rate": 0.333,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "claims": true,
+          "local": true,
+          "global": true,
+          "methodology_steps": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true,
+          "cross_source": true
+        },
+        "all_pass": true
+      },
+      "retry": {
+        "policy": "resilient"
+      }
+    }
+  }
+}

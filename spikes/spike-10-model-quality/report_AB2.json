@@ -1,0 +1,341 @@
+{
+  "A baseline  1.5B + legacy retry": {
+    "model": "qwen2.5-coder:1.5b",
+    "policy": "legacy",
+    "distill": {
+      "draft": {
+        "statement": "临时绕过技术债会变成系统长期负担，必须写进技术债台账。",
+        "level": "tradeoff",
+        "confidence": 0.9,
+        "topic": "技术债",
+        "reasoning": "通过复盘和团队约定，我们发现临时绕过技术债会变成系统长期负担，必须写进技术债台账。"
+      },
+      "retry": {
+        "n_attempts": 1,
+        "prompt_growth": null,
+        "policy": "legacy"
+      },
+      "scores": {
+        "verbatim_rate": 0.36,
+        "overlap": 0.5,
+        "abstraction": 0.64,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "statement": true,
+          "level": true,
+          "topic": true,
+          "reasoning": true,
+          "confidence": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true
+        },
+        "all_pass": true
+      }
+    },
+    "combine": {
+      "artifact": {
+        "title": "短期交付压力与长期维护成本权衡方法论",
+        "kind": "methodology",
+        "claims": [
+          {
+            "statement": "短期交付压力与长期维护成本之间，应当权衡。",
+            "level": "principle",
+            "confidence": 1.0,
+            "evidence_ids": [
+              "s3",
+              "s4",
+              "s5",
+              "s2"
+            ]
+          }
+        ],
+        "local": [
+          "临时绕过可能会导致长期维护成本增加，应优先考虑长期解决方案。",
+          "在设计阶段发现连接池瓶颈，改动成本几乎为零，对比以往上线前才发现，代价差了一个数量级。",
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。"
+        ],
+        "global": [
+          "临时绕过可能会导致长期维护成本增加，应优先考虑长期解决方案。",
+          "在设计阶段发现连接池瓶颈，改动成本几乎为零，对比以往上线前才发现，代价差了一个数量级。",
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。"
+        ],
+        "methodology_steps": [
+          "在设计阶段发现连接池瓶颈，改动成本几乎为零，对比以往上线前才发现，代价差了一个数量级。",
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。"
+        ],
+        "evidence_refs": [
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "_dropped_claims": 0
+      },
+      "report": {
+        "query": "短期交付压力与长期维护成本之间，应当如何权衡？",
+        "kept": [
+          {
+            "id": "s3",
+            "title": "复盘：临时绕过都会变长期负担",
+            "summary": "临时绕过可能会导致长期维护成本增加，应优先考虑长期解决方案。",
+            "score": 0.8
+          },
+          {
+            "id": "s4",
+            "title": "C 项目：压测前置到设计阶段",
+            "summary": "在设计阶段发现连接池瓶颈，改动成本几乎为零，对比以往上线前才发现，代价差了一个数量级。",
+            "score": 0.8
+          },
+          {
+            "id": "s5",
+            "title": "团队约定：技术债必须记账",
+            "summary": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+            "score": 0.8
+          },
+          {
+            "id": "s2",
+            "title": "B 项目：第三方 SDK 强制升级",
+            "summary": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "score": 0.5
+          }
+        ],
+        "dropped": [
+          {
+            "id": "s1",
+            "title": "A 项目：鉴权被安全评审打回",
+            "score": 0.0
+          }
+        ],
+        "kept_ids": [
+          "s3",
+          "s4",
+          "s5",
+          "s2"
+        ],
+        "quality": {
+          "local_empty": false,
+          "global_empty": true,
+          "dropped_claims": 0
+        }
+      },
+      "scores": {
+        "n_claims": 1,
+        "verbatim_rate": 0.105,
+        "overlap": 0.0,
+        "citation_hit": 0.75,
+        "cross_source_rate": 1.0,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "claims": true,
+          "local": true,
+          "global": true,
+          "methodology_steps": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true,
+          "cross_source": true
+        },
+        "all_pass": true
+      },
+      "retry": {
+        "policy": "legacy"
+      }
+    }
+  },
+  "B policy    1.5B + fixed retry": {
+    "model": "qwen2.5-coder:1.5b",
+    "policy": "resilient",
+    "distill": {
+      "draft": {
+        "statement": "临时绕过会变成系统的长期负担，需要在服务端完成权限判断。",
+        "level": "tradeoff",
+        "confidence": 0.9,
+        "topic": "技术债",
+        "reasoning": "临时绕过会变成系统的长期负担，需要在服务端完成权限判断。复盘近三个项目，发现一个共性：所有先临时绕过后面再补的决定，最后都没有被补上，反而变成了系统的长期负担。临时方案一旦上线，就再也不会有人主动拆掉它。团队新约定：任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。"
+      },
+      "retry": {
+        "n_attempts": 1,
+        "prompt_growth": 0,
+        "policy": "resilient"
+      },
+      "scores": {
+        "verbatim_rate": 0.269,
+        "overlap": 0.542,
+        "abstraction": 0.731,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "statement": true,
+          "level": true,
+          "topic": true,
+          "reasoning": true,
+          "confidence": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true
+        },
+        "all_pass": true
+      }
+    },
+    "combine": {
+      "artifact": {
+        "title": "短期交付压力与长期维护成本权衡方法论",
+        "kind": "methodology",
+        "claims": [
+          {
+            "statement": "短期交付压力与长期维护成本之间，应当权衡。",
+            "level": "principle",
+            "confidence": 0.9,
+            "evidence_ids": [
+              "s3"
+            ]
+          },
+          {
+            "statement": "临时绕过可能会成为长期负担，应优先考虑长期维护成本。",
+            "level": "pattern",
+            "confidence": 0.8,
+            "evidence_ids": [
+              "s3"
+            ]
+          },
+          {
+            "statement": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+            "level": "pattern",
+            "confidence": 0.8,
+            "evidence_ids": [
+              "s5"
+            ]
+          },
+          {
+            "statement": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "level": "antipattern",
+            "confidence": 0.5,
+            "evidence_ids": [
+              "s2"
+            ]
+          },
+          {
+            "statement": "为了赶上线，我们把鉴权校验放在了客户端，服务端只做粗粒度检查。安全评审直接打回，要求所有权限判断必须在服务端完成。返工花了两周，比当初省下的四天多得多。",
+            "level": "antipattern",
+            "confidence": 0.0,
+            "evidence_ids": [
+              "s1"
+            ]
+          }
+        ],
+        "local": [
+          "临时绕过可能会成为长期负担，应优先考虑长期维护成本。",
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "为了赶上线，我们把鉴权校验放在了客户端，服务端只做粗粒度检查。安全评审直接打回，要求所有权限判断必须在服务端完成。返工花了两周，比当初省下的四天多得多。"
+        ],
+        "global": [
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "为了赶上线，我们把鉴权校验放在了客户端，服务端只做粗粒度检查。安全评审直接打回，要求所有权限判断必须在服务端完成。返工花了两周，比当初省下的四天多得多。"
+        ],
+        "methodology_steps": [
+          "1. 识别短期交付压力与长期维护成本之间的权衡问题。",
+          "2. 确定临时绕过可能会成为长期负担，应优先考虑长期维护成本。",
+          "3. 记录技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+          "4. 识别第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "5. 为了赶上线，我们把鉴权校验放在了客户端，服务端只做粗粒度检查。安全评审直接打回，要求所有权限判断必须在服务端完成。返工花了两周，比当初省下的四天多得多。"
+        ],
+        "evidence_refs": [
+          "s1",
+          "s2",
+          "s3",
+          "s5"
+        ],
+        "_dropped_claims": 0
+      },
+      "report": {
+        "query": "短期交付压力与长期维护成本之间，应当如何权衡？",
+        "kept": [
+          {
+            "id": "s3",
+            "title": "复盘：临时绕过都会变长期负担",
+            "summary": "临时绕过可能成为长期负担，应优先考虑长期维护成本。",
+            "score": 0.8
+          },
+          {
+            "id": "s5",
+            "title": "团队约定：技术债必须记账",
+            "summary": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+            "score": 0.8
+          },
+          {
+            "id": "s2",
+            "title": "B 项目：第三方 SDK 强制升级",
+            "summary": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "score": 0.5
+          },
+          {
+            "id": "s1",
+            "title": "A 项目：鉴权被安全评审打回",
+            "summary": "为了赶上线，我们把鉴权校验放在了客户端，服务端只做粗粒度检查。安全评审直接打回，要求所有权限判断必须在服务端完成。返工花了两周，比当初省下的四天多得多。",
+            "score": 0.0
+          }
+        ],
+        "dropped": [
+          {
+            "id": "s4",
+            "title": "C 项目：压测前置到设计阶段",
+            "score": 0.0
+          }
+        ],
+        "kept_ids": [
+          "s3",
+          "s5",
+          "s2",
+          "s1"
+        ],
+        "quality": {
+          "local_empty": false,
+          "global_empty": true,
+          "dropped_claims": 0
+        }
+      },
+      "scores": {
+        "n_claims": 5,
+        "verbatim_rate": 0.56,
+        "overlap": 0.56,
+        "citation_hit": 0.8,
+        "cross_source_rate": 0.0,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "claims": true,
+          "local": true,
+          "global": true,
+          "methodology_steps": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": false,
+          "not_patchwork": true,
+          "structurally_complete": true,
+          "cross_source": false
+        },
+        "all_pass": false
+      },
+      "retry": {
+        "policy": "resilient"
+      }
+    }
+  }
+}

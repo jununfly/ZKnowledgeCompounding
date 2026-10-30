@@ -1,0 +1,353 @@
+{
+  "A baseline  1.5B + legacy retry": {
+    "model": "qwen2.5-coder:1.5b",
+    "policy": "legacy",
+    "distill": {
+      "draft": {
+        "statement": "临时绕过会变成系统的长期负担，必须在服务端完成权限判断。",
+        "level": "tradeoff",
+        "confidence": 0.9,
+        "topic": "技术债",
+        "reasoning": "临时绕过会变成系统的长期负担，必须在服务端完成权限判断。复盘近三个项目，发现一个共性：所有先临时绕过后面再补的决定，最后都没有被补上，反而变成了系统的长期负担。临时方案一旦上线，就再也不会有人主动拆掉它。团队新约定：任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。"
+      },
+      "retry": {
+        "n_attempts": 1,
+        "prompt_growth": null,
+        "policy": "legacy"
+      },
+      "scores": {
+        "verbatim_rate": 0.308,
+        "overlap": 0.625,
+        "abstraction": 0.692,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "statement": true,
+          "level": true,
+          "topic": true,
+          "reasoning": true,
+          "confidence": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true
+        },
+        "all_pass": true
+      }
+    },
+    "combine": {
+      "artifact": {
+        "title": "短期交付压力与长期维护成本权衡方法论",
+        "kind": "methodology",
+        "claims": [
+          {
+            "statement": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+            "level": "principle",
+            "confidence": 0.8,
+            "evidence_ids": [
+              "s5"
+            ]
+          },
+          {
+            "statement": "鉴权校验放在客户端，服务端只做粗粒度检查。",
+            "level": "pattern",
+            "confidence": 0.5,
+            "evidence_ids": [
+              "s1"
+            ]
+          },
+          {
+            "statement": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "level": "antipattern",
+            "confidence": 0.5,
+            "evidence_ids": [
+              "s2"
+            ]
+          },
+          {
+            "statement": "临时绕过会变成系统的长期负担。",
+            "level": "tradeoff",
+            "confidence": 0.5,
+            "evidence_ids": [
+              "s3"
+            ]
+          }
+        ],
+        "local": [
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+          "鉴权校验放在客户端，服务端只做粗粒度检查。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "临时绕过会变成系统的长期负担。"
+        ],
+        "global": [
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+          "鉴权校验放在客户端，服务端只做粗粒度检查。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "临时绕过会变成系统的长期负担。"
+        ],
+        "methodology_steps": [
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+          "鉴权校验放在客户端，服务端只做粗粒度检查。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "临时绕过会变成系统的长期负担。"
+        ],
+        "evidence_refs": [
+          "s1",
+          "s2",
+          "s3",
+          "s5"
+        ],
+        "_dropped_claims": 0
+      },
+      "report": {
+        "query": "短期交付压力与长期维护成本之间，应当如何权衡？",
+        "kept": [
+          {
+            "id": "s5",
+            "title": "团队约定：技术债必须记账",
+            "summary": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+            "score": 0.8
+          },
+          {
+            "id": "s1",
+            "title": "A 项目：鉴权被安全评审打回",
+            "summary": "鉴权校验放在客户端，服务端只做粗粒度检查。安全评审直接打回，要求所有权限判断必须在服务端完成。返工花了两周，比当初省下的四天多得多。",
+            "score": 0.5
+          },
+          {
+            "id": "s2",
+            "title": "B 项目：第三方 SDK 强制升级",
+            "summary": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "score": 0.5
+          },
+          {
+            "id": "s3",
+            "title": "复盘：临时绕过都会变长期负担",
+            "summary": "临时绕过会变成系统的长期负担",
+            "score": 0.5
+          }
+        ],
+        "dropped": [
+          {
+            "id": "s4",
+            "title": "C 项目：压测前置到设计阶段",
+            "score": 0.0
+          }
+        ],
+        "kept_ids": [
+          "s5",
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "quality": {
+          "local_empty": false,
+          "global_empty": true,
+          "dropped_claims": 0
+        }
+      },
+      "scores": {
+        "n_claims": 4,
+        "verbatim_rate": 0.678,
+        "overlap": 0.77,
+        "citation_hit": 1.0,
+        "cross_source_rate": 0.0,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "claims": true,
+          "local": true,
+          "global": true,
+          "methodology_steps": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": false,
+          "not_patchwork": false,
+          "structurally_complete": true,
+          "cross_source": false
+        },
+        "all_pass": false
+      },
+      "retry": {
+        "policy": "legacy"
+      }
+    }
+  },
+  "B policy    1.5B + fixed retry": {
+    "model": "qwen2.5-coder:1.5b",
+    "policy": "resilient",
+    "distill": {
+      "draft": {
+        "statement": "临时绕过会变成系统的长期负担，必须在服务端完成权限判断。",
+        "level": "tradeoff",
+        "confidence": 0.9,
+        "topic": "技术债",
+        "reasoning": "通过复盘和团队约定，我们发现临时绕过会变成系统的长期负担，必须在服务端完成权限判断。"
+      },
+      "retry": {
+        "n_attempts": 1,
+        "prompt_growth": 0,
+        "policy": "resilient"
+      },
+      "scores": {
+        "verbatim_rate": 0.308,
+        "overlap": 0.625,
+        "abstraction": 0.692,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "statement": true,
+          "level": true,
+          "topic": true,
+          "reasoning": true,
+          "confidence": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true
+        },
+        "all_pass": true
+      }
+    },
+    "combine": {
+      "artifact": {
+        "title": "短期交付压力与长期维护成本权衡方法论",
+        "kind": "methodology",
+        "claims": [
+          {
+            "statement": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。",
+            "level": "principle",
+            "confidence": 0.8,
+            "evidence_ids": [
+              "s5"
+            ]
+          },
+          {
+            "statement": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "level": "principle",
+            "confidence": 0.5,
+            "evidence_ids": [
+              "s2"
+            ]
+          },
+          {
+            "statement": "临时绕过会变成系统的长期负担",
+            "level": "principle",
+            "confidence": 0.5,
+            "evidence_ids": [
+              "s3"
+            ]
+          },
+          {
+            "statement": "鉴权被安全评审打回，要求所有权限判断必须在服务端完成，返工花了两周，比当初省下的四天多得多。",
+            "level": "principle",
+            "confidence": 0.0,
+            "evidence_ids": [
+              "s1"
+            ]
+          }
+        ],
+        "local": [],
+        "global": [
+          "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+          "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+          "临时绕过会变成系统的长期负担",
+          "鉴权被安全评审打回，要求所有权限判断必须在服务端完成，返工花了两周，比当初省下的四天多得多。"
+        ],
+        "methodology_steps": [
+          "1. 确定技术债的定义和管理流程。",
+          "2. 设定技术债的清理标准和周期。",
+          "3. 建立技术债台账，记录技术债的来源、金额、责任人和清理时间。",
+          "4. 定期检查技术债台账，确保技术债的清理进度。",
+          "5. 对于未清理的技术债，制定详细的清理计划，并跟踪清理进度。",
+          "6. 对于已经清理的技术债，进行定期的复盘，总结经验教训，优化技术债管理流程。"
+        ],
+        "evidence_refs": [
+          "s1",
+          "s2",
+          "s3",
+          "s5"
+        ],
+        "_dropped_claims": 0
+      },
+      "report": {
+        "query": "短期交付压力与长期维护成本之间，应当如何权衡？",
+        "kept": [
+          {
+            "id": "s5",
+            "title": "团队约定：技术债必须记账",
+            "summary": "技术债必须记账，任何临时绕过都必须写进技术债台账，带责任人和预计清理时间。两个月下来，台账里有三分之一被真正清理了。剩下没清理的至少是已知的，而不是意外的。",
+            "score": 0.8
+          },
+          {
+            "id": "s2",
+            "title": "B 项目：第三方 SDK 强制升级",
+            "summary": "第三方 SDK 强制升级导致 API 全变了，被动返工两周，教训是：外部依赖的到期时间不是我们的排期时间。",
+            "score": 0.5
+          },
+          {
+            "id": "s3",
+            "title": "复盘：临时绕过都会变长期负担",
+            "summary": "临时绕过会变成系统的长期负担",
+            "score": 0.5
+          },
+          {
+            "id": "s1",
+            "title": "A 项目：鉴权被安全评审打回",
+            "summary": "鉴权校验放在客户端，服务端只做粗粒度检查，安全评审直接打回，要求所有权限判断必须在服务端完成，返工花了两周，比当初省下的四天多得多。",
+            "score": 0.0
+          }
+        ],
+        "dropped": [
+          {
+            "id": "s4",
+            "title": "C 项目：压测前置到设计阶段",
+            "score": 0.0
+          }
+        ],
+        "kept_ids": [
+          "s5",
+          "s2",
+          "s3",
+          "s1"
+        ],
+        "quality": {
+          "local_empty": true,
+          "global_empty": true,
+          "dropped_claims": 0
+        }
+      },
+      "scores": {
+        "n_claims": 4,
+        "verbatim_rate": 0.715,
+        "overlap": 0.769,
+        "citation_hit": 1.0,
+        "cross_source_rate": 0.0,
+        "structural_fit": 0.75,
+        "structural_detail": {
+          "claims": true,
+          "local": false,
+          "global": true,
+          "methodology_steps": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": false,
+          "not_patchwork": false,
+          "structurally_complete": false,
+          "cross_source": false
+        },
+        "all_pass": false
+      },
+      "retry": {
+        "policy": "resilient"
+      }
+    }
+  }
+}

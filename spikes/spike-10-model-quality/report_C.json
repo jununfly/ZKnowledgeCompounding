@@ -1,0 +1,168 @@
+{
+  "C model     9B   + fixed retry": {
+    "model": "qwen3.5:9b-mlx",
+    "policy": "resilient",
+    "distill": {
+      "draft": {
+        "statement": "在软件交付中，任何为追求速度而实施的临时架构妥协，若未被显性记录并绑定清理责任，其维护成本将呈指数级增长并最终反噬项目进度；因此，技术债的可见性是防止短期优化转化为长期负担的关键控制点。",
+        "level": "principle",
+        "confidence": 0.95,
+        "topic": "技术债管理",
+        "reasoning": "原文三段内容呈现了从具体案例（鉴权）到普遍规律（临时绕过变负担），再到治理策略（记账）的递进。第一段展示了客户端鉴权的直接成本，第二段归纳了临时方案必然固化的模式，第三段提出了通过显性化台账来打破这一固化模式的机制。综合来看，核心认知不在于鉴权本身，而在于‘可见性’如何改变技术债的生命周期，从而形成一条关于工程权衡的通用原则。"
+      },
+      "retry": {
+        "n_attempts": 1,
+        "prompt_growth": 0,
+        "policy": "resilient"
+      },
+      "scores": {
+        "verbatim_rate": 0.046,
+        "overlap": 0.035,
+        "abstraction": 0.954,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "statement": true,
+          "level": true,
+          "topic": true,
+          "reasoning": true,
+          "confidence": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true
+        },
+        "all_pass": true
+      }
+    },
+    "combine": {
+      "artifact": {
+        "title": "短期交付与长期维护权衡方法论",
+        "kind": "methodology",
+        "claims": [
+          {
+            "statement": "临时绕过方案若未规划清理，将转化为长期维护负担",
+            "level": "tradeoff",
+            "confidence": 0.95,
+            "evidence_ids": [
+              "s1",
+              "s3"
+            ]
+          },
+          {
+            "statement": "不应因短期交付压力推迟关键第三方依赖升级",
+            "level": "principle",
+            "confidence": 1.0,
+            "evidence_ids": [
+              "s2"
+            ]
+          },
+          {
+            "statement": "技术债必须记账，明确责任人与清理时间以控制风险",
+            "level": "pattern",
+            "confidence": 1.0,
+            "evidence_ids": [
+              "s5"
+            ]
+          }
+        ],
+        "local": [
+          "A 项目鉴权被安全评审打回：为赶上线将鉴权放客户端虽省四天，但返工两周远超节省时间。",
+          "B 项目第三方 SDK 强制升级：不应因短期交付压力推迟第三方 SDK 升级，需提前应对停服风险以规避长期维护成本。",
+          "复盘结论：临时方案一旦上线便无人主动拆除，最终成为系统长期负担，不应为短期交付牺牲长期维护。",
+          "团队约定：技术债必须记账，临时绕过需明确责任人和清理时间，使短期交付风险变为已知可控。"
+        ],
+        "global": [
+          "短期交付的“节省”与长期维护的“成本”呈正相关耦合关系，单纯追求上线速度会导致隐性债务累积，唯有通过显性化技术债管理（如记账、定责）才能将不可控风险转化为可控变量。"
+        ],
+        "methodology_steps": [
+          "识别短期交付中的技术妥协点",
+          "评估该妥协对长期维护成本的影响",
+          "建立技术债台账，明确责任人及清理时限"
+        ],
+        "evidence_refs": [
+          "s1",
+          "s2",
+          "s3",
+          "s5"
+        ],
+        "_dropped_claims": 0
+      },
+      "report": {
+        "query": "短期交付压力与长期维护成本之间，应当如何权衡？",
+        "kept": [
+          {
+            "id": "s1",
+            "title": "A 项目：鉴权被安全评审打回",
+            "summary": "为赶上线将鉴权放客户端虽省四天，但返工两周远超节省时间，警示短期交付不能忽视长期成本。",
+            "score": 1.0
+          },
+          {
+            "id": "s2",
+            "title": "B 项目：第三方 SDK 强制升级",
+            "summary": "不应因短期交付压力推迟第三方 SDK 升级，需提前应对停服风险以规避长期维护成本。",
+            "score": 1.0
+          },
+          {
+            "id": "s3",
+            "title": "复盘：临时绕过都会变长期负担",
+            "summary": "临时方案一旦上线便无人主动拆除，最终成为系统长期负担，不应为短期交付牺牲长期维护。",
+            "score": 1.0
+          },
+          {
+            "id": "s5",
+            "title": "团队约定：技术债必须记账",
+            "summary": "团队约定技术债必须记账，临时绕过需明确责任人和清理时间，使短期交付风险变为已知可控。",
+            "score": 1.0
+          }
+        ],
+        "dropped": [
+          {
+            "id": "s4",
+            "title": "C 项目：压测前置到设计阶段",
+            "score": 0.9
+          }
+        ],
+        "kept_ids": [
+          "s1",
+          "s2",
+          "s3",
+          "s5"
+        ],
+        "quality": {
+          "local_empty": false,
+          "global_empty": true,
+          "dropped_claims": 0
+        }
+      },
+      "scores": {
+        "n_claims": 3,
+        "verbatim_rate": 0.171,
+        "overlap": 0.119,
+        "citation_hit": 0.833,
+        "cross_source_rate": 0.333,
+        "structural_fit": 1.0,
+        "structural_detail": {
+          "claims": true,
+          "local": true,
+          "global": true,
+          "methodology_steps": true
+        }
+      },
+      "verdict": {
+        "checks": {
+          "not_verbatim": true,
+          "not_patchwork": true,
+          "structurally_complete": true,
+          "cross_source": true
+        },
+        "all_pass": true
+      },
+      "retry": {
+        "policy": "resilient"
+      }
+    }
+  }
+}
