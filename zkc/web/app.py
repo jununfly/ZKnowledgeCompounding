@@ -16,7 +16,7 @@ from typing import Optional
 from fastapi import FastAPI, Form
 from fastapi.responses import HTMLResponse
 
-from zkc import routing
+from zkc import routing, tuning
 from zkc.ingest import ingest_with_routing
 from zkc.routing import (
     DEFAULT_LEXICAL_CORPUS_PATH,
@@ -176,5 +176,16 @@ def create_app(
             lexical_router=lexical_router,
             llm_available=llm_on,
         )
+
+    @app.get("/tuning")
+    def tuning_table() -> dict:
+        """阈值唯一权威来源 + 来源标签（P1.4 ②）：展示值时必须同时显示 source。
+
+        任何调用方 / UI 取阈值都应经此端点核对，禁止只报裸数字。
+        """
+        return {
+            "note": "阈值唯一来源 = zkc.tuning；source ∈ placeholder/simulation/calibrated",
+            "params": tuning.as_rows(),
+        }
 
     return app

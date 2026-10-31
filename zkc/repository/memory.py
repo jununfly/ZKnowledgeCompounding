@@ -16,6 +16,7 @@ from .models import (
     Node,
     ReviewItem,
 )
+from .. import tuning
 from .errors import ConcurrentModification
 from .protocols import (
     AttentionRepository,
@@ -78,12 +79,14 @@ class MemoryNodeRepository(NodeRepository):
         return [n for n in self._rows.values() if n.track == track]
 
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
+        # 阈值走 tuning（禁止裸数字，P1.4 铁律）：SURFACE_THRESHOLD=0.6 进入注意力
+        surface = tuning.get("SURFACE_THRESHOLD")
         out: list[Node] = []
         for n in self._rows.values():
             if n.review_interval is None or n.last_reviewed_at is None:
                 # 未设定复审节奏 → 不在「到期」判定内（交由 L1 基线补齐）
                 continue
-            if n.decay_score >= 0.6 and (n.last_reviewed_at + n.review_interval) <= as_of:
+            if n.decay_score >= surface and (n.last_reviewed_at + n.review_interval) <= as_of:
                 out.append(n)
         return out
 

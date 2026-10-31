@@ -13,6 +13,7 @@ import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json
 
+from .. import tuning
 from .connection import connect
 from .errors import ConcurrentModification
 from .models import (
@@ -183,16 +184,18 @@ class PgNodeRepository(NodeRepository):
         return [self._row_to_node(r) for r in cur.fetchall()]
 
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
+        # 阈值走 tuning（禁止裸数字，P1.4 铁律）：SURFACE_THRESHOLD=0.6 进入注意力
+        surface = tuning.get("SURFACE_THRESHOLD")
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute(
             """
             SELECT * FROM public.node
-            WHERE decay_score >= 0.6
+            WHERE decay_score >= %(surface)s
               AND review_interval IS NOT NULL
               AND last_reviewed_at IS NOT NULL
               AND (last_reviewed_at + review_interval) <= %(as_of)s
             """,
-            dict(as_of=as_of),
+            dict(surface=surface, as_of=as_of),
         )
         return [self._row_to_node(r) for r in cur.fetchall()]
 
