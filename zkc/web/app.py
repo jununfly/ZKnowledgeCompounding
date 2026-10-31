@@ -133,6 +133,8 @@ def capture_note(
         "aborted": res.aborted,
         "llm_track": res.llm_track,
         "lexical_track": res.lexical_track,
+        "lexical_gate": (lexical_router.gate if lexical_router is not None else None),
+        "lexical_gate_source": (lexical_router.gate_source if lexical_router is not None else None),
     }
 
 

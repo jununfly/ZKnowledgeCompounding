@@ -171,10 +171,19 @@ class LexicalRouter:
 
     冷启动（未 fit 或样本不足）→ predict 返回 (None, 0.0)，即「无法判定」，
     由 route_text 转为 vague→人工（安全欠覆盖）。随人工定轨积累样本逐渐自动化。
+
+    门槛校准：fit 后**自动从语料分布校准** gate（类内/类间 质心余弦相似度中点），
+    修复硬编码 0.5 在小语料下恒弃权（实测类质心余弦仅 ~0.33）。调用方显式传 gate
+    时尊重其选择、跳过自动校准。校准语义与治理见 tuning.ROUTING_LEXICAL_*。
     """
 
-    def __init__(self, gate: Optional[float] = None, min_examples_per_class: int = 3):
-        self.gate = tuning.get("ROUTING_LEXICAL_CONF_GATE") if gate is None else gate
+    def __init__(self, gate: Optional[float] = None, min_examples_per_class: int = 3,
+                 auto_calibrate_gate: bool = True):
+        self._seed_gate = tuning.get("ROUTING_LEXICAL_CONF_GATE") if gate is None else gate
+        self._gate_explicit = gate is not None
+        self.gate = self._seed_gate
+        self.gate_source = "seed"  # seed | corpus-calibrated
+        self.auto_calibrate_gate = auto_calibrate_gate
         self.min_examples_per_class = min_examples_per_class
         self._idf: dict[str, float] = {}
         self._centroids: dict[str, dict[str, float]] = {}
@@ -210,8 +219,47 @@ class LexicalRouter:
                     summed[term] = summed.get(term, 0.0) + val
             k = len(group)
             self._centroids[label] = {t: v / k for t, v in summed.items()}
+        # 自动校准门槛：拟合后按语料分布重设 gate（仅当调用方未显式指定 gate）
+        if self.auto_calibrate_gate and not self._gate_explicit and self._centroids:
+            cal = self._calibrate_gate(class_tokens)
+            if cal is not None:
+                self.gate = cal
+                self.gate_source = "corpus-calibrated"
         self._fitted = bool(self._centroids)
         return self
+
+    def _calibrate_gate(self, class_tokens: dict[str, list[list[str]]]) -> Optional[float]:
+        """从拟合语料自动校准词法门槛，解决硬编码 0.5 在小语料下恒弃权。
+
+        用与 predict() 相同指标：每个样本对「自身类完整质心」的余弦为类内相似度、
+        对「最佳异类质心」的余弦为类间相似度，取两者中点为分界：
+        gate = mean_out + MIDPOINT*(mean_in - mean_out)。
+        （注：LOO 质心在稀疏短句下会把类内相似度压成 0，故用完整质心。）
+        类不可分（mean_in<=mean_out 或仅单类）则回退 seed gate（保守）。
+        """
+        fitted = [l for l, g in class_tokens.items() if len(g) >= self.min_examples_per_class]
+        if len(fitted) < 2:
+            return None
+        in_sims: list[float] = []
+        out_sims: list[float] = []
+        for label in fitted:
+            for toks in class_tokens[label]:
+                vec = _tfidf_vector(toks, self._idf)
+                sim_in = _cosine(vec, self._centroids[label])
+                best_out = max(
+                    (_cosine(vec, self._centroids[other]) for other in fitted if other != label),
+                    default=0.0,
+                )
+                in_sims.append(sim_in)
+                out_sims.append(best_out)
+        if not in_sims:
+            return None
+        mean_in = sum(in_sims) / len(in_sims)
+        mean_out = sum(out_sims) / len(out_sims)
+        if mean_in <= mean_out:
+            return None  # 类不可分 → 不强行降门槛，回退 seed
+        midpoint = tuning.get("ROUTING_LEXICAL_CALIB_MIDPOINT")
+        return mean_out + midpoint * (mean_in - mean_out)
 
     @property
     def fitted(self) -> bool:

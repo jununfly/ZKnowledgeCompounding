@@ -325,5 +325,64 @@ class ResolveClassifyTest(unittest.TestCase):
             self.assertEqual(list_pending_classify(store=store), [])
 
 
+# ----------------------------------------------------------------- 词法门槛自动校准（解决 0.5 恒弃权）
+class LexicalGateCalibrationTest(unittest.TestCase):
+    """修复：硬编码 0.5 在小语料下恒弃权（类质心余弦仅 ~0.33）。
+
+    默认构造 LexicalRouter() 拟合后应自动把 gate 校准到 seed(0.5) 以下，
+    使词法信号不再恒弃权；显式传 gate 不受自动校准影响。
+    """
+
+    def test_default_gate_autocalibrates_below_seed(self):
+        r = LexicalRouter()  # 默认 seed=0.5
+        r.fit(SENTENCES)
+        self.assertTrue(r.fitted)
+        self.assertEqual(r.gate_source, "corpus-calibrated")
+        self.assertLess(r.gate, 0.5)
+        self.assertGreater(r.gate, 0.0)
+
+    def test_in_corpus_query_commits_after_calibration(self):
+        # 之前 gate=0.5 会因 best_sim~0.33 恒返回 None → 词法失效；
+        # 校准后应能对类内样本给出判定（不再恒弃权）
+        r = LexicalRouter().fit(SENTENCES)
+        track, conf = r.predict(EX_STATIC)
+        self.assertEqual(track, "static")
+        self.assertGreaterEqual(conf, r.gate)
+
+    def test_out_of_vocab_still_abstains(self):
+        r = LexicalRouter().fit(SENTENCES)
+        track, _ = r.predict("嗯随便吧")  # 无共享 token
+        self.assertIsNone(track)
+
+    def test_explicit_gate_not_overridden(self):
+        r = LexicalRouter(gate=0.4)
+        r.fit(SENTENCES)
+        self.assertEqual(r.gate, 0.4)
+        self.assertEqual(r.gate_source, "seed")
+
+    def test_auto_off_respects_seed(self):
+        r = LexicalRouter(auto_calibrate_gate=False)
+        r.fit(SENTENCES)
+        self.assertEqual(r.gate, r._seed_gate)
+        self.assertEqual(r.gate_source, "seed")
+
+    def test_dual_agree_reachable_with_default_router(self):
+        # 生产路径 build_routers 用默认 LexicalRouter()：校准后应能 dual-agree
+        # （此前 gate=0.5 恒 abstain-disagree，词法交叉验证形同失效）
+        dr = DecisionRouter(FakeClient({"track": "static", "confidence": 0.9}))
+        res = route_text(EX_STATIC, dr, LexicalRouter().fit(SENTENCES), llm_available=True)
+        self.assertEqual(res.track, "static")
+        self.assertEqual(res.source, "dual-agree")
+        self.assertIsNone(res.aborted)
+
+    def test_single_class_falls_back_to_seed(self):
+        # 仅 dynamic 有 ≥3 样本 → 单类不可分 → 回退 seed，不强行降门槛
+        r = LexicalRouter()
+        r.fit([("明天开会", "dynamic"), ("今天回邮件", "dynamic"), ("处理故障", "dynamic")])
+        self.assertTrue(r.fitted)
+        self.assertEqual(r.gate, r._seed_gate)
+        self.assertEqual(r.gate_source, "seed")
+
+
 if __name__ == "__main__":
     unittest.main()
