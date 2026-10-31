@@ -9,8 +9,13 @@
   记录已应用版本」，用 `docker exec psql` 就够，不需要 ORM 与 Python DB 驱动。
 - 代价：没有 autogenerate（不能自动 diff 模型与库）。对本阶段可接受——
   schema 由架构 §5 与 spike 证据手工维护，反而更可控。
-- ⚠️ **是否回迁 Alembic 重新 open**：见实施计划 §5 **R19** / 任务 **P1.5**。
-  回迁窗口 = 写业务代码之前（成本最低）。若 P1.2 引入 SQLAlchemy 模型层，应同时回迁。
+- ⚠️ **已定不回迁 Alembic（2026-10-31 决策，R19 关闭）**：见实施计划 §5 **R19** / 任务 **P1.5**。
+  判定 = P1.2 走「raw SQL + repository seam」（psycopg 裸 SQL，不引入 SQLAlchemy ORM 模型层），
+  回迁触发条件未满足，故维持自研。若日后 P1.2 演进为 ORM 模型层，则重新 open 并同步回迁。
+
+设计边界（重要）：**本模块是仓库里唯一允许 docker-exec 直连的路径**——它管理 schema，
+不碰领域数据。一切领域读写必须走 `zkc/repository.get_storage()` seam
+（`zkc/ingest.py` 是示范入口），绝不直接 docker/psql。此边界是「存储可替换 seam」不变量的硬约束。
 
 设计要点：
 1. **每个迁移是单事务**（`psql --single-transaction`），失败整体回滚，不留半截 schema。
