@@ -1,0 +1,18 @@
+{
+  "nomic-embed-text:latest": {
+    "dim": 768,
+    "l2_norm": 1.0,
+    "cold_s": 0.649,
+    "warm_single_s": 0.012,
+    "batch32_s": 0.303,
+    "per_item_ms": 9.5
+  },
+  "qwen3-embedding:latest": {
+    "dim": 4096,
+    "l2_norm": 1.0,
+    "cold_s": 3.539,
+    "warm_single_s": 0.189,
+    "batch32_s": 5.863,
+    "per_item_ms": 183.2
+  }
+}
