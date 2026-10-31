@@ -58,7 +58,7 @@
       "id": "1-2",
       "uid": "01a18dff0127-100f5020d8",
       "label": "P1 存储地基（3/5 完成）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -344,25 +344,49 @@
       "id": "1-2-6",
       "uid": "01a18dff5e18-2eb6da7329",
       "label": "P1.3 双时态 + decay 触发器（线性）实测",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "decay 触发器形态",
+          "answer": "应用层维护扫描（refresh sweep），非 DB trigger。架构 §6 明确『所有候选均无原生 TTL/衰减 → 衰减必须应用层建模』，DB 无原生衰减语义；故用 Python 维护器重算并写回 decay_score，而非 PG 触发器。",
+          "note": ""
+        },
+        {
+          "q": "衰减函数与阈值来源",
+          "answer": "线性函数 min(1, elapsed/interval) 当选；函数选择走 tuning.get('DECAY_FUNCTION')，阈值 SURFACE_THRESHOLD/ROT_THRESHOLD 走 tuning.get()，不再从 spike 硬编码。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-7": {
       "id": "1-2-7",
       "uid": "01a18dff5ef4-56d58cbc2e",
       "label": "P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "业务代码禁裸数字",
+          "answer": "zkc/ 全部业务代码（repository/pg.py、routing.py、ingest.py、web）里出现的阈值类裸数字一律改为 tuning.get()；audit 发现 list_due_for_review 硬编码 0.6 等须替换。spike 目录不回改（时间胶囊）。",
+          "note": ""
+        },
+        {
+          "q": "阈值展示须带来源标签",
+          "answer": "UI/日志展示阈值时须同时显示 source 标签（tuning.as_rows()/param.source），禁止只报数字。web 增加 /tuning 端点展示全部参数及来源；日志打印阈值附来源。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -793,7 +817,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 14:47:15",
+    "updated": "2026-10-31 16:25:24",
     "md_file": "ROADMAP.md"
   },
   "edges": [

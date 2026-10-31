@@ -209,8 +209,8 @@
   - **产物库**：`zkc_dev`（已建并处于 `0001 applied`，`sha=824880c46260`）；实测 **12 张表**（11 张领域表 + `schema_migration`）、`node.embedding = vector(768)`；遗留库 `zkc` **原地保留**作 spike 时间胶囊、不回改。
   - **用法速查**：`python -m zkc.migrate {status|upgrade|downgrade|verify} [--db zkc_dev] [--to 0001]`
 - [ ] P1.2 repository seam 抽象（保持 Kuzu/TerminusDB 可替换）—— **前置已验证**：`psycopg[binary]` 可装（走代理）且已连通 `zkc_dev`
-- [ ] P1.3 双时态 + decay 触发器（线性）实测（Spike 01）
-~~- [ ] P1.4 阈值收敛~~ → 见上方 ✅（阈值表已建）。**剩余**：①业务代码接入时一律 `tuning.get()`、禁止裸数字；②UI/日志显示值时必须同时显示来源标签
+- [x] **P1.3 双时态 + decay 触发器（线性）实测（Spike 01）** ✅ **已完成 2026-10-31**：新建 `zkc/decay.py`（纯函数线性衰减模型 + `refresh_decay` 应用层维护扫描；阈值走 `tuning.get`）；`pg.list_due_for_review` 与 `memory.list_due_for_review` 的硬编码 `0.6` 改为 `tuning.get('SURFACE_THRESHOLD')`；`tests/test_decay.py`（9 纯单测）+ `tests/test_decay_pg.py`（3 真实 PG 集成实测：refresh 写回线性分 / append-only 双时态版本链不破 / 到期+超阈入选）；全仓 99 tests passed。双时态已在 0002 迁移 + `pg.save/_locked_snapshot` 落地
+- [x] **P1.4 剩余（阈值治理收口）** ✅ **已完成 2026-10-31**：① 审计 zkc/ 全部业务代码，`pg/memory.list_due_for_review` 裸 `0.6` 已替换为 `tuning.get('SURFACE_THRESHOLD')`；`routing.py` 的 LLM/词法门槛早已走 `tuning.get`，无裸阈值残留；② `zkc/web/app.py` 新增 `GET /tuning` 端点，返回全部 29 个参数及 `source` 标签（`tuning.as_rows()`），UI/日志展示阈值须带来源铁律落地
 - [ ] **P1.5 决定是否回迁 Alembic**（§5 **R19**，由本次对账新暴露）：迁移器已跑通，但「pip 装不上」的原始理由已撤回；**在写业务代码之前**是切换成本最低的窗口
 
 **P2 摄入+分流**
@@ -377,7 +377,9 @@ spikes/ (15, passed)       → 每个 Phase 任务的验证证据与时间胶囊
 |---|---|---|
 | `zkc/__init__.py` | 应用包入口（声明 MVP 形态 + 阈值唯一来源） | ✅ |
 | `zkc/tuning.py` | **阈值唯一权威来源**：25 个参数 × `{value, source, calibrated_at, history}`；`can_calibrate()` 门禁；`Parameter.set()` 强制留痕 | ✅ 17 tests |
+| `zkc/decay.py` | **衰减模型（P1.3）**：纯函数线性衰减 `decay_linear` + `compute_decay_score`（静态轨恒 0）+ `surface` + `refresh_decay` 应用层维护扫描；阈值全走 `tuning.get` | ✅ 9 纯单测 + 3 PG 集成 |
 | `zkc/migrate.py` | 零依赖 schema 迁移器：`status / upgrade / downgrade / verify`；单事务 + sha256 留痕 | ✅ 11 tests |
+| `zkc/web/app.py` | FastAPI 本地捕获层；新增 `GET /tuning` 端点（P1.4 ②：展示全部参数及 `source` 标签） | ✅ |
 | `migrations/0001_baseline_d1_d9.up.sql` | 基线全量 DDL：11 张领域表 + 枚举 + 索引 + FK（D1–D9） | ✅ applied |
 | `migrations/0001_baseline_d1_d9.down.sql` | 逆序回滚 | ✅ |
 | `tests/test_tuning.py` | 阈值表单测（17） | ✅ |
