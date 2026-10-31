@@ -145,6 +145,10 @@ class ContextRepository(ABC):
     def remove_member_human(self, context_id: UUID, node_id: UUID) -> None:
         """仅删人审成员（produced_by IS NULL）；transform 产成员走 revert_assembly 级联。"""
 
+    @abstractmethod
+    def find_higher_dim_for_seed(self, node_id: UUID) -> UUID | None:
+        """T4.1 去重闸门：若某 higher_dim context 已含该节点则返回其 id，否则 None。"""
+
 
 class ReviewQueueRepository(ABC):
     @abstractmethod

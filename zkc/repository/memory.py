@@ -263,6 +263,12 @@ class MemoryContextRepository(ContextRepository):
             if node_id in self._members[cid]
         ]
 
+    def find_higher_dim_for_seed(self, node_id: UUID) -> UUID | None:
+        for cid, ctx in self._rows.items():
+            if ctx.scope == "higher_dim" and node_id in self._members.get(cid, {}):
+                return cid
+        return None
+
 
 class MemoryReviewQueueRepository(ReviewQueueRepository):
     def __init__(self) -> None:

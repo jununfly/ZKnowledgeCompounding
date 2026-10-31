@@ -10,7 +10,7 @@ import pathlib
 import unittest
 from uuid import UUID, uuid4
 
-from zkc.context import ContextAssembler
+from zkc.context import ContextAssembler, ContextNamer, HigherDimProposal
 from zkc.repository import get_storage
 from zkc.repository.models import Node
 
@@ -62,6 +62,21 @@ def _vec(ndim: int, one_hot: int) -> list[float]:
     return v
 
 
+def _vec_close(ndim: int, primary: int, secondary: int | None = None,
+               secondary_val: float = 0.0) -> list[float]:
+    """构造与 one-hot(primary) 高度相似的向量（用于跨阈值近邻模拟）。"""
+    v = [0.0] * ndim
+    v[primary] = 1.0 - secondary_val
+    if secondary is not None:
+        v[secondary] = secondary_val
+    return v
+
+
+def _fake_llm(prompt: str) -> str:
+    """测试用 LLM：恒定返回确定性标题，免 Ollama/网络。"""
+    return "聚合主题X"
+
+
 class MemoryContextTest(unittest.TestCase):
     def test_assembly_contract(self):
         store = get_storage("memory")
@@ -73,6 +88,30 @@ class MemoryContextTest(unittest.TestCase):
         asm = ContextAssembler(store)
         n1 = store.nodes.save(Node(track="dynamic", title="seed"))
         assert asm.discover(n1.id) == []
+
+    def test_propose_no_neighbors_would_not_create(self):
+        store = get_storage("memory")
+        asm = ContextAssembler(store)
+        n1 = store.nodes.save(Node(track="dynamic", title="seed"))
+        prop = asm.propose_higher_dim(n1.id, llm=_fake_llm)
+        assert prop.neighbor_ids == []
+        assert prop.would_create is False
+        assert "近邻不足" in prop.reason
+        # 闸门拒绝自动创建
+        try:
+            asm.create_higher_dim(prop)
+            assert False, "expected ValueError"
+        except ValueError:
+            pass
+
+    def test_naming_llm_and_fallback(self):
+        namer = ContextNamer()
+        # LLM 路径
+        assert namer.name(["机器学习模型训练", "训练中的过拟合"], _fake_llm) == "聚合主题X"
+        # 退化路径：确定性、非空、含条数
+        fb = namer.name(["机器学习模型训练方法", "模型训练中的过拟合"], None)
+        assert fb and "条）" in fb
+        assert namer.name(["机器学习模型训练方法", "模型训练中的过拟合"], None) == fb
 
 
 @unittest.skipUnless(
@@ -119,6 +158,60 @@ class PgContextTest(unittest.TestCase):
         assert other.id in ids, ids
         assert seed.id not in ids, ids
 
+    def test_propose_passes_gates_then_create(self):
+        seed = self.store.nodes.save(
+            Node(track="dynamic", title="种子主题", embedding=_vec_close(768, 0)))
+        na = self.store.nodes.save(
+            Node(track="dynamic", title="近邻A", embedding=_vec_close(768, 0, 1, 0.01)))
+        nb = self.store.nodes.save(
+            Node(track="dynamic", title="近邻B", embedding=_vec_close(768, 0, 2, 0.02)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="不相关", embedding=_vec_close(768, 1)))
+
+        prop = self.asm.propose_higher_dim(seed.id, k=5, llm=_fake_llm)
+        assert prop.would_create is True, prop.reason
+        assert set(prop.neighbor_ids) == {na.id, nb.id}, prop.neighbor_ids
+        assert prop.suggested_title == "聚合主题X"
+
+        cid, tid = self.asm.create_higher_dim(prop)
+        assert isinstance(cid, UUID) and isinstance(tid, UUID)
+        assert set(self.store.contexts.list_members(cid)) == {seed.id, na.id, nb.id}
+        ctx = self.store.contexts.list_for_node(seed.id)[0]
+        assert ctx.scope == "higher_dim" and ctx.title == "聚合主题X"
+
+        # 级联撤销
+        assert self.asm.revert(tid) == 1
+        assert self.store.contexts.list_members(cid) == []
+
+    def test_propose_dedup_existing(self):
+        seed = self.store.nodes.save(
+            Node(track="dynamic", title="种子", embedding=_vec_close(768, 0)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="近邻A", embedding=_vec_close(768, 0, 1, 0.01)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="近邻B", embedding=_vec_close(768, 0, 2, 0.02)))
+
+        prop = self.asm.propose_higher_dim(seed.id, llm=_fake_llm)
+        assert prop.would_create is True
+        cid, _ = self.asm.create_higher_dim(prop)
+
+        prop2 = self.asm.propose_higher_dim(seed.id, llm=_fake_llm)
+        assert prop2.would_create is False
+        assert prop2.existing_context_id == cid
+        assert "已存在" in prop2.reason
+
+    def test_propose_fallback_naming_when_no_llm(self):
+        seed = self.store.nodes.save(
+            Node(track="dynamic", title="机器学习模型训练方法", embedding=_vec_close(768, 0)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="近邻A", embedding=_vec_close(768, 0, 1, 0.01)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="近邻B", embedding=_vec_close(768, 0, 2, 0.02)))
+
+        prop = self.asm.propose_higher_dim(seed.id, llm=None)
+        assert prop.would_create is True
+        assert prop.suggested_title and "条）" in prop.suggested_title
+
     @classmethod
     def tearDownClass(cls):
         import psycopg
@@ -130,6 +223,30 @@ class PgContextTest(unittest.TestCase):
             os.environ.pop("ZKC_PG_DSN", None)
         else:
             os.environ["ZKC_PG_DSN"] = cls._orig_dsn
+
+
+class NamingTest(unittest.TestCase):
+    """T4.1 命名（provider 无关，免 DB / 免 Ollama）。"""
+
+    def test_llm_path_returns_clean_title(self):
+        namer = ContextNamer()
+        assert namer.name(["a", "b"], _fake_llm) == "聚合主题X"
+
+    def test_fallback_deterministic_nonempty(self):
+        namer = ContextNamer()
+        a = namer.name(["机器学习模型训练方法", "模型训练中的过拟合"], None)
+        b = namer.name(["机器学习模型训练方法", "模型训练中的过拟合"], None)
+        assert a and a == b and "条）" in a
+
+    def test_fallback_empty_input(self):
+        namer = ContextNamer()
+        assert "未命名" in namer.name([], None)
+
+    def test_clean_title_strips_quotes_and_multiline(self):
+        from zkc.context import _clean_title
+
+        assert _clean_title('"标题"\n多余') == "标题"
+        assert _clean_title("第一行\n第二行") == "第一行"
 
 
 if __name__ == "__main__":

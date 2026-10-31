@@ -567,6 +567,20 @@ class PgContextRepository(ContextRepository):
         )
         self._conn.commit()
 
+    def find_higher_dim_for_seed(self, node_id) -> UUID | None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            SELECT c.id FROM public.context c
+            JOIN public.context_member cm ON cm.context_id = c.id
+            WHERE c.scope = 'higher_dim' AND cm.node_id = %(nid)s::uuid
+            LIMIT 1
+            """,
+            dict(nid=str(node_id)),
+        )
+        r = cur.fetchone()
+        return r["id"] if r else None
+
 
 class PgReviewQueueRepository(ReviewQueueRepository):
     def __init__(self, conn) -> None:

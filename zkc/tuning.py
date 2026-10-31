@@ -161,6 +161,12 @@ REGISTRY: dict[str, Parameter] = {
         _p("METRIC_W_DECAY", 0.25, PLACEHOLDER, "复利系数·衰减可控权重（默认等权 0.25）"),
         _p("METRIC_METHOD_TARGET", 10.0, PLACEHOLDER,
            "方法论产出归一化目标：达到该产出数即记满分 1.0（待真实数据校准）"),
+        # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 · 1-5-4 收尾切片）
+        _p("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, PLACEHOLDER,
+           "discover k-NN 近邻被纳入更高维聚合的最低余弦相似度（sim=1-余弦距离，1=完全相同）。"
+           "仅作触发初筛，最终创建仍过人审闸门（稀缺注意力：系统提议、人确认）"),
+        _p("CONTEXT_HIGHER_DIM_MIN_MEMBERS", 2, PLACEHOLDER,
+           "触发提议所需的最小近邻数（不含种子自身）；低于此数不构成「聚合」价值"),
     ]
 }
 
