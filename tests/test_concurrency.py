@@ -140,7 +140,8 @@ class PgNodeConcurrentWriteTest(unittest.TestCase):
 
     def test_concurrent_decay_and_interval_do_not_corrupt_chain(self):
         # 第二形态：一条线程改 decay、一条改 interval，并发打到同一 node，
-        # 验证两个都会先快照再改、不互相覆盖历史。
+        # 验证两者不互相覆盖事实。c2 决议 A-1a（2026-10-31）：set_interval 改事实
+        # → 先快照再改；update_decay 改派生量 decay_score → 不写历史、不 bump tx_from。
         conn1 = psycopg.connect(self._test_dsn)
         conn2 = psycopg.connect(self._test_dsn)
         barrier = threading.Barrier(2, timeout=20)
@@ -177,9 +178,10 @@ class PgNodeConcurrentWriteTest(unittest.TestCase):
         self.assertEqual(got.decay_score, 0.55)
         self.assertEqual(got.review_interval, timedelta(days=3))
 
-        # 两次并发更新 → 2 条历史 + 1 当前 = 3 版本，且 decay/interval 均被保留
+        # 并发更新：set_interval 改事实 → 快照（v0→v1）；update_decay 改派生量 → 不快照。
+        # 故历史 = 1 条快照 + 1 当前 = 2 版本；decay/interval 均被保留、互不覆盖。
         hist = repo1.history(nid)
-        self.assertEqual(len(hist), 3, f"期望 3 个版本，实际 {len(hist)}")
+        self.assertEqual(len(hist), 2, f"期望 2 个版本（set_interval 快照 + 当前态），实际 {len(hist)}")
         self.assertEqual(hist[-1].decay_score, 0.55)
         self.assertEqual(hist[-1].review_interval, timedelta(days=3))
 

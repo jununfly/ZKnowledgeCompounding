@@ -2,7 +2,8 @@
 
 在真实 Postgres（zkc-spike-pg）上的临时库跑全部迁移（0001/0002/0003），验证：
 1. refresh_decay 把动态轨 decay_score 按线性模型写回；静态轨恒 0 且不被写。
-2. refresh 走 append-only 双时态版本链（每次写产生历史快照，不破坏当前态）。
+2. （c2 决议 A-1a）refresh 只重写派生的 decay_score，不写 node_history、不 bump
+   tx_from —— 历史只存事实演进，派生量不进双时态版本链。
 3. list_due_for_review 阈值来自 tuning（SURFACE_THRESHOLD），到期+超阈才入选。
 
 需要 docker + psycopg；设 ZKC_RUN_PG_TESTS=0 跳过。
@@ -84,7 +85,10 @@ class PgDecayTest(unittest.TestCase):
         self.assertAlmostEqual(self.store.nodes.get(dyn.id).decay_score, 0.5)  # 5/10
         self.assertEqual(self.store.nodes.get(static.id).decay_score, 0.0)
 
-    def test_refresh_is_append_only_versioned(self):
+    def test_refresh_is_derived_only_not_versioned(self):
+        # c2 决议 A-1a（2026-10-31）：decay_score 是 compute_decay_score 的派生投影，
+        # refresh 只重写该派生列，不写 node_history、不 bump tx_from（tx_from 始终标记
+        # 「上次事实变更」）。历史膨胀与溯源噪声因此被杜绝。
         dyn = self.store.nodes.save(Node(
             track="dynamic", title="v0",
             review_interval=timedelta(days=10),
@@ -92,10 +96,15 @@ class PgDecayTest(unittest.TestCase):
             decay_score=0.0,
         ))
         before = len(self.store.nodes.history(dyn.id))
+        before_tx_from = self.store.nodes.get(dyn.id).tx_from
         refresh_decay(self.store.nodes, self.now)
         after = len(self.store.nodes.history(dyn.id))
-        # refresh 调 update_decay → 产生一条历史快照（append-only 双时态）
-        self.assertEqual(after, before + 1)
+        # refresh 调 update_decay → 不产生历史快照（派生量不进双时态版本链）
+        self.assertEqual(after, before)
+        # 派生量照算不误：仍按线性刷新到 0.5（5/10）
+        self.assertAlmostEqual(self.store.nodes.get(dyn.id).decay_score, 0.5)
+        # tx_from 不 bump（始终标记「上次事实变更」，而非派生重算）
+        self.assertEqual(self.store.nodes.get(dyn.id).tx_from, before_tx_from)
         # 当前态仍是最后一次写，tx_to 为 NULL
         self.assertIsNone(self.store.nodes.get(dyn.id).tx_to)
 

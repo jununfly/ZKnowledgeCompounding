@@ -72,6 +72,14 @@ def run_contract(store) -> None:
     # ---- Node：decay / interval 写入 ----
     store.nodes.update_decay(n1.id, 0.42)
     assert store.nodes.get(n1.id).decay_score == 0.42
+    # c2 决议 A-1a/A-2（2026-10-31）：decay_score 是派生量，update_decay 不写历史快照、
+    # 不 bump tx_from（tx_from 始终标记「上次事实变更」）。两后端语义一致。
+    hist_after_decay = store.nodes.history(n1.id)
+    # n1 此前仅首存一次（v0，无编辑）→ 历史 = [当前态]，update_decay 不应新增版本
+    assert len(hist_after_decay) == 1, (
+        f"update_decay 不应产生历史快照，收到 {len(hist_after_decay)}"
+    )
+    assert store.nodes.get(n1.id).tx_from == n1.tx_from, "update_decay 不应 bump tx_from"
     store.nodes.set_interval(due.id, timedelta(days=7), "auto", "test")
     assert store.nodes.get(due.id).review_interval == timedelta(days=7)
 
