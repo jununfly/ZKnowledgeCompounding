@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v1.2
 
-> 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §9 项 6 / §10 项 1-5；待 zj 复核）
+> 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §8「已定（spike 12/13/13b）」与 §10 项 1–5；§9 已补条目 ⑨）。**复核状态：三角审计已完成、zj 已批 A/B 档（2026-10-31）**——A 档 12 项已回填本文档、B 档 3 项转计划 §5 风险登记册，清单见 `docs/plans/ZKC-architecture-v1.2-review-checklist.md`
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -27,6 +27,7 @@
 | Spike 12 LLM-as-judge 忠实度闸门（机制） | `spikes/spike-12-hallucination-judge/README.md` | 14 tests passed；**分解式忠实度判定机制已证明可行**（拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结）+ 13 例 golden + evaluate 出混淆矩阵与**危险漏检率**（truth 非 supported 却判 supported，唯一决定自动化的指标）；真实 4B 在本机 16GB 不可用（~110-130s/条且不产 JSON）→ 4B 不作自动 gate |
 | Spike 13 幻觉判定器 human-in-the-loop 接入设计 + judge 执行模型决策 | `spikes/spike-13-hallucination-gate-hil/README.md` | 设计已定：路由硬闸（空分解/矛盾 100% 强制人审）+ 注意力预算封顶（faithfulness 人审 ≤20%×budget）+ claim 表增量 + LangGraph interrupt/resume + 人判自举校准语料；**judge 执行模型决策：本地 7B-9B 推荐但被本机实测否决（见 Spike 13b-probe）** |
 | Spike 13b-probe 本地 7B-9B 实证 | `spikes/spike-13b-probe/README.md` | **9B（qwen3.5:9b-mlx 8.9GB 已拉取）本机实证否决**：~6min/条延迟 + JSON 不合规（吐 `Label/Evidence/Overall` 文本），判定能力正确（g6 矛盾识别对、引用来源 `[s1]` 对）→ 死亡因是**速度与格式**（硬件绑定），非能力缺陷；触发 Spike 13 降级链第 2 级（字面 rubric 预过滤 + 人工兜底） |
+| **Spike 14 embedding 编码器定维（R16 关闭）** | `spikes/spike-14-embedding-dim/README.md` | **2026-10-31 实测**：`nomic-embed-text` = **768d**（冷 0.65s / warm 12ms / 32 条 0.30s ≈ 9.5ms/条 / 274MB）、`qwen3-embedding` = **4096d**（3.54s / 189ms / 5.86s ≈ 183.2ms/条 / 4.7GB）；**两者输出均已 L2 归一化**（可直接 `vector_cosine_ops`）。**选型 = nomic 768d**，§5 `vector(768)` 由占位转为已定。**用途硬约束**：仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3、模糊误提交 1；该职责归 DecisionRouter）。**可逆路径**：加列 `embedding_strong vector(4096)` 属增量，不重建 768d 索引。限定：单次采样、未测中文召回质量（→ 计划 R18） |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
 
 ---
@@ -118,7 +119,16 @@ CREATE TABLE node (
   archived_at       timestamptz,     -- 已归档（衰减可控信号，D4）
   -- 调度
   attention_signal  real,            -- 该关注程度（ZKC 自研）
-  embedding         vector(1024)     -- pgvector
+  embedding         vector(768)      -- pgvector；**已定（spike 14 实测 2026-10-31，R16 关闭）**
+                                     -- 原写 1024 仅为 spike 01 验证 DDL 可执行性的占位，与真实编码器不符。
+                                     -- spike 14 实测：nomic-embed-text = **768d**（9.5ms/条，274MB）、
+                                     --   qwen3-embedding = 4096d（183.2ms/条，4.7GB）；两者输出均已 L2 归一化
+                                     --   → 可直接用 vector_cosine_ops。
+                                     -- **选型 = nomic-embed-text 768d**；**用途仅限检索召回/反向连接候选**，
+                                     --   **严禁用于任何安全判定**（双轨分流/弃权阈值）——spike 03 实测 nomic
+                                     --   在相似度阈值判定下 dangerous=3、模糊误提交 1（不安全），该职责归
+                                     --   DecisionRouter。**换编码器 = 重建索引**；若检索质量不足，加第二列
+                                     --   `embedding_strong vector(4096)` 属增量，不破坏本列。
 );
 
 -- 元认知 claim（蒸馏产物，必须带来源）
@@ -127,8 +137,19 @@ CREATE TABLE meta_claim (
   statement text NOT NULL,
   level text,                        -- 元 / 方法 / 事实
   confidence real,
-  evidence_refs uuid[] NOT NULL      -- 溯源：来源 node id
+  evidence_refs uuid[] NOT NULL,     -- 溯源：来源 node id
+  -- D9（spike 13，A10 修订 2026-10-31）：忠实度闸门状态。judge 不可用时全走 human_only。
+  faithfulness_status text,          -- supported / unsupported / contradicted / human_only
+  judge_raw   jsonb,                 -- 分解式判定原始输出（可审计）
+  judge_model text,                  -- 判定所用模型（NULL = 未走自动 judge）
+  faithfulness_route text,           -- auto_pass / human_required（路由硬闸结果）
+  human_verdict text,                -- 人工判决（HITL 结果）
+  human_verdict_at timestamptz
 );
+
+-- **溯源权威声明（R2-4 拍板 2026-10-31）**：`meta_claim.evidence_refs` 是 claim 来源的**唯一权威**
+-- （schema 级 NOT NULL，是 claim 存在的前提）；`citation` 表只记「后续条目复用某 claim」的**行为事件**，
+-- 仅用于复用率度量，**不参与「是否已捕获」判定**。二者方向相反、分工明确，避免双算或漏算。
 
 -- 反向连接边（基于元认知建立）
 CREATE TABLE edge (
@@ -226,10 +247,10 @@ CREATE TABLE attention_observation (
 - 图遍历**先用递归 CTE / 邻接表**，不引入图数据库（保持 repository seam 可切 Kuzu / TerminusDB）。
 - **decay 阈值（spike 01 已定）**：`SURFACE_THRESHOLD = 0.6`（进入注意力）、`ROT_THRESHOLD = 0.9`（已腐化），两者之间的时间即**行动窗口**。
 - **有效复审节奏 = `SURFACE_THRESHOLD × review_interval`**（不是 `review_interval` 本身）→ 注意力需求 = `动态条目数 / (0.6 × interval)`，按 interval 直接算会低估约 40%。
-- **context 成员关系（spike 06 已定，回填 §9 项 6）**：`context.scope` 实际为 **ENUM `context_scope`**（`self_loop`/`higher_dim`，比 §5 草图 `text` 更严格，D1）；`member_nodes uuid[]` 数组列保留但**弃用**，成员关系改用 **`context_member` junction 表**（每行带 `produced_by` + `weight`），以接入 spike 04/05 固化的「可溯源 / 级联撤销」不变量（D2）。`context` 自身也带 `produced_by`/`tx_from`/`tx_to`，使一次装配（一个 transform → 一个 context + 其成员）可整体级联撤销。`transform(id)` 由 spike-04 ext schema 定义。
+- **context 成员关系（spike 06 已定，回填 §9 项 ②）**：`context.scope` 实际为 **ENUM `context_scope`**（`self_loop`/`higher_dim`，比 §5 草图 `text` 更严格，D1）；`member_nodes uuid[]` 数组列保留但**弃用**，成员关系改用 **`context_member` junction 表**（每行带 `produced_by` + `weight`），以接入 spike 04/05 固化的「可溯源 / 级联撤销」不变量（D2）。`context` 自身也带 `produced_by`/`tx_from`/`tx_to`，使一次装配（一个 transform → 一个 context + 其成员）可整体级联撤销。`transform(id)` 由 spike-04 ext schema 定义。
 - **引用埋点 + 衰减可控信号（spike 07 已定，回填 §9 项 ③）**：复用率无法仅用 `meta_claim.evidence_refs` 算出（其指向 claim 自身来源，方向相反），故新增 **`citation` 表**（后续条目 → claim 的引用，D3）构成双向溯源；`衰减可控` 的"已归档"分支需在 `node` 上加 **`archived_at` 列**（D4）。二者均带 `produced_by` 级联撤销，与既有不变量同构。据此实现五个复利度量（连接密度/复用率/方法论产出/衰减可控/复利系数），见 `spikes/spike-07-compounding-metrics/`。
 - **到期分流规则（spike 08 已定，回填 §9 项 ⑤）**：到期动态节点（`track='dynamic' AND decay_score≥0.9`）的分流为确定性三态——已捕获(`evidence_refs` 含该节点)→ARCHIVE；有连接/在 context 且未捕获→DISTILL；孤儿或注意力预算高压→ABSTAIN（交人审，绝不静默丢弃）。**关键发现（D5，良性范围收敛）**：规则仅需既有信号列，**无需新增信号列**，故 §5 仅新增操作性 **`review_queue` 表**（ABSTAIN/DISTILL 入队，与 spike 02/04 review gate 同构）。`attention_pressure` 真实来源、DISTILL 实际执行、孤儿 SLA 等仍 open。见 `spikes/spike-08-expiry-routing/`。
-- 该 schema 已在 **PostgreSQL 16 + pgvector** 实测通过（spike 01）：含 `vector(1024)`、enum 类型、`uuid[]` 上的 GIN 索引；静态轨 `decay_score` 恒为 0；`meta_claim` 缺少 `evidence_refs` 会被 schema 拒绝（溯源在存储层强制）。
+- 该 schema 已在 **PostgreSQL 16 + pgvector** 实测通过（spike 01）：含 ~~`vector(1024)`~~ → **`vector(768)`**（A6 修订，见上表注释）、enum 类型、`uuid[]` 上的 GIN 索引；静态轨 `decay_score` 恒为 0；`meta_claim` 缺少 `evidence_refs` 会被 schema 拒绝（溯源在存储层强制）。
 - **`review_interval` 自动设定（spike 09 已定，回填 §9 项 ④）**：interval 不是个体自由属性，而是**双层量** `生效 = 个体基线 × 全局预算因子`，规则见新增 §6.5。为此新增 **D6**（`node.baseline_interval` + `node.interval_source`，后者保护人工设定不被自动化改写）与 **D7**（`interval_adjustment` append-only 审计表，带 `produced_by` 可整体回滚）。预算本身由 **`attention_observation` 埋点统计估计**（新增表，见 §6.5.1）。
 
 ## 6. 核心子系统与选型
@@ -238,8 +259,9 @@ CREATE TABLE attention_observation (
 |---|---|---|---|
 | 存储 | **Postgres + pgvector**（本地/自托管） | 依赖最少、可离线、事务/PITR 成熟；与 Utopia 已验证形态一致 | Kuzu（图变核心）/ TerminusDB（需原生版本控制） |
 | 向量 | pgvector HNSW | 与元数据同库、可 JOIN | — |
+| **embedding 编码器** | **`nomic-embed-text` → `vector(768)`**（已定 2026-10-31） | **spike 14 实测**：768d / 9.5ms/条 / 274MB，vs qwen3-embedding 4096d / 183.2ms/条 / 4.7GB（维度 5.3×、延迟 19.3×、体积 17×）；两者输出均已 L2 归一化。**用途硬约束**：仅限检索召回与反向连接候选，**不得用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3，该职责归 DecisionRouter） | **加列** `embedding_strong vector(4096)`（增量，不重建 768d 索引）；编码器本身经 encoder seam 替换 |
 | 双轨分流 | **DecisionRouter（本地 LLM 直接判定轨道）** + Semantic Router（校准路由 + 双信号弃权）作候选预过滤 | spike 03 验证：**DecisionRouter 主方案**——编码器无关、F1（模糊误提交=0）与 F2（长模糊对抗句 0 进 dynamic）均完美、覆盖 100%；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，弱编码器（nomic 768d）出现 1 处模糊误提交+2 处轨道互混 → 仅作强编码器下的互补/置信度信号源，不作独立决策器 | Semantic Router（校准路由）/ Outlines / DSPy |
-| 本地推理 | **Ollama 0.40+（Apple silicon 走 MLX）** | 唯一原生本地/离线运行时，OpenAI 兼容层 | 任意 OpenAI 兼容端点 |
+| 本地推理 | **Ollama（本机实测 0.33.3 全通过；Apple silicon 走 MLX）** | 唯一原生本地/离线运行时，OpenAI 兼容层（A5 修订：原写 0.40+ 无实证，spike-02:127 / spike-03:30 实测 0.33.3 通过） | 任意 OpenAI 兼容端点 |
 | 蒸馏/结合模型 | **`qwen3.5:4b-mlx`（迭代默认）；`qwen3.5:9b-mlx` 为可选上限** | spike 10 实测（含 1.5B/4B 各 3 次多次采样）：1.5B 复述率高、跨源综合 0/3 不可用；4B 复述率降至 0.10；9B 在 16GB 常驻 10–12GB 触发 swap（单次蒸馏 4.7 分钟）→ 9B 不作为默认。**跨源综合短板已由 Spike 11 跨源强制算子解决**（4B×3 稳定 3/3，`n_cross_source` 2–3，补全回路 0 触发）→ 算子层与模型选型解耦。详见 §8 / §9 ⑧ | 云端强模型（provider seam） |
 | 结构化抽取 | **Instructor**（Pydantic + 校验重试） | 唯一提供"文本→校验过的结构化对象"原语 | Outlines |
 | 编排 / 人审 | **LangGraph**（图 + PG checkpoint + interrupt/resume） | 选型复核背书（2026-10-29）：唯一同时满足「checkpoint 落 PG 同库同 schema + 领域状态编辑级 HITL + 纯本地 Python 栈」；已知 gap 为无 durable execution（崩溃自动恢复），对人工驱动的蒸馏属 nice-to-have，非 blocker。Pydantic AI / Cordis 评估见 §6.4 与 §7 | 自研最小状态机 |
@@ -285,11 +307,19 @@ CREATE TABLE attention_observation (
 
 | 层 | 作用 | 规则 |
 |---|---|---|
-| **L1 基线**（个体） | 条目自身暗示的腐化速率 | 静态/已归档 → `NULL`；显式时间锚（"下周三""3 天内"…）→ clamp(horizon,1,180)（多锚取最早）；已捕获（claim/artifact evidence）→ 28d；`self_loop` → 3d；有 edge 或 `higher_dim` → 14d；孤儿 → 7d |
+| **L1 基线**（个体） | 条目自身暗示的腐化速率 | 静态/已归档 → `NULL`；显式时间锚（"下周三""3 天内"…）→ clamp(horizon,1,180)（多锚取最早）；**`self_loop` → 3d**；已捕获（claim/artifact evidence）→ 28d；有 edge 或 `higher_dim` → 14d；孤儿 → 7d。**顺序即优先级：`self_loop` 压过「已捕获」**（2026-10-31 zj 拍板，修原 L1 表与 L2 优先级表顺序相反的问题，见下） |
 | **L2 预算归一化**（全局） | 压进注意力预算 | 需求 ≤ 预算则一条不动；否则按优先级升序延后（时间锚 3 > self_loop 2 > 有连接/共享 context 1 > 孤儿/已捕获 0），同优先级内**短 interval 先延后**，每步 ×2；`interval_source='human'` 永不自动改写；到 `MAX=180d` 仍超 → `infeasible=True` + `max_dynamic_items = budget×0.6×180` |
 | **L3 反馈**（闭环） | 先验不可靠，用真实结果修正 | AIMD：复审时仍新鲜（decay<0.3）→ ×1.5；正好（0.3–0.9）→ 不变；已腐化（≥0.9）→ ×0.7；钳制 `[1d,180d]`。受**标注率闸门**约束（见下） |
 
 **L3 标注率闸门（zj 定 ≥70%，2026-10-29）**：L3 只认显式结果标注（`still_valid`/`changed`/`stale`），不认 decay 数值。埋点新增 `labeled_completed`（D8），口径 = 滚动 7 天窗口内 `labeled_completed / completed`；窗口内完成复审 **< 10 次不判定**（样本不足，闸门放行，避免 warm-up 期冻结闭环）。**低于 70% → L3 停机**，interval 停在基线——宁可不动，也不能用无声的划过改写节奏；人工显式给定 verdict 时不受此限。
+
+**已捕获条目的「单程票」语义（2026-10-31 zj 拍板 · ADR-0002）**：spike 08（到期 + 已捕获 → ARCHIVE）与 spike 09（已捕获 → 28d）原被记为冲突，实为**两个不同问题被写成了同一句**——09 答「到期**前**多久看一次」、08 答「**已**到期怎么办」。统一表述：
+
+> **已捕获 = 一张单程票：拉长观察（28d）→ 到期即归档（ARCHIVE），永不回到 DISTILL。**
+
+两条边界（同等重要，缺一不可）：
+1. **撤销回退**：若承载它的 claim/artifact 被 `produced_by` 级联撤销，「已捕获」状态消失 → 该条目按**未捕获**基线重算（有连接 14d / 孤儿 7d），且**必须写 D7 `interval_adjustment` 留痕**，禁止静默变化（否则「撤销」在调度层不可见）。
+2. **`self_loop` 压过已捕获**：项目躬身入局的条目即便已被提炼过，原件仍在变（3d > 28d）。原 L1 表把「已捕获 28d」排在 `self_loop` 3d **之前**，而 L2 优先级表把 `self_loop`(2) 排在已捕获(0) **之前**——两处顺序相反，本条一并修掉（L1 表已改序）。到期终局仍走 ARCHIVE。
 
 **诚实降级契约**：预算不足时**不做无限延后**。interval 远超真实半衰期 = 决定让这条腐化，该决定必须可见——故用 `infeasible` + `max_dynamic_items` 明确报告「必须缩小动态集合（回到 spike 08 的 DISTILL/ARCHIVE）」，而不是静默把 interval 拉到天上。
 
@@ -336,7 +366,7 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 ## 8. 风险与未决
 
 - **本地小模型蒸馏质量可能不足** → provider seam 保留：常规抽取本地，元认知步骤可切强模型。
-- **（spike 10 已部分解决，附限定）换世代比调 prompt 有效，但跨源综合仍不达标**：1.5B 产物的 combine 复述率 0.56–0.72、拼接复述 overlap 0.56–0.77；切到 Qwen3.5（4B/9B）后降到 0.155–0.171 / 0.02–0.12。**但跨源综合仍薄弱**：所有臂的跨源 claim 绝对数都只有 0–1 条，未达「≥2 条跨源断言」门槛。详见 §8「⚠️ Spike 10 限定」。**→ 后续 Spike 11 已实证该缺口在算子层可解（提示硬约束 + 单次补全回路，4B×3 稳定 3/3），见 §9 ⑧。**
+- **（spike 10 已部分解决，附限定；A3/A4 修订 2026-10-31，数字以 3 次采样分布为准）换世代比调 prompt 有效，但跨源综合仍不达标**：1.5B 的 combine 复述率 **0.553–0.689（中位 0.649）**、拼接复述 overlap **0.656**；切到 Qwen3.5-4B 后降到 **0.075–0.103（中位 0.10）/ 0.057**（1.5B、4B 各 3 次采样，**区间不重叠**）。**9B 无多次采样数据，不得与 4B 并列**。**但跨源综合仍薄弱**：跨源 claim 绝对数 1.5B 为 0（0–1）、4B **中位 2（1–2）**——4B 仍有 1/3 概率只产 1 条而踩「≥2 条」门槛，故判不达标（**不是"各臂恒 0–1"**）。详见 §8「⚠️ Spike 10 限定」。**→ 已由 Spike 11 跨源强制算子解决**（4B×3 稳定 3/3）。**→ 后续 Spike 11 已实证该缺口在算子层可解（提示硬约束 + 单次补全回路，4B×3 稳定 3/3），见 §9 ⑧。**
 - **⚠️ Spike 10 限定条件（必须记账，不得外推）**
     1. **采样噪声足以翻转结论**：同一臂（1.5B + 内置重试）两次运行得到跨源率 0.0（4 条 claim）与 1.0（1 条 claim），combine 复述率 0.678 与 0.105。**单次采样的任何对比都不可信**，结论须基于多次采样的分布。
     2. **比率指标可被"少发 claim"刷高**：1 条 claim 引 2 个源即 cross_source_rate=1.0。故 rubric 同时要求**绝对数量**（≥2 条跨源 claim）。
@@ -361,8 +391,8 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 - **已定（spike 09）**：`review_interval` 自动设定 = **三层规则**（L1 个体基线 / L2 全局预算归一化 / L3 复审反馈 AIMD）；interval 是**双层量**（个体基线 × 预算因子），因注意力预算是硬约束。见 §6.5。
 - **已定（spike 09 切片 B）**：`budget_per_day` 由 `attention_observation` 埋点**统计估计**（删失感知 + 单调护栏 + 阻尼 EMA + 校准期 oversubscribe），仿真验证可从 10 或 1 双向收敛到真值。见 §6.5.1。
 - **未决（通用）**：注意力信号的加权方式（现仅按 decay 排序）、复利度量的最终口径、切片 B 全部阈值（p25、α=0.3、±30%、×1.5）的校准。
-- **未决（spike 09 限定，不得外推）**：① **L3 必须接显式复审结果标注**——decay-only 反馈在「按 decay 阈值调度」下恒为 no-op，永不修正基线；② 收敛目标为 `H/0.6`（SURFACE=0.6 的定义所致），不是真值 H；③ 所有阈值（预算 1.2/天、优先级序、×2 延后、±20% 容忍带、AIMD 1.5/0.7）为**占位**，振荡带约 ±50%，需真实数据校准；④ 已捕获条目在 spike 08 判为 ARCHIVE、在 spike 09 判为 28d，两条规则待统一。
-- **已定（spike 12/13/13b）**：**忠实度闸门决策**——① 分解式 LLM-as-judge 机制**可行**（spike-12：14 tests passed，oracle 满分；拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结；evaluate 出混淆矩阵 + 唯一决定自动化的指标「危险漏检率」= truth 非 supported 却判 supported）；② **本机小模型判定不可用**（硬件绑定，非能力缺陷）：4B（qwen3.5:4b-mlx）~110-130s/条且不产 JSON，9B（qwen3.5:9b-mlx 8.9GB）~6min/条且 JSON 不合规（吐 `Label/Evidence/Overall` 文本），两者判定能力均正确（识别矛盾 + 引用来源对）→ 死亡因是**速度与格式**；③ **MVP 忠实度闸门定案 = human-in-the-loop + 字面 rubric 预过滤**（Spike 10/11 的 verbatim/overlap/citation_hit，快且可自动化），即 Spike 13 降级链第 2 级；④ 自动 LLM 预过滤层**本机推迟**（更快硬件 / 离盒 / 云端 opt-in 时零改动启用 judge.py + run_spike12.py）；⑤ Spike 13 接入设计（路由硬闸 + 注意力预算封顶 + claim 表增量 + LangGraph HITL + 人判自举校准语料）已定，待 Spike 13b 实现；⑥ **仍 open**：真实危险漏检率 / 阈值校准 / golden 规模（现 13 例，需扩大以校准 auto-pass 比例）。
+- **未决（spike 09 限定，不得外推）**：① **L3 必须接显式复审结果标注**——decay-only 反馈在「按 decay 阈值调度」下恒为 no-op，永不修正基线；② 收敛目标为 `H/0.6`（SURFACE=0.6 的定义所致），不是真值 H；③ 所有阈值（预算 1.2/天、优先级序、×2 延后、±20% 容忍带、AIMD 1.5/0.7）为**占位**，振荡带约 ±50%，需真实数据校准；④ **已定（2026-10-31 zj 拍板 · ADR-0002）**：已捕获条目两条规则已统一为**单程票**——spike 09 答「到期前多久看」= 28d 拉长观察；spike 08 答「已到期怎么办」= 直接 ARCHIVE，**永不回 DISTILL**。边界 1：`produced_by` 级联撤销导致「已捕获」消失 → 按未捕获基线重算并写 D7 留痕（禁止静默变）；边界 2：**`self_loop`(3d) 压过已捕获(28d)**（原 L1 表与 L2 优先级表顺序相反，已修，见 §6.5）。
+- **已定（spike 12/13/13b）**：**忠实度闸门决策**——① 分解式 LLM-as-judge 机制**可行**（spike-12：14 tests passed，oracle 满分；拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结；evaluate 出混淆矩阵 + 唯一决定自动化的指标「危险漏检率」= truth 非 supported 却判 supported）；② **本机小模型判定不可用**（硬件绑定，非能力缺陷）：4B（qwen3.5:4b-mlx）~110-130s/条且不产 JSON，9B（qwen3.5:9b-mlx 8.9GB）~6min/条且 JSON 不合规（吐 `Label/Evidence/Overall` 文本），两者判定能力均正确（识别矛盾 + 引用来源对）→ 死亡因是**速度与格式**；③ **MVP 忠实度闸门定案 = human-in-the-loop + 字面 rubric 预过滤**（Spike 10/11 的 verbatim/overlap/citation_hit，快且可自动化），即 Spike 13 降级链第 2 级；④ 自动 LLM 预过滤层**本机推迟**（更快硬件 / 离盒 / 云端 opt-in 时零改动启用 judge.py + run_spike12.py）；⑤ Spike 13 接入设计（路由硬闸 + 注意力预算封顶 + claim 表增量 + LangGraph HITL + 人判自举校准语料）已定，**实现待另开 spike（A9 修订：Spike 13b 已改为 judge 执行模型 probe，不承担实现）**；⑥ **仍 open**：真实危险漏检率 / 阈值校准 / golden 规模（现 13 例，需扩大以校准 auto-pass 比例）。
 
 ## 9. 下一步（spike 清单）
 
@@ -371,7 +401,7 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 3. ✅ **模糊路由 vs DecisionRouter spike（已完成）** —— 见 `spikes/spike-03-vague-routing/README.md`（9 tests，1 expectedFailure）。结论：验证 Spike 02 收尾的两条候选修复。**两条路径都修掉 F2（长模糊对抗句 0 进 dynamic）**；**DecisionRouter 主方案**——F1（模糊误提交=0）完美、F2 完美、覆盖 100%、编码器无关，契合 Ollama 栈（精度随模型规模可提，本环境仅 1.5B）；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，nomic(768d) 出现 1 误提交+2 互混 → 降级为互补/置信度信号源。选型表（§6）与未决②已同步。
 4. ✅ **蒸馏 spike（已完成）** —— 见 `spikes/spike-04-distill-loop/README.md`（9 tests passed）。Instructor+Ollama(qwen2.5-coder)+LangGraph interrupt/resume 全程无外部 API 跑通，checkpoint 落**同库 PG**（PostgresSaver，跨连接 resume 实测通过）。**§6.4 两条约束已作为 schema 级验收强制通过**：C1 双时态 append-only（修订=闭行+插行，历史行逐字段不变）、C2 produced_by 级联撤销（FK ON DELETE CASCADE，人工产物不受牵连）。**注意**：1.5B 蒸馏产物近复述而非元认知，印证 §8「本地小模型质量」风险——管线与约束已验证，语义质量走 provider seam 切强模型，属后续。
 5. ✅ **结合 spike（已完成）** —— 见 `spikes/spike-05-combine-operator/README.md`（9 tests passed + e2e 演示）。RCS 漏斗（逐源条件化摘要→重排→来源上限）+ 双层合并 + **引用强制**（幻觉引用剔除、零引用断言删除、全失效抛错——无引用的建模产物不允许存在）跑通；复用 spike-04 的 transform/produced_by 级联撤销。**人工评估结论（诚实记账）**：1.5B 产物为「带引用的摘要堆砌」（一源一 claim、global 层复述、无跨源断言）→ **语义质量不达标，与 spike-04 同源：模型规模问题非架构问题**，走 provider seam 切强模型，选型不推翻。
-6. **剩余 spike（与 PRD §9 对齐）**：① ✅ **强模型蒸馏/结合质量复测 + 质量口径定义（已完成，2026-10-30）** —— 见 `spikes/spike-10-model-quality/README.md`（四臂复跑 + 8 tests）。**已定义可自动计算的质量口径**（复述率 / 拼接复述 overlap / 跨源率 / 引用命中 / 结构完整）并跑四臂对照：换世代（1.5B → Qwen3.5）显著降低复述率，**但跨源综合仍不达标**（各臂跨源 claim 绝对数仅 0–1 条）。**结论带强限定（采样噪声足以翻转单次结果、比率指标可被刷高、幻觉自动测不了）**，见 §8「⚠️ Spike 10 限定」。仍 open：多次采样分布、幻觉判定、阈值校准；② ✅ **`context` 拓扑装配 spike（已完成）** —— 见 `spikes/spike-06-context-assembly/README.md`（10 tests passed）。T4.1 发现（pgvector k-NN 可行，启发式过朴）+ T4.2 成员维护（junction 表 `context_member` 取代数组列，D1/D2 已回填 §5）；③ ✅ **复利度量口径 + 引用埋点（已完成）** —— 见 `spikes/spike-07-compounding-metrics/README.md`（9 tests passed）。T7.1 五指标（连接密度/复用率/方法论产出/衰减可控/复利系数）已定义并可计算，T6.2 新增 `citation` 表 + `node.archived_at`（D3/D4 已回填 §5）；④ ✅ **`review_interval` 自动设定规则（已完成）** —— 见 `spikes/spike-09-review-interval/README.md`（**44 tests passed**：切片 A 三层规则 22 + 切片 B `budget_per_day` 统计赋值 16）。切片 A切片 A：L1 个体基线（时间锚 > 已捕获 28d > self_loop 3d > 有连接/共享 context 14d > 孤儿 7d；静态轨 NULL）；L2 预算归一化（按优先级延后、人工设定豁免、`infeasible` 诚实报告 `max_dynamic_items`）；L3 复审反馈 AIMD（×1.5 / ×0.7）。**核心判断**：interval 是「个体基线 × 全局预算因子」的双层量，纯个体设定会违反注意力硬预算。**两条实测发现**：decay-only 反馈是永久 no-op（必须显式标注复审结果）、收敛目标为 `H/0.6` 而非真值 H。切片 B：`budget_per_day` 由 `attention_observation` 埋点统计估计（删失感知 + 单调护栏 + 阻尼 EMA + 校准期 oversubscribe），仿真可从 10 或 1 双向收敛到真值 3，详见 §6.5.1。§5 D6/D7 已回填，新增 §6.5 / §6.5.1；⑤ ✅ **到期条目「蒸馏 vs 归档」分流规则（已完成）** —— 见 `spikes/spike-08-expiry-routing/README.md`（9 tests passed）。三态分流（ARCHIVE/DISTILL/ABSTAIN）+ 注意力预算降级 + 孤儿强制弃权；规则不需新信号列（D5 仅新增 `review_queue` 表，良性范围收敛）；⑥ DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案；⑦ **每日复审队列 UI（MVP 必选，PRD §6 流 C）**：`decay≥0.6` 清单 + 复审结果标注（`still_valid`/`changed`/`stale`）+ 每日收口埋点（`pushed`/`completed`/`queue_remaining`）——是 §6.5 L3 与 §6.5.1 budget 估计两个闭环唯一的外生锚载体，未交付则两者皆为装饰；⑧ ✅ **跨源断言强制算子（已完成，2026-10-30）** —— 见 `spikes/spike-11-cross-source-enforcement/README.md`（9 tests + 4B×3 / 1.5B×3 真实采样）。`CrossSourceCombineOperator`：提示硬约束 + bounded 单次补全回路，schema 未动。**4B 跨源 gate 2/3 → 稳定 3/3、ncross 下限 1→2、补全 0 触发**；**但 1.5B 无溢出收益（0/3，补全 3/3 结构化失败被安全丢弃）** → 跨源综合是算子层问题、非模型规模，但能力下限仍由模型结构化能力决定（4B 以上走算子保证，1.5B 不可用）。Spike 10 遗留的「跨源综合不达标」open 项关闭。仍 open：幻觉判定（LLM judge）、阈值校准。
+6. **剩余 spike（与 PRD §9 对齐）**：① ✅ **强模型蒸馏/结合质量复测 + 质量口径定义（已完成，2026-10-30）** —— 见 `spikes/spike-10-model-quality/README.md`（四臂复跑 + 8 tests）。**已定义可自动计算的质量口径**（复述率 / 拼接复述 overlap / 跨源率 / 引用命中 / 结构完整）并跑四臂对照：换世代（1.5B → Qwen3.5）显著降低复述率，**但跨源综合仍不达标**（A4 修订 2026-10-31：跨源 claim 绝对数 **1.5B 为 0（0–1）、4B 中位 2（1–2）**，非「各臂恒 0–1」——4B 仍有 1/3 概率只产 1 条而踩 ≥2 门槛）。**结论带强限定（采样噪声足以翻转单次结果、比率指标可被刷高、幻觉自动测不了）**，见 §8「⚠️ Spike 10 限定」。仍 open：多次采样分布、幻觉判定、阈值校准；② ✅ **`context` 拓扑装配 spike（已完成）** —— 见 `spikes/spike-06-context-assembly/README.md`（10 tests passed）。T4.1 发现（pgvector k-NN 可行，启发式过朴）+ T4.2 成员维护（junction 表 `context_member` 取代数组列，D1/D2 已回填 §5）；③ ✅ **复利度量口径 + 引用埋点（已完成）** —— 见 `spikes/spike-07-compounding-metrics/README.md`（9 tests passed）。T7.1 五指标（连接密度/复用率/方法论产出/衰减可控/复利系数）已定义并可计算，T6.2 新增 `citation` 表 + `node.archived_at`（D3/D4 已回填 §5）；④ ✅ **`review_interval` 自动设定规则（已完成）** —— 见 `spikes/spike-09-review-interval/README.md`（**44 tests passed**：切片 A 三层规则 22 + 切片 B `budget_per_day` 统计赋值与 L3 闸门 **22**；A1 修订——原写 16 为错值，代码复核 `test_spike_interval.py` 22 + `test_budget_estimator.py` 22 = 44）。切片 A：L1 个体基线（时间锚 > **self_loop 3d** > 已捕获 28d > 有连接/共享 context 14d > 孤儿 7d；静态轨 NULL；**顺序已按 ADR-0002 改为 self_loop 压过已捕获**）；L2 预算归一化（按优先级延后、人工设定豁免、`infeasible` 诚实报告 `max_dynamic_items`）；L3 复审反馈 AIMD（×1.5 / ×0.7）。**核心判断**：interval 是「个体基线 × 全局预算因子」的双层量，纯个体设定会违反注意力硬预算。**两条实测发现**：decay-only 反馈是永久 no-op（必须显式标注复审结果）、收敛目标为 `H/0.6` 而非真值 H。切片 B：`budget_per_day` 由 `attention_observation` 埋点统计估计（删失感知 + 单调护栏 + 阻尼 EMA + 校准期 oversubscribe），仿真可从 10 或 1 双向收敛到真值 3，详见 §6.5.1。§5 D6/D7 已回填，新增 §6.5 / §6.5.1；⑤ ✅ **到期条目「蒸馏 vs 归档」分流规则（已完成）** —— 见 `spikes/spike-08-expiry-routing/README.md`（9 tests passed）。三态分流（ARCHIVE/DISTILL/ABSTAIN）+ 注意力预算降级 + 孤儿强制弃权；规则不需新信号列（D5 仅新增 `review_queue` 表，良性范围收敛）；⑥ DecisionRouter 在 7~14B 下清晰项精度实测 + 混合置信度方案；⑦ **每日复审队列 UI（MVP 必选，PRD §6 流 C）**：`decay≥0.6` 清单 + 复审结果标注（`still_valid`/`changed`/`stale`）+ 每日收口埋点（`pushed`/`completed`/`queue_remaining`）——是 §6.5 L3 与 §6.5.1 budget 估计两个闭环唯一的外生锚载体，未交付则两者皆为装饰；⑧ ✅ **跨源断言强制算子（已完成，2026-10-30）** —— 见 `spikes/spike-11-cross-source-enforcement/README.md`（9 tests + 4B×3 / 1.5B×3 真实采样）。`CrossSourceCombineOperator`：提示硬约束 + bounded 单次补全回路，schema 未动。**4B 跨源 gate 2/3 → 稳定 3/3、ncross 下限 1→2、补全 0 触发**；**但 1.5B 无溢出收益（0/3，补全 3/3 结构化失败被安全丢弃）** → 跨源综合是算子层问题、非模型规模，但能力下限仍由模型结构化能力决定（4B 以上走算子保证，1.5B 不可用）。Spike 10 遗留的「跨源综合不达标」open 项关闭。仍 open：幻觉判定（LLM judge）、阈值校准；⑨ ✅ **幻觉判定闸门（已完成，spike-12/13/13b）** —— 见 `spikes/spike-12-hallucination-judge/`（14 tests passed，机制可行）+ `spike-13`（接入设计）+ `spike-13b-probe`（judge 执行模型实证）。分解式判定机制可行但本机 4B/9B 均不可用（速度 + 格式），MVP 定案 HITL + 字面 rubric 预过滤；**Spike 13 的实现仍待另开 spike**（13b 只做 probe）。
 
 ---
 
