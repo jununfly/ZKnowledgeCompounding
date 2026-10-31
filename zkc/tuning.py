@@ -133,14 +133,18 @@ REGISTRY: dict[str, Parameter] = {
         _p("ROUTING_LLM_CONF_GATE", 0.5, SIMULATION,
            "DecisionRouter(LLM) 置信度门槛；低于此强置 vague。源自 spike-03 GATE=0.5"),
         _p("ROUTING_LEXICAL_CONF_GATE", 0.5, PLACEHOLDER,
-           "词法 TF-IDF 三路置信度门槛的**冷启动 seed**。**实际运行门槛由 LexicalRouter.fit() "
-           "从拟合语料自动校准**（类内/类间 LOO 余弦相似度中点）以修复硬编码 0.5 在小语料下"
-           "恒弃权（实测类质心余弦仅 ~0.33）。本值仅作未 fit / 类不可分时的回退保守门槛。"
+           "词法 TF-IDF 三路置信度门槛的**冷启动 seed**（PLACEHOLDER：无真实埋点支撑）。"
+           "**实际运行门槛由 LexicalRouter.fit() 从拟合语料分布自动推导**（类内/类间质心余弦相似度"
+           "中点），推导结果记为 gate_source='corpus-derived'——这是「语料分布推导」、与 tuning 的 "
+           "CALIBRATED（运行时埋点校准）是两回事、不互相替代；corpus-derived 绝不写回本 REGISTRY 的 "
+           "CALIBRATED。本 seed 仅作未 fit / 类不可分时的回退保守门槛。"
            "**第二信号严禁用 embedding**(R16：embedding 仅限检索召回/反向连接候选，"
            "spike-03 实测 nomic dangerous=3)，故用 embedding-free 词法路由作交叉验证"),
         _p("ROUTING_LEXICAL_CALIB_MIDPOINT", 0.5, PLACEHOLDER,
-           "词法门槛自动校准的中点份额：gate = mean_out + 0.5*(mean_in - mean_out)。"
-           "0.5=类内/类间相似度正中；越接近 0 越保守(贴近类间、少误提交)"),
+           "词法门槛自动推导的中点份额：gate = mean_out + 0.5*(mean_in - mean_out)。"
+           "0.5=类内/类间相似度正中；越接近 0 越保守(贴近类间、少误提交)。"
+           "**这是「语料分布推导」的设计默认，非运行时埋点校准**：升 CALIBRATED 须经 calibrate() "
+           "门禁（≥14 天埋点 + ≥3 饱和日），仅凭语料分布推导不得越门禁"),
         _p("ROUTING_REQUIRE_DUAL_SIGNAL", True, PLACEHOLDER,
            "True=必须 LLM 与词法双信号一致才自动提交真实轨道；否则(含词法无法判定)→vague→人工。"
            "冷启动词法无训练数据时一切走人工(安全欠覆盖，非危险)，随人工定轨积累逐渐自动化"),

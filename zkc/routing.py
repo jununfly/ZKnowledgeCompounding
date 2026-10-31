@@ -172,9 +172,15 @@ class LexicalRouter:
     冷启动（未 fit 或样本不足）→ predict 返回 (None, 0.0)，即「无法判定」，
     由 route_text 转为 vague→人工（安全欠覆盖）。随人工定轨积累样本逐渐自动化。
 
-    门槛校准：fit 后**自动从语料分布校准** gate（类内/类间 质心余弦相似度中点），
+    门槛校准：fit 后**自动从语料分布推导** gate（类内/类间 质心余弦相似度中点），
     修复硬编码 0.5 在小语料下恒弃权（实测类质心余弦仅 ~0.33）。调用方显式传 gate
-    时尊重其选择、跳过自动校准。校准语义与治理见 tuning.ROUTING_LEXICAL_*。
+    时尊重其选择、跳过自动推导。
+
+    **重要边界（治理铁律）**：此处的「推导」是 *corpus-derived*（从标注语料分布算出），
+    记为 ``gate_source='corpus-derived'``，**与 tuning 的 CALIBRATED（运行时埋点校准）是
+    两回事、不互相替代**。corpus-derived 的结果**绝不写回** tuning.REGISTRY 的 CALIBRATED；
+    要升 CALIBRATED 必须走 ``tuning.calibrate()`` 过门禁（≥14 天埋点 + ≥3 饱和日）。
+    详细治理见 tuning.ROUTING_LEXICAL_*。
     """
 
     def __init__(self, gate: Optional[float] = None, min_examples_per_class: int = 3,
@@ -182,7 +188,7 @@ class LexicalRouter:
         self._seed_gate = tuning.get("ROUTING_LEXICAL_CONF_GATE") if gate is None else gate
         self._gate_explicit = gate is not None
         self.gate = self._seed_gate
-        self.gate_source = "seed"  # seed | corpus-calibrated
+        self.gate_source = "seed"  # seed | corpus-derived
         self.auto_calibrate_gate = auto_calibrate_gate
         self.min_examples_per_class = min_examples_per_class
         self._idf: dict[str, float] = {}
@@ -224,7 +230,7 @@ class LexicalRouter:
             cal = self._calibrate_gate(class_tokens)
             if cal is not None:
                 self.gate = cal
-                self.gate_source = "corpus-calibrated"
+                self.gate_source = "corpus-derived"
         self._fitted = bool(self._centroids)
         return self
 

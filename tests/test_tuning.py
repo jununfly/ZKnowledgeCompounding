@@ -106,5 +106,33 @@ class TestDisplay(unittest.TestCase):
         self.assertIn("value", rows["ROT_THRESHOLD"])
 
 
+class TestLexicalParamsGovernance(unittest.TestCase):
+    """ROUTING_LEXICAL_CONF_GATE / _CALIB_MIDPOINT 仍 PLACEHOLDER；
+    只能用 calibrate() 经真实埋点门禁升 CALIBRATED，「语料分布推导」不算数。
+    """
+
+    def test_lexical_seed_and_midpoint_placeholder(self):
+        self.assertEqual(tuning.param("ROUTING_LEXICAL_CONF_GATE").source, PLACEHOLDER)
+        self.assertEqual(tuning.param("ROUTING_LEXICAL_CALIB_MIDPOINT").source, PLACEHOLDER)
+
+    def test_calibrate_lexical_midpoint_refused_without_telemetry(self):
+        # 即使用「语料分布推导」作理由，门禁仍拒绝——这是两条校准路径不互替的核心
+        with self.assertRaises(PermissionError):
+            tuning.calibrate("ROUTING_LEXICAL_CALIB_MIDPOINT", 0.4, date(2026, 11, 1),
+                             "凭语料分布推导降 midpoint",
+                             days_with_observation=0, saturated_days=0)
+        self.assertEqual(tuning.get("ROUTING_LEXICAL_CALIB_MIDPOINT"), 0.5)
+
+    def test_calibrate_lexical_midpoint_allowed_with_telemetry(self):
+        tuning.calibrate("ROUTING_LEXICAL_CALIB_MIDPOINT", 0.4, date(2026, 12, 1),
+                         "14 天埋点 + 3 饱和日，真实 mid=0.4",
+                         days_with_observation=14, saturated_days=3)
+        p = tuning.param("ROUTING_LEXICAL_CALIB_MIDPOINT")
+        self.assertEqual(p.value, 0.4)
+        self.assertEqual(p.source, CALIBRATED)
+        # 还原，避免测试间互相污染
+        p.value, p.source, p.calibrated_at, p.history = 0.5, PLACEHOLDER, None, []
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -8,7 +8,7 @@ from __future__ import annotations
 import tempfile
 import unittest
 
-from zkc import routing
+from zkc import routing, tuning
 from zkc.routing import (
     DecisionRouter,
     LexicalRouter,
@@ -337,7 +337,7 @@ class LexicalGateCalibrationTest(unittest.TestCase):
         r = LexicalRouter()  # 默认 seed=0.5
         r.fit(SENTENCES)
         self.assertTrue(r.fitted)
-        self.assertEqual(r.gate_source, "corpus-calibrated")
+        self.assertEqual(r.gate_source, "corpus-derived")
         self.assertLess(r.gate, 0.5)
         self.assertGreater(r.gate, 0.0)
 
@@ -382,6 +382,33 @@ class LexicalGateCalibrationTest(unittest.TestCase):
         self.assertTrue(r.fitted)
         self.assertEqual(r.gate, r._seed_gate)
         self.assertEqual(r.gate_source, "seed")
+
+
+# ----------------------------------------------------------------- 校准边界锁定（残留闭环：语料推导 ≠ 埋点校准）
+class LexicalCalibrationGovernanceTest(unittest.TestCase):
+    """锁定两条「校准」路径不互相替代（修复 1-3-1 后残留项）：
+
+    1) 语料分布推导：LexicalRouter.fit() 自动算出 gate，gate_source='corpus-derived'
+       —— 这是「从标注语料分布推导」，与 tuning 的 CALIBRATED（运行时埋点校准）是两回事。
+    2) 运行时埋点校准：tuning.calibrate() 须过门禁（≥14 天 + ≥3 饱和日）才升 CALIBRATED。
+    corpus-derived 的结果绝不允许写回 REGISTRY 的 CALIBRATED。
+    """
+
+    def test_corpus_derived_gate_source_is_not_calibrated(self):
+        r = LexicalRouter().fit(SENTENCES)
+        self.assertEqual(r.gate_source, "corpus-derived")  # 改名：不再是 "corpus-calibrated"
+        self.assertNotEqual(r.gate_source, "calibrated")
+        # 推导出的 gate 绝不写回 tuning REGISTRY 的 CALIBRATED
+        self.assertEqual(tuning.param("ROUTING_LEXICAL_CONF_GATE").source, tuning.PLACEHOLDER)
+        self.assertEqual(tuning.param("ROUTING_LEXICAL_CALIB_MIDPOINT").source, tuning.PLACEHOLDER)
+
+    def test_corpus_derivation_does_not_mutate_registry(self):
+        before_gate = tuning.get("ROUTING_LEXICAL_CONF_GATE")
+        before_mid = tuning.get("ROUTING_LEXICAL_CALIB_MIDPOINT")
+        LexicalRouter().fit(SENTENCES)
+        LexicalRouter().fit(SENTENCES)  # 任意次拟合都不该改 REGISTRY
+        self.assertEqual(tuning.get("ROUTING_LEXICAL_CONF_GATE"), before_gate)
+        self.assertEqual(tuning.get("ROUTING_LEXICAL_CALIB_MIDPOINT"), before_mid)
 
 
 if __name__ == "__main__":
