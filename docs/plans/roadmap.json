@@ -547,11 +547,27 @@
       "id": "1-4-1",
       "uid": "01a18dff8af3-435dffec12",
       "label": "P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "P4.1 落地载体与迁移策略？",
+          "answer": "spike-09 已是完整设计（interval_policy/budget_estimator/store）。不新建迁移：schema D6/D7/D8 已在 0001；把 spike 代码提升为存储无关生产代码 zkc/scheduling.py，走 repository seam（PG + 内存 fake 同构）+ tuning 铁律（禁裸数字）。",
+          "note": ""
+        },
+        {
+          "q": "L1 基线阶梯优先级顺序？",
+          "answer": "horizon(显式时间锚,按解析天数) > captured(28d) > self_loop(3d) > connected/higher_dim(14d) > orphan(7d)；静态轨/已归档 → None（不衰减）。保守取最早命中的时间锚（复审过早只浪费少量注意力，过晚则已腐化，符合 PRD 宁少勿错）。",
+          "note": ""
+        },
+        {
+          "q": "L3 反馈闸门如何接 P4.4 标注率？",
+          "answer": "adapt_interval 仅当标注率≥LABEL_RATE_MIN(0.70) 且 7天窗口内样本≥LABEL_MIN_SAMPLES(10) 才改写；否则 applied=False('label gate closed')，interval 停在基线。显式 outcome 绕过闸门。关键：衰减-only 复审是永久 no-op（调度在 SURFACE=0.6 触发→decay 恒 0.6=on_time→永不纠错），复审必须携带结果标注，否则 L3 是装饰。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -559,13 +575,30 @@
       "id": "1-4-2",
       "uid": "01a18dff8bd5-05aa986128",
       "label": "P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "复审后如何复位衰减时钟？",
+          "answer": "新增 mark_reviewed(node_id, at)（protocol+PG+内存）：置 last_reviewed_at=at、decay_score=0。否则复审后 (last_reviewed_at+interval) 仍 ≤ now → 条目立刻『再次到期』陷入死循环，且衰减永不归零。review_reset 语义落在仓库层。#P4.2",
+          "note": ""
+        },
+        {
+          "q": "两个闭环外生锚如何落到 UI？",
+          "answer": "锚A：复审标注 still_valid→on_time(x1)、changed/stale→too_late(x0.7)，调 adapt_interval；browse=仅复位时钟+completed++（不触发L3，使标注率闸门有意义）。锚B：每次复审累加今日观测 completed/labeled_completed；收口表单写 pushed/queue_remaining。record_observation 已对 day UNIQUE 做 upsert，单日行跨多次复审+收口累加。两个锚在同一界面一次交互同时修好。#P4.2",
+          "note": ""
+        },
+        {
+          "q": "复审队列如何能真正出队（last_reviewed_at 启动）？",
+          "answer": "assign_baselines 首次给动态条目赋基线时同步种 last_reviewed_at=now（仅当为 None）。否则 last_reviewed_at 永为 NULL，list_due_for_review 的 NULL 过滤把它永久排除，队列永远空、闭环全废。这是把 1-4-1 调度落地的必要收口（微小改动，已在 1-4-1 代码内）。#P4.2",
+          "note": ""
+        }
+      ],
       "notes": "MVP 硬前提（PRD 目标 5 / 架构 §6.5.1）：没有这个界面，budget 估计器永远停在 confidence='none'、L3 闸门无样本，两个自指闭环全废。同一界面承载两个外生锚：复审结果标注（驱动 L3 interval 反馈）+ 每日收口埋点（驱动 budget 估计）。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-3": {
       "id": "1-4-3",
@@ -583,7 +616,7 @@
       "id": "1-4-4",
       "uid": "01a18dff8d90-0ad5d6124e",
       "label": "P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
@@ -592,6 +625,11 @@
           "q": "标注率闸门的口径与失效风险？",
           "answer": "滚动 7 天 labeled_completed/completed ≥70%，否则 L3 停机（interval 停在基线）。",
           "note": "关键防呆：窗口内完成复审 <10 次时不判定（样本不足放行），避免 warm-up 期把 L3 冻死。人工显式 verdict 不受闸门限制。未标注的复审禁止写 interval_adjustment。"
+        },
+        {
+          "q": "1-4-4 相对 1-4-1/1-4-2 的交付边界？",
+          "answer": "闸门逻辑在 1-4-1 落地（labeling_rate_from + adapt_interval 的 gate 分支），UI 在 1-4-2 持续喂标注。本节点交付=端到端验证：用真实多日观测证明 7 天滚动率 <70% 时未标注复审 applied=False（不写 interval_adjustment）、窗口 <10 样本放行、显式 verdict 绕过闸门、browse 路径绝不写 interval。新增 tests/test_labeling_gate.py（5 项）。#P4.4",
+          "note": ""
         }
       ],
       "notes": "",
@@ -691,11 +729,22 @@
       "id": "1-6-2",
       "uid": "01a18dffd105-671e43c06e",
       "label": "P5.2 5 度量面板（连接密度/复用率/方法论产出/衰减可控/复利系数）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "五度量如何跨部门计算且保持存储无关？",
+          "answer": "沿用 load_schedulable 的 seam：纯函数只吃 MetricInputs 普通快照；Storage.load_metric_inputs() 按后端捞数据（PG 跑 SQL、内存跑 Python）。这样数学可脱离存储单测，且不破坏仓库门面。衰减可控口径含 R4 前提说明（预算不满足时值偏低属供给问题）。#P5.2",
+          "note": ""
+        },
+        {
+          "q": "五度量口径与复利系数合成？",
+          "answer": "口径取自 PRD：连接密度=被 reverse_link/derived_from 触达的动态节点占比；复用率=被 citation 引用的 claim 占比；方法论产出=combine 产出的 artifact 数；衰减可控=到期(decay>=ROT)动态节点中被 claim/artifact 引用或已归档的比例。复利系数=四项等权(0.25)归一化合成（方法产出按 METRIC_METHOD_TARGET 饱和）。权重/目标/ROT 全走 zkc.tuning。#P5.2",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -739,11 +788,22 @@
       "id": "1-7-3",
       "uid": "01a18dffd485-a112713099",
       "label": "P6.3 用户文档 + 度量复盘节奏（每周）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "P6.3 用户文档与每周复盘节奏的定位是什么？",
+          "answer": "产出 docs/user-guide.md（启动方式、/review 两个外生锚说明、/metrics 五度量口径表、每周复盘 5 步清单）+ scripts/metrics_snapshot.py（复盘可执行入口，--storage pg/memory 输出 metrics_report JSON）。文档不复述架构，只给『怎么用 + 看什么指标 + 每周怎么收口』。",
+          "note": ""
+        },
+        {
+          "q": "复盘节奏依赖什么前置闭环才有效？",
+          "answer": "锚定 P4.2 已落地的每日收口埋点（锚 B：pushed/completed/queue_remaining/labeled_completed）与复审结果标注（锚 A：still_valid/changed/stale）。每周复盘 = 跑 metrics_snapshot + 看复利系数趋势 + 核对 decay_controllability 前提（注意力预算 n/(0.6×interval) 是否满足）。无真实 UI 埋点则五度量无意义——与 1-4-2 同一根因。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -834,7 +894,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 19:50:22",
+    "updated": "2026-10-31 21:31:13",
     "md_file": "ROADMAP.md"
   },
   "edges": [
