@@ -14,8 +14,10 @@ from .models import (
     Claim,
     Context,
     Edge,
+    MetricInputs,
     Node,
     ReviewItem,
+    SchedulableNode,
 )
 
 
@@ -53,6 +55,36 @@ class NodeRepository(ABC):
         reason: str,
         version_seq: int | None = None,
     ) -> None: ...
+
+    @abstractmethod
+    def set_baseline_interval(
+        self,
+        node_id: UUID,
+        interval: timedelta,
+        source: str,
+        reason: str,
+    ) -> None:
+        """L1 基线赋值：同时写 baseline_interval 与 review_interval（二者在此刻一致）。"""
+
+    @abstractmethod
+    def audit_interval(
+        self,
+        node_id: UUID,
+        kind: str,
+        old_days: float | None,
+        new_days: float,
+        reason: str,
+        produced_by: UUID | None = None,
+    ) -> None:
+        """写一行 interval_adjustment（append-only 审计；produced_by 指向 transform 可整体回滚）。"""
+
+    @abstractmethod
+    def mark_reviewed(self, node_id: UUID, at: datetime) -> None:
+        """复审触碰：复位衰减时钟（last_reviewed_at=at, decay_score=0）。
+
+        闭环关键：标签标注（或浏览）后必须调用，否则 (last_reviewed_at+interval) 永远 ≤ now，
+        该条目会立刻「再次到期」陷入死循环；同时 decay 归 0 让下一轮从干净状态重新积累。
+        """
 
 
 class ClaimRepository(ABC):
@@ -144,3 +176,15 @@ class Storage(ABC):
     @abstractmethod
     def record_transform(self, kind: str, params: dict) -> UUID:
         """写一行 `transform`（溯源），返回其 id，供 produced_by 引用。"""
+
+    @abstractmethod
+    def load_schedulable(self) -> list[SchedulableNode]:
+        """所有「动态轨 + 未归档」节点的调度信号快照（L1/L2 规则输入，跨聚合查询）。"""
+
+    @abstractmethod
+    def load_metric_inputs(self) -> MetricInputs:
+        """复利度量所需的普通数据快照（P5.2）；纯函数度量只吃此快照，存储无关。"""
+
+    @abstractmethod
+    def revert_interval_transform(self, transform_id: UUID) -> int:
+        """逆序恢复某 transform 产生的全部 interval 改动并清空审计痕迹，返回恢复条数。"""

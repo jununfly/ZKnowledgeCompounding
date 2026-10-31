@@ -25,6 +25,8 @@ from zkc.routing import (
     OllamaClient,
 )
 from zkc.repository import get_storage
+from zkc.web.review import register_review_routes
+from zkc.web.metrics import register_metrics_routes
 
 CAPTURE_HTML = """<!doctype html>
 <html lang="zh">
@@ -160,6 +162,9 @@ def create_app(
         os.environ.get("ZKC_LLM_ENABLED", "1") != "0"
     )
 
+    # 共享 store：capture 与每日复审队列（P4.2）同一实例，避免双连接漂移。
+    store_ = store or get_storage()
+
     app = FastAPI(title="ZKC 快捕获")
 
     @app.get("/", response_class=HTMLResponse)
@@ -168,7 +173,6 @@ def create_app(
 
     @app.post("/capture")
     def capture(note: str = Form(...)) -> dict:
-        store_ = store or get_storage()
         return capture_note(
             note,
             store=store_,
@@ -187,5 +191,11 @@ def create_app(
             "note": "阈值唯一来源 = zkc.tuning；source ∈ placeholder/simulation/calibrated",
             "params": tuning.as_rows(),
         }
+
+    # P4.2 每日复审队列 UI：挂载到同一 app（共享 store_）。
+    register_review_routes(app, store_)
+
+    # P5.2 复利度量面板：挂载到同一 app（共享 store_）。
+    register_metrics_routes(app, store_)
 
     return app

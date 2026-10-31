@@ -103,6 +103,8 @@ REGISTRY: dict[str, Parameter] = {
         _p("EMA_CLAMP", 0.3, SIMULATION, "单次调整幅度 ±30%"),
         _p("PRESSURE_DEFER", 0.8, SIMULATION, "注意力压力延后阈值"),
         # ---- L3 AIMD 反馈
+        _p("EARLY_THRESHOLD", 0.3, PLACEHOLDER,
+           "复审时 decay < 此值 = too_early（节奏比真实腐化快，骚扰过度 → 拉长）"),
         _p("AIMD_UP", 1.5, PLACEHOLDER, "复审判 late → 缩短 interval（乘）"),
         _p("AIMD_DOWN", 0.7, PLACEHOLDER, "复审判 early → 拉长 interval（乘）"),
         _p("ON_TIME_BAND", 0.20, SIMULATION,
@@ -148,6 +150,13 @@ REGISTRY: dict[str, Parameter] = {
         _p("ROUTING_REQUIRE_DUAL_SIGNAL", True, PLACEHOLDER,
            "True=必须 LLM 与词法双信号一致才自动提交真实轨道；否则(含词法无法判定)→vague→人工。"
            "冷启动词法无训练数据时一切走人工(安全欠覆盖，非危险)，随人工定轨积累逐渐自动化"),
+        # ---- P5.2 复利度量面板（spike-07 口径，权重/目标待校准）
+        _p("METRIC_W_DENSITY", 0.25, PLACEHOLDER, "复利系数·连接密度权重（默认等权 0.25）"),
+        _p("METRIC_W_REUSE", 0.25, PLACEHOLDER, "复利系数·复用率权重（默认等权 0.25）"),
+        _p("METRIC_W_METHOD", 0.25, PLACEHOLDER, "复利系数·方法论产出权重（默认等权 0.25）"),
+        _p("METRIC_W_DECAY", 0.25, PLACEHOLDER, "复利系数·衰减可控权重（默认等权 0.25）"),
+        _p("METRIC_METHOD_TARGET", 10.0, PLACEHOLDER,
+           "方法论产出归一化目标：达到该产出数即记满分 1.0（待真实数据校准）"),
     ]
 }
 

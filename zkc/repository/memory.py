@@ -13,8 +13,10 @@ from .models import (
     Claim,
     Context,
     Edge,
+    MetricInputs,
     Node,
     ReviewItem,
+    SchedulableNode,
 )
 from .. import tuning
 from .errors import ConcurrentModification
@@ -33,6 +35,7 @@ class MemoryNodeRepository(NodeRepository):
     def __init__(self) -> None:
         self._rows: dict[UUID, Node] = {}
         self._versions: dict[UUID, list[Node]] = {}  # 逻辑 id -> 历史版本快照（append-only）
+        self._audit_log: list[dict] = []             # interval_adjustment 的内存等价（仅供自检）
 
     def save(self, node: Node) -> Node:
         if node.id is None:
@@ -120,6 +123,38 @@ class MemoryNodeRepository(NodeRepository):
         cur.interval_source = source
         cur.tx_from = datetime.now()
         cur.tx_to = None
+        cur.version_seq += 1
+
+    def set_baseline_interval(
+        self, node_id: UUID, interval: timedelta, source: str, reason: str
+    ) -> None:
+        cur = self._rows[node_id]
+        snap = replace(cur)
+        snap.tx_to = datetime.now()
+        self._versions.setdefault(node_id, []).append(snap)
+        cur.baseline_interval = interval
+        cur.review_interval = interval
+        cur.interval_source = source
+        cur.tx_from = datetime.now()
+        cur.tx_to = None
+        cur.version_seq += 1
+
+    def audit_interval(
+        self, node_id: UUID, kind: str, old_days: float | None,
+        new_days: float, reason: str, produced_by: UUID | None = None,
+    ) -> None:
+        # 内存实现：审计痕迹仅记到内存列表（无独立 interval_adjustment 表），
+        # 仅供纯逻辑自检；真实持久化与级联回滚由 PG 实现负责。
+        self._audit_log.append(
+            dict(node_id=node_id, kind=kind, old_days=old_days,
+                 new_days=new_days, reason=reason, produced_by=produced_by)
+        )
+
+    def mark_reviewed(self, node_id: UUID, at: datetime) -> None:
+        # 内存实现：与 PG 轻量路径一致 —— 复位衰减时钟（last_reviewed_at + decay_score=0）。
+        cur = self._rows[node_id]
+        cur.last_reviewed_at = at
+        cur.decay_score = 0.0
         cur.version_seq += 1
 
 
@@ -274,3 +309,60 @@ class MemoryStorage(Storage):
         self._transform_seq += 1
         # 内存实现用一个确定性的伪 id（测试可重复）
         return UUID(int=self._transform_seq)
+
+    def load_schedulable(self) -> list[SchedulableNode]:
+        out = []
+        for node in self.nodes._rows.values():
+            if node.track != "dynamic" or node.archived_at is not None:
+                continue
+            nid = node.id
+            captured = any(nid in c.evidence_refs for c in self.claims._rows.values())
+            conn_count = sum(
+                1 for e in self.edges._rows.values() if e.src == nid or e.dst == nid
+            )
+            self_loop_count = higher_dim_count = 0
+            for cid, members in self.contexts._members.items():
+                if nid in members:
+                    scope = self.contexts._rows[cid].scope
+                    if scope == "self_loop":
+                        self_loop_count += 1
+                    elif scope == "higher_dim":
+                        higher_dim_count += 1
+            iv = node.review_interval
+            bi = node.baseline_interval
+            out.append(SchedulableNode(
+                id=nid, track=node.track, title=node.title, content=node.content,
+                captured=captured, conn_count=conn_count,
+                self_loop_count=self_loop_count, higher_dim_count=higher_dim_count,
+                interval_days=(iv.total_seconds() / 86400.0) if iv is not None else None,
+                baseline_days=(bi.total_seconds() / 86400.0) if bi is not None else None,
+                source=node.interval_source, archived=False,
+            ))
+        return out
+
+    def load_metric_inputs(self) -> MetricInputs:
+        """复利度量快照（P5.2）：遍历内存集合。
+
+        注：内存 fake 暂未持久化 modeling_artifact / citation（P3 结合算子落地时补），
+        故 artifact_evidence / citations 返回空 —— 对应分量(methodology_output / 复用率
+        的 citation 部分)在 fake 下为 0；连接密度 / 衰减可控 / claim 复用口径可完整验证。
+        """
+        nodes = [
+            (n.id, n.track, n.decay_score or 0.0, n.archived_at is not None)
+            for n in self.nodes._rows.values()
+        ]
+        edges = [(e.src, e.dst, e.kind) for e in self.edges._rows.values()]
+        claim_evidence = [list(c.evidence_refs) for c in self.claims._rows.values()]
+        return MetricInputs(
+            nodes=nodes, edges=edges, claim_evidence=claim_evidence,
+            artifact_evidence=[], citations=[],
+        )
+
+    def revert_interval_transform(self, transform_id: UUID) -> int:
+        # 内存实现不持久化 interval_adjustment 表，级联回滚由 PG 负责；
+        # 这里仅清掉对应审计痕迹并返回计数（保持协议行为一致）。
+        before = len(self._audit_log)
+        self._audit_log = [
+            a for a in self._audit_log if a.get("produced_by") != transform_id
+        ]
+        return before - len(self.nodes._audit_log)

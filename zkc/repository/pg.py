@@ -21,8 +21,10 @@ from .models import (
     Claim,
     Context,
     Edge,
+    MetricInputs,
     Node,
     ReviewItem,
+    SchedulableNode,
 )
 from .protocols import (
     AttentionRepository,
@@ -258,6 +260,62 @@ class PgNodeRepository(NodeRepository):
             raise ConcurrentModification(
                 f"node {node_id} interval 设置版本冲突：期望 version_seq={version_seq}"
             )
+        self._conn.commit()
+
+    def set_baseline_interval(
+        self,
+        node_id: UUID,
+        interval: timedelta,
+        source: str,
+        reason: str,
+    ) -> None:
+        """L1 基线赋值：baseline_interval 与 review_interval 此刻一致（均来自 L1 估算）。"""
+        cur = self._conn.cursor(row_factory=dict_row)
+        if self._lock_hook is not None:
+            self._lock_hook()
+        self._locked_snapshot(cur, node_id)
+        cur.execute(
+            """
+            UPDATE public.node SET baseline_interval=%(iv)s, review_interval=%(iv)s,
+                   interval_source=%(src)s, version_seq = version_seq + 1,
+                   tx_from=clock_timestamp()
+            WHERE id=%(id)s RETURNING version_seq
+            """,
+            dict(iv=interval, src=source, id=node_id),
+        )
+        self._conn.commit()
+
+    def audit_interval(
+        self,
+        node_id: UUID,
+        kind: str,
+        old_days: float | None,
+        new_days: float,
+        reason: str,
+        produced_by: UUID | None = None,
+    ) -> None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "INSERT INTO public.interval_adjustment "
+            "(node_id, kind, old_days, new_days, reason, produced_by) VALUES (%s,%s,%s,%s,%s,%s)",
+            (node_id, kind, old_days, new_days, reason, produced_by),
+        )
+        self._conn.commit()
+
+    def mark_reviewed(self, node_id: UUID, at: datetime) -> None:
+        """复审触碰：复位衰减时钟（last_reviewed_at=at, decay_score=0）。
+
+        轻量路径（与 update_decay 一致）：decay_score 是派生投影，不写 node_history、
+        不 bump tx_from；仅更新派生列并自增 version_seq 保活 OCC。
+        """
+        cur = self._conn.cursor(row_factory=dict_row)
+        if self._lock_hook is not None:
+            self._lock_hook()
+        cur.execute(
+            "UPDATE public.node SET last_reviewed_at=%(at)s, decay_score=0,"
+            " version_seq = version_seq + 1 WHERE id=%(id)s RETURNING version_seq",
+            dict(at=at, id=node_id),
+        )
         self._conn.commit()
 
     @staticmethod
@@ -608,6 +666,99 @@ class PgStorage(Storage):
         tid = cur.fetchone()["id"]
         self._conn.commit()
         return tid
+
+    def load_schedulable(self) -> list[SchedulableNode]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            SELECT
+              n.id,
+              n.track,
+              n.title,
+              n.content,
+              n.review_interval,
+              n.baseline_interval,
+              n.interval_source,
+              n.archived_at IS NOT NULL AS archived,
+              ( EXISTS(SELECT 1 FROM public.meta_claim m
+                         WHERE m.evidence_refs @> ARRAY[n.id] LIMIT 1)
+                OR EXISTS(SELECT 1 FROM public.modeling_artifact a
+                            WHERE a.evidence_refs @> ARRAY[n.id] LIMIT 1)
+              ) AS captured,
+              (SELECT count(*) FROM public.edge e WHERE e.src = n.id OR e.dst = n.id) AS conn_count,
+              (SELECT count(*) FROM public.context_member cm
+                 JOIN public.context c ON c.id = cm.context_id
+                 WHERE cm.node_id = n.id AND c.scope = 'self_loop') AS self_loop_count,
+              (SELECT count(*) FROM public.context_member cm
+                 JOIN public.context c ON c.id = cm.context_id
+                 WHERE cm.node_id = n.id AND c.scope = 'higher_dim') AS higher_dim_count
+            FROM public.node n
+            WHERE n.track = 'dynamic' AND n.archived_at IS NULL
+            """
+        )
+        out = []
+        for r in cur.fetchall():
+            iv = r["review_interval"]
+            bi = r["baseline_interval"]
+            out.append(SchedulableNode(
+                id=r["id"], track=r["track"], title=r["title"], content=r["content"],
+                captured=bool(r["captured"]), conn_count=int(r["conn_count"]),
+                self_loop_count=int(r["self_loop_count"]),
+                higher_dim_count=int(r["higher_dim_count"]),
+                interval_days=(iv.total_seconds() / 86400.0) if iv is not None else None,
+                baseline_days=(bi.total_seconds() / 86400.0) if bi is not None else None,
+                source=r["interval_source"], archived=bool(r["archived"]),
+            ))
+        return out
+
+    def load_metric_inputs(self) -> MetricInputs:
+        """复利度量快照（P5.2）：单游标多查询捞出普通数据，纯函数度量只吃此快照。"""
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            SELECT id, track, COALESCE(decay_score, 0) AS decay,
+                   (archived_at IS NOT NULL) AS archived
+            FROM public.node
+            """
+        )
+        nodes = [(r["id"], r["track"], float(r["decay"]), bool(r["archived"]))
+                 for r in cur.fetchall()]
+        cur.execute("SELECT src, dst, kind FROM public.edge")
+        edges = [(r["src"], r["dst"], r["kind"]) for r in cur.fetchall()]
+        cur.execute("SELECT evidence_refs FROM public.meta_claim "
+                    "WHERE evidence_refs IS NOT NULL")
+        claim_evidence = [list(r["evidence_refs"]) for r in cur.fetchall()]
+        cur.execute(
+            "SELECT ma.evidence_refs FROM public.modeling_artifact ma "
+            "JOIN public.transform t ON t.id = ma.produced_by "
+            "WHERE t.kind = 'combine' AND ma.evidence_refs IS NOT NULL"
+        )
+        artifact_evidence = [list(r["evidence_refs"]) for r in cur.fetchall()]
+        cur.execute("SELECT cited_claim_id FROM public.citation")
+        citations = [r["cited_claim_id"] for r in cur.fetchall()]
+        return MetricInputs(
+            nodes=nodes, edges=edges, claim_evidence=claim_evidence,
+            artifact_evidence=artifact_evidence, citations=citations,
+        )
+
+    def revert_interval_transform(self, transform_id: UUID) -> int:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT node_id, old_days FROM public.interval_adjustment "
+            "WHERE produced_by=%s::uuid ORDER BY created_at DESC",
+            (str(transform_id),),
+        )
+        changes = cur.fetchall()
+        for r in changes:
+            node_id, old_days = r["node_id"], r["old_days"]
+            cur.execute(
+                "UPDATE public.node SET review_interval=%s WHERE id=%s",
+                (timedelta(days=float(old_days)) if old_days is not None else None,
+                 str(node_id)),
+            )
+        cur.execute("DELETE FROM public.transform WHERE id=%s::uuid", (str(transform_id),))
+        self._conn.commit()
+        return len(changes)
 
     def clear_all(self) -> None:
         """测试用：清空所有领域表（保留 schema）。"""

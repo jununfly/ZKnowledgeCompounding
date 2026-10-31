@@ -122,6 +122,29 @@ class ReviewItem:
 
 
 @dataclass
+class SchedulableNode:
+    """调度信号快照（L1/L2 规则输入；由 `Storage.load_schedulable()` 产出，存储无关）。
+
+    所有字段都是纯数据：title/content 用于 L1 时间锚解析；captured/conn/self_loop/
+    higher_dim 是「是否腐化快」的结构信号；interval_days/baseline_days/source 是现状。
+    `days` 统一用 float 天作工作单元（与 schema 的 `interval` 类型解耦，便于纯函数测试）。
+    """
+
+    id: UUID | None = None
+    track: str = "dynamic"
+    title: str = ""
+    content: str | None = None
+    captured: bool = False                 # 已是某 claim/artifact 的 evidence（价值已沉淀）
+    conn_count: int = 0                    # edge 连接数
+    self_loop_count: int = 0               # 所属 self_loop context 数（项目躬身入局）
+    higher_dim_count: int = 0              # 所属 higher_dim context 数
+    interval_days: float | None = None     # 当前生效 review_interval（天）
+    baseline_days: float | None = None    # 当前 baseline_interval（天）
+    source: str = "auto"                   # auto / human（人工设定豁免自动化）
+    archived: bool = False
+
+
+@dataclass
 class AttentionObservation:
     """注意力观测埋点（对应 schema `attention_observation`，D8；budget 估计唯一输入）。"""
 
@@ -130,3 +153,24 @@ class AttentionObservation:
     completed: int = 0
     queue_remaining: int = 0
     labeled_completed: int = 0
+
+
+@dataclass
+class MetricInputs:
+    """复利度量计算的普通数据快照（存储无关）。
+
+    由 ``Storage.load_metric_inputs()`` 按后端捞取（PG 跑 SQL、内存跑 Python），
+    纯函数度量只吃本快照，无 DB/仓库依赖 → 可脱离存储单测（沿用 load_schedulable 的 seam）。
+    各字段都是最小可计算单元：
+      nodes            : list[(id, track, decay_score, archived)]
+      edges            : list[(src, dst, kind)]
+      claim_evidence   : list[list[node_id]]  每条 meta_claim 的 evidence_refs
+      artifact_evidence: list[list[node_id]]  来自 combine 的 modeling_artifact 的 evidence_refs
+      citations        : list[cited_claim_id]  citation 表记录的被复用 claim
+    """
+
+    nodes: list = field(default_factory=list)
+    edges: list = field(default_factory=list)
+    claim_evidence: list = field(default_factory=list)
+    artifact_evidence: list = field(default_factory=list)
+    citations: list = field(default_factory=list)
