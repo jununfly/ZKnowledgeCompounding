@@ -205,14 +205,22 @@ class PgNodeRepository(NodeRepository):
         cur = self._conn.cursor(row_factory=dict_row)
         if self._lock_hook is not None:
             self._lock_hook()
-        current = self._locked_snapshot(cur, node_id)
+        # 轻量路径（c2 决议 A-1a，2026-10-31）：decay_score 是 compute_decay_score 的派生
+        # 投影（由 last_reviewed_at+review_interval+now 可重算），并非事实 —— 不写 node_history、
+        # 不 bump tx_from（tx_from 始终标记「上次事实变更」），仅更新派生列并自增 version_seq
+        # 保活 OCC。FOR UPDATE 仍持行锁，保证并发写者串行（避免「两事务同读旧态各自更新」丢失更新）。
+        cur.execute(
+            "SELECT id, version_seq FROM public.node WHERE id=%(id)s FOR UPDATE",
+            dict(id=node_id),
+        )
+        row = cur.fetchone()
         # version_seq 由调用方持有时做严格 OCC；为 None（兼容旧调用）仅自增，
         # 退化由 FOR UPDATE 悲观锁串行兜底。expect 优先用调用方版本，否则用锁后当前版。
-        expect = version_seq if version_seq is not None else current
+        expect = version_seq if version_seq is not None else int(row["version_seq"])
         occ = "" if version_seq is None else " AND version_seq=%(expect)s"
         cur.execute(
-            f"UPDATE public.node SET decay_score=%(d)s, version_seq = version_seq + 1, "
-            f"tx_from=clock_timestamp() WHERE id=%(id)s{occ} RETURNING version_seq",
+            f"UPDATE public.node SET decay_score=%(d)s, version_seq = version_seq + 1 "
+            f"WHERE id=%(id)s{occ} RETURNING version_seq",
             dict(d=decay_score, id=node_id, expect=expect),
         )
         r = cur.fetchone()

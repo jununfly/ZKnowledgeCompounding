@@ -91,19 +91,16 @@ class MemoryNodeRepository(NodeRepository):
         return out
 
     def update_decay(self, node_id: UUID, decay_score: float, version_seq: int | None = None) -> None:
-        # 内存实现：update 也走 append-only 版本快照，与 Pg 语义一致
+        # 内存实现：与 Pg 轻量路径一致（c2 决议 A-1a，2026-10-31）—— decay_score 是
+        # compute_decay_score 的派生投影（可重算），并非事实：不写历史快照、不 bump tx_from
+        # （tx_from 始终标记「上次事实变更」），仅更新派生列并自增 version_seq 保活 OCC。
         cur = self._rows[node_id]
         if version_seq is not None and version_seq != cur.version_seq:
             raise ConcurrentModification(
                 f"node {node_id} decay 更新版本冲突：期望 version_seq={version_seq}，"
                 f"当前为 {cur.version_seq}"
             )
-        snap = replace(cur)
-        snap.tx_to = datetime.now()
-        self._versions.setdefault(node_id, []).append(snap)
         cur.decay_score = decay_score
-        cur.tx_from = datetime.now()
-        cur.tx_to = None
         cur.version_seq += 1
 
     def set_interval(
