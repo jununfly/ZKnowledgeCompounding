@@ -129,6 +129,16 @@ REGISTRY: dict[str, Parameter] = {
            "**换维度 = 重建索引**，如需升级走加列路径而非改本值",
            calibrated_at=SPIKE14_AT,
            ),
+        # ---- 双轨分流（P2.2 · DecisionRouter + 词法三路双信号弃权）
+        _p("ROUTING_LLM_CONF_GATE", 0.5, SIMULATION,
+           "DecisionRouter(LLM) 置信度门槛；低于此强置 vague。源自 spike-03 GATE=0.5"),
+        _p("ROUTING_LEXICAL_CONF_GATE", 0.5, PLACEHOLDER,
+           "词法 TF-IDF 三路置信度门槛；低于此判 vague。**第二信号严禁用 embedding**"
+           "(R16：embedding 仅限检索召回/反向连接候选，spike-03 实测 nomic dangerous=3)，"
+           "故用 embedding-free 词法路由作交叉验证"),
+        _p("ROUTING_REQUIRE_DUAL_SIGNAL", True, PLACEHOLDER,
+           "True=必须 LLM 与词法双信号一致才自动提交真实轨道；否则(含词法无法判定)→vague→人工。"
+           "冷启动词法无训练数据时一切走人工(安全欠覆盖，非危险)，随人工定轨积累逐渐自动化"),
     ]
 }
 

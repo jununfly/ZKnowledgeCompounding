@@ -115,7 +115,7 @@ class ReviewItem:
 
     id: UUID | None = None
     node_id: UUID = field(default_factory=uuid4)
-    action: str = "distill"  # distill | archive | abstain
+    action: str = "distill"  # distill | archive | abstain | classify(路由人工兜底)
     reason: str | None = None
     created_at: datetime | None = None
     resolved: bool = False
