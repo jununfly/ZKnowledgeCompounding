@@ -706,7 +706,7 @@
       "id": "1-5-4",
       "uid": "01a18dff91d7-0898664a41",
       "label": "P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -714,6 +714,11 @@
         {
           "q": "1-5-4 第一切片范围？",
           "answer": "Port spike-06 到生产：schema(context/context_member/transform)已在 0001 基线就绪，无需新迁移。本切片在 repository seam 上加 assemble_context(一transform->一context+members,produced_by级联)+revert_assembly(删transform->FK CASCADE 撤 context+members)+discover_higher_dim(pgvector k-NN,T4.1)+人审成员 add/remove。补 zkc/context.py 算子与双实现单测。R15：membership 先用已验证的 junction 表(非高频重算即无写放大)；查询时动态视图留作压测后选项。",
+          "note": ""
+        },
+        {
+          "q": "T4.1 命名/触发策略范围？",
+          "answer": "收尾切片：(1) 命名=ContextNamer 复用 distill 的 LLM=Callable[[str],str] seam（可注入、免重依赖），LLM 不可达/空返回退化为确定性关键词命名(fallback_name)，绝不因命名失败阻断提议；(2) 触发=人审闸门版 propose_higher_dim 只「提议」不自动创建——过相似度阈值(CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7 placeholder)+最小近邻数(MIN_MEMBERS=2 placeholder)+去重闸门(find_higher_dim_for_seed 同种子已存在则跳过)三关全过才 would_create=True；create_higher_dim 显式落库（未来接 UI/review_queue 人审确认）。全局每日提议数频率上限属调度层(注意力预算)，不在本切片内，登记为后续项。",
           "note": ""
         }
       ],
@@ -926,7 +931,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 01:21:57",
+    "updated": "2026-11-01 01:40:32",
     "md_file": "ROADMAP.md"
   },
   "edges": [
