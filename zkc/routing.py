@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 import urllib.request
 from abc import ABC, abstractmethod
@@ -37,6 +38,8 @@ from . import tuning
 DEFAULT_LLM_MODEL = "qwen2.5-coder:1.5b"
 DEFAULT_OLLAMA_URL = "http://localhost:11434"
 VAGUE = "unrouted"  # 弃权/模糊在 node.track 上的落点（需人工定轨）
+# 词法语料持久化路径（本地优先离线；LexicalRouter 冷启动靠它逐渐自动化）
+DEFAULT_LEXICAL_CORPUS_PATH = "data/lexical_corpus.json"
 
 SYSTEM_PROMPT = (
     "你是 ZKC 双轨分类器。只输出 JSON："
@@ -58,6 +61,11 @@ class ChatClient(ABC):
         """返回解析后的 JSON dict；失败/不可达返回 None。"""
         ...
 
+    def health(self) -> bool:
+        """客户端是否可达。默认 True；OllamaClient 走真实探测。
+        route_text 在线模式下会用它自动降级为离线兜底（不变量 5：本地优先离线）。"""
+        return True
+
 
 class OllamaClient(ChatClient):
     """本地 Ollama /api/chat（stdlib urllib，零依赖）。超时由调用方决定。"""
@@ -65,8 +73,18 @@ class OllamaClient(ChatClient):
     def __init__(self, model: str = DEFAULT_LLM_MODEL, url: str = DEFAULT_OLLAMA_URL,
                  timeout: float = 120.0):
         self.model = model
-        self.url = url.rstrip("/") + "/api/chat"
+        self.base_url = url.rstrip("/")
+        self.url = self.base_url + "/api/chat"
         self.timeout = timeout
+
+    def health(self) -> bool:
+        """GET /api/tags 探活；不可达返回 False（交给 route_text 离线兜底）。"""
+        try:
+            req = urllib.request.Request(self.base_url + "/api/tags")
+            with urllib.request.urlopen(req, timeout=5.0) as resp:
+                return resp.status == 200
+        except (urllib.error.URLError, OSError):
+            return False
 
     def chat_json(self, system: str, user: str) -> Optional[dict]:
         payload = json.dumps({
@@ -239,6 +257,12 @@ def route_text(
     if require_dual_signal is None:
         require_dual_signal = tuning.get("ROUTING_REQUIRE_DUAL_SIGNAL")
 
+    # —— 自动离线探测（不变量 5：本地优先离线）——
+    # 调用方声明 llm_available=True 但客户端实际不可达 → 自动降级离线兜底，
+    # 捕获流程绝不因路由模块失败而阻塞。
+    if llm_available and not decision_router.client.health():
+        llm_available = False
+
     # —— 信号 A（LLM）——
     llm_track, llm_conf = (None, 0.0)
     if llm_available:
@@ -300,3 +324,25 @@ def route_text(
         lexical_track=lex_track, lexical_conf=lex_conf,
         source="llm-only", aborted="no-lexical-crosscheck",
     )
+
+
+# ----------------------------------------------------------------- 词法语料持久化（LexicalRouter 冷启动学习闭环）
+def save_lexical_corpus(path: str, examples: list[tuple[str, str]]) -> None:
+    """持久化标注语料 [(text, label)]，label∈{static,dynamic,vague}。本地优先离线。"""
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(
+            [{"text": t, "label": l} for t, l in examples],
+            f, ensure_ascii=False, indent=2,
+        )
+
+
+def load_lexical_corpus(path: str) -> list[tuple[str, str]]:
+    """读取标注语料；文件不存在返回空列表（冷启动起点）。"""
+    if not os.path.exists(path):
+        return []
+    with open(path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return [(row["text"], row["label"]) for row in data]

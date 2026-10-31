@@ -5,16 +5,24 @@ LLM 信号用 FakeClient 注入；词法信号用受控拟合集。
 """
 from __future__ import annotations
 
+import tempfile
 import unittest
 
 from zkc import routing
 from zkc.routing import (
     DecisionRouter,
     LexicalRouter,
+    OllamaClient,
     RoutingResult,
+    load_lexical_corpus,
     route_text,
 )
-from zkc.ingest import ingest_with_routing, CLASSIFY_ACTION
+from zkc.ingest import (
+    ingest_with_routing,
+    list_pending_classify,
+    resolve_classify,
+    CLASSIFY_ACTION,
+)
 from zkc.repository import get_storage
 
 
@@ -26,6 +34,13 @@ class FakeClient(routing.ChatClient):
 
     def chat_json(self, system, user):
         return self.response
+
+
+class UnhealthyClient(FakeClient):
+    """health()=False：模拟 Ollama 进程挂掉，验证自动离线降级。"""
+
+    def health(self):
+        return False
 
 
 # 受控拟合集：static / dynamic 各自词汇基本不交叠
@@ -169,6 +184,145 @@ class IngestWithRoutingTest(unittest.TestCase):
         self.assertEqual(len(open_items), 1)
         self.assertEqual(open_items[0].action, CLASSIFY_ACTION)
         self.assertEqual(open_items[0].node_id, node.id)
+
+
+# ----------------------------------------------------------------- P2.3 联调（1-3-3）
+class HealthAndAutoOfflineTest(unittest.TestCase):
+    """残留#1：Ollama 探活 + route_text 自动离线降级（沙箱无 Ollama 也可验证）。"""
+
+    def test_ollama_health_false_on_closed_port(self):
+        # 连接必然被拒的端口 → health 必为 False，与机器上是否装 Ollama 无关
+        client = OllamaClient(url="http://localhost:59999")
+        self.assertFalse(client.health())
+
+    def test_route_text_auto_degrades_when_client_unhealthy(self):
+        # 调用方以为 LLM 在线，但 health()=False → 自动走离线兜底（词法单信号）
+        dr = DecisionRouter(UnhealthyClient({"track": "dynamic", "confidence": 0.9}))
+        res = route_text(EX_STATIC, dr, _fitted_lexical(), llm_available=True)
+        self.assertEqual(res.track, "static")
+        self.assertEqual(res.source, "lexical-only")
+        self.assertEqual(res.aborted, "llm-unavailable-lexical-fallback")
+
+    def test_route_text_auto_offline_undecided_abstains(self):
+        dr = DecisionRouter(UnhealthyClient({"track": "dynamic", "confidence": 0.9}))
+        res = route_text("嗯随便", dr, _fitted_lexical(), llm_available=True)
+        self.assertEqual(res.track, routing.VAGUE)
+        self.assertEqual(res.source, "abstain-offline")
+
+
+class ResolveClassifyTest(unittest.TestCase):
+    """残留#2/#3：classify 消费 + 词法语料回灌。"""
+
+    def _vague_ingest(self, store, title, content):
+        dr = DecisionRouter(FakeClient({"track": "vague", "confidence": 0.1}))
+        node, _ = ingest_with_routing(
+            title=title, content=content,
+            decision_router=dr, lexical_router=_fitted_lexical(), store=store,
+        )
+        return node
+
+    def test_list_pending_classify_filters_action_and_resolved(self):
+        store = get_storage("memory")
+        self._vague_ingest(store, "含糊1", "x")
+        self._vague_ingest(store, "含糊2", "y")
+        # 非 classify 的 open 条目不应混入
+        other = store.review_queue.enqueue(store.nodes.list_by_track("unrouted")[0].id,
+                                           "distill", reason="其他动作")
+        items = list_pending_classify(store=store)
+        self.assertEqual(len(items), 2)
+        self.assertTrue(all(it.action == CLASSIFY_ACTION for it in items))
+        # resolve 一个后只剩 1
+        store.review_queue.resolve(other.id)
+        items[0] and store.review_queue.resolve(items[0].id)
+        self.assertEqual(len(list_pending_classify(store=store)), 1)
+
+    def test_resolve_sets_track_and_marks_resolved(self):
+        store = get_storage("memory")
+        node = self._vague_ingest(store, "待定", "内容")
+        item = list_pending_classify(store=store)[0]
+        saved = resolve_classify(item.id, "dynamic", store=store)
+        self.assertEqual(saved.track, "dynamic")
+        self.assertIsNone(saved.routing_confidence)  # 人工路径无 LLM 置信
+        self.assertEqual(list_pending_classify(store=store), [])
+        # OCC 版本链：unrouted(v1) → dynamic(v2)，历史快照保留
+        hist = store.nodes.history(saved.id)
+        self.assertEqual(len(hist), 2)
+        self.assertEqual(hist[0].track, routing.VAGUE)
+        self.assertEqual(saved.version_seq, 2)
+
+    def test_resolve_rejects_invalid_track(self):
+        store = get_storage("memory")
+        node = self._vague_ingest(store, "待定", "内容")
+        item = list_pending_classify(store=store)[0]
+        with self.assertRaises(ValueError):
+            resolve_classify(item.id, "vague", store=store)  # vague 不是轨道
+        with self.assertRaises(ValueError):
+            resolve_classify(item.id, "乱写", store=store)
+        # 条目仍未消费
+        self.assertEqual(len(list_pending_classify(store=store)), 1)
+
+    def test_resolve_unknown_or_resolved_item_rejected(self):
+        store = get_storage("memory")
+        node = self._vague_ingest(store, "待定", "内容")
+        item = list_pending_classify(store=store)[0]
+        resolve_classify(item.id, "static", store=store)
+        with self.assertRaises(ValueError):
+            resolve_classify(item.id, "dynamic", store=store)  # 已 resolved 不可再定轨
+
+    def test_resolve_feeds_corpus_and_refits(self):
+        store = get_storage("memory")
+        router = LexicalRouter()  # 冷启动未 fit
+        self.assertFalse(router.fitted)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = f"{tmp}/corpus.json"
+            node = self._vague_ingest(store, "待定", "内容")
+            item = list_pending_classify(store=store)[0]
+            resolve_classify(item.id, "dynamic", store=store,
+                             lexical_router=router, lexical_corpus_path=path)
+            # 语料落盘 + 内容正确
+            corpus = load_lexical_corpus(path)
+            self.assertEqual(corpus, [("待定 内容", "dynamic")])
+            # 样本不足 3/类 → 仍无法自动提交（安全欠覆盖保持）
+            self.assertFalse(router.fitted)
+
+    def test_end_to_end_vague_to_learned_router(self):
+        """端到端闭环：vague→classify→人工定轨×6→LexicalRouter 自动 fit 并能预测。
+
+        gate=0.25：实测发现（记录进 roadmap）——字级 unigram TF-IDF + 小语料下，
+        类质心余弦对语料原文也只有 ~0.33，tuning 的 0.5 恒弃权；gate 校准属
+        真实语料阶段的 tuning 任务（PLACEHOLDER 语义一致），本测试只验证学习闭环。
+        """
+        store = get_storage("memory")
+        router = LexicalRouter(gate=0.25)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = f"{tmp}/corpus.json"
+            samples = [
+                ("事项1", "续租合同租金 6800", "static"),
+                ("事项2", "服务器地址 10.0.0.1", "static"),
+                ("事项3", "上线日期定在 2026", "static"),
+                ("事项4", "明天要开会讨论需求", "dynamic"),
+                ("事项5", "今天记得回复邮件", "dynamic"),
+                ("事项6", "下午去处理线上故障", "dynamic"),
+            ]
+            for title, content, track in samples:
+                self._vague_ingest(store, title, content)
+                item = list_pending_classify(store=store)[0]
+                resolve_classify(item.id, track, store=store,
+                                 lexical_router=router, lexical_corpus_path=path)
+            self.assertEqual(load_lexical_corpus(path), [
+                ("事项1 续租合同租金 6800", "static"),
+                ("事项2 服务器地址 10.0.0.1", "static"),
+                ("事项3 上线日期定在 2026", "static"),
+                ("事项4 明天要开会讨论需求", "dynamic"),
+                ("事项5 今天记得回复邮件", "dynamic"),
+                ("事项6 下午去处理线上故障", "dynamic"),
+            ])
+            self.assertTrue(router.fitted)  # ≥3/类 → 自动化解锁
+            track, conf = router.predict("续租合同金额确认")
+            self.assertEqual(track, "static")
+            self.assertGreaterEqual(conf, 0.0)
+            # 队列清空：闭环无残留
+            self.assertEqual(list_pending_classify(store=store), [])
 
 
 if __name__ == "__main__":

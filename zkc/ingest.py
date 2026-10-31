@@ -16,7 +16,7 @@ from typing import Optional
 from uuid import UUID
 
 from .repository import Storage, get_storage
-from .repository.models import Node
+from .repository.models import Node, ReviewItem
 from . import routing
 from .routing import RoutingResult
 
@@ -138,3 +138,67 @@ def ingest_with_routing(
     if result.track == routing.VAGUE:
         store.review_queue.enqueue(saved.id, CLASSIFY_ACTION, reason=result.aborted)
     return saved, result
+
+
+# ----------------------------------------------------------------- P2.3 联调：classify 的消费与回灌
+# 人工兜底可定轨的轨道集合；vague 不是轨道——定了轨就不再是 unrouted。
+RESOLVABLE_TRACKS = ("static", "dynamic")
+
+
+def list_pending_classify(*, store: Optional[Storage] = None) -> list[ReviewItem]:
+    """待人工定轨的 classify 条目（每日复审队列 UI / P4.2 消费）。
+
+    只返回 action=classify 且未 resolved 的条目，按入队序（FIFO）。
+    """
+    store = store or get_storage()
+    return [it for it in store.review_queue.list_open() if it.action == CLASSIFY_ACTION]
+
+
+def resolve_classify(
+    item_id: UUID,
+    track: str,
+    *,
+    store: Optional[Storage] = None,
+    lexical_router: Optional[routing.LexicalRouter] = None,
+    lexical_corpus_path: Optional[str] = None,
+    text: Optional[str] = None,
+) -> Node:
+    """人工兜底定轨（P2.3 联调闭环）。
+
+    - 校验 track ∈ {static, dynamic}，非法即拒（人工输入同样过闸）。
+    - node.track 落定（OCC 版本快照，append-only），routing_confidence 留 None（人工路径无 LLM 置信）。
+    - review_queue 条目标记 resolved。
+    - 可选回灌：提供 lexical_router + lexical_corpus_path 时，把 (text, track) 追加进
+      词法语料并 refit —— 人工定轨样本积累 ≥3/类后 LexicalRouter 逐渐自动化
+      （冷启动安全欠覆盖 → 学习闭环）。
+    text 缺省用 node.title + content 重建（与 ingest_with_routing 的路由文本同式）。
+    """
+    if track not in RESOLVABLE_TRACKS:
+        raise ValueError(f"track 必须 ∈ {RESOLVABLE_TRACKS}，收到 {track!r}")
+    store = store or get_storage()
+
+    item = next(
+        (it for it in store.review_queue.list_open()
+         if it.id == item_id and it.action == CLASSIFY_ACTION),
+        None,
+    )
+    if item is None:
+        raise ValueError(f"classify 条目 {item_id} 不存在或已 resolved")
+
+    node = store.nodes.get(item.node_id)
+    if node is None:
+        raise ValueError(f"node {item.node_id} 不存在（数据不一致）")
+
+    node.track = track
+    node.routing_confidence = None
+    saved = store.nodes.save(node)  # OCC：version_seq 校验 + 历史快照
+    store.review_queue.resolve(item_id)
+
+    if lexical_router is not None and lexical_corpus_path is not None:
+        if text is None:
+            text = saved.title + (" " + saved.content if saved.content else "")
+        examples = routing.load_lexical_corpus(lexical_corpus_path)
+        examples.append((text, track))
+        routing.save_lexical_corpus(lexical_corpus_path, examples)
+        lexical_router.fit(examples)
+    return saved
