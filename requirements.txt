@@ -1,0 +1,6 @@
+# ZKC 本地 web 应用依赖（ADR-0001：FastAPI + SSR，localhost:8000）
+# 运行：fastapi + uvicorn + python-multipart（Form 解析）；测试：httpx（FastAPI TestClient 需要）
+fastapi
+uvicorn
+python-multipart
+httpx
