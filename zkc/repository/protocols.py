@@ -36,14 +36,22 @@ class NodeRepository(ABC):
 
     @abstractmethod
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
-        """decay≥0.6 且 (last_reviewed_at + review_interval) ≤ as_of 的节点。"""
+        """decay_score ≥ tuning.SURFACE_THRESHOLD（见 zkc.tuning）且
+        (last_reviewed_at + review_interval) ≤ as_of 的节点。"""
 
     @abstractmethod
-    def update_decay(self, node_id: UUID, decay_score: float) -> None: ...
+    def update_decay(
+        self, node_id: UUID, decay_score: float, version_seq: int | None = None
+    ) -> None: ...
 
     @abstractmethod
     def set_interval(
-        self, node_id: UUID, interval: timedelta, source: str, reason: str
+        self,
+        node_id: UUID,
+        interval: timedelta,
+        source: str,
+        reason: str,
+        version_seq: int | None = None,
     ) -> None: ...
 
 
