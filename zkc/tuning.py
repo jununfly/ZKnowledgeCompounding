@@ -120,6 +120,10 @@ REGISTRY: dict[str, Parameter] = {
         # ---- 蒸馏 HITL（独立预算，不占复审预算）
         _p("F_CAP_RATIO", 0.20, PLACEHOLDER,
            "蒸馏人审封顶比例；只对蒸馏人审侧生效（R11：两套独立预算）"),
+        # ---- 蒸馏语义不变式（P3.1 · 候选不提供，ZKC 自建）
+        _p("DISTILL_MIN_CITATIONS_PER_CLAIM", 1, PLACEHOLDER,
+           "每条 meta-claim 至少引用 1 个来源（去繁非凭空）。属逻辑不变式而非可调阈值，"
+           "但经 tuning 统一出口，便于后续若放宽（如纯综述节点允许 0）可留痕"),
         # ---- embedding（spike 14 实测定死）
         _p("EMBEDDING_MODEL", "nomic-embed-text:latest", CALIBRATED,
            "spike 14 实测；仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 "
