@@ -380,13 +380,45 @@
       "id": "1-3-2",
       "uid": "01a18dff8937-07fffd4a0c",
       "label": "P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "范围判定",
+          "answer": "Product execution：本节点把 spike 02/03 验证过的分流方案落地进 zkc/ 生产代码（路由引擎+双信号弃权+人工兜底+routing_confidence），允许修改项目代码；旧 spike 目录保持时间胶囊不回改。",
+          "note": ""
+        },
+        {
+          "q": "双信号构成",
+          "answer": "信号A=DecisionRouter(LLM 推理，本地 Ollama，模型可替换)；信号B=词法 TF-IDF 三路路由(embedding-free)。【关键偏差】spike-03 曾建议「DecisionRouter+嵌入相似度」作安全阀，但 R16 硬约束 embedding 严禁用于安全判定(spike-03 实测 nomic dangerous=3)，故第二信号改为词法 TF-IDF(spike-03 实测 TF-IDF 三路 dangerous=0，安全属性达标)。",
+          "note": ""
+        },
+        {
+          "q": "弃权规则",
+          "answer": "同时满足①LLM conf>=GATE(0.5) ②词法 conf>=GATE ③两信号轨道一致(static/dynamic) 才提交真实轨道；任一不满足(含任一信号判 vague 或两信号不一致)→vague→人工兜底。提交清晰项到 vague 属安全欠覆盖(非危险)，与 spike-03 语义一致。",
+          "note": ""
+        },
+        {
+          "q": "离线/本地优先兜底",
+          "answer": "LLM 客户端不可达(Ollama 未起)→退化为词法单信号(source=lexical-only，记录告警：无交叉验证、安全性下降)；词法仍无法判定→vague。捕获流程绝不因路由模块失败而阻塞(不变量5 本地优先离线)。",
+          "note": ""
+        },
+        {
+          "q": "人工兜底机制",
+          "answer": "vague/弃权条目 track 保持 unrouted，并向 review_queue 入队 action='classify'(新增动作；数据层无字符串校验，仅文档标注)，由每日复审队列 UI(P4.2) 消费人工定轨。routing_confidence 存 LLM 置信度。",
+          "note": ""
+        },
+        {
+          "q": "阈值治理",
+          "answer": "新增 tuning 参数 ROUTING_LLM_CONF_GATE=0.5(SIMULATION，源自 spike-03 GATE)、ROUTING_LEXICAL_CONF_GATE=0.5(PLACEHOLDER)；业务代码禁止裸数字。模型名 qwen2.5-coder:1.5b 作模块常量。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3-3": {
       "id": "1-3-3",
@@ -691,7 +723,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 11:01:12",
+    "updated": "2026-10-31 13:20:50",
     "md_file": "ROADMAP.md"
   },
   "edges": [
