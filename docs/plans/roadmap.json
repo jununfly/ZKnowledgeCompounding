@@ -363,6 +363,11 @@
           "q": "衰减函数与阈值来源",
           "answer": "线性函数 min(1, elapsed/interval) 当选；函数选择走 tuning.get('DECAY_FUNCTION')，阈值 SURFACE_THRESHOLD/ROT_THRESHOLD 走 tuning.get()，不再从 spike 硬编码。",
           "note": ""
+        },
+        {
+          "q": "c2 · decay 刷新与双时态 node_history 的关系（A-1a+A-3a）",
+          "answer": "decay_score 是 compute_decay_score 的派生投影（可重算），不是事实 → update_decay 不写 node_history、不 bump tx_from（tx_from 始终标记上次事实变更）。pg/memory 两后端同构轻量路径；set_interval 仍快照（事实决策）。已落地并锁进测试。",
+          "note": ""
         }
       ],
       "notes": "",
@@ -822,7 +827,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 16:55:33",
+    "updated": "2026-10-31 18:54:50",
     "md_file": "ROADMAP.md"
   },
   "edges": [
