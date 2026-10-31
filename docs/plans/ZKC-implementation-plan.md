@@ -3,10 +3,10 @@
 > 状态：**v0.6**（2026-10-31 按代码库对账后同步）
 > - **已拍板并落地**：§0.1 六项 TODO + R2 六项（含 **③ 工期 = 4 h/周**）；架构三角审计 A 档 12 项已回填架构+PRD、B 档 3 项转 §5（R13/R14/R15）；**§3.2 裁剪方案 = S1 已生效**（执行顺序 P0→P1→P2→P4→P3→P5→P6）。
 > - **P0 文档收口：完成**（R9 已解决）。P0 剩 P0.3「评审签字」待 zj 一次性签字。
-> - **P1 存储地基：进行中 3/5** —— P1.0（编码器定维，R16 解决）/ P1.1（迁移 D1–D9，**11 tests passed**）/ P1.4（阈值表，**17 tests passed**）已完成；剩 P1.2 repository seam、P1.3 decay 触发器实测。代码资产见 **§10**。
+> - **P1 存储地基：全部完成（7/7 节点）** —— P1.0（编码器定维，R16）/ P1.1（迁移 D1–D9，**11 tests passed**）/ P1.2（repository seam）/ P1.3（双时态+decay 线性实测）/ P1.4（阈值表 **17 tests** + 治理收口）/ P1.5（**R19 关闭=不回迁 Alembic**，guard 测试锁方向）均已完成。代码资产见 **§10**。
 > - **⚠️ 全部改动未 commit**：`git status` 有 4 个 modified + 7 个 untracked（含 `zkc/`、`migrations/`、`tests/`、`spikes/spike-14-embedding-dim/`、`docs/zj-adr/`、`ZJ-CONTEXT.md`）。按 zj 约定 commit 需显式触发。
 > - **⚠️ 4 h/周 的连带后果（见 §3.2）**：日历工期 **24–32 周（约 6–8 个月）**，与 P6「每天打开」不可共存 → **R10 降级判定默认启用**（上线判定 = 累计 ≥20 个带标注复审动作）。
-> - **⚠️ 本次对账修正的过时结论（按 §0 铁律 2 留痕，见 §5 R19）**：`zkc/migrate.py` 的选型理由「pip 装不上包」**已被推翻**（走代理可装）。迁移器保留，但**是否回迁 Alembic 重新成为 open 决策**。
+> - **⚠️ 本次对账修正的过时结论（按 §0 铁律 2 留痕，见 §5 R19）**：`zkc/migrate.py` 的选型理由「pip 装不上包」**已被推翻**（走代理可装）——此为留痕，不再作为选型依据。R19 已于 **P1.5（2026-10-31 收口）正式关闭 = 不回迁 Alembic**：判定依据转为 R19 触发条件（P1.2 = raw SQL + repository seam，未引入 SQLAlchemy ORM → 触发未满足）+ 第一性不变量「依赖最少」+ 11 tests 跑通 + sha256 留痕/`verify` 闸门。锁方向 guard 测试见 `tests/test_r19_guard.py`。
 > 目的：把 `PRD v0.2` + `架构 v1.2` + **15 个** spike 的**已验证决策**，转化为「开工 → 上线」的可执行计划。
 > 本文件是**决策级 → 执行级**的桥接，不重复 PRD/架构内容，只引用与拆解。
 >
@@ -118,7 +118,7 @@
 | **溯源权威** | **`meta_claim.evidence_refs` 唯一权威**（schema 级 NOT NULL，是 claim 存在的前提）；`citation` 只记「后续复用」的**行为事件**，仅用于复用率度量 | zj 拍板 2026-10-31（R2-4） | 已写入架构 §5 权威声明。**`citation` 不参与「是否已捕获」判定**——否则"被引用一次"会被等同于"价值已沉淀"，与单程票语义冲突 |
 | **注意力预算分账** | **两套独立预算**：复审预算（`budget_per_day`，初值 1.0/天）与**蒸馏人审预算**分离计量 | zj 拍板 2026-10-31（R2-3） | 性质不同（维持 vs 生产）；`F_cap=20%` 只对蒸馏人审侧生效，不再把 0.2 条/天当上限 |
 | **度量 operationalize** | 5 指标判定者**全部自动**；复利系数**等权 0.25 起步**（标占位）；复盘节奏**每周**（与 P6 的 7 活跃日对齐） | zj 拍板 2026-10-31（R2-5） | 见 §7；X.1 并入不变量 5 不单列；X.2/X.3 转非目标（见 §1.3） |
-| **schema 迁移方式** | **自研零依赖迁移器** `zkc/migrate.py`（`docker exec psql` + `schema_migration` 版本表 + sha256 留痕）；**不用 Alembic** | P1.1（2026-10-31） | 子命令 `status/upgrade/downgrade/verify`；单事务应用；`verify` 拦「改历史迁移」。**⚠️ 选型理由部分撤回，是否回迁 Alembic 重新 open —— 见 §5 R19** |
+| **schema 迁移方式** | **自研零依赖迁移器** `zkc/migrate.py`（`docker exec psql` + `schema_migration` 版本表 + sha256 留痕）；**不用 Alembic** | P1.1（2026-10-31）/ **R19 关闭 2026-10-31** | 子命令 `status/upgrade/downgrade/verify`；单事务应用；`verify` 拦「改历史迁移」。**R19 已关闭 = 不回迁 Alembic**：「pip 装不上」理由已作废留痕，最终判定依 P1.2（raw SQL + repository seam，无 SQLAlchemy ORM → 回迁触发未满足）+ 依赖最少不变量；锁方向 guard 见 `tests/test_r19_guard.py` |
 | **embedding 编码器** | **`nomic-embed-text:latest` → `vector(768)`** | Spike 14 实测 2026-10-31（R16 已解决） | 9.5ms/条、274MB（vs qwen3 4096d：183.2ms/条、4.7GB）。**硬约束：仅限检索召回/反向连接候选，严禁用于安全判定**（spike 03：nomic dangerous=3，该职责归 DecisionRouter）。可逆路径 = 加列 `embedding_strong vector(4096)` |
 
 > 上述决策若有调整，必须回到对应 spike 复测并回填架构文档，不得静默改。
@@ -208,10 +208,10 @@
   - **验证**：upgrade / downgrade **完整重放通过**；幂等（重复 upgrade 为空操作）；schema 级不变量实测被拒（无 `evidence_refs` 的 claim、`decay_score` 越界、`labeled_completed > completed` 三者均报错）。
   - **产物库**：`zkc_dev`（已建并处于 `0001 applied`，`sha=824880c46260`）；实测 **12 张表**（11 张领域表 + `schema_migration`）、`node.embedding = vector(768)`；遗留库 `zkc` **原地保留**作 spike 时间胶囊、不回改。
   - **用法速查**：`python -m zkc.migrate {status|upgrade|downgrade|verify} [--db zkc_dev] [--to 0001]`
-- [ ] P1.2 repository seam 抽象（保持 Kuzu/TerminusDB 可替换）—— **前置已验证**：`psycopg[binary]` 可装（走代理）且已连通 `zkc_dev`
+- [x] **P1.2 repository seam 抽象（保持 Kuzu/TerminusDB 可替换）** ✅ **已完成 2026-10-31**（roadmap 1-2-5）：`zkc/repository/`（`models`/`protocols`/`memory`/`pg`/`connection`/`__init__` 工厂 `get_storage`，`ZKC_STORAGE=pg|memory`）；`tests/test_repository.py` 用同一份行为契约同时跑内存 fake 与真实 PG（建 `zkc_repo_test` 库跑 0001），双实现一致；**前置已验证**：`psycopg[binary]` 可装（走代理）且已连通 `zkc_dev`
 - [x] **P1.3 双时态 + decay 触发器（线性）实测（Spike 01）** ✅ **已完成 2026-10-31**：新建 `zkc/decay.py`（纯函数线性衰减模型 + `refresh_decay` 应用层维护扫描；阈值走 `tuning.get`）；`pg.list_due_for_review` 与 `memory.list_due_for_review` 的硬编码 `0.6` 改为 `tuning.get('SURFACE_THRESHOLD')`；`tests/test_decay.py`（9 纯单测）+ `tests/test_decay_pg.py`（3 真实 PG 集成实测：refresh 写回线性分 / append-only 双时态版本链不破 / 到期+超阈入选）；全仓 99 tests passed。双时态已在 0002 迁移 + `pg.save/_locked_snapshot` 落地
 - [x] **P1.4 剩余（阈值治理收口）** ✅ **已完成 2026-10-31**：① 审计 zkc/ 全部业务代码，`pg/memory.list_due_for_review` 裸 `0.6` 已替换为 `tuning.get('SURFACE_THRESHOLD')`；`routing.py` 的 LLM/词法门槛早已走 `tuning.get`，无裸阈值残留；② `zkc/web/app.py` 新增 `GET /tuning` 端点，返回全部 29 个参数及 `source` 标签（`tuning.as_rows()`），UI/日志展示阈值须带来源铁律落地
-- [ ] **P1.5 决定是否回迁 Alembic**（§5 **R19**，由本次对账新暴露）：迁移器已跑通，但「pip 装不上」的原始理由已撤回；**在写业务代码之前**是切换成本最低的窗口
+- [x] **P1.5 决定是否回迁 Alembic（R19）** ✅ **已完成 2026-10-31（收口 = 不回迁）**：判定 = P1.2 走「raw SQL + repository seam」（psycopg 裸 SQL，**未引入 SQLAlchemy ORM 模型层**）→ R19 回迁触发条件**未满足**，维持自研 `zkc/migrate.py`。最终依据（替换已作废的「pip 装不上」理由）：① 触发条件未满足；② 第一性不变量「依赖最少」；③ 11 tests 跑通 + sha256 留痕 + `verify` 闸门拦「改历史迁移」。代价（无 autogenerate）本阶段可接受。**锁方向 guard 测试 = `tests/test_r19_guard.py`**（断言 zkc/ 无 SQLAlchemy/Alembic import、requirements 不含两者、迁移权威=zkc.migrate）；未来 P1.2 演进为 ORM 时该测试变红，自动触发 R19 重开。回迁窗口已关闭。
 
 **P2 摄入+分流**
 - [x] P2.1 快捕获 UX（本地优先离线）（T0.2）
@@ -269,7 +269,7 @@
 | R16 | ~~**embedding 编码器未最终确定**~~ | 审计 A6 | ~~换编码器 = 重建索引~~ | **已定死（2026-10-31，spike 14 实测）**：**`nomic-embed-text` → `vector(768)`**。实测 768d / 9.5ms/条 / 274MB vs qwen3 4096d / 183.2ms/条 / 4.7GB（延迟 19.3×、体积 17×）；两者均已 L2 归一化。**硬约束**：embedding **仅限检索召回/反向连接候选，严禁用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3，该职责归 DecisionRouter）。**可逆路径**：加列 `embedding_strong vector(4096)` 属增量，不重建 768d 索引 | 已解决 |
 | R18 | **中文检索召回质量未实测**：spike 14 只测维度/延迟/归一化，**未评估召回质量**；nomic 中文语义弱于 qwen3 是合理预期但无证据 | spike 14 限定 | P5 检索/反向连接候选不准 → 反向连接发现率下降 | P5 用**真实语料**验证召回；不合格则走 R16 的可逆路径（加列 `embedding_strong vector(4096)`）；MVP 检索以结构化查询（track/decay/topic/context）为主，embedding 只做候选召回 + 人确认，降低对该风险的暴露 | open |
 | R12 | ~~7 个无 spike 覆盖的 topic 转为待做~~（T0.2/T0.3/T2.2/T6.1/X.1/X.2/X.3），原计划工期未计入 | P0.2 收口 | ~~工期被低估~~ | T0.2→P2.1、T6.1→P5.1 已挂并计入工期；T0.3/T2.2 延后到 P6 之后；**X.1 并入不变量 5 不单列、X.2/X.3 转非目标**（均已写入 §1.3，R2-5 拍板） | 已解决 |
-| R19 | **迁移器选型理由部分作废，是否回迁 Alembic 重新 open**：`zkc/migrate.py` 当时的首要理由是「本机 pip 装不上 alembic/psycopg（沙箱网络）」，该理由**已于 2026-10-31 被推翻**——走 Clash 代理后 `instructor 1.17.0`、`psycopg[binary]` 均可装（见 §8.3） | P1.1 对账（2026-10-31） | 若日后 schema 演进频繁，缺 autogenerate 会让 schema 维护成本上升（`verify` 只能拦「改历史迁移」，不能自动 diff 模型） | **当前处置：保留自研迁移器**（已跑通 11 tests，且契合不变量「依赖最少」）。**降级/回迁窗口 = 写业务代码之前**（现在成本最低）。判定触发条件：P1.2 若引入 SQLAlchemy 模型层，就应同时回迁 Alembic；若继续走「raw SQL + repository seam」，则维持自研。已新增任务 **P1.5** | open |
+| R19 | ~~**迁移器选型理由部分作废，是否回迁 Alembic 重新 open**~~：`zkc/migrate.py` 当时的首要理由「本机 pip 装不上 alembic/psycopg（沙箱网络）」**已于 2026-10-31 被推翻**留痕（走 Clash 代理后 `instructor 1.17.0`、`psycopg[binary]` 均可装，见 §8.3）——此为过时理由留痕，**不再是选型依据** | P1.5 收口（2026-10-31） | 若日后 schema 演进频繁，缺 autogenerate 会让 schema 维护成本上升（`verify` 只能拦「改历史迁移」，不能自动 diff 模型） | **最终处置（2026-10-31 收口）：不回迁 Alembic，维持自研 `zkc/migrate.py`**。判定依据 = R19 触发条件：P1.2 走「raw SQL + repository seam」（psycopg 裸 SQL，**未引入 SQLAlchemy ORM 模型层**）→ 回迁触发条件**未满足**；叠加第一性不变量「依赖最少」+ 11 tests 跑通 + sha256 留痕 + `verify` 闸门。**锁方向 guard 测试 = `tests/test_r19_guard.py`**（断言 zkc/ 无 SQLAlchemy/Alembic import、requirements 不含两者、迁移权威 = zkc.migrate）；日后 P1.2 演进为 ORM 时该测试变红 → 自动触发 R19 重开。若未来确需 SQLAlchemy ORM，则重新 open 并同步回迁 | 已解决 |
 
 ---
 
@@ -280,7 +280,7 @@
 - [ ] **衰减可控**：到期动态节点在 ROT=0.9 前被引用或归档占比达标，且**先满足注意力预算** `n/(0.6×interval)`（否则该指标恒 0）
 - [ ] **e2e 闭环跑通**：捕获→蒸馏→调度→复审→复用→度量，单条数据全链路无断点
 - [ ] **5 度量出数**（连接密度/复用率/方法论产出/衰减可控/复利系数，PRD §7）
-- [ ] **架构文档「待 zj 复核」清零** ✅（复核清单 A/B 档批完并回填）、风险登记册 **R1/R4/R6/R9/R10/R12/R13/R14/R15/R16/R17/R18/R19** 有显式处置；**上线前仍 open 且需关掉的**：R1（自动判定）、R4（预算校验）、R13、R14、R15、R18、R19
+- [ ] **架构文档「待 zj 复核」清零** ✅（复核清单 A/B 档批完并回填）、风险登记册 **R1/R4/R6/R9/R10/R12/R13/R14/R15/R16/R17/R18/R19** 有显式处置（**R19 已于 P1.5 收口 = 不回迁，对应 guard 测试 `tests/test_r19_guard.py` 锁方向**）；**上线前仍 open 且需关掉的**：R1（自动判定）、R4（预算校验）、R13、R14、R15、R18
 
 **上线判定（P6）**：zj 本人用**导入的真实历史素材**跑通 e2e 闭环，达成 **累计 ≥20 个带标注的复审动作**（**R10 降级判定已默认启用**，2026-10-31；原「≥7 个活跃日」降为可选加强档，见 §1.2），上述门槛持续达标。**不要求第二人可安装**（对外分发不属 MVP，见 §1.2）。
 

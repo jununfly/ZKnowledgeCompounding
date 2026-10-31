@@ -57,7 +57,7 @@
     "1-2": {
       "id": "1-2",
       "uid": "01a18dff0127-100f5020d8",
-      "label": "P1 存储地基（3/5 完成）",
+      "label": "P1 存储地基（全部完成）",
       "status": "completed",
       "mode": "explore",
       "parent": "1",
@@ -305,6 +305,11 @@
           "q": "P1.5 是否回迁 Alembic？",
           "answer": "维持自研零依赖迁移器 zkc/migrate.py，不回迁 Alembic。",
           "note": "判定依据=R19 触发条件：P1.2 方向是『raw SQL + repository seam』（保持 Kuzu/TerminusDB 可替换），数据层用 psycopg[binary] 走裸 SQL，不引入 SQLAlchemy ORM 模型层 → 回迁触发条件未满足。佐证：实施计划 §8.3『应用代码 DSN postgresql://...@localhost:55433/zkc_dev，已实测 psycopg 连通』、§10『P1.2 引入 seam 时应补最小 requirements.txt（目前只有 psycopg[binary]、instructor 必须显式装）』——均指向裸 SQL 驱动而非 ORM。自研迁移器已 11 tests 跑通、契合不变量『依赖最少』、有 sha256 留痕 + verify 闸门拦『改历史迁移』。代价（无 autogenerate）本阶段可接受：schema 源自 spike 证据、手工维护更可控。回迁窗口关闭（已写业务代码前拍板）；若未来 P1.2 演进为 SQLAlchemy ORM 模型层，则重新 open 并同步回迁。"
+        },
+        {
+          "q": "P1.5 R19 最终收口（2026-10-31）",
+          "answer": "不回迁 Alembic，维持自研 zkc/migrate.py。判定依据 = R19 触发条件（P1.2 = raw SQL + repository seam，psycopg 裸 SQL，未引入 SQLAlchemy ORM 模型层 → 回迁触发未满足）+ 第一性不变量「依赖最少」+ 11 tests 跑通 + sha256 留痕/verify 闸门。已作废的「pip 装不上」理由仅留痕，不再作为依据。",
+          "note": ""
         }
       ],
       "notes": "建议作为下一个 4h 切片：它是 critical-path 起点，且回迁窗口在写业务代码之前（P1.2 seam 之后切换成本上升）。判定触发条件：P1.2 若引入 SQLAlchemy 模型层就同时回迁 Alembic；若继续 raw SQL + repository seam 则维持自研 zkc/migrate.py。",
@@ -817,7 +822,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 16:25:24",
+    "updated": "2026-10-31 16:55:33",
     "md_file": "ROADMAP.md"
   },
   "edges": [
