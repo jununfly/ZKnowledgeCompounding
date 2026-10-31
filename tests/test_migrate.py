@@ -7,6 +7,7 @@
 """
 from __future__ import annotations
 
+import os
 import unittest
 
 from zkc import migrate
@@ -14,11 +15,21 @@ from zkc import migrate
 DB = "zkc_dev_test"
 
 
+# 与其它 PG 集成测试文件保持一致：ZKC_RUN_PG_TESTS!=1 时整体跳过，
+# 而不是在 setUpModule 里硬碰不存在的 zkc-spike-pg 容器（unit-no-pg 作业就是这种环境）。
+def _pg_enabled() -> bool:
+    return os.environ.get("ZKC_RUN_PG_TESTS", "1") == "1"
+
+
 def _scalar(sql: str) -> str:
     return migrate.psql(DB, sql)
 
 
 def setUpModule() -> None:  # noqa: N802
+    if not _pg_enabled():
+        raise unittest.SkipTest(
+            "ZKC_RUN_PG_TESTS != 1: 跳过 PG migrate 集成测试"
+        )
     migrate.ensure_database(DB)
     migrate.bootstrap(DB)
     # 从干净状态开始：回滚所有已应用迁移，保证可重复跑
