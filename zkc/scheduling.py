@@ -454,9 +454,12 @@ def adapt_interval(
     math = adapt_interval_math(old, verdict, human=False)
     store.nodes.set_interval(
         node_id, days_to_interval(math["new_days"]), "auto", math["reason"])
-    store.nodes.audit_interval(
-        node_id, "feedback", math["old_days"], math["new_days"],
-        f"review at decay={decay_at_review:.2f} -> {verdict}", None)
+    # 无操作（如 on_time 的 AIMD 因子 1.0 → new==old）不写 audit_interval，
+    # 避免 7→7 这类无信息量行污染 interval_adjustment 审计表（锚 A 噪声治理）。
+    if math["applied"]:
+        store.nodes.audit_interval(
+            node_id, "feedback", math["old_days"], math["new_days"],
+            f"review at decay={decay_at_review:.2f} -> {verdict}", None)
     return dict(id=_hid(node_id), **math)
 
 

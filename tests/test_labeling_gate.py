@@ -90,6 +90,15 @@ class LabelingGateTest(unittest.TestCase):
         self.assertEqual(self.store.nodes.get(self.nid).decay_score, 0.0)  # 时钟复位
         self.assertEqual(self.store.attention.get(NOW.date()).labeled_completed, 0)  # 未标注
 
+    def test_on_time_does_not_write_audit(self):
+        # 锚 A 噪声治理：UI still_valid → verdict on_time（AIMD x1.0）→ new==old → applied=False
+        # 不应写 interval_adjustment 审计行（避免 7→7 无操作行污染审计表）。
+        before = len(self.store.nodes._audit_log)
+        r = S.adapt_interval(self.store, self.nid, decay_at_review=0.5, outcome="on_time")
+        self.assertFalse(r["applied"])
+        self.assertEqual(r["new_days"], r["old_days"])        # 确实无变化
+        self.assertEqual(len(self.store.nodes._audit_log), before)  # 审计行未增加
+
 
 if __name__ == "__main__":
     unittest.main()
