@@ -1,0 +1,797 @@
+{
+  "title": "ZKC MVP 上线（P0→P6，4h/周）",
+  "description": "来源：docs/plans/ZKC-implementation-plan.md v0.6。执行顺序按 §3.2 S1：P0→P1→P2→P4→P3→P5→P6（编号=执行顺序，Phase 原编号保留在标签内供追溯）。节点完成口径以实施计划 §4 为准。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a18dfea297-8b4f4bdd33",
+      "label": "ZKC MVP 上线（P0→P6，4h/周）",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7",
+        "1-8"
+      ],
+      "decisions": [
+        {
+          "q": "执行顺序为什么不是 P1→P2→P3→P4，而是 P4 提前到 P3 之前？",
+          "answer": "采纳 S1（2026-10-31 zj 拍板）：P4 只依赖 P2 的分流结果，不依赖 P3 的蒸馏产物。总工时不变（94–126 h），但「第一次看到系统替我省注意力」从第 14–22 周提前到第 8–13 周。",
+          "note": "S1 连带确认：已捕获判定靠 evidence_refs + produced_by（P1/P2 就绪），不靠蒸馏产物。新增风险：P4 先于 P3 期间「衰减可控」指标偏低属预期内，不得据此判失败。"
+        },
+        {
+          "q": "P6 上线判定为什么改成「累计 ≥20 个带标注复审动作」？",
+          "answer": "因 zj 每周仅 4 h（≈每周 1 次触碰），与原判定「≥7 个活跃日每天打开」不可共存。R10 降级判定由「触发后启用」改为「默认启用」。",
+          "note": "「≥7 活跃日」降为可选加强档；标注率 ≥70% 仍是硬门槛；第二人可安装不属 MVP。残余风险：连 20 个动作都攒不出 → 需再降级到「人工显式 verdict 驱动 L3」。"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a18dff0055-00b9ba9ce9",
+      "label": "P0 文档收口（3/4 完成，剩 P0.3 签字）",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3",
+        "1-1-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a18dff0127-100f5020d8",
+      "label": "P1 存储地基（3/5 完成）",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5",
+        "1-2-6",
+        "1-2-7"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a18dff0205-5bf941f99b",
+      "label": "P2 摄入+分流",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a18dff02ed-2137e9ce90",
+      "label": "P4 调度+复审闭环（S1：先于 P3）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3",
+        "1-4-4",
+        "1-4-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a18dff03ce-e40bd6a592",
+      "label": "P3 复利变换（最大块，HITL 串行）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3",
+        "1-5-4",
+        "1-5-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6": {
+      "id": "1-6",
+      "uid": "01a18dff04d4-4d0d3e55b8",
+      "label": "P5 复用+度量",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7": {
+      "id": "1-7",
+      "uid": "01a18dff05b7-c28cd3e8f3",
+      "label": "P6 上线",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-7-1",
+        "1-7-2",
+        "1-7-3",
+        "1-7-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8": {
+      "id": "1-8",
+      "uid": "01a18dff069d-cbcc0acc91",
+      "label": "风险 open 项关停（横切 R1/R4/R13/R14/R15/R18）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-8-1",
+        "1-8-2",
+        "1-8-3",
+        "1-8-4",
+        "1-8-5",
+        "1-8-6"
+      ],
+      "decisions": [
+        {
+          "q": "风险 open 项为什么不并入各 Phase 节点，而单列 1-8？",
+          "answer": "这些项（R1/R4/R13/R14/R15/R18）是「纸面裁不定、需运行时或真实数据才能关」的项，并入 Phase 会被当成该 Phase 的常规子任务而静默消失。",
+          "note": "单列后每条都带明确关闭时点（P3 前 / P3 实现时 / P5 / 上线前），且 R4 与 R18 是上线硬门槛。R19 不在此列——它由 1-2-4 承载，避免同一事实两处维护。"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a18dff5676-f3b7b4c5f9",
+      "label": "P0.1 架构三角审计清零",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a18dff5741-0723e0251b",
+      "label": "P0.2 RESEARCH-TOPICS 冻结为只读索引",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "uid": "01a18dff580f-b76d770629",
+      "label": "P0.4 ZJ-CONTEXT 术语表 + ADR-0001/0002",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-4": {
+      "id": "1-1-4",
+      "uid": "01a18dff58ea-2393c48ecc",
+      "label": "P0.3 §2 决策基线 + §5 风险登记册评审签字（P0 唯一剩余）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "纯签字动作，不阻塞代码：通读实施计划 §2（决策基线）+ §5（风险登记册）后一次性确认即可闭环 P0。",
+      "layer": "plan"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a18dff59cb-81591c8830",
+      "label": "P1.0 定死 embedding 编码器 → vector(768)",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "embedding 编码器为什么选 nomic-embed-text(768d) 而不是 qwen3(4096d)？",
+          "answer": "spike 14 实测：nomic 9.5ms/条、274MB vs qwen3 183.2ms/条、4.7GB（延迟 19.3×、体积 17×）。16GB 机器上还要常驻 4B 蒸馏模型，4.7GB 编码器是沉重负担。",
+          "note": "⚠️ 用途硬约束：embedding 仅限检索召回/反向连接候选，严禁用于双轨分流与弃权判定——spike 03 实测 nomic 在相似度阈值判定下 dangerous=3（qwen3 为 0），该职责归 DecisionRouter。可逆路径：加列 embedding_strong vector(4096) 是增量，不重建 768d 索引。"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a18dff5aa7-dc15b6f4b4",
+      "label": "P1.1 迁移 0001（D1–D9）落地 zkc_dev",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "uid": "01a18dff5b7f-a023c0edf3",
+      "label": "P1.4 阈值表 zkc/tuning.py（25 参数）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "uid": "01a18dff5c58-13362a80e8",
+      "label": "P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "P1.1 已选自研迁移器，为什么「是否回迁 Alembic」又变成 open？",
+          "answer": "自研的首要理由「本机 pip 装不上 alembic/psycopg」已于 2026-10-31 被推翻：走 Clash 代理（--proxy http://127.0.0.1:7890）后 instructor、psycopg[binary] 均可装。理由只剩「依赖最少」，不足以定案。",
+          "note": "登记为 R19 + 任务 P1.5。回迁窗口 = 写业务代码之前（现在成本最低）。判定触发条件：P1.2 若引入 SQLAlchemy 模型层就应同时回迁；若继续 raw SQL + repository seam 则维持自研。"
+        }
+      ],
+      "notes": "建议作为下一个 4h 切片：它是 critical-path 起点，且回迁窗口在写业务代码之前（P1.2 seam 之后切换成本上升）。判定触发条件：P1.2 若引入 SQLAlchemy 模型层就同时回迁 Alembic；若继续 raw SQL + repository seam 则维持自研 zkc/migrate.py。",
+      "layer": "plan"
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "uid": "01a18dff5d2e-48b686ac66",
+      "label": "P1.2 repository seam（保持 Kuzu/TerminusDB 可替换）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-6": {
+      "id": "1-2-6",
+      "uid": "01a18dff5e18-2eb6da7329",
+      "label": "P1.3 双时态 + decay 触发器（线性）实测",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-7": {
+      "id": "1-2-7",
+      "uid": "01a18dff5ef4-56d58cbc2e",
+      "label": "P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a18dff885c-ecba287b1b",
+      "label": "P2.1 快捕获 UX（本地优先离线，T0.2）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a18dff8937-07fffd4a0c",
+      "label": "P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "uid": "01a18dff8a15-e17dd65de2",
+      "label": "P2.3 分流 → review_queue 写入联调",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a18dff8af3-435dffec12",
+      "label": "P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a18dff8bd5-05aa986128",
+      "label": "P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "MVP 硬前提（PRD 目标 5 / 架构 §6.5.1）：没有这个界面，budget 估计器永远停在 confidence='none'、L3 闸门无样本，两个自指闭环全废。同一界面承载两个外生锚：复审结果标注（驱动 L3 interval 反馈）+ 每日收口埋点（驱动 budget 估计）。",
+      "layer": "plan"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "uid": "01a18dff8cb2-6db9543efa",
+      "label": "P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-4": {
+      "id": "1-4-4",
+      "uid": "01a18dff8d90-0ad5d6124e",
+      "label": "P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "标注率闸门的口径与失效风险？",
+          "answer": "滚动 7 天 labeled_completed/completed ≥70%，否则 L3 停机（interval 停在基线）。",
+          "note": "关键防呆：窗口内完成复审 <10 次时不判定（样本不足放行），避免 warm-up 期把 L3 冻死。人工显式 verdict 不受闸门限制。未标注的复审禁止写 interval_adjustment。"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-5": {
+      "id": "1-4-5",
+      "uid": "01a18dff8e71-f56ac636b3",
+      "label": "P4.5 已捕获条目「单程票」规则（ADR-0002，含边界 1/2）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "已捕获条目规则：spike 08 判 ARCHIVE、spike 09 判 28d，怎么统一？",
+          "answer": "不是真冲突，是两个问题：spike 09 答「到期前多久看」，spike 08 答「已到期怎么办」。合并为单程票：已捕获 → 28d 拉长观察 → 到期（decay≥0.9）即 ARCHIVE，永不回 DISTILL。",
+          "note": "边界 1：produced_by 级联撤销导致「已捕获」消失时，按未捕获基线重算（有连接 14d / 孤儿 7d）并写 D7 interval_adjustment 留痕，禁止静默变。边界 2：self_loop(3d) 压过已捕获(28d)——修 spike 09 内 L1/L2 顺序相反的矛盾。ADR-0002。"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a18dff8f4a-32cd7c4d92",
+      "label": "P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "uid": "01a18dff9027-977ac70b68",
+      "label": "P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "uid": "01a18dff90ff-caaffb6a87",
+      "label": "P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "uid": "01a18dff91d7-0898664a41",
+      "label": "P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-5": {
+      "id": "1-5-5",
+      "uid": "01a18dff92d5-e5c78dc7be",
+      "label": "P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "uid": "01a18dffd02b-33fac05197",
+      "label": "P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "uid": "01a18dffd105-671e43c06e",
+      "label": "P5.2 5 度量面板（连接密度/复用率/方法论产出/衰减可控/复利系数）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "uid": "01a18dffd1e6-30e35e68cd",
+      "label": "P5.3 度量 operationalize（判定者全自动 + 等权 0.25 起步）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-1": {
+      "id": "1-7-1",
+      "uid": "01a18dffd2c1-7ae337dfdd",
+      "label": "P6.1 明确不做打包/分发，只保证本机可启动（ADR-0001）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-2": {
+      "id": "1-7-2",
+      "uid": "01a18dffd3a1-e128e5e206",
+      "label": "P6.2 真实数据冷启动引导（导入 ≥60 条动态型素材）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-3": {
+      "id": "1-7-3",
+      "uid": "01a18dffd485-a112713099",
+      "label": "P6.3 用户文档 + 度量复盘节奏（每周）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-4": {
+      "id": "1-7-4",
+      "uid": "01a18dffd56d-e53ff053fc",
+      "label": "P6.4 达成累计 ≥20 个带标注复审动作 + 标注率 ≥70%（R10 降级判定）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "uid": "01a18dffd658-c38ad5f091",
+      "label": "R13 9B GGUF + num_ctx 8192 常驻实测（P3 前，不阻塞）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "uid": "01a18dffd73f-d70ceba81f",
+      "label": "R14 补全回路延迟成本埋点（P3 实现时，超预算则关闭补全）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "uid": "01a18dffd83a-d495d5b76b",
+      "label": "R15 context_member 写放大压测（先做查询时动态视图）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-4": {
+      "id": "1-8-4",
+      "uid": "01a18dffd920-44d813e28b",
+      "label": "R18 中文检索召回质量验证（P5 真实语料，不合格走加列 4096 路径）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-5": {
+      "id": "1-8-5",
+      "uid": "01a18dffd9fe-27c1ce172f",
+      "label": "R1 自动忠实度判定（上线前，4B/9B 本机已否决，可选启用 judge.py）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-6": {
+      "id": "1-8-6",
+      "uid": "01a18dffdadb-3baa84569d",
+      "label": "R4 注意力预算校验 n/(0.6×interval)（上线前必做，否则衰减可控恒 0）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "上线硬门槛之一：注意力预算需求 = n/(0.6×interval)。不满足则「衰减可控」指标恒 0，且不是指标问题而是供给问题——先查预算再查指标。",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-10-31 02:07:17",
+    "updated": "2026-10-31 02:10:56",
+    "md_file": "ROADMAP.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a18dff5c58-13362a80e8",
+      "to": "01a18dff5d2e-48b686ac66",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a18dff5d2e-48b686ac66",
+      "to": "01a18dff5e18-2eb6da7329",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a18dff5d2e-48b686ac66",
+      "to": "01a18dff5ef4-56d58cbc2e",
+      "type": "blocks"
+    },
+    {
+      "id": "e4",
+      "from": "01a18dff5d2e-48b686ac66",
+      "to": "01a18dff885c-ecba287b1b",
+      "type": "blocks"
+    },
+    {
+      "id": "e5",
+      "from": "01a18dff5d2e-48b686ac66",
+      "to": "01a18dff8937-07fffd4a0c",
+      "type": "blocks"
+    },
+    {
+      "id": "e6",
+      "from": "01a18dff8937-07fffd4a0c",
+      "to": "01a18dff8a15-e17dd65de2",
+      "type": "blocks"
+    },
+    {
+      "id": "e7",
+      "from": "01a18dff8a15-e17dd65de2",
+      "to": "01a18dff8af3-435dffec12",
+      "type": "blocks"
+    },
+    {
+      "id": "e8",
+      "from": "01a18dff5e18-2eb6da7329",
+      "to": "01a18dff8af3-435dffec12",
+      "type": "blocks"
+    },
+    {
+      "id": "e9",
+      "from": "01a18dff8af3-435dffec12",
+      "to": "01a18dff8bd5-05aa986128",
+      "type": "blocks"
+    },
+    {
+      "id": "e10",
+      "from": "01a18dff8af3-435dffec12",
+      "to": "01a18dff8cb2-6db9543efa",
+      "type": "blocks"
+    },
+    {
+      "id": "e11",
+      "from": "01a18dff8af3-435dffec12",
+      "to": "01a18dff8e71-f56ac636b3",
+      "type": "blocks"
+    },
+    {
+      "id": "e12",
+      "from": "01a18dff8bd5-05aa986128",
+      "to": "01a18dff8d90-0ad5d6124e",
+      "type": "blocks"
+    },
+    {
+      "id": "e13",
+      "from": "01a18dff8937-07fffd4a0c",
+      "to": "01a18dff8f4a-32cd7c4d92",
+      "type": "blocks"
+    },
+    {
+      "id": "e14",
+      "from": "01a18dff8f4a-32cd7c4d92",
+      "to": "01a18dff9027-977ac70b68",
+      "type": "blocks"
+    },
+    {
+      "id": "e15",
+      "from": "01a18dff8f4a-32cd7c4d92",
+      "to": "01a18dff90ff-caaffb6a87",
+      "type": "blocks"
+    },
+    {
+      "id": "e16",
+      "from": "01a18dff8f4a-32cd7c4d92",
+      "to": "01a18dff91d7-0898664a41",
+      "type": "blocks"
+    },
+    {
+      "id": "e17",
+      "from": "01a18dff8f4a-32cd7c4d92",
+      "to": "01a18dff92d5-e5c78dc7be",
+      "type": "blocks"
+    },
+    {
+      "id": "e18",
+      "from": "01a18dff8d90-0ad5d6124e",
+      "to": "01a18dffd105-671e43c06e",
+      "type": "blocks"
+    },
+    {
+      "id": "e19",
+      "from": "01a18dff91d7-0898664a41",
+      "to": "01a18dffd02b-33fac05197",
+      "type": "blocks"
+    },
+    {
+      "id": "e20",
+      "from": "01a18dffd3a1-e128e5e206",
+      "to": "01a18dffd56d-e53ff053fc",
+      "type": "blocks"
+    },
+    {
+      "id": "e21",
+      "from": "01a18dff8bd5-05aa986128",
+      "to": "01a18dffd56d-e53ff053fc",
+      "type": "blocks"
+    },
+    {
+      "id": "e22",
+      "from": "01a18dffd105-671e43c06e",
+      "to": "01a18dffd485-a112713099",
+      "type": "blocks"
+    }
+  ],
+  "edge_seq": 22
+}
