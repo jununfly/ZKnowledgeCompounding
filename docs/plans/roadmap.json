@@ -79,7 +79,7 @@
       "id": "1-3",
       "uid": "01a18dff0205-5bf941f99b",
       "label": "P2 摄入+分流",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -368,13 +368,46 @@
       "id": "1-3-1",
       "uid": "01a18dff885c-ecba287b1b",
       "label": "P2.1 快捕获 UX（本地优先离线，T0.2）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "P2.1 捕获 UX 形态？",
+          "answer": "本地 web（FastAPI+SSR, localhost:8000），遵循 ADR-0001；不做 TUI/CLI/桌面壳",
+          "note": ""
+        },
+        {
+          "q": "P2.1 是否顺带搭共享 web 骨架？",
+          "answer": "是；bootstrap 共享 FastAPI 骨架供 P4.2 复审队列复用，避免重做",
+          "note": ""
+        },
+        {
+          "q": "捕获端点如何接线 + 离线优先？",
+          "answer": "直接调已存在的 ingest_with_routing；Ollama 不可用时 llm_available=False 走词法路由+VAGUE 弃权（已有逻辑）",
+          "note": ""
+        },
+        {
+          "q": "P2.1 范围边界？",
+          "answer": "只做捕获表单 + POST /capture + 返回分流结果；复审队列/度量面板属 P4.2/P5.1 不在本节点",
+          "note": ""
+        },
+        {
+          "q": "P2.1 真实运行验证归属？",
+          "answer": "代码+单测已闭环（8/8 通过）；真实 Ollama 启动 + 词法语料种子 + localhost:8000 打开属 P6 冷启动 dogfood，不在本节点自动化范围",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1,
+      "exit_criteria": [
+        "捕获页可在 localhost:8000 打开：单 textarea + 提交按钮",
+        "POST /capture 调 ingest_with_routing 落库并返回 {track, confidence, vague, node_id}",
+        "Ollama 不可用时仍可用（llm_available=False 降级，条目进 classify 队列）",
+        "端到端测试：动态句→dynamic 轨；含糊句→unrouted+classify 队列（复用 test_routing 断言风格）"
+      ]
     },
     "1-3-2": {
       "id": "1-3-2",
@@ -760,7 +793,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 14:17:55",
+    "updated": "2026-10-31 14:47:15",
     "md_file": "ROADMAP.md"
   },
   "edges": [
