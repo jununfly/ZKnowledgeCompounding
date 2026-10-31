@@ -17,6 +17,8 @@ from uuid import UUID
 
 from .repository import Storage, get_storage
 from .repository.models import Node
+from . import routing
+from .routing import RoutingResult
 
 
 def ingest_node(
@@ -93,3 +95,46 @@ def list_due_for_review(
     """返回 decay≥0.6 且已到期的 node（调度器每日收口用）。"""
     store = store or get_storage()
     return store.nodes.list_due_for_review(as_of or datetime.now())
+
+
+# 人工兜底用的复审动作：路由弃权/vague 条目需人工定轨（数据层无字符串校验，仅文档约束）。
+CLASSIFY_ACTION = "classify"
+
+
+def ingest_with_routing(
+    *,
+    title: str,
+    content: str | None = None,
+    text_for_routing: str | None = None,
+    decision_router: routing.DecisionRouter,
+    lexical_router: routing.LexicalRouter | None = None,
+    llm_available: bool = True,
+    valid_from: Optional[datetime] = None,
+    embedding: Optional[list[float]] = None,
+    store: Optional[Storage] = None,
+) -> tuple[Node, RoutingResult]:
+    """摄入并自动分流（P2.2 主入口）。
+
+    - 用双信号路由引擎决定 track（见 `routing.route_text`）。
+    - 提交真实轨道时：node.track 落定、routing_confidence 存 LLM 置信。
+    - 弃权/vague 时：track 保持 unrouted，并向 review_queue 入队 action='classify'
+      （人工兜底），由每日复审队列 UI（P4.2）消费人工定轨。
+    返回 (Node, RoutingResult)，调用方可用 result 决定 UI 提示/埋点。
+    """
+    store = store or get_storage()
+    text = text_for_routing if text_for_routing is not None else (title + (" " + content if content else ""))
+    result = routing.route_text(
+        text, decision_router, lexical_router, llm_available=llm_available,
+    )
+    node = Node(
+        title=title,
+        content=content,
+        track=result.track,
+        valid_from=valid_from or datetime.now(),
+        embedding=embedding,
+        routing_confidence=result.llm_conf if result.track != routing.VAGUE else None,
+    )
+    saved = store.nodes.save(node)
+    if result.track == routing.VAGUE:
+        store.review_queue.enqueue(saved.id, CLASSIFY_ACTION, reason=result.aborted)
+    return saved, result
