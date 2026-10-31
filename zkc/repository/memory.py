@@ -213,7 +213,8 @@ class MemoryEdgeRepository(EdgeRepository):
 class MemoryContextRepository(ContextRepository):
     def __init__(self) -> None:
         self._rows: dict[UUID, Context] = {}
-        self._members: dict[UUID, dict[UUID, float]] = {}  # context_id -> {node_id: weight}
+        # context_id -> {node_id: (weight, produced_by)}；produced_by=None=人审成员
+        self._members: dict[UUID, dict[UUID, tuple[float, UUID | None]]] = {}
 
     def save(self, context: Context) -> Context:
         if context.id is None:
@@ -240,7 +241,17 @@ class MemoryContextRepository(ContextRepository):
         weight: float = 1.0,
         produced_by: UUID | None = None,
     ) -> None:
-        self._members.setdefault(context_id, {})[node_id] = weight
+        self._members.setdefault(context_id, {})[node_id] = (weight, produced_by)
+
+    def add_member_human(
+        self, context_id: UUID, node_id: UUID, weight: float = 1.0
+    ) -> None:
+        self.add_member(context_id, node_id, weight, produced_by=None)
+
+    def remove_member_human(self, context_id: UUID, node_id: UUID) -> None:
+        m = self._members.get(context_id)
+        if m and node_id in m and m[node_id][1] is None:
+            del m[node_id]
 
     def list_members(self, context_id: UUID) -> list[UUID]:
         return list(self._members.get(context_id, {}).keys())
@@ -366,3 +377,30 @@ class MemoryStorage(Storage):
             a for a in self._audit_log if a.get("produced_by") != transform_id
         ]
         return before - len(self.nodes._audit_log)
+
+    def assemble_context(
+        self, scope: str, node_ids, title=None, weight: float = 1.0
+    ) -> tuple[UUID, UUID]:
+        if scope not in ("self_loop", "higher_dim"):
+            raise ValueError(f"invalid scope: {scope}")
+        tid = self.record_transform(
+            "context_assembly", {"scope": scope, "node_ids": list(node_ids)}
+        )
+        ctx = self.contexts.save(Context(scope=scope, title=title, produced_by=tid))
+        for nid in node_ids:
+            self.contexts.add_member(ctx.id, nid, weight, produced_by=tid)
+        return (ctx.id, tid)
+
+    def revert_assembly(self, transform_id: UUID) -> int:
+        removed = [
+            cid for cid, ctx in self.contexts._rows.items()
+            if ctx.produced_by == transform_id
+        ]
+        for cid in removed:
+            self.contexts._rows.pop(cid, None)
+            self.contexts._members.pop(cid, None)
+        return len(removed)
+
+    def discover_higher_dim(self, seed_node_id, k: int = 5) -> list:
+        # 内存 fake 不做向量相似度，返回空（discovery 是 pgvector 运算，由 PG 实现）
+        return []

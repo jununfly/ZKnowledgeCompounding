@@ -135,6 +135,16 @@ class ContextRepository(ABC):
     @abstractmethod
     def list_for_node(self, node_id: UUID) -> list[Context]: ...
 
+    @abstractmethod
+    def add_member_human(
+        self, context_id: UUID, node_id: UUID, weight: float = 1.0
+    ) -> None:
+        """人审添加成员：produced_by=NULL，可单独删除（不随 transform 级联撤）。"""
+
+    @abstractmethod
+    def remove_member_human(self, context_id: UUID, node_id: UUID) -> None:
+        """仅删人审成员（produced_by IS NULL）；transform 产成员走 revert_assembly 级联。"""
+
 
 class ReviewQueueRepository(ABC):
     @abstractmethod
@@ -188,3 +198,19 @@ class Storage(ABC):
     @abstractmethod
     def revert_interval_transform(self, transform_id: UUID) -> int:
         """逆序恢复某 transform 产生的全部 interval 改动并清空审计痕迹，返回恢复条数。"""
+
+    @abstractmethod
+    def assemble_context(
+        self, scope: str, node_ids: list[UUID], title: str | None = None, weight: float = 1.0
+    ) -> tuple[UUID, UUID]:
+        """一次装配：一 transform -> 一 context + 其 members（均带 produced_by）。
+        返回 (context_id, transform_id)；撤消时 revert_assembly(transform_id) 级联撤全部。"""
+
+    @abstractmethod
+    def revert_assembly(self, transform_id: UUID) -> int:
+        """撤消装配：删 transform -> FK CASCADE 撤 context + members（produced_by 级联）。
+        返回撤掉的 context 数。"""
+
+    @abstractmethod
+    def discover_higher_dim(self, seed_node_id: UUID, k: int = 5) -> list:
+        """T4.1：种子节点的 k 近邻（pgvector 余弦）。内存 fake 不做向量运算，返回空。"""

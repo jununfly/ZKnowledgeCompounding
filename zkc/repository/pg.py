@@ -546,6 +546,27 @@ class PgContextRepository(ContextRepository):
                         produced_by=r["produced_by"], version_seq=r.get("version_seq", 1))
                 for r in cur.fetchall()]
 
+    def add_member_human(self, context_id, node_id, weight=1.0) -> None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            INSERT INTO public.context_member (context_id, node_id, weight, produced_by)
+            VALUES (%(cid)s, %(nid)s, %(w)s, NULL)
+            ON CONFLICT (context_id, node_id) DO UPDATE SET weight=EXCLUDED.weight
+            """,
+            dict(cid=context_id, nid=node_id, w=weight),
+        )
+        self._conn.commit()
+
+    def remove_member_human(self, context_id, node_id) -> None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "DELETE FROM public.context_member "
+            "WHERE context_id=%(cid)s AND node_id=%(nid)s AND produced_by IS NULL",
+            dict(cid=context_id, nid=node_id),
+        )
+        self._conn.commit()
+
 
 class PgReviewQueueRepository(ReviewQueueRepository):
     def __init__(self, conn) -> None:
@@ -759,6 +780,48 @@ class PgStorage(Storage):
         cur.execute("DELETE FROM public.transform WHERE id=%s::uuid", (str(transform_id),))
         self._conn.commit()
         return len(changes)
+
+    def assemble_context(
+        self, scope: str, node_ids, title=None, weight: float = 1.0
+    ) -> tuple[UUID, UUID]:
+        if scope not in ("self_loop", "higher_dim"):
+            raise ValueError(f"invalid scope: {scope}")
+        tid = self.record_transform(
+            "context_assembly", {"scope": scope, "node_ids": [str(n) for n in node_ids]}
+        )
+        ctx = self.contexts.save(Context(scope=scope, title=title, produced_by=tid))
+        for nid in node_ids:
+            self.contexts.add_member(ctx.id, nid, weight, produced_by=tid)
+        return (ctx.id, tid)
+
+    def revert_assembly(self, transform_id: UUID) -> int:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT count(*) AS n FROM public.context WHERE produced_by=%(tid)s::uuid",
+            dict(tid=str(transform_id)),
+        )
+        n = cur.fetchone()["n"]
+        cur.execute(
+            "DELETE FROM public.transform WHERE id=%(tid)s::uuid",
+            dict(tid=str(transform_id)),
+        )
+        self._conn.commit()
+        return n
+
+    def discover_higher_dim(self, seed_node_id, k: int = 5) -> list:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            SELECT n.id, n.title, 1 - (n.embedding <=> q.embedding) AS sim
+            FROM public.node n,
+                 (SELECT embedding FROM public.node WHERE id=%(sid)s::uuid) q
+            WHERE n.id <> %(sid)s::uuid AND n.embedding IS NOT NULL
+            ORDER BY n.embedding <=> q.embedding
+            LIMIT %(k)s
+            """,
+            dict(sid=str(seed_node_id), k=k),
+        )
+        return cur.fetchall()
 
     def clear_all(self) -> None:
         """测试用：清空所有领域表（保留 schema）。"""
