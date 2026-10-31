@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 02:10:56
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 11:01:12
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
 ├── [~][X+] 1-1. P0 文档收口（3/4 完成，剩 P0.3 签字）
@@ -13,13 +13,13 @@
 │   ├── [x][X+] 1-2-1. P1.0 定死 embedding 编码器 → vector(768)
 │   ├── [x][X+] 1-2-2. P1.1 迁移 0001（D1–D9）落地 zkc_dev
 │   ├── [x][X+] 1-2-3. P1.4 阈值表 zkc/tuning.py（25 参数）
-│   ├── [ ][X+] 1-2-4. P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前）
-│   ├── [!][X+] 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换）
-│   ├── [!][X+] 1-2-6. P1.3 双时态 + decay 触发器（线性）实测
-│   └── [!][X+] 1-2-7. P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签
+│   ├── [x][X+] 1-2-4. P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前）
+│   ├── [x][X+] 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换）
+│   ├── [ ][X+] 1-2-6. P1.3 双时态 + decay 触发器（线性）实测
+│   └── [ ][X+] 1-2-7. P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签
 ├── [ ][X+] 1-3. P2 摄入+分流
-│   ├── [!][X+] 1-3-1. P2.1 快捕获 UX（本地优先离线，T0.2）
-│   ├── [!][X+] 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）
+│   ├── [ ][X+] 1-3-1. P2.1 快捕获 UX（本地优先离线，T0.2）
+│   ├── [ ][X+] 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）
 │   └── [!][X+] 1-3-3. P2.3 分流 → review_queue 写入联调
 ├── [ ][X+] 1-4. P4 调度+复审闭环（S1：先于 P3）
 │   ├── [!][X+] 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD）
@@ -49,14 +49,14 @@
     ├── [ ][X+] 1-8-4. R18 中文检索召回质量验证（P5 真实语料，不合格走加列 4096 路径）
     ├── [ ][X+] 1-8-5. R1 自动忠实度判定（上线前，4B/9B 本机已否决，可选启用 judge.py）
     └── [ ][X+] 1-8-6. R4 注意力预算校验 n/(0.6×interval)（上线前必做，否则衰减可控恒 0）
-<details><summary>阻塞链：20 个节点被阻塞</summary>
+<details><summary>阻塞链：15 个节点被阻塞</summary>
 
-- 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换） ← e1: 1-2-4. P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前） [ ]
-- 1-2-6. P1.3 双时态 + decay 触发器（线性）实测 ← e2: 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换） [ ]
-- 1-2-7. P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签 ← e3: 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换） [ ]
-- 1-3-1. P2.1 快捕获 UX（本地优先离线，T0.2） ← e4: 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换） [ ]
-- 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03） ← e5: 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换） [ ]
-- ... 另有 15 个节点被阻塞未列出
+- 1-3-3. P2.3 分流 → review_queue 写入联调 ← e6: 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03） [ ]
+- 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） ← e7: 1-3-3. P2.3 分流 → review_queue 写入联调 [ ], e8: 1-2-6. P1.3 双时态 + decay 触发器（线性）实测 [ ]
+- 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚） ← e9: 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） [ ]
+- 1-4-3. P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe） ← e10: 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） [ ]
+- 1-4-4. P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机） ← e12: 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚） [ ]
+- ... 另有 10 个节点被阻塞未列出
 
 </details>
 
@@ -64,6 +64,6 @@
 ### 下一步可开工（ready 前 3）
 
 - 1-1-4. P0.3 §2 决策基线 + §5 风险登记册评审签字（P0 唯一剩余） [ ]
-- 1-2-4. P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前） [ ]
-- 1-3. P2 摄入+分流 [ ]
+- 1-2-6. P1.3 双时态 + decay 触发器（线性）实测 [ ]
+- 1-2-7. P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签 [ ]
 <!-- ROADMAP_SECTION_END -->

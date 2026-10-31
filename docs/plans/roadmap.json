@@ -279,7 +279,7 @@
       "id": "1-2-4",
       "uid": "01a18dff5c58-13362a80e8",
       "label": "P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
@@ -288,22 +288,57 @@
           "q": "P1.1 已选自研迁移器，为什么「是否回迁 Alembic」又变成 open？",
           "answer": "自研的首要理由「本机 pip 装不上 alembic/psycopg」已于 2026-10-31 被推翻：走 Clash 代理（--proxy http://127.0.0.1:7890）后 instructor、psycopg[binary] 均可装。理由只剩「依赖最少」，不足以定案。",
           "note": "登记为 R19 + 任务 P1.5。回迁窗口 = 写业务代码之前（现在成本最低）。判定触发条件：P1.2 若引入 SQLAlchemy 模型层就应同时回迁；若继续 raw SQL + repository seam 则维持自研。"
+        },
+        {
+          "q": "P1.5 是否回迁 Alembic？",
+          "answer": "维持自研零依赖迁移器 zkc/migrate.py，不回迁 Alembic。",
+          "note": ""
+        },
+        {
+          "q": "P1.5 是否回迁 Alembic？",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "eb2d40e2164035504d383ce2132302f549799404391496f156e00fa8bdc9078c"
+        },
+        {
+          "q": "P1.5 是否回迁 Alembic？",
+          "answer": "维持自研零依赖迁移器 zkc/migrate.py，不回迁 Alembic。",
+          "note": "判定依据=R19 触发条件：P1.2 方向是『raw SQL + repository seam』（保持 Kuzu/TerminusDB 可替换），数据层用 psycopg[binary] 走裸 SQL，不引入 SQLAlchemy ORM 模型层 → 回迁触发条件未满足。佐证：实施计划 §8.3『应用代码 DSN postgresql://...@localhost:55433/zkc_dev，已实测 psycopg 连通』、§10『P1.2 引入 seam 时应补最小 requirements.txt（目前只有 psycopg[binary]、instructor 必须显式装）』——均指向裸 SQL 驱动而非 ORM。自研迁移器已 11 tests 跑通、契合不变量『依赖最少』、有 sha256 留痕 + verify 闸门拦『改历史迁移』。代价（无 autogenerate）本阶段可接受：schema 源自 spike 证据、手工维护更可控。回迁窗口关闭（已写业务代码前拍板）；若未来 P1.2 演进为 SQLAlchemy ORM 模型层，则重新 open 并同步回迁。"
         }
       ],
       "notes": "建议作为下一个 4h 切片：它是 critical-path 起点，且回迁窗口在写业务代码之前（P1.2 seam 之后切换成本上升）。判定触发条件：P1.2 若引入 SQLAlchemy 模型层就同时回迁 Alembic；若继续 raw SQL + repository seam 则维持自研 zkc/migrate.py。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-5": {
       "id": "1-2-5",
       "uid": "01a18dff5d2e-48b686ac66",
       "label": "P1.2 repository seam（保持 Kuzu/TerminusDB 可替换）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "P1.2 repository seam 的选型约束是什么？",
+          "answer": "走『raw SQL + repository seam』：定义存储接口（protocol/ABC），Postgres 实现用 psycopg[binary] 裸 SQL（不引入 SQLAlchemy ORM 模型层）；Kuzu/TerminusDB 作为可替换的备用实现（本阶段只留 seam，不实现）。承接 1-2-4 决策（不回迁 Alembic）。",
+          "note": "依据：① 1-2-4 已定不回迁 Alembic，且 P1.2 方向是 raw SQL + seam 而非 ORM（§8.3 DSN 用 psycopg 裸 SQL 连通）；② 架构不变量#3『存储是可替换 seam，不是架构中心』要求应用只依赖接口、不依赖具体驱动；③ 保持最少依赖，契合不变量『依赖最少』。seam 的存在意义 = 让变换/调度语义不耦合 PG，未来切图库只需加一个实现类。本阶段 seam 的『接口形状』（聚合粒度、方法集）待 zj 确认后再写代码。"
+        },
+        {
+          "q": "P1.2 repository seam 的接口粒度？",
+          "answer": "按聚合拆多协议：NodeRepository / ClaimRepository / ContextRepository / EdgeRepository / ReviewQueueRepository / AttentionRepository 各自 protocol + Pg 实现 + 内存 fake。",
+          "note": "zj 2026-10-31 拍板（AskUserQuestion 选项1，推荐项）。接口小、按聚合可替换、最贴合 repository 模式；未来切 Kuzu/TerminusDB 只改单个实现类，不波及其他聚合。连接策略统一：psycopg 连接封装 + get_storage() 工厂（env ZKC_STORAGE=pg|memory）+ 内存 fake 供 TDD。本阶段只实现 Postgres 实现 + 内存 fake，备用图库实现留空。"
+        },
+        {
+          "q": "P1.2 repository seam 首切片交付了什么？遗留什么？",
+          "answer": "交付：zkc/repository/ 包——models(实体dataclass) + protocols(6个按聚合protocol + Storage门面) + memory(内存fake) + pg(psycopg裸SQL实现) + connection(DSN从env) + __init__(get_storage工厂，ZKC_STORAGE=pg|memory)。唯一注入点 get_storage()，应用只依门面不依具体实现。tests/test_repository.py 用同一份行为契约同时跑内存fake与真实PG(建zkc_repo_test库跑0001迁移)，双实现行为一致。全量30 tests通过。",
+          "note": "遗留（按决策本阶段不做）：Kuzu/TerminusDB 备用实现留空——seam 已抽象，未来加一个实现类即可，不波及其他聚合。完整双时态版本链(tx_to关旧行+插新行)留作后续refine，首切片 save 采用有id则就地更新；produced_by 作为普通UUID字段由调用方传入。次切片可将业务代码(摄入/调度/变换)从 zkc/migrate 的 docker-exec 直连切到 get_storage()。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-6": {
       "id": "1-2-6",
@@ -656,7 +691,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 02:10:56",
+    "updated": "2026-10-31 11:01:12",
     "md_file": "ROADMAP.md"
   },
   "edges": [
