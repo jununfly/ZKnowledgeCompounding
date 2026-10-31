@@ -16,7 +16,6 @@
 > - `docs/research/RESEARCH-TOPICS.md`（22 topic；**2026-10-31 已冻结为只读历史索引**，open 项已迁入本计划 §4/§5）
 > - `spikes/spike-{01..13,13b,14}-*/README.md`（**15 个**，全 passed）
 > - **代码资产**：`zkc/`（应用包 + 阈值表 + 迁移器）、`migrations/`（0001 D1–D9）、`tests/`（28 tests）——见 §10
-> - **路线图（zj-roadmap-driven）**：`docs/plans/roadmap.json`（事实源，禁止手改）+ `docs/plans/ROADMAP.md`（渲染视图，由 CLI 全量重写）——46 节点 / 22 条 `blocks` 边 / 7 条决策，**节点编号 = 执行顺序**（P0→P1→P2→P4→P3→P5→P6）。每次推进后用 `roadmap_cli.py render` 更新视图
 
 ---
 
@@ -32,6 +31,7 @@
 5. **进度回写**：每个 Phase 完成时，在对应 Phase 行追加实际工期、关键产出链接、偏离项；未完成的子任务保留 `[ ]` 并注明阻塞原因。
 6. **禁止静默外推 spike 限定**：架构 §8 的「⚠️ Spike 10/02 限定条件」、各 spike 的 open 项，是本协议的最高风险红线；任何实现都不得假设「单次采样结论可信」「小模型自动判定可用」「阈值已校准」。
 7. **渐进式暴露，避免臃肿**：本文件只保留实施所需的**必要信息**（决策/风险/里程碑/硬约束）；细节与证据一律**引用** PRD/架构/spike/调研报告，不在此复制。某节内容超过一屏即视为信号——将其外移为独立文档，本文件仅留「引用锚点 + 一句结论」，保持单一可维护 context 不膨胀。
+8. **不依赖临时跟踪产物**：执行过程若借助临时路线图/进度跟踪文件（完成后即删），本文件**不得将其作为事实源或引用源**；其必要信息（执行顺序、关键决策）须**摄取**进本文件 §2/§3.2/§4 后方可删除该临时产物，使本文件自包含、可独立作为长期权威源。
 
 **维护责任人**：zj（架构/决策）+ AI 搭档（执行中回写草稿，zj 复核签字）。每次 commit 前本文件应与代码同步更新（或显式标注「本提交未触及计划文件」）。
 
@@ -363,8 +363,6 @@ PRD v0.2 (做什么)
 RESEARCH-TOPICS (22 topic) → 冻结为只读索引，open 项迁入架构 §9 + 本计划 §5
 spikes/ (15, passed)       → 每个 Phase 任务的验证证据与时间胶囊
 代码资产 (zkc/ migrations/ tests/) → 本计划 §10
-本计划（决策/风险/工期）  → docs/plans/roadmap.json（路线图事实源，节点=执行顺序）
-                             └─ render → docs/plans/ROADMAP.md（Human 进度窗口，CLI 全量重写）
 ```
 
 ---
@@ -386,8 +384,6 @@ spikes/ (15, passed)       → 每个 Phase 任务的验证证据与时间胶囊
 | `tests/test_migrate.py` | 迁移集成测试，**打真实 docker 容器**（11） | ✅ |
 | `spikes/spike-14-embedding-dim/` | `probe_dim.py` + `probe_result.json` + README（R16 实测证据） | ✅ |
 | `ZJ-CONTEXT.md` / `docs/zj-adr/0001` `/0002` | 术语表 + 两份 ADR | ✅ |
-| `docs/plans/roadmap.json` | **路线图事实源**（zj-roadmap-driven）：46 节点 / 22 条 `blocks` 边 / 7 条决策。禁止手改，只能走 `roadmap_cli.py` | ✅ |
-| `docs/plans/ROADMAP.md` | 路线图渲染视图（由 `render` 全量重写，手改会被覆盖） | ✅ |
 
 ### 10.2 常用命令
 
@@ -403,13 +399,6 @@ python -m zkc.migrate verify    --db zkc_dev   # 拦「改历史迁移」
 
 # 阈值表（业务代码禁止裸数字）
 python -c "from zkc import tuning; print(tuning.get('ROT_THRESHOLD'))"
-
-# 路线图（事实源 = roadmap.json；md 由 CLI 全量重写，禁止手改）
-SKILL_DIR=/Users/bilibili/.workbuddy/skills/zj-roadmap-driven
-python $SKILL_DIR/roadmap_cli.py render  docs/plans/roadmap.json   # 每次实质工作后必跑
-python $SKILL_DIR/roadmap_cli.py ready          docs/plans/roadmap.json   # 现在能开工什么
-python $SKILL_DIR/roadmap_cli.py critical-path  docs/plans/roadmap.json   # 最长未完工链
-python $SKILL_DIR/roadmap_cli.py decisions      docs/plans/roadmap.json   # 全部决策
 ```
 
 ### 10.3 已知缺口（代码侧）
