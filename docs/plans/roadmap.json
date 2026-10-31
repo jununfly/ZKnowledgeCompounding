@@ -657,13 +657,20 @@
       "id": "1-5-1",
       "uid": "01a18dff8f4a-32cd7c4d92",
       "label": "P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5-1 第一切片的范围与依赖策略？",
+          "answer": "切片1 只交付 ZKC 自建蒸馏语义 + provider 无关算子，不引入 Ollama/Instructor/LangGraph 重依赖（沙箱装不上；调研 distill-llm 亦指出蒸馏语义必须自建、候选均不提供）。算子可注入 LLM callable，真实抽取接线前即可单测，不阻断 critical path。校验规则：每条 meta-claim 须引用≥1 来源（去繁非凭空）。Ollama/Instructor/LangGraph 接线 + score 表留作后续切片。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-2": {
       "id": "1-5-2",
@@ -894,7 +901,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 21:31:13",
+    "updated": "2026-10-31 22:53:25",
     "md_file": "ROADMAP.md"
   },
   "edges": [

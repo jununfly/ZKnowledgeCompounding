@@ -1,65 +1,29 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 21:31:13
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 22:53:25
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
-├── [x][X+] 1-1. P0 文档收口（全部完成）
-│   ├── [x][X+] 1-1-1. P0.1 架构三角审计清零
-│   ├── [x][X+] 1-1-2. P0.2 RESEARCH-TOPICS 冻结为只读索引
-│   ├── [x][X+] 1-1-3. P0.4 ZJ-CONTEXT 术语表 + ADR-0001/0002
-│   └── [x][X+] 1-1-4. P0.3 §2 决策基线 + §5 风险登记册评审签字（P0 唯一剩余）
-├── [x][X+] 1-2. P1 存储地基（全部完成）
-│   ├── [x][X+] 1-2-1. P1.0 定死 embedding 编码器 → vector(768)
-│   ├── [x][X+] 1-2-2. P1.1 迁移 0001（D1–D9）落地 zkc_dev
-│   ├── [x][X+] 1-2-3. P1.4 阈值表 zkc/tuning.py（29 参数）
-│   ├── [x][X+] 1-2-4. P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前）
-│   ├── [x][X+] 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换）
-│   ├── [x][X+] 1-2-6. P1.3 双时态 + decay 触发器（线性）实测
-│   └── [x][X+] 1-2-7. P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签
-├── [x][X+] 1-3. P2 摄入+分流
-│   ├── [x][X+] 1-3-1. P2.1 快捕获 UX（本地优先离线，T0.2）
-│   ├── [x][X+] 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）
-│   └── [x][X+] 1-3-3. P2.3 分流 → review_queue 写入联调
-├── [ ][X+] 1-4. P4 调度+复审闭环（S1：先于 P3）
-│   ├── [x][X+] 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD）
-│   ├── [x][X+] 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚）
-│   ├── [ ][X+] 1-4-3. P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe）
-│   ├── [x][X+] 1-4-4. P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机）
-│   └── [ ][X+] 1-4-5. P4.5 已捕获条目「单程票」规则（ADR-0002，含边界 1/2）
-├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
-│   ├── [ ][X+] 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
-│   ├── [!][X+] 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11）
-│   ├── [!][X+] 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）
-│   ├── [!][X+] 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）
-│   └── [!][X+] 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）
-├── [ ][X+] 1-6. P5 复用+度量
-│   ├── [!][X+] 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖）
-│   ├── [x][X+] 1-6-2. P5.2 5 度量面板（连接密度/复用率/方法论产出/衰减可控/复利系数）
-│   └── [ ][X+] 1-6-3. P5.3 度量 operationalize（判定者全自动 + 等权 0.25 起步）
-├── [ ][X+] 1-7. P6 上线
-│   ├── [ ][X+] 1-7-1. P6.1 明确不做打包/分发，只保证本机可启动（ADR-0001）
-│   ├── [ ][X+] 1-7-2. P6.2 真实数据冷启动引导（导入 ≥60 条动态型素材）
-│   ├── [x][X+] 1-7-3. P6.3 用户文档 + 度量复盘节奏（每周）
-│   └── [!][X+] 1-7-4. P6.4 达成累计 ≥20 个带标注复审动作 + 标注率 ≥70%（R10 降级判定）
-└── [ ][X+] 1-8. 风险 open 项关停（横切 R1/R4/R13/R14/R15/R18）
-    ├── [ ][X+] 1-8-1. R13 9B GGUF + num_ctx 8192 常驻实测（P3 前，不阻塞）
-    ├── [ ][X+] 1-8-2. R14 补全回路延迟成本埋点（P3 实现时，超预算则关闭补全）
-    ├── [ ][X+] 1-8-3. R15 context_member 写放大压测（先做查询时动态视图）
-    ├── [ ][X+] 1-8-4. R18 中文检索召回质量验证（P5 真实语料，不合格走加列 4096 路径）
-    ├── [ ][X+] 1-8-5. R1 自动忠实度判定（上线前，4B/9B 本机已否决，可选启用 judge.py）
-    └── [ ][X+] 1-8-6. R4 注意力预算校验 n/(0.6×interval)（上线前必做，否则衰减可控恒 0）
+    ├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
+    │   ├── [~][X+] 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
+    │   ... 该层还有 4 个兄弟，0 个 in_progress ▸
+    ... 该层还有 7 个兄弟，0 个 in_progress ▸
 <details><summary>阻塞链：6 个节点被阻塞</summary>
 
-- 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11） ← e14: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [ ]
-- 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05） ← e15: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [ ]
-- 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06） ← e16: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [ ]
-- 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b） ← e17: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [ ]
+- 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11） ← e14: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
+- 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05） ← e15: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
+- 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06） ← e16: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
+- 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b） ← e17: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
 - 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖） ← e19: 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06） [ ]
 - ... 另有 1 个节点被阻塞未列出
 
 </details>
 
+
+### 当前施工：1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
+
+**决策：**
+- Q: 1-5-1 第一切片的范围与依赖策略？ → 切片1 只交付 ZKC 自建蒸馏语义 + provider 无关算子，不引入 Ollama/Instructor/LangGraph 重依赖（沙箱装不上；调研 distill-llm 亦指出蒸馏语义必须自建、候选均不提供）。算子可注入 LLM callable，真实抽取接线前即可单测，不阻断 critical path。校验规则：每条 meta-claim 须引用≥1 来源（去繁非凭空）。Ollama/Instructor/LangGraph 接线 + score 表留作后续切片。
 
 ### 下一步可开工（ready 前 3）
 
