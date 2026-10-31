@@ -1,6 +1,9 @@
 # ZKC 本地 web 应用依赖（ADR-0001：FastAPI + SSR，localhost:8000）
 # 运行：fastapi + uvicorn + python-multipart（Form 解析）；测试：httpx（FastAPI TestClient 需要）
+# 存储：psycopg[binary] —— zkc/repository/connection.py 的 PG 驱动；原先缺失，
+#        本地只是本机已装故未暴露，CI 干净环境会直接 ImportError。
 fastapi
 uvicorn
 python-multipart
 httpx
+psycopg[binary]

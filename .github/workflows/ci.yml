@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # workflow 自身静态检查。actionlint 校验 YAML 结构、表达式上下文（如 matrix /
+  # steps.<id> 引用）与常见误用；ubuntu runner 自带 shellcheck，actionlint 会自动
+  # 把它接上，因此 run: 里的 shell 片段一并被检查（覆盖 CI 里那些 docker/psql 调用）。
+  #
+  # 为什么直接下载 release 二进制而不是用 market 上的 action：少一层第三方 action
+  # 供应链面，且版本用 ACTIONLINT_VERSION 固定，避免 latest 漂移导致 CI 行为不可复现。
+  lint:
+    name: lint (actionlint)
+    runs-on: ubuntu-latest
+    env:
+      ACTIONLINT_VERSION: '1.7.12'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install actionlint
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -sSL --retry 3 --retry-all-errors -o "$RUNNER_TEMP/actionlint.tgz" \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          tar -xzf "$RUNNER_TEMP/actionlint.tgz" -C "$RUNNER_TEMP/bin" actionlint
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: actionlint version
+        run: actionlint -version
+
+      # 不传参数 = 自动发现 .github/workflows 下所有 workflow
+      - name: Run actionlint
+        run: actionlint
+
+  # ---------------------------------------------------------------------------
+  # 最低保障：没有 docker / PG 的环境（如只拉代码跑单测的贡献者）必须优雅跳过
+  # PG 集成测试，而不是硬失败。ZKC_RUN_PG_TESTS=0 是各 PG 测试文件的 skipUnless 开关。
+  unit-no-pg:
+    name: unit (PG disabled)
+    runs-on: ubuntu-latest
+    env:
+      ZKC_RUN_PG_TESTS: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run unit tests
+        run: make test
+
+  # ---------------------------------------------------------------------------
+  # 完整链路：PG + pgvector → 迁移（含 sha 闸门）→ 集成测试 → 两个外生锚端到端。
+  #
+  # 为什么不用 GitHub 的 services: 容器：
+  #   zkc/migrate.py 是仓库「唯一允许 docker-exec 直连」的迁移路径，它固定
+  #   docker exec 到容器名 ZKC_PG_CONTAINER（默认 zkc-spike-pg）。GH services 容器
+  #   名字随机、docker exec 找不到，故这里显式 docker run --name 保持一致，
+  #   从而原样复用仓库自己的迁移器，而不是在 CI 里另写一套 psql 调用绕开它。
+  full:
+    name: full (PG + migrations + anchors e2e)
+    runs-on: ubuntu-latest
+    env:
+      ZKC_RUN_PG_TESTS: '1'
+      ZKC_PG_CONTAINER: zkc-spike-pg
+      ZKC_PG_USER: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # 用 pgvector 镜像而非裸 postgres：migrations 里有 CREATE EXTENSION vector
+      # 与 embedding vector(768) / HNSW 索引，裸 postgres 会直接迁移失败。
+      # 端口 55433 与 zkc/repository/connection.py 的 DEFAULT_DSN 一致，
+      # 因此下游 get_storage("pg") 无需任何 DSN 覆盖。
+      - name: Start Postgres + pgvector
+        run: |
+          docker run -d --name zkc-spike-pg \
+            -e POSTGRES_USER=postgres \
+            -e POSTGRES_PASSWORD=zkc \
+            -e POSTGRES_DB=zkc_dev \
+            -p 55433:5432 \
+            pgvector/pgvector:pg16
+          # 用墙钟超时而非「固定次数 × sleep」：慢机器上 60 次 sleep 2 也未必够，
+          # 而次数计数只是假精确。超时即 dump 容器日志，避免挂死到 job 超时。
+          deadline=$((SECONDS + 180))
+          until docker exec zkc-spike-pg pg_isready -U postgres -d zkc_dev; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::postgres not ready within 180s"
+              docker logs zkc-spike-pg || true
+              exit 1
+            fi
+            sleep 2
+          done
+
+      # 在迁移之前只确认「镜像里带 pgvector 能力」（module 存在 ≠ 已安装扩展）。
+      # 真正的后置断言在迁移之后做——见下「Verify schema + pgvector」。
+      - name: Verify pgvector capability in image
+        run: |
+          docker exec zkc-spike-pg psql -U postgres -d zkc_dev -tAc \
+            "SELECT 1 FROM pg_available_extensions WHERE name='vector';" | grep -q 1
+
+      # 迁移走仓库自研零依赖迁移器（docker exec + sha256 留痕）。
+      # verify 会比对已应用 sha 与磁盘文件 sha：改历史迁移必须在这里被抓到。
+      - name: Apply migrations
+        run: |
+          python -m zkc.migrate status
+          python -m zkc.migrate upgrade
+          python -m zkc.migrate verify
+
+      # 后置断言（在迁移之后，此时扩展与表都已建立）：必须真的出现 vector 扩展与
+      # 核心表，否则静默降级到一个「没有向量能力」的环境会让后续测试给出假绿。
+      - name: Verify schema + pgvector
+        run: |
+          docker exec zkc-spike-pg psql -U postgres -d zkc_dev -tAc \
+            "SELECT 1 FROM pg_extension WHERE extname='vector';" | grep -q 1
+          # 核心表名以迁移 0001 为准：node / meta_claim / review_queue（注意是
+          # meta_claim，不是 claim）。计数必须=3，否则说明只应用了半截迁移。
+          docker exec zkc-spike-pg psql -U postgres -d zkc_dev -tAc \
+            "SELECT count(*) FROM information_schema.tables
+             WHERE table_schema='public'
+               AND table_name IN ('node','meta_claim','review_queue');" | grep -q '^3$'
+
+      - name: Run tests (includes PG integration)
+        run: make test
+
+      # 两个外生锚（复审标注 / 每日收口埋点）的端到端回归：
+      # seed 直写 PG，drive 打 localhost:8000 并独立直查落库。
+      - name: Start web app
+        run: |
+          python -m zkc.web > /tmp/zkc-web.log 2>&1 &
+          deadline=$((SECONDS + 60))
+          until curl -sf http://127.0.0.1:8000/review -o /dev/null; do
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "::error::web app not ready within 60s"
+              cat /tmp/zkc-web.log || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+      - name: Anchors e2e (dogfood)
+        run: |
+          make dogfood-seed
+          make dogfood-drive
+
+      - name: Web app log (on failure)
+        if: failure()
+        run: cat /tmp/zkc-web.log || true
