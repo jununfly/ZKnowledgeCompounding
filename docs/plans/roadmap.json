@@ -121,7 +121,8 @@
         "1-5-2",
         "1-5-3",
         "1-5-4",
-        "1-5-5"
+        "1-5-5",
+        "1-5-6"
       ],
       "decisions": [],
       "notes": "",
@@ -657,7 +658,7 @@
       "id": "1-5-1",
       "uid": "01a18dff8f4a-32cd7c4d92",
       "label": "P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -665,6 +666,11 @@
         {
           "q": "1-5-1 第一切片的范围与依赖策略？",
           "answer": "切片1 只交付 ZKC 自建蒸馏语义 + provider 无关算子，不引入 Ollama/Instructor/LangGraph 重依赖（沙箱装不上；调研 distill-llm 亦指出蒸馏语义必须自建、候选均不提供）。算子可注入 LLM callable，真实抽取接线前即可单测，不阻断 critical path。校验规则：每条 meta-claim 须引用≥1 来源（去繁非凭空）。Ollama/Instructor/LangGraph 接线 + score 表留作后续切片。",
+          "note": ""
+        },
+        {
+          "q": "1-5-1 完成口径？",
+          "answer": "完成=切片1：ZKC 自建蒸馏语义(每条claim>=1来源)+provider无关算子(可注入LLM)，已 commit(3f7b339)+单测绿(7/7)。Ollama/Instructor/LangGraph HITL 接线+score表/rubric 延后，登记为 1-5-6 独立后续切片，不阻塞 critical path。",
           "note": ""
         }
       ],
@@ -700,13 +706,20 @@
       "id": "1-5-4",
       "uid": "01a18dff91d7-0898664a41",
       "label": "P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5-4 第一切片范围？",
+          "answer": "Port spike-06 到生产：schema(context/context_member/transform)已在 0001 基线就绪，无需新迁移。本切片在 repository seam 上加 assemble_context(一transform->一context+members,produced_by级联)+revert_assembly(删transform->FK CASCADE 撤 context+members)+discover_higher_dim(pgvector k-NN,T4.1)+人审成员 add/remove。补 zkc/context.py 算子与双实现单测。R15：membership 先用已验证的 junction 表(非高频重算即无写放大)；查询时动态视图留作压测后选项。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-5": {
       "id": "1-5-5",
@@ -897,11 +910,23 @@
       "decisions": [],
       "notes": "上线硬门槛之一：注意力预算需求 = n/(0.6×interval)。不满足则「衰减可控」指标恒 0，且不是指标问题而是供给问题——先查预算再查指标。",
       "layer": "plan"
+    },
+    "1-5-6": {
+      "id": "1-5-6",
+      "uid": "01a192fb7966-6a3148d63e",
+      "label": "P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 22:53:25",
+    "updated": "2026-11-01 01:21:57",
     "md_file": "ROADMAP.md"
   },
   "edges": [

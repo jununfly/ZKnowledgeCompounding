@@ -1,29 +1,25 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 22:53:25
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 01:21:57
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
     ├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
-    │   ├── [~][X+] 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
-    │   ... 该层还有 4 个兄弟，0 个 in_progress ▸
+    │   ├── [~][X+] 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）
+    │   ... 该层还有 5 个兄弟，0 个 in_progress ▸
     ... 该层还有 7 个兄弟，0 个 in_progress ▸
-<details><summary>阻塞链：6 个节点被阻塞</summary>
+<details><summary>阻塞链：2 个节点被阻塞</summary>
 
-- 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11） ← e14: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
-- 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05） ← e15: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
-- 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06） ← e16: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
-- 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b） ← e17: 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL [~]
-- 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖） ← e19: 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06） [ ]
-- ... 另有 1 个节点被阻塞未列出
+- 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖） ← e19: 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06） [~]
+- 1-7-4. P6.4 达成累计 ≥20 个带标注复审动作 + 标注率 ≥70%（R10 降级判定） ← e20: 1-7-2. P6.2 真实数据冷启动引导（导入 ≥60 条动态型素材） [ ]
 
 </details>
 
 
-### 当前施工：1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
+### 当前施工：1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）
 
 **决策：**
-- Q: 1-5-1 第一切片的范围与依赖策略？ → 切片1 只交付 ZKC 自建蒸馏语义 + provider 无关算子，不引入 Ollama/Instructor/LangGraph 重依赖（沙箱装不上；调研 distill-llm 亦指出蒸馏语义必须自建、候选均不提供）。算子可注入 LLM callable，真实抽取接线前即可单测，不阻断 critical path。校验规则：每条 meta-claim 须引用≥1 来源（去繁非凭空）。Ollama/Instructor/LangGraph 接线 + score 表留作后续切片。
+- Q: 1-5-4 第一切片范围？ → Port spike-06 到生产：schema(context/context_member/transform)已在 0001 基线就绪，无需新迁移。本切片在 repository seam 上加 assemble_context(一transform->一context+members,produced_by级联)+revert_assembly(删transform->FK CASCADE 撤 context+members)+discover_higher_dim(pgvector k-NN,T4.1)+人审成员 add/remove。补 zkc/context.py 算子与双实现单测。R15：membership 先用已验证的 junction 表(非高频重算即无写放大)；查询时动态视图留作压测后选项。
 
 ### 下一步可开工（ready 前 3）
 
