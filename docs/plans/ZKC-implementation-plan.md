@@ -100,7 +100,7 @@
 |---|---|---|---|
 | 存储 substrate | **Postgres 16 + pgvector**（repository seam 可替换 Kuzu/TerminusDB） | Spike 01 | enum + GIN；静态轨 decay 恒 0；claim 无 evidence_refs 被 schema 拒绝。**⚠️ 2026-10-31 变更（铁律 2 留痕）：`vector(1024)` → `vector(768)`**。旧值 1024 = spike 01 验证 DDL 可执行性的占位，与真实编码器不符；新值 768 = spike 14 实测 `nomic-embed-text`。触发条件：迁移落地前必须定维（换维度 = 重建索引）。已落 `migrations/0001` |
 | 双轨模型 | 单表 `node` + `track` 枚举 + 双时态(`valid_/tx_from/to`) | Spike 01 / PRD §4 | 双时态≠双轨，仅服务静态事实演进溯源 |
-| 衰减 decay | **线性** `min(1, elapsed/interval)` | Spike 01 | SURFACE=0.6 / ROT=0.9（现集中于 `zkc/tuning.py`，`source=simulation`）；阶梯否决；指数备选 |
+| 衰减 decay | **线性** `min(1, elapsed/interval)` | Spike 01 | SURFACE=0.6 / ROT=0.9（现集中于 `zkc/tuning.py`，`source=simulation`）；阶梯否决；指数备选；**c2（ADR-0003）：`decay_score` 是派生量，`update_decay` 不写 `node_history`、不 bump `tx_from`（刷新不污染双时态语义）** |
 | 双轨分流 | **DecisionRouter 主方案** + 双信号弃权 + 人工兜底 | Spike 02/03 | 3-way 仅强编码器(qwen3)预过滤；`routing_confidence` 记录；周期重分类 |
 | 蒸馏模型 | `qwen3.5:4b-mlx` 默认，9b 可选上限 | Spike 10 | 9B 在 16GB 常驻 10–12GB 触发 swap → 4B 默认 |
 | 结合/建模 | **ZKC 自研程序**（RCS 漏斗 + 引用强制 + 级联撤销） | Spike 05 | 无候选产出建模产物 |
@@ -196,12 +196,12 @@
 **P0 文档收口**
 - [x] P0.1 架构文档「待 zj 复核」逐条清零或转 risk §5 ✅ **已完成 2026-10-31**：三角审计清单 `docs/plans/ZKC-architecture-v1.2-review-checklist.md`（A 档 12 / B 档 3 / C 档 62）；**zj 已全批 → A 档回填架构（8 处）+ PRD（4 处）、B 档转 R13/R14/R15、C 档整批认可**；架构顶部状态已改为「已复核」
 - [x] P0.2 RESEARCH-TOPICS **冻结为历史索引** ✅ **已完成 2026-10-31**：顶部标「🔒 只读 · 已被取代」；§1 状态列改为「处置 + 证据」（已关闭 14 / 关闭带 open 2 / open 转待做 2 / 延后 2 / 转非目标 2）；新增 §1.1 迁移表（T0.2→P2.1、T6.1→P5.1、T2.1→R16、T4.2→R15、T0.3/T2.2 延后、X.1/X.2/X.3 转非目标）；§3 调研顺序标失效
-- [ ] P0.3 本计划 §2 决策基线 + §5 风险登记册评审签字 —— **P0 唯一剩余项**：zj 通读 §2（17 行）+ §5（17 条）后一次性签字即可闭环
+- [x] P0.3 本计划 §2 决策基线 + §5 风险登记册评审签字 —— **P0 唯一剩余项（2026-10-31 已签字闭环）**：zj 通读 §2（22 行）+ §5（19 条：14 活跃 + 5 已解决）后一次性签字即可闭环 P0（✅ 签字；F1–F4 同步修订）
 - [x] P0.4 建 `ZJ-CONTEXT.md` 术语表 + `docs/zj-adr/` ✅ **已完成 2026-10-31**：`ZJ-CONTEXT.md`（术语表：双轨/双时态/单程票/饱和日/删失观测/外生锚/活跃日）+ `docs/zj-adr/0001-mvp-delivery-form.md`（本地 web）+ `docs/zj-adr/0002-captured-single-way-ticket.md`（单程票）
 
 **P1 存储地基**
 - [x] **P1.0 定死 embedding 编码器（R16 硬前置）** ✅ **已完成 2026-10-31**：`spikes/spike-14-embedding-dim/` 实测 → **`nomic-embed-text` → `vector(768)`**（9.5ms/条、274MB；vs qwen3 4096d 183.2ms/条、4.7GB）；两者均已 L2 归一化。**硬约束**：embedding 仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 nomic dangerous=3，该职责归 DecisionRouter）。R16 已解决，新增 R18（中文召回质量未实测）
-- [x] **P1.4 阈值收敛（阈值表部分）** ✅ **已完成 2026-10-31**：新建 `zkc/tuning.py`（`Parameter{value, source, calibrated_at, history}`；`source ∈ {placeholder, simulation, calibrated}`）+ `tests/test_tuning.py`（**17 tests passed**）。**共 25 个参数**（13 `placeholder` / 10 `simulation` / 2 `calibrated`）：decay(3) / interval 基线(4+2 钳制) / L2 预算(3) / L3 AIMD(3) / 标注率闸门(3) / 校准门禁(2) / F_cap(1) / embedding(2)；`can_calibrate` 门禁（≥14 天埋点且 ≥3 饱和日）实测拒绝无数据改数并留痕。**⚠️ 澄清**：旧 spike 目录**不回改**（它们是时间胶囊式的验证证据），"统一 5 处 `ROT_THRESHOLD`"= 新代码统一走 `tuning.get()`，不是改 spike
+- [x] **P1.4 阈值收敛（阈值表部分）** ✅ **已完成 2026-10-31**：新建 `zkc/tuning.py`（`Parameter{value, source, calibrated_at, history}`；`source ∈ {placeholder, simulation, calibrated}`）+ `tests/test_tuning.py`（**17 tests passed**）。**共 29 个参数**（16 `placeholder` / 11 `simulation` / 2 `calibrated`；增量 = P2.2 DecisionRouter 的 4 个 `ROUTING_*`，embedding 已在早期 25 内）：decay(3) / interval 基线(4+2 钳制) / L2 预算(3) / L3 AIMD(3) / 标注率闸门(3) / 校准门禁(2) / F_cap(1) / embedding(2)；`can_calibrate` 门禁（≥14 天埋点且 ≥3 饱和日）实测拒绝无数据改数并留痕。**⚠️ 澄清**：旧 spike 目录**不回改**（它们是时间胶囊式的验证证据），"统一 5 处 `ROT_THRESHOLD`"= 新代码统一走 `tuning.get()`，不是改 spike
 - [x] **P1.1 迁移脚本 D1–D9** ✅ **已完成 2026-10-31**（`migrations/0001_baseline_d1_d9.up.sql` + `.down.sql` + `zkc/migrate.py` + `tests/test_migrate.py`，**11 tests passed**）
   - **⚠️ 实施偏差（按 §0 铁律 2 留痕）**：**Alembic → 自研零依赖迁移器**。旧值 = Alembic（原计划措辞）；新值 = `docker exec psql` + 版本表 `schema_migration` + sha256 留痕。**触发条件**：①架构不变量「依赖最少」；②迁移只需「按序执行 SQL + 记录版本」，不需要 ORM/autogenerate。**代价**：无 autogenerate，schema 靠手工维护（本阶段反而更可控，schema 源自 spike 证据）。已用 `verify` 子命令补上「改历史迁移必被抓到」的闸门。
   - **修正的三处 drift**（相对遗留 `zkc` 库）：① `node.embedding` **1024 → 768**（R16/spike 14）；② `meta_claim` **补 D9 六个 faithfulness 字段**；③ `context` **去掉已弃用的 `member_nodes uuid[]`**（D2 已由 `context_member` 取代）。
@@ -376,7 +376,7 @@ spikes/ (15, passed)       → 每个 Phase 任务的验证证据与时间胶囊
 | 路径 | 作用 | 状态 |
 |---|---|---|
 | `zkc/__init__.py` | 应用包入口（声明 MVP 形态 + 阈值唯一来源） | ✅ |
-| `zkc/tuning.py` | **阈值唯一权威来源**：25 个参数 × `{value, source, calibrated_at, history}`；`can_calibrate()` 门禁；`Parameter.set()` 强制留痕 | ✅ 17 tests |
+| `zkc/tuning.py` | **阈值唯一权威来源**：29 个参数 × `{value, source, calibrated_at, history}`；`can_calibrate()` 门禁；`Parameter.set()` 强制留痕 | ✅ 17 tests |
 | `zkc/decay.py` | **衰减模型（P1.3）**：纯函数线性衰减 `decay_linear` + `compute_decay_score`（静态轨恒 0）+ `surface` + `refresh_decay` 应用层维护扫描；阈值全走 `tuning.get` | ✅ 9 纯单测 + 3 PG 集成 |
 | `zkc/migrate.py` | 零依赖 schema 迁移器：`status / upgrade / downgrade / verify`；单事务 + sha256 留痕 | ✅ 11 tests |
 | `zkc/web/app.py` | FastAPI 本地捕获层；新增 `GET /tuning` 端点（P1.4 ②：展示全部参数及 `source` 标签） | ✅ |

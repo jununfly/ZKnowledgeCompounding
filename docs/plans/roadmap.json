@@ -39,8 +39,8 @@
     "1-1": {
       "id": "1-1",
       "uid": "01a18dff0055-00b9ba9ce9",
-      "label": "P0 文档收口（3/4 完成，剩 P0.3 签字）",
-      "status": "in_progress",
+      "label": "P0 文档收口（全部完成）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -225,13 +225,20 @@
       "id": "1-1-4",
       "uid": "01a18dff58ea-2393c48ecc",
       "label": "P0.3 §2 决策基线 + §5 风险登记册评审签字（P0 唯一剩余）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "P0.3 §2 决策基线 + §5 风险登记册评审签字？",
+          "answer": "2026-10-31 签字闭环 P0：§2(22 行)/§5(19 条) 通读确认；发现 F1-F4 文档失准/漏引并全修订——F1 §2 行数 17→22、F2 §5 条数 17→19(14 活跃+5 已解决)、F3 参数数 25→29(16 placeholder/11 simulation/2 calibrated)、F4 §2 decay 行补 c2/ADR-0003 脚注。",
+          "note": ""
+        }
+      ],
       "notes": "纯签字动作，不阻塞代码：通读实施计划 §2（决策基线）+ §5（风险登记册）后一次性确认即可闭环 P0。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-1": {
       "id": "1-2-1",
@@ -266,13 +273,13 @@
     "1-2-3": {
       "id": "1-2-3",
       "uid": "01a18dff5b7f-a023c0edf3",
-      "label": "P1.4 阈值表 zkc/tuning.py（25 参数）",
+      "label": "P1.4 阈值表 zkc/tuning.py（29 参数）",
       "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "2026-10-31 复核校正：原标 25 参数，实测 REGISTRY 29 个（16 placeholder / 11 simulation / 2 calibrated）。增量 = P2.2 DecisionRouter 的 4 个 ROUTING_*（embedding 的 EMBEDDING_MODEL/EMBEDDING_DIM 已在早期 25 内，不在增量）。",
       "layer": "plan"
     },
     "1-2-4": {
@@ -827,7 +834,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 18:54:50",
+    "updated": "2026-10-31 19:50:22",
     "md_file": "ROADMAP.md"
   },
   "edges": [
