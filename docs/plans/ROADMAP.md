@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 13:20:50
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-31 14:17:55
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
 ├── [~][X+] 1-1. P0 文档收口（3/4 完成，剩 P0.3 签字）
@@ -20,7 +20,7 @@
 ├── [ ][X+] 1-3. P2 摄入+分流
 │   ├── [ ][X+] 1-3-1. P2.1 快捕获 UX（本地优先离线，T0.2）
 │   ├── [x][X+] 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）
-│   └── [ ][X+] 1-3-3. P2.3 分流 → review_queue 写入联调
+│   └── [x][X+] 1-3-3. P2.3 分流 → review_queue 写入联调
 ├── [ ][X+] 1-4. P4 调度+复审闭环（S1：先于 P3）
 │   ├── [!][X+] 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD）
 │   ├── [!][X+] 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚）
@@ -51,7 +51,7 @@
     └── [ ][X+] 1-8-6. R4 注意力预算校验 n/(0.6×interval)（上线前必做，否则衰减可控恒 0）
 <details><summary>阻塞链：13 个节点被阻塞</summary>
 
-- 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） ← e7: 1-3-3. P2.3 分流 → review_queue 写入联调 [ ], e8: 1-2-6. P1.3 双时态 + decay 触发器（线性）实测 [ ]
+- 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） ← e8: 1-2-6. P1.3 双时态 + decay 触发器（线性）实测 [ ]
 - 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚） ← e9: 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） [ ]
 - 1-4-3. P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe） ← e10: 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD） [ ]
 - 1-4-4. P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机） ← e12: 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚） [ ]

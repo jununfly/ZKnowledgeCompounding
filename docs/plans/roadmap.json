@@ -424,13 +424,50 @@
       "id": "1-3-3",
       "uid": "01a18dff8a15-e17dd65de2",
       "label": "P2.3 分流 → review_queue 写入联调",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "范围判定",
+          "answer": "Product execution：本节点联调 routing→review_queue 写入+消费+回灌，落地 zkc/ 生产代码 + scripts/dogfood + 集成测试；旧 spike 目录不动。",
+          "note": ""
+        },
+        {
+          "q": "残留#1 真实LLM dogfood",
+          "answer": "新增 OllamaClient.health()（GET /api/tags 探测）+ route_text 在线时自动 health 失败降级离线；scripts/dogfood_routing.py 真实跑 Ollama，未起则优雅跳过（沙箱预期）。沙箱内用 health()=False 单测覆盖离线降级分支。",
+          "note": ""
+        },
+        {
+          "q": "残留#2 LexicalRouter冷启动",
+          "answer": "新增词法语料持久化（data/lexical_corpus.json）+ resolve_classify 回灌(text,track)：人工定轨样本积累≥3/类后 LexicalRouter 自动 fit，从安全欠覆盖逐步自动化。这是冷启动的真实闭环，而非纯设计陈述。",
+          "note": ""
+        },
+        {
+          "q": "残留#3 classify消费=本节点核心",
+          "answer": "ingest.list_pending_classify() 供每日复审队列UI(P4.2)消费；ingest.resolve_classify() 落定轨道+OCC快照+标记resolved+可选回灌语料。端到端：vague→enqueue classify→list→resolve→node.track 落定+学习。",
+          "note": ""
+        },
+        {
+          "q": "联调验收门槛",
+          "answer": "test_routing 新增：health=False 自动离线降级；list_pending_classify 过滤；resolve_classify 落定/拒非法/回灌refit；端到端 vague→resolve→router 学会该类。全仓测试须绿。",
+          "note": ""
+        },
+        {
+          "q": "真实Ollama dogfood证据",
+          "answer": "本机 Ollama+qwen2.5-coder:1.5b 实测（scripts/dogfood_routing.py）：①合同句→LLM返回解析失败/无效track→abstain→人工（小模型schema依从不完美，落在安全欠覆盖非危险）；②银行办事句→dynamic conf=1.00→llm-only提交，判定正确；③含糊句→LLM自判vague conf=0.50→abstain→人工。三条全部落在设计语义内。残留#1闭合。",
+          "note": ""
+        },
+        {
+          "q": "词法gate校准发现",
+          "answer": "字级unigram TF-IDF+小语料下，类质心余弦对语料原文也只有~0.33 → tuning 的 ROUTING_LEXICAL_CONF_GATE=0.5 实际恒弃权（安全但词法信号失效）。gate 校准属真实语料阶段 tuning 任务（PLACEHOLDER 语义一致），e2e 测试用 gate=0.25 验证学习闭环本身。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-1": {
       "id": "1-4-1",
@@ -723,7 +760,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-10-31 13:20:50",
+    "updated": "2026-10-31 14:17:55",
     "md_file": "ROADMAP.md"
   },
   "edges": [
