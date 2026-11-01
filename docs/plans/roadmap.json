@@ -788,14 +788,21 @@
       "id": "1-5-5",
       "uid": "01a18dff92d5-e5c78dc7be",
       "label": "P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
-      "children": [],
+      "children": [
+        "1-5-5-1"
+      ],
       "decisions": [
         {
           "q": "1-5-5 第一切片范围与路由语义？",
           "answer": "zkc/faithfulness.py 纯函数闸门核心：① 字面 rubric 预过滤=spike-10 normalize/ngrams/verbatim/overlap 移植（不 import spikes），红旗=verbatim/overlap 超 tuning 阈值，仅作 reason 标注**不是放行信号**（spike-10 盲点：rubric 抓不到内容幻觉）；② judge seam 移植 spike-12 分解式判定（atomic_facts + aggregate 确定性推导 + parse_judgment 防御解析），pydantic 可用（fastapi 传递依赖）；③ 路由双模式：judge_fn=None（本机现状，13b-probe 4B/9B 双否决）→ 全部 pending_human/human_only，绝不 auto-pass；judge_fn 可用 → Spike 13 §3 四分支（空分解/矛盾→forced 人审；unsupported→抽检 R_unsupported；supported→auto_pass+periodic_audit 5% 审计）。R11 独立预算：F_CAP_RATIO(0.20 已有)只封顶抽检+审计侧，强制项永无上限。④ 人工兜底 adjudicate(store, claim_id, verdict)：confirm/reject/edit → human_confirmed/human_rejected + human_verdict_at；校准语料**不建新表**=judge_raw 非空且有人判的 claim 行本身（judge vs 人判同 row 可查询导出，Spike 13 §7 最小实现）。⑤ ClaimRepository.list_by_status 消费口（memory+pg 同构）。验收③（无记录人判或带 judge_raw 的显式 auto-pass 不得离开 pending）在 route/adjudicate 内 enforcement + 测试。Web UI 卡片/F_cap 与每日队列联动/dogfood 脚本属后续切片。",
+          "note": ""
+        },
+        {
+          "q": "1-5-5 收口验证",
+          "answer": "第一切片实现已入库（22d8a42）：zkc/faithfulness.py（rubric 预过滤/judge seam/双模式路由/adjudicate/校准语料）+ tests/test_faithfulness.py 26 例 + tuning 四键（PLACEHOLDER）+ list_by_status 三处同构。全仓 312 tests OK。验收③（无记录人判不得离开 pending）与④（人判落校准语料）均有显式测试。Web UI 卡片/F_cap 联动/dogfood 属后续切片。",
           "note": ""
         }
       ],
@@ -1027,11 +1034,34 @@
       ],
       "notes": "",
       "layer": "plan"
+    },
+    "1-5-5-1": {
+      "id": "1-5-5-1",
+      "uid": "01a196b543cf-d3134088d3",
+      "label": "1-5-5 后续切片：Web UI 审查卡片 + F_cap 与每日复审队列联动 + human_only dogfood（不依赖 judge，直接喂 1-7-4 观察期）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "承载范围与边界？",
+          "answer": "承接 1-5-5 决策声明的三项后续切片（2026-11-01 zj 拍板新开节点）：① Web UI 审查卡片——在既有 web/review 人审流旁挂 faithfulness.pending_human_queue 消费界面（forced_* 优先、rubric 红旗加权展示），操作调 adjudicate(confirm/reject/edit)，喂校准语料与 1-7-4 观察期标注动作；② F_cap 与每日队列联动——R11 独立预算落地：F_CAP_RATIO 只封顶抽检+审计侧（sampled_unsupported 未抽中/periodic_audit）进入每日队列的量，强制项（forced_contradicted/forced_empty_atomic/human_only 全人工）永无预算上限、绝不丢弃；③ human_only 模式 dogfood 脚本——不依赖 judge（本机 4B/9B 已否决），脚本走 judge_fn=None 全人工路径端到端验证 gate→queue→adjudicate→calibration_corpus。真实 judge 接线 dogfood 归 1-8-5（R1），本节点不含。边界：不建新表（D9 六字段已在 0001 基线）；不引重依赖。",
+          "note": ""
+        },
+        {
+          "q": "实现落点与 R11 独立预算的语义收窄（显式记账，非静默偏差）",
+          "answer": "实现：① faithfulness.daily_faithfulness_queue——强制侧（forced_*/human_only）全量展示零丢弃；F_CAP_RATIO 只封顶抽检+审计侧（cap=int(ratio×(强制+封顶总数))，红旗加权取前 cap，其余留痕轮转不丢弃），f_cap_source 随展示值带来源标签（1-2-7）。② web/review.py faithfulness_queue_view + adjudicate_claim（包装 adjudicate）+ GET /review/api/faithfulness + POST .../adjudicate + REVIEW_HTML 审查卡片面板（忠实/不忠实两键；edit 留 API）。③ scripts/dogfood_faithfulness.py：judge_fn=None 全链路 14/14 PASS（照抄→verbatim 红旗、好抽象→无红旗、空来源→no_source_text；裁决→队列清空）。测试 tests/test_faithfulness_ui.py 12 例，全仓 324 OK。【语义收窄】原 decide 写『喂 1-7-4 观察期标注动作』，实现按 R11 独立预算裁决：adjudicate 绝不写 attention_observation——1-7-4 标注率口径只由节点复审驱动，claim 人审污染复审容量会破坏 budget 估计与 R10 判定。1-7-4 对忠实度人审的依赖由『审查卡片可用→人审可发生→语料可生长』间接满足，不经埋点混流。UI 不含 edit 文本改写（API 支持，UI 后续）。judge 真实接线 dogfood 归 1-8-5。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 17:21:05",
+    "updated": "2026-11-01 19:14:07",
     "md_file": "ROADMAP.md"
   },
   "edges": [
