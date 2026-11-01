@@ -910,12 +910,18 @@
     "1-8-2": {
       "id": "1-8-2",
       "uid": "01a18dffd73f-d70ceba81f",
-      "label": "R14 补全回路延迟成本埋点（P3 实现时，超预算则关闭补全）",
-      "status": "pending",
+      "label": "R14 补全延迟成本埋点（1-5-2 已落地埋点+kill switch；聚合判定并入 1-7-4 观察期）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "R14 处置：埋点落地后残余如何收口？",
+          "answer": "zj 拍板 2026-11-01（grill 收敛）：改写为已缓解并关闭本节点。依据：R14 降级预案='P3 实现时埋点记录补全触发率与额外延迟；超预算则关闭补全'——其中埋点（report.completion_fired / main_latency_ms / completion_latency_ms）与关闭动作（complete_on_shortfall kill switch）均已随 1-5-2 落地并 commit(1097bc6)，属'P3 实现时'范围，已完成。**残余收口：触发率聚合 + 超预算判定并入 1-7-4 观察期同批外生锚**（与标注率、校准门禁 R6/R13/R18 同批，均依赖真实使用数据，现在无法判定）。**判据模板（观察期执行，不新增伪精确参数）**：真实运行期间聚合补全触发率与补全延迟分布，若 [触发率 >50% 且补全延迟中位数 > 主生成中位数的 50%] 两条件同时成立 → 关 complete_on_shortfall（退回主生成质量），重估 R14；否则保持默认开启。不预先拍延迟预算数字——无分布支撑的数字是伪精确。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1011,7 +1017,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 15:30:13",
+    "updated": "2026-11-01 16:20:37",
     "md_file": "ROADMAP.md"
   },
   "edges": [
