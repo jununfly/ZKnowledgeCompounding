@@ -720,6 +720,11 @@
           "q": "T4.1 命名/触发策略范围？",
           "answer": "收尾切片：(1) 命名=ContextNamer 复用 distill 的 LLM=Callable[[str],str] seam（可注入、免重依赖），LLM 不可达/空返回退化为确定性关键词命名(fallback_name)，绝不因命名失败阻断提议；(2) 触发=人审闸门版 propose_higher_dim 只「提议」不自动创建——过相似度阈值(CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7 placeholder)+最小近邻数(MIN_MEMBERS=2 placeholder)+去重闸门(find_higher_dim_for_seed 同种子已存在则跳过)三关全过才 would_create=True；create_higher_dim 显式落库（未来接 UI/review_queue 人审确认）。全局每日提议数频率上限属调度层(注意力预算)，不在本切片内，登记为后续项。",
           "note": ""
+        },
+        {
+          "q": "T4.1 后续项（全局每日上限 + 占位阈值校准门禁）是否已落地？",
+          "answer": "已落地（commit 13f7de0），闭环原决策'登记为后续项'。① 全局每日提议上限：scheduling.proposal_budget_for_day 作上限唯一权威（PROPOSAL_PER_DAY_CAP=5 placeholder），AttentionRepository 加 record_proposal/count_proposals（memory+pg 双实现），migration 0004 proposal_log 落库外生锚，context.propose_higher_dim_daily 在'同种子去重'之上做'全库每日限流'（达 cap 后剩余种子 would_create=False）。② 占位阈值校准门禁：tuning.is_calibrated 探针 + HigherDimProposal.calibrated 字段；propose_higher_dim 据 CONTEXT_HIGHER_DIM_SIM_THRESHOLD/MIN_MEMBERS 的 source 设标志，未校准时 reason 标注'须走 calibrate() 门禁 ≥14天+≥3饱和日'，人审仍生效但明确非真理。真实校准仍待 ≥14 天埋点+≥3 饱和日（与 R13/R14 同批外生锚）。",
+          "note": ""
         }
       ],
       "notes": "",
@@ -872,11 +877,17 @@
       "id": "1-8-3",
       "uid": "01a18dffd83a-d495d5b76b",
       "label": "R15 context_member 写放大压测（先做查询时动态视图）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "R15 context_member 写放大压测是否完成？",
+          "answer": "已完成（commit 13f7de0）。新增 tests/test_r15_write_amplification.py：junction 表在高频重算（C 个 context × M 成员 × R 轮 revert+assemble）下写次 = C·(1+M)+R·C·(2+M)，线性有界 O(R·C·M)，动态视图 0 写，放大系数有精确上界非失控。计划文档 §5 R15 由 open 转'已缓解（压测已加）'，§6 上线门禁 open 列表移除 R15。结论：沿用 junction 表的 mitigation 成立，无需改动态视图。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -931,7 +942,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 01:40:32",
+    "updated": "2026-11-01 09:19:01",
     "md_file": "ROADMAP.md"
   },
   "edges": [
