@@ -133,7 +133,12 @@ def build_judge_prompt(claim: str, sources: list[dict]) -> str:
         f"3. 每条标注 evidence：支撑或反对它的来源 id；若都找不到写「无」。\n"
         f"4. overall 由事实标签推导（我们也会自己重算，你可填可空）。\n"
         f"5. reason：一句话说明最关键的依据。\n"
-        f"逐条核验，宁可标 unsupported 也不要脑补支持。"
+        f"逐条核验，宁可标 unsupported 也不要脑补支持。\n\n"
+        f"【输出格式】只输出一个 JSON 对象，**键名必须与下面完全一致**（1-8-5 实测："
+        f"不给显式 schema 时小模型会自造键名导致解析为空分解）：\n"
+        f'{{"atomic_facts": [{{"fact": "原子事实原文", "verdict": "supported|unsupported|contradicted", '
+        f'"evidence": "来源id 或 无"}}], "overall": "supported|partial|unsupported|contradicted", '
+        f'"reason": "一句话关键依据"}}'
     )
 
 
