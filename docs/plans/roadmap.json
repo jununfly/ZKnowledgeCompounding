@@ -1029,13 +1029,27 @@
       "id": "1-8-4",
       "uid": "01a18dffd920-44d813e28b",
       "label": "R18 中文检索召回质量验证（P5 真实语料，不合格走加列 4096 路径）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-8",
-      "children": [],
-      "decisions": [],
+      "children": [
+        "1-8-4-1"
+      ],
+      "decisions": [
+        {
+          "q": "合格判据怎么定（R18 线）？",
+          "answer": "评测集=32 条人工改写中文 query（每条对应 1 个目标文档，禁止照抄标题；覆盖缓存/skills/harness/多agent/记忆/组织/安全等全部主题簇）。指标：Recall@10 ≥ 0.85 且 MRR ≥ 0.5 为合格（依据：embedding 仅候选召回+人确认，top-10 是 /browse 追加展示窗口，错排靠后人工可救，召回不到则语义入口失效）。合格→R18 关停（记录实测数为证据）；不合格→同查询集跑 qwen3-embedding 4096d 对比，仅当 4096 达标且显著优于 768 才开加列路径。脚本 scripts/r18_recall_eval.py + queries JSON 可重跑。",
+          "note": ""
+        },
+        {
+          "q": "实测结果与 R18 处置结论？",
+          "answer": "生产数据流实测（query vs 库内已存向量，61 条语料 / 32 条改写 query）：nomic 768d Recall@1=0.219 @5=0.438 @10=0.562，MRR=0.345，median_rank=7，14/32 条未进 Top10 → 不合格。同查询集 qwen3-embedding 4096d（文档向量重编，模拟加列后基线）：Recall@1=0.750 @5=0.906 @10=0.938，MRR=0.824，median_rank=1，仅 2 条 rank 11/12 → 合格且显著优于 768。结论：触发加列 4096 路径；R18 验证本身完成（判据、脚本、查询集、实测数均已落盘可重跑），实装单列后续节点。成本注：4096d 每行 16KB×61 行≈1MB 可忽略；重编一次性 ~7.5min（61 篇长文分批）；query 编码 ~183ms/条（spike-14 已测）在 browse 场景可接受。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8-5": {
       "id": "1-8-5",
@@ -1152,11 +1166,35 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-8-4-1": {
+      "id": "1-8-4-1",
+      "uid": "01a197755c8f-3662a4b220",
+      "label": "embedding 加列 4096d 实装（新列 vector(4096) + 迁移重编 + /browse 检索切换 + 同评测集复测达标）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-8-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "双列还是换列？nomic 去留与阈值语义影响面？",
+          "answer": "zj 拍板：**nomic 保留 → 双列共存**。新列 node.embedding_4096 vector(4096)，768 列与历史/训练面全部不动；/browse 候选召回切到 4096 列。影响面裁定：① discover_higher_dim（反向连接候选）本切片**不动**——它绑定 CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7 的 sim 分布语义，换模型需重新校准阈值，单列后续处理，不静默切换；② tuning 新增 EMBEDDING_4096_MODEL/EMBEDDING_4096_DIM（source=CALIBRATED，calibrated_at=2026-11-01，依据=1-8-4 实测 61 语料×32 query）；EMBEDDING_DIM 768 原值保留供 nomic 列；③ 迁移 0008 单事务加列，node_history 不加列（embedding 是派生数据非事实，双时态快照不镜像）；④ 回填/写入走 repository seam 新方法 set_embedding_column（白名单列名，轻量路径：FOR UPDATE+version_seq 自增，不写 history、不 bump tx_from——与 update_decay 派生投影同理由）；⑤ 复测：同 32 条 query 评测集对生产列 embedding_4096 重跑（不再 reembed），达标=Recall@10≥0.85 且 MRR≥0.5。",
+          "note": ""
+        },
+        {
+          "q": "实装结果与验收证据？",
+          "answer": "全部落地并验收：① 迁移 0008 已应用 zkc_dev（sha=99f1f32281ad，verify 全一致）；② 回填 60/60（scripts/backfill_embedding_4096.py，seam 内 set_embedding_column 轻量路径，~7.5min）；③ /browse 生产检索已切 4096 列（qwen3-embedding，768 列保留）；④ **同评测集生产列复测：Recall@1=0.781 @5=0.938 @10=1.000，MRR=0.853，median_rank=1 → 合格**（优于 1-8-4 对比基线 @10=0.938，因语料剔除无 content 的 v1 节点）；⑤ e2e 验收：q=「提示词缓存怎么配置才能省钱」结构化 0 命中、4096 候选 top1/top2 正确命中两篇缓存文档，降级语义不变（encoder 不可用→纯结构化）；⑥ 全仓测试 398 OK（新增 7 项：4096 列白名单/双列独立/dim 覆写/make_encoder_4096 等）；⑦ 顺手修复 history() SELECT * UNION 在加列后列数不齐的坑（改为显式列清单，node_history 不含 4096 派生列）。R18 正式关停（1-8-4 验证 + 1-8-4-1 实装双证据）。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 21:33:46",
+    "updated": "2026-11-01 22:38:33",
     "md_file": "ROADMAP.md"
   },
   "edges": [
