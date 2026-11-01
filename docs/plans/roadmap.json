@@ -279,7 +279,13 @@
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "label『29 参数』与当前 tuning 实际参数数（48）不一致，如何治理？",
+          "answer": "不改 label。label 记录的是该节点完成时点的参数数（1-1-4 签字口径：29 = 16 placeholder/11 simulation/2 calibrated），是历史快照不是实时承诺；后续节点（1-3-2/1-5-2/1-5-5/1-5-6）新增参数属合法增长且各有 decide 留痕。实时权威 = zkc/tuning.py 本体 + GET /tuning（as_rows 带 source 标签，1-2-7 ②）。未来审计规则：核对 tuning 现状以 /tuning 为准，不以节点 label 数字为准。",
+          "note": ""
+        }
+      ],
       "notes": "2026-10-31 复核校正：原标 25 参数，实测 REGISTRY 29 个（16 placeholder / 11 simulation / 2 calibrated）。增量 = P2.2 DecisionRouter 的 4 个 ROUTING_*（embedding 的 EMBEDDING_MODEL/EMBEDDING_DIM 已在早期 25 内，不在增量）。",
       "layer": "plan"
     },
@@ -399,6 +405,11 @@
         {
           "q": "阈值展示须带来源标签",
           "answer": "UI/日志展示阈值时须同时显示 source 标签（tuning.as_rows()/param.source），禁止只报数字。web 增加 /tuning 端点展示全部参数及来源；日志打印阈值附来源。",
+          "note": ""
+        },
+        {
+          "q": "P1.4 禁裸数字二轮逐行审计（2026-11-01，回应 1-5-6 后 roadmap 比对）结果？",
+          "answer": "零违规。全量扫 zkc/（含 repository/web），三类判定：①阈值/基线天数/gate/比例/权重全部走 tuning.get()（scheduling 经 _t 别名，ingest 经 route_text 内部读）——裸小数比较全仓 0 命中；②豁免（非阈值语义）：数学常数（0.5 半衰期底数/1e-9 浮点容差/86400 秒天换算）、归零钳位（0.0/1.0）、结构信号（conn_count>=1）、值域校验（decay 0..1）、展示层 *100、llm.py DEFAULT_NUM_CTX=8192（1-5-2 铁律②环境硬约束，模块常量+注释锚定，同 distill MIN_CITATIONS 先例）；③测试/spike 不在审计域。审计方法留痕：浮点字面量扫描 + 比较运算符整数扫描 + tuning 键反向对照三层，且 BSD grep 不支持 BRE \\| 交替（两次假阴性已改 grep -E 复核）。",
           "note": ""
         }
       ],
@@ -1083,7 +1094,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 19:38:31",
+    "updated": "2026-11-01 19:57:41",
     "md_file": "ROADMAP.md"
   },
   "edges": [
