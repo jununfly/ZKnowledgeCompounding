@@ -704,13 +704,30 @@
       "id": "1-5-2",
       "uid": "01a18dff9027-977ac70b68",
       "label": "P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5-2 第一切片范围与 1-5-3 的边界？",
+          "answer": "本切片交付生产算子 zkc/cross_source.py：自包含移植 Spike 11（pydantic schema ArtifactClaim/CrossSourceArtifact + enforce_citations 引用强制 + RCS 漏斗 + 提示硬约束 + 单次有界补全回路）。漏斗/引用强制作为跨源算子的必要基础设施随本切片进来（Spike 11 算子已实证严格优于 Spike 05 baseline：4B 3/3 vs 2/3）。1-5-3 承接剩余：repository 落库接线（evidence_refs UUID 化 + produced_by）+ 与 revert_artifact 级联撤销联调 + 生产入口。不引重依赖（不用 instructor/openai 客户端，LLM 全走可注入 callable，同 distill.py seam）。",
+          "note": ""
+        },
+        {
+          "q": "R14（补全回路延迟成本埋点）如何在本切片落地？",
+          "answer": "按 R14 降级预案在算子层落地埋点：report 记录 main_latency_ms / completion_latency_ms / completion_fired / n_cross_source_final，触发率与额外延迟由调用方按 run 聚合；补全回路保留 complete_on_shortfall 开关（默认开），超预算时可整体关闭退回主生成质量。阈值 CROSS_SOURCE_MIN_ASSERTIONS=2 / COMBINE_MAX_SOURCES=4 进 tuning（PLACEHOLDER，待真实语料校准）。",
+          "note": ""
+        },
+        {
+          "q": "真实 Ollama dogfood 发现了哪些对 1-5-6 真实接线至关重要的调用铁律？",
+          "answer": "dogfood（scripts/dogfood_cross_source.py，qwen3.5:4b-mlx 真实跑通：30.5s 全程、跨源 gate PASS 3/2、补全零触发，与 Spike 11 §5.1 一致）实测三条铁律：① /v1 端点 + response_format json_object 对 qwen3.5-mlx **永久挂死**（>900s 无响应；去掉即 13s 返回）——Instructor Mode.JSON 走提示层不发 response_format 故 spike 未踩，1-5-6 禁用 Mode.JSON_SCHEMA/OPENAI_TOOLS 或直接走原生 /api/chat + format:json；② Qwen3.5 默认 256K context → 16GB 爬行，每次调用必须显式 think=false + num_ctx=8192（spike-10 已记录，本次复现）；③ num_predict 必须显式给足（默认截断把产物 JSON 腰斩、缺 claims）。schema 由提示层注入（同 Instructor 行为），pydantic 校验 + 单次非膨胀重试兜底。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-3": {
       "id": "1-5-3",
@@ -994,7 +1011,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 12:12:27",
+    "updated": "2026-11-01 15:30:13",
     "md_file": "ROADMAP.md"
   },
   "edges": [
