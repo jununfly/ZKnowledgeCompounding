@@ -605,11 +605,17 @@
       "id": "1-4-3",
       "uid": "01a18dff8cb2-6db9543efa",
       "label": "P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "P4.3 落地载体与验收口径？",
+          "answer": "spike-09 切片 B 已是完整设计+仿真（44 tests 中 slice B 22）。代码已提升为 zkc/scheduling.py 存储无关纯函数：estimate_budget_from（删失感知：saturated→p25 / 无饱和日→lower_bound / 无观测→none）、update_budget_from（单调护栏 lower_bound 不下调 + 阻尼 EMA α=0.3 钳±30%）、l2_target（校准期 oversubscribe×1.5）、fit_budget_rows（L2 归一，人工设定豁免）。tests/test_scheduling.py 含 11 项 budget 单测、整文件 33 项全绿；架构 §6.5.1 已文档化。残余非阻塞：阈值(p25/α0.3/±30%/×1.5)校准属 open（架构 §8 / P6.4 真实数据校准）；结构性极限（条目太少容量不可观测）与\"需 1-4-2 真实每日复审队列喂 attention_observation 埋点\"已在 1-4-2 闭环。本节点工程已闭合，故由 pending 翻 completed；此前的 pending 是节点状态未翻转，非工作缺失。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -972,7 +978,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 10:39:17",
+    "updated": "2026-11-01 11:06:46",
     "md_file": "ROADMAP.md"
   },
   "edges": [
