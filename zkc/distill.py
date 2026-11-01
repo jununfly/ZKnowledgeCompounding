@@ -9,13 +9,17 @@
 - 本切片交付：ZKC 自建蒸馏语义的数据模型 + 校验规则，以及一个 **provider 无关**的算子
   （LLM 调用通过可注入 callable 传入）。这样在真实 Ollama/Instructor 接线之前即可单测，
   不阻断整条 critical path（1-5-1 是 1-5-2~1-5-5 的 blocks 前驱）。
-- 后续切片：接 Instructor + Ollama 真实结构化抽取、接 LangGraph HITL、加 score 表/rubric。
+- 1-5-6 结构化接线已落地：JSON 契约解析 + 手写校验重试（Instructor 等价，决策见
+  roadmap 1-5-6 decisions）+ 真实 Ollama 客户端（zkc.llm.make_distill_llm，铁律内置）。
+  LangGraph 不引入：HITL 语义已由 expiry.apply_distill 失败回落 review_queue 承载；
+  score 表见 migrations/0007_llm_call_score + expiry.apply_distill 落库点。
 
 铁律（P1.4）：本模块阈值走 zkc.tuning；蒸馏语义**不变式**（每条 claim 须引用≥1 来源）
 属于逻辑约束而非可调阈值，保留为模块常量并显式标注。
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from typing import Callable, Optional, Sequence
@@ -58,6 +62,9 @@ class DistillationResult:
     """一次蒸馏的结构化产出。"""
     claims: list[MetaClaim] = field(default_factory=list)
     notes: str = ""
+    # 结构化接线（1-5-6）：本次蒸馏实际消耗的 LLM 尝试次数（含首次），
+    # 供 score 表（llm_call_score.attempts）记录重试成本。
+    attempts: int = 1
 
 
 class DistillationError(ValueError):
@@ -88,6 +95,75 @@ def _build_prompt(
             or "将以下材料蒸馏为去繁后的元认知结论；每条结论须用 [[源节点uuid]] 标记其来源。")
     body = "\n".join(f"[{sid}] {txt}" for sid, txt in source_texts)
     return f"{head}\n\n材料：\n{body}\n\n节点：{node_id}"
+
+
+# 结构化 JSON 契约（1-5-6）：prompt 层 schema 提示，等同 Instructor Mode.JSON 的
+# 提示层行为（铁律①：禁用 /v1+response_format 与 Instructor Mode.JSON_SCHEMA/OPENAI_TOOLS——
+# 对 qwen3.5-mlx 永久挂死；JSON 合规由提示约束 + 调用方正则抽取兜底）。
+DISTILL_SCHEMA_HINT = (
+    '输出必须是且仅是如下结构的 JSON（字段名逐字遵守）：\n'
+    '{"claims": [{"text": str, "topic": str, '
+    '"citations": [来源节点uuid字符串数组，每条至少1个]}]}\n'
+    'citations 只能引用材料中给出的 [uuid]，不得编造。'
+)
+
+_JSON_OBJ_RE = re.compile(r"\{.*\}", re.DOTALL)
+
+
+def _extract_json(raw: str) -> Optional[dict]:
+    """从 LLM 文本提取第一个 JSON 对象（宽松，容忍围栏/前后缀）；失败返回 None。"""
+    m = _JSON_OBJ_RE.search(raw or "")
+    if not m:
+        return None
+    try:
+        obj = json.loads(m.group(0))
+    except ValueError:
+        return None
+    return obj if isinstance(obj, dict) else None
+
+
+def _parse_json_output(
+    raw: str, source_texts: Sequence[tuple[UUID, str]]
+) -> Optional[DistillationResult]:
+    """解析结构化 JSON 契约为 DistillationResult（1-5-6 主路径）。
+
+    契约：{"claims": [{text, topic, citations: [uuid, ...]}]}。
+    - citations 里非源集合的 uuid 一律丢弃（与文本解析同语义：不许编造来源）；
+    - claim 文本中的 [[uuid]] 内联标记也并入引用（宽容 LLM 混用两种标记）；
+    - JSON 缺 claims 数组 / claims 非列表 → 返回 None（调用方走文本 fallback 或重试）。
+    """
+    obj = _extract_json(raw)
+    if obj is None or not isinstance(obj.get("claims"), list):
+        return None
+    id_set = {sid for sid, _ in source_texts}
+    claims: list[MetaClaim] = []
+    for item in obj["claims"]:
+        if not isinstance(item, dict) or not str(item.get("text") or "").strip():
+            return None  # 结构残缺 → 整体视为解析失败（重试修正比静默丢 claim 安全）
+        cited: list[UUID] = []
+        for tok in (item.get("citations") or []):
+            try:
+                uid = UUID(str(tok))
+            except (ValueError, TypeError):
+                continue
+            if uid in id_set and uid not in cited:
+                cited.append(uid)
+        for tok in _CITE_RE.findall(str(item.get("text") or "")):
+            try:
+                uid = UUID(tok)
+            except ValueError:
+                continue
+            if uid in id_set and uid not in cited:
+                cited.append(uid)
+        claims.append(MetaClaim(
+            text=str(item["text"]).strip(),
+            topic=str(item.get("topic") or "(unclassified)"),
+            citations=[Citation(sid) for sid in cited],
+            reverse_links=list(cited),
+        ))
+    if not claims:
+        return None
+    return DistillationResult(claims=claims)
 
 
 def _parse_llm_output(raw: str, source_texts: Sequence[tuple[UUID, str]]) -> DistillationResult:
@@ -121,17 +197,41 @@ def distill_node(
     llm: LLM,
     *,
     system_prompt: Optional[str] = None,
+    max_attempts: Optional[int] = None,
 ) -> DistillationResult:
-    """对单个节点执行一次蒸馏（ZKC 语义层 + 可注入 LLM）。
+    """对单个节点执行一次蒸馏（ZKC 语义层 + 可注入 LLM + 结构化校验重试）。
 
     - source_texts: [(源节点id, 文本), ...]，提供反向连接与引用目标。
-    - llm: provider 无关的文本生成 callable（真实环境由 Instructor + Ollama 实现）。
-    - 返回**已通过语义校验**的结果；不满足不变式则抛 DistillationError。
+    - llm: provider 无关的文本生成 callable（真实环境见 zkc.llm.make_distill_llm）。
+    - 结构化接线（1-5-6，Instructor 等价）：prompt 带 JSON schema 提示；解析顺序
+      JSON 契约 → 旧文本标记 fallback；任一解析成功但**语义校验失败**（引用不足），
+      或两种解析都失败 → 带一条短修正提示重调 LLM，最多 max_attempts 次
+      （tuning.DISTILL_MAX_ATTEMPTS）。超限抛最后一次的 DistillationError。
+    - 返回**已通过语义校验**的结果（attempts 记录实际尝试次数）。
     """
-    prompt = _build_prompt(node_id, source_texts, system_prompt)
-    raw = llm(prompt)
-    result = _parse_llm_output(raw, source_texts)
-    return validate_result(result)
+    n = int(max_attempts if max_attempts is not None
+            else tuning.get("DISTILL_MAX_ATTEMPTS"))
+    base = _build_prompt(node_id, source_texts, system_prompt)
+    prompt = base + "\n\n" + DISTILL_SCHEMA_HINT
+    last_err: Optional[Exception] = None
+    for attempt in range(1, n + 1):
+        p = prompt
+        if attempt > 1 and last_err is not None:
+            # 非膨胀重试（spike-10 先例）：每次从头重建 prompt，只追加一条短修正提示。
+            p = (prompt + f"\n上一次输出未通过校验（{str(last_err)[:80]}）。"
+                 "请重新输出完整 JSON，字段名逐字遵守，每条 claim 的 citations "
+                 "至少含 1 个材料中的来源 uuid。")
+        raw = llm(p)
+        result = _parse_json_output(raw, source_texts)
+        if result is None:
+            result = _parse_llm_output(raw, source_texts)
+        try:
+            result = validate_result(result)
+            result.attempts = attempt
+            return result
+        except DistillationError as e:
+            last_err = e
+    raise last_err  # type: ignore[misc]
 
 
 class DistillationOperator:

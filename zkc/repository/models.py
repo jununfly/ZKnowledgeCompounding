@@ -175,6 +175,28 @@ class AttentionObservation:
 
 
 @dataclass
+class LLMCallScore:
+    """一次 LLM 调用的轻量度量（对应 schema `llm_call_score`，1-5-6；Langfuse 替代）。
+
+    成功与失败都记：失败行的 error 是接线质量的第一手观测。
+    human_verdict = 蒸馏质量 rubric 的人工打分入口（复审流回填，默认 NULL）。
+    """
+
+    id: UUID | None = None
+    operation: str = "distill"
+    node_id: UUID | None = None
+    model: str | None = None
+    latency_ms: float | None = None
+    parse_ok: bool = True
+    attempts: int | None = None
+    n_claims: int | None = None
+    n_citations: int | None = None
+    error: str | None = None
+    human_verdict: str | None = None
+    created_at: datetime | None = None
+
+
+@dataclass
 class MetricInputs:
     """复利度量计算的普通数据快照（存储无关）。
 

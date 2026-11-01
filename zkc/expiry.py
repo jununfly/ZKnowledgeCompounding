@@ -21,6 +21,7 @@ decay_score），**存储无关**——内存 fake 与 PG 同一行为。
 """
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Callable, Optional
 from uuid import UUID
@@ -127,11 +128,12 @@ def apply_distill(
     node_id,
     distiller: Callable,
     now: Optional[datetime] = None,
+    model: Optional[str] = None,
 ) -> dict:
     """执行 distill 决策的「真蒸馏」分支（残余 B：不再只入队）。
 
     distiller: 可注入 callable ``(store, node_id) -> DistillationResult``——真实环境用
-    ``distill.distill_node`` + LLM（Instructor/Ollama），测试用 fake。语义流程：
+    ``distill.distill_node`` + LLM（zkc.llm.make_distill_llm），测试用 fake。语义流程：
       1. 跑蒸馏并强制 ZKC 语义校验（每条 claim ≥1 来源引用，见 distill.validate_result）；
       2. 每条 MetaClaim 落一条 Claim（statement=text, level='insight',
          evidence_refs=citations 的来源节点）——节点由此进入「已捕获」；
@@ -141,15 +143,30 @@ def apply_distill(
     任一步失败（DistillationError / LLM 异常）→ 回落 enqueue 人审 + applied=False，
     绝不静默丢弃（PRD §8 宁少勿错）。
 
+    度量（1-5-6）：每次调用落一行 llm_call_score（成功与失败都记）——latency_ms /
+    parse_ok / attempts（来自 result.attempts）/ n_claims / n_citations / error；
+    ``model`` 由调用方从 ``getattr(llm, "model_name", None)`` 透传（distiller 是
+    不透明 callable，模型名不在本层可见）。rubric 人工打分经
+    ``store.scores.set_human_verdict`` 回填（复审流消费口）。
+
     返回 ``{applied, action, claim_ids, reason, enqueued}``。
     """
     nid = _as_uuid(node_id)
     now = now or datetime.now(timezone.utc)
+    t0 = time.perf_counter()
     try:
         from .distill import DistillationError, validate_result
+        from .repository.models import LLMCallScore
 
         result = distiller(store, nid)
         result = validate_result(result)
+        latency_ms = (time.perf_counter() - t0) * 1000.0
+        n_cit = sum(len(mc.citations) for mc in result.claims)
+        store.scores.record(LLMCallScore(
+            operation=DECISION_DISTILL, node_id=nid, model=model,
+            latency_ms=latency_ms, parse_ok=True, attempts=result.attempts,
+            n_claims=len(result.claims), n_citations=n_cit,
+        ))
         claim_ids = []
         for mc in result.claims:
             c = store.claims.save(Claim(
@@ -166,6 +183,16 @@ def apply_distill(
             enqueued=False,
         )
     except Exception as e:  # noqa: BLE001 —— 失败必须回落人审，绝不静默丢
+        from .repository.models import LLMCallScore
+
+        latency_ms = (time.perf_counter() - t0) * 1000.0
+        try:
+            store.scores.record(LLMCallScore(
+                operation=DECISION_DISTILL, node_id=nid, model=model,
+                latency_ms=latency_ms, parse_ok=False, error=str(e)[:500],
+            ))
+        except Exception:  # noqa: BLE001 —— 度量失败绝不掩盖主失败路径
+            pass
         enqueue_review(store, nid, DECISION_DISTILL, f"auto-distill failed: {e}")
         return dict(
             applied=False, action=DECISION_DISTILL, claim_ids=[],

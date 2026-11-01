@@ -14,6 +14,7 @@ from .models import (
     Claim,
     Context,
     Edge,
+    LLMCallScore,
     MetricInputs,
     ModelingArtifact,
     Node,
@@ -229,8 +230,24 @@ class AttentionRepository(ABC):
         供 propose_higher_dim_daily 当日跳过，确保 dismiss 真生效（否则每刷新都再提议）。"""
 
 
+class ScoreRepository(ABC):
+    """llm_call_score（1-5-6）：轻量 LLM 调用度量（Langfuse 替代），append-only。"""
+
+    @abstractmethod
+    def record(self, score: LLMCallScore) -> LLMCallScore:
+        """落一行调用度量（成功与失败都记）；返回带 id/created_at 的实体。"""
+
+    @abstractmethod
+    def set_human_verdict(self, score_id: UUID, verdict: str) -> None:
+        """rubric 人工打分回填（'good'|'bad'）；由复审流调用。"""
+
+    @abstractmethod
+    def list_recent(self, limit: int = 50) -> list[LLMCallScore]:
+        """最近 limit 条（created_at 降序），供观测面板/校准导出。"""
+
+
 class Storage(ABC):
-    """门面：聚合 6 个仓库 + provenance 助手。应用只依赖此门面。"""
+    """门面：聚合 8 个仓库 + provenance 助手。应用只依赖此门面。"""
 
     nodes: NodeRepository
     claims: ClaimRepository
@@ -239,6 +256,7 @@ class Storage(ABC):
     contexts: ContextRepository
     review_queue: ReviewQueueRepository
     attention: AttentionRepository
+    scores: ScoreRepository
 
     @abstractmethod
     def record_transform(self, kind: str, params: dict) -> UUID:

@@ -166,5 +166,76 @@ class PgApplyDistillTest(PgExpiryTest):
         self.assertEqual(cur.fetchone()[0], 0)
 
 
+# ============================================================ 1-5-6：score 表（PG）
+
+class PgScoreTest(PgExpiryTest):
+    """llm_call_score 真实 PG：apply_distill 落库 + rubric 回填（Langfuse 替代）。"""
+
+    def test_apply_distill_success_records_score(self):
+        n = self._node("conn")
+        src = self._node("src")
+        self.store.edges.link(src.id, n.id, "derived_from")
+        self.store.nodes.update_decay(n.id, 0.95)
+
+        def ok(store, nid):
+            return D.distill_node(nid, [(nid, "材料")],
+                                  lambda p: '{"claims": [{"text": "c", '
+                                            '"topic": "t", '
+                                            '"citations": ["%s"]}]}' % nid)
+
+        res = E.apply_distill(self.store, n.id, ok, now=self.now, model="m-test")
+        self.assertTrue(res["applied"])
+        rows = self.store.scores.list_recent()
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertEqual(r.operation, "distill")
+        self.assertEqual(r.node_id, n.id)
+        self.assertEqual(r.model, "m-test")
+        self.assertTrue(r.parse_ok)
+        self.assertEqual(r.attempts, 1)
+        self.assertEqual(r.n_claims, 1)
+        self.assertEqual(r.n_citations, 1)
+        self.assertIsNone(r.error)
+
+    def test_apply_distill_failure_records_score(self):
+        n = self._node("conn")
+        src = self._node("src")
+        self.store.edges.link(src.id, n.id, "derived_from")
+        self.store.nodes.update_decay(n.id, 0.95)
+
+        def bad(store, nid):
+            return D.DistillationResult(claims=[])
+
+        res = E.apply_distill(self.store, n.id, bad, now=self.now)
+        self.assertFalse(res["applied"])
+        r = self.store.scores.list_recent()[0]
+        self.assertFalse(r.parse_ok)
+        self.assertTrue(r.error)
+
+    def test_score_human_verdict_roundtrip(self):
+        from zkc.repository.models import LLMCallScore
+
+        self.store.scores.record(LLMCallScore(operation="distill", parse_ok=True))
+        row = self.store.scores.list_recent()[0]
+        self.assertIsNone(row.human_verdict)
+        self.store.scores.set_human_verdict(row.id, "good")
+        self.assertEqual(self.store.scores.list_recent()[0].human_verdict, "good")
+        with self.assertRaises(ValueError):
+            self.store.scores.set_human_verdict(row.id, "meh")
+
+    def test_human_verdict_check_constraint(self):
+        # DB CHECK 白名单是最后一道闸：repository 层漏检也进不了库
+        from zkc.repository.models import LLMCallScore
+
+        self.store.scores.record(LLMCallScore(operation="distill", parse_ok=True))
+        row = self.store.scores.list_recent()[0]
+        cur = self.store._conn.cursor()
+        with self.assertRaises(Exception):
+            cur.execute(
+                "UPDATE public.llm_call_score SET human_verdict='meh' WHERE id=%s",
+                (str(row.id),))
+        self.store._conn.rollback()
+
+
 if __name__ == "__main__":
     unittest.main()

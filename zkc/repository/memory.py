@@ -13,6 +13,7 @@ from .models import (
     Claim,
     Context,
     Edge,
+    LLMCallScore,
     MetricInputs,
     ModelingArtifact,
     Node,
@@ -29,6 +30,7 @@ from .protocols import (
     EdgeRepository,
     NodeRepository,
     ReviewQueueRepository,
+    ScoreRepository,
     Storage,
 )
 
@@ -360,6 +362,30 @@ class MemoryAttentionRepository(AttentionRepository):
         return set(self._dismissed.get(day, set()))
 
 
+class MemoryScoreRepository(ScoreRepository):
+    def __init__(self) -> None:
+        self._rows: dict[UUID, LLMCallScore] = {}
+        self._seq: list[UUID] = []
+
+    def record(self, score: LLMCallScore) -> LLMCallScore:
+        score.id = score.id or uuid4()
+        score.created_at = score.created_at or datetime.now()
+        self._rows[score.id] = score
+        self._seq.append(score.id)
+        return score
+
+    def set_human_verdict(self, score_id: UUID, verdict: str) -> None:
+        if verdict not in ("good", "bad"):
+            raise ValueError(f"invalid human_verdict: {verdict!r}")
+        row = self._rows.get(score_id)
+        if row is None:
+            raise KeyError(f"llm_call_score not found: {score_id}")
+        row.human_verdict = verdict
+
+    def list_recent(self, limit: int = 50) -> list[LLMCallScore]:
+        return [self._rows[i] for i in reversed(self._seq)][:limit]
+
+
 class MemoryStorage(Storage):
     """聚合 6 个内存仓库；provenance 用自增计数模拟 transform id。"""
 
@@ -371,6 +397,7 @@ class MemoryStorage(Storage):
         self.contexts = MemoryContextRepository()
         self.review_queue = MemoryReviewQueueRepository()
         self.attention = MemoryAttentionRepository()
+        self.scores = MemoryScoreRepository()
         self._transform_seq = 0
 
     def record_transform(self, kind: str, params: dict) -> UUID:

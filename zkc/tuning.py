@@ -124,6 +124,13 @@ REGISTRY: dict[str, Parameter] = {
         _p("DISTILL_MIN_CITATIONS_PER_CLAIM", 1, PLACEHOLDER,
            "每条 meta-claim 至少引用 1 个来源（去繁非凭空）。属逻辑不变式而非可调阈值，"
            "但经 tuning 统一出口，便于后续若放宽（如纯综述节点允许 0）可留痕"),
+        # ---- 蒸馏结构化接线（1-5-6 · Instructor 等价的手写重试）
+        _p("DISTILL_MAX_ATTEMPTS", 2, PLACEHOLDER,
+           "蒸馏 LLM 结构化解析/语义校验失败的最大尝试次数（含首次）。对齐 1-5-2 先例："
+           "不引 Instructor，校验重试由手写循环等价实现；超限抛 DistillationError"),
+        _p("DISTILL_NUM_PREDICT", 1024, PLACEHOLDER,
+           "Ollama num_predict 显式值（默认截断会把产物 JSON 腰斩——1-5-2 铁律③）。"
+           "随 claims 数量增长需重估"),
         # ---- embedding（spike 14 实测定死）
         _p("EMBEDDING_MODEL", "nomic-embed-text:latest", CALIBRATED,
            "spike 14 实测；仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 "

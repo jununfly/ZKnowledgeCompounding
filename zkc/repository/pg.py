@@ -21,6 +21,7 @@ from .models import (
     Claim,
     Context,
     Edge,
+    LLMCallScore,
     MetricInputs,
     ModelingArtifact,
     Node,
@@ -35,6 +36,7 @@ from .protocols import (
     EdgeRepository,
     NodeRepository,
     ReviewQueueRepository,
+    ScoreRepository,
     Storage,
 )
 
@@ -827,6 +829,71 @@ class PgAttentionRepository(AttentionRepository):
         return out
 
 
+class PgScoreRepository(ScoreRepository):
+    """llm_call_score（1-5-6）：轻量 LLM 调用度量，append-only。"""
+
+    def __init__(self, conn) -> None:
+        self._conn = conn
+
+    def record(self, score: LLMCallScore) -> LLMCallScore:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            INSERT INTO public.llm_call_score
+              (operation, node_id, model, latency_ms, parse_ok, attempts,
+               n_claims, n_citations, error, human_verdict)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, created_at
+            """,
+            (score.operation,
+             str(score.node_id) if score.node_id is not None else None,
+             score.model, score.latency_ms, score.parse_ok, score.attempts,
+             score.n_claims, score.n_citations, score.error, score.human_verdict),
+        )
+        r = cur.fetchone()
+        self._conn.commit()
+        score.id = r["id"]
+        score.created_at = r["created_at"]
+        return score
+
+    def set_human_verdict(self, score_id: UUID, verdict: str) -> None:
+        if verdict not in ("good", "bad"):
+            raise ValueError(f"invalid human_verdict: {verdict!r}")
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "UPDATE public.llm_call_score SET human_verdict=%s WHERE id=%s",
+            (verdict, str(score_id)),
+        )
+        if cur.rowcount == 0:
+            raise KeyError(f"llm_call_score not found: {score_id}")
+        self._conn.commit()
+
+    def list_recent(self, limit: int = 50) -> list[LLMCallScore]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            """
+            SELECT id, operation, node_id, model, latency_ms, parse_ok, attempts,
+                   n_claims, n_citations, error, human_verdict, created_at
+            FROM public.llm_call_score
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+        out = []
+        for r in cur.fetchall():
+            out.append(LLMCallScore(
+                id=r["id"], operation=r["operation"], node_id=r["node_id"],
+                model=r["model"],
+                latency_ms=float(r["latency_ms"]) if r["latency_ms"] is not None else None,
+                parse_ok=bool(r["parse_ok"]), attempts=r["attempts"],
+                n_claims=r["n_claims"], n_citations=r["n_citations"],
+                error=r["error"], human_verdict=r["human_verdict"],
+                created_at=r["created_at"],
+            ))
+        return out
+
+
 class PgStorage(Storage):
     def __init__(self, conn=None) -> None:
         self._conn = conn or connect()
@@ -837,6 +904,7 @@ class PgStorage(Storage):
         self.contexts = PgContextRepository(self._conn)
         self.review_queue = PgReviewQueueRepository(self._conn)
         self.attention = PgAttentionRepository(self._conn)
+        self.scores = PgScoreRepository(self._conn)
 
     def record_transform(self, kind: str, params: dict) -> UUID:
         cur = self._conn.cursor(row_factory=dict_row)
@@ -988,8 +1056,9 @@ class PgStorage(Storage):
     def clear_all(self) -> None:
         """测试用：清空所有领域表（保留 schema）。"""
         cur = self._conn.cursor(row_factory=dict_row)
-        for t in ("attention_observation", "review_queue", "context_member", "context",
-                  "edge", "citation", "modeling_artifact", "meta_claim",
-                  "node_history", "node", "transform"):
+        for t in ("llm_call_score", "attention_observation", "review_queue",
+                  "context_member", "context", "edge", "citation",
+                  "modeling_artifact", "meta_claim", "node_history", "node",
+                  "transform"):
             cur.execute(f"DELETE FROM public.{t}")
         self._conn.commit()

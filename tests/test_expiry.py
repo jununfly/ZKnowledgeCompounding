@@ -233,6 +233,62 @@ class ApplyDistillTest(unittest.TestCase):
         self.assertFalse(res["applied"])
         self.assertEqual(len(self.store.review_queue.list_open()), 1)
 
+    # ---------------------------------------------- 1-5-6：score 表落库（Langfuse 替代）
+
+    def test_apply_distill_success_records_score(self):
+        n = self._expired_connected()
+        res = E.apply_distill(self.store, n.id, self._distiller_ok(),
+                              now=self.now, model="m-test")
+        self.assertTrue(res["applied"])
+        rows = self.store.scores.list_recent()
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertEqual(r.operation, "distill")
+        self.assertEqual(r.node_id, n.id)
+        self.assertEqual(r.model, "m-test")
+        self.assertTrue(r.parse_ok)
+        self.assertEqual(r.attempts, 1)
+        self.assertEqual(r.n_claims, 1)
+        self.assertEqual(r.n_citations, 1)
+        self.assertIsNone(r.error)
+        self.assertIsNotNone(r.id)
+        self.assertIsNotNone(r.created_at)
+        self.assertGreaterEqual(r.latency_ms, 0.0)
+
+    def test_apply_distill_failure_records_score_with_error(self):
+        n = self._expired_connected()
+
+        def bad(store, nid):
+            return D.DistillationResult(claims=[])
+
+        E.apply_distill(self.store, n.id, bad, now=self.now, model="m-test")
+        rows = self.store.scores.list_recent()
+        self.assertEqual(len(rows), 1)
+        r = rows[0]
+        self.assertFalse(r.parse_ok)
+        self.assertIn("distillation", (r.error or ""))
+        self.assertIsNone(r.n_claims)  # 失败路径拿不到产物计数（诚实语义：未知非 0）
+
+    def test_score_human_verdict_roundtrip(self):
+        # rubric 人工打分入口：good/bad 可回填，非法值拒绝
+        n = self._expired_connected()
+        E.apply_distill(self.store, n.id, self._distiller_ok(), now=self.now)
+        row = self.store.scores.list_recent()[0]
+        self.assertIsNone(row.human_verdict)
+        self.store.scores.set_human_verdict(row.id, "good")
+        self.assertEqual(self.store.scores.list_recent()[0].human_verdict, "good")
+        self.store.scores.set_human_verdict(row.id, "bad")
+        self.assertEqual(self.store.scores.list_recent()[0].human_verdict, "bad")
+        with self.assertRaises(ValueError):
+            self.store.scores.set_human_verdict(row.id, "meh")
+
+    def test_score_list_recent_orders_and_limits(self):
+        n = self._expired_connected()
+        E.apply_distill(self.store, n.id, self._distiller_ok(), now=self.now)
+        E.apply_distill(self.store, n.id, self._distiller_ok(), now=self.now)
+        rows = self.store.scores.list_recent(limit=1)
+        self.assertEqual(len(rows), 1)  # 最近一条
+
     def test_route_and_apply_with_distiller_runs_distill_not_enqueue(self):
         n = self._expired_connected()
         r = E.route_and_apply(self.store, n.id, distiller=self._distiller_ok())
