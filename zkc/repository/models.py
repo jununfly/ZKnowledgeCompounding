@@ -85,6 +85,24 @@ class Claim:
 
 
 @dataclass
+class ModelingArtifact:
+    """结合算子产出的建模/方法论产物（对应 schema `modeling_artifact`）。
+
+    与 meta_claim 同语义的「价值升层」载体：evidence_refs 是其来源引用（ZKC 结合语义：
+    产物必须带来源），也是节点「已捕获」的第二个信号（与 claim 并列，见 load_schedulable）。
+    """
+
+    id: UUID | None = None
+    title: str = ""
+    kind: str = "methodology"  # methodology | mental_model | tradeoff_map（DB CHECK 同）
+    body: dict = field(default_factory=dict)
+    evidence_refs: list[UUID] = field(default_factory=list)
+    produced_by: UUID | None = None
+    revises: UUID | None = None
+    created_at: datetime | None = None
+
+
+@dataclass
 class Edge:
     """连接 / 反向连接（对应 schema `edge`）。"""
 
@@ -142,6 +160,7 @@ class SchedulableNode:
     baseline_days: float | None = None    # 当前 baseline_interval（天）
     source: str = "auto"                   # auto / human（人工设定豁免自动化）
     archived: bool = False
+    decay_score: float = 0.0               # 当前衰减分（到期判定用：≥ ROT_THRESHOLD 即到期）
 
 
 @dataclass

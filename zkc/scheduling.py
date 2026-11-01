@@ -104,14 +104,17 @@ def baseline_for_signals(
             reason=f"explicit temporal anchor -> {horizon:g}d horizon",
             tier="horizon",
         )
-    if captured:
-        return dict(days=_t("BASELINE_CAPTURED_DAYS"),
-                    reason="value lifted to meta layer -> raw needs less attention",
-                    tier="captured")
+    # 边界 2（ADR-0002）：self_loop(3d) 压过已捕获(28d)——项目躬身入局的原件仍在变。
+    # 原 spike 09 的 L1 表把「已捕获 28d」排在 self_loop 3d 之前，与 L2 优先级表顺序相反，
+    # 此处修正为 self_loop 优先。
     if self_loop_count >= 1:
         return dict(days=_t("BASELINE_SELF_LOOP_DAYS"),
                     reason="self-loop context (active project) -> fastest rot",
                     tier="self_loop")
+    if captured:
+        return dict(days=_t("BASELINE_CAPTURED_DAYS"),
+                    reason="value lifted to meta layer -> raw needs less attention",
+                    tier="captured")
     if higher_dim_count >= 1 or conn_count >= 1:
         return dict(days=_t("BASELINE_CONNECTED_DAYS"),
                     reason="connected / shared higher-dim context -> medium rot",
@@ -436,6 +439,43 @@ def days_to_interval(days: Optional[float]) -> Optional[timedelta]:
     return None if days is None else timedelta(days=float(days))
 
 
+def recompute_baseline_on_capture_loss(
+    store: Storage, node_id, *, produced_by=None
+) -> dict:
+    """边界 1（ADR-0002，显式路径）：承载节点的 claim/artifact 被 produced_by 级联撤销后，
+    「已捕获」状态消失 → 按未捕获基线重算（有连接 14d / 孤儿 7d）并写 D7 interval_adjustment
+    留痕，禁止静默变化。
+
+    与 ``assign_baselines`` 的被动检测互补：本函数供 claim/artifact 撤销路径**立即**调用，
+    不依赖下一次 ``assign_baselines`` 全量扫描；两者都写显式 capture-loss 审计。
+
+    返回 {applied, old_days, new_days, reason, tier}。still captured / 不可调度则 applied=False。
+    """
+    node = store.nodes.get(node_id)
+    if node is None:
+        raise ValueError(f"node {node_id} not found")
+    row = next((r for r in store.load_schedulable() if r.id == node_id), None)
+    if row is None:
+        return dict(applied=False, old_days=None, new_days=None,
+                    reason="node not schedulable (static/archived)", tier=None)
+    if row.captured:
+        return dict(applied=False, old_days=row.interval_days, new_days=row.interval_days,
+                    reason="still captured: no recalc needed", tier="captured")
+    sug = baseline_for_node(row)
+    if sug["days"] is None:
+        return dict(applied=False, old_days=row.interval_days, new_days=row.interval_days,
+                    reason="no uncaptured baseline (static/archived)", tier=None)
+    old = row.interval_days
+    reason = (f"capture-loss via produced_by cascade: recalc by uncaptured rule "
+              f"({sug['tier']})")
+    store.nodes.set_baseline_interval(
+        node_id, days_to_interval(sug["days"]), "auto", reason)
+    store.nodes.audit_interval(
+        node_id, "baseline", old, sug["days"], reason, produced_by)
+    return dict(applied=abs((sug["days"] or 0) - (old or 0)) > 1e-9,
+                old_days=old, new_days=sug["days"], reason=reason, tier=sug["tier"])
+
+
 def assign_baselines(store: Storage, produced_by=None) -> list[dict]:
     """计算并持久化 L1 基线（跳过人工覆盖）。返回每条结果摘要。
 
@@ -454,10 +494,22 @@ def assign_baselines(store: Storage, produced_by=None) -> list[dict]:
         if sug["days"] is None:
             continue
         old = row.interval_days
+        # 边界 1（ADR-0002，被动检测）：原基线为已捕获(28d) 但「已捕获」状态已消失
+        # （承载它的 claim/artifact 被 produced_by 级联撤销）→ 按未捕获基线重算，且必须
+        # 写显式 capture-loss 审计，禁止静默变化（否则「撤销」在调度层不可见）。
+        reason = sug["reason"]
+        was_captured_baseline = (
+            row.baseline_days is not None
+            and abs(row.baseline_days - _t("BASELINE_CAPTURED_DAYS")) < 1e-9
+            and sug["tier"] != "captured"
+        )
+        if was_captured_baseline:
+            reason = (f"capture-loss via produced_by cascade: recalc by uncaptured rule "
+                      f"({sug['tier']})")
         store.nodes.set_baseline_interval(
-            row.id, days_to_interval(sug["days"]), "auto", sug["reason"])
+            row.id, days_to_interval(sug["days"]), "auto", reason)
         store.nodes.audit_interval(
-            row.id, "baseline", old, sug["days"], sug["reason"], produced_by)
+            row.id, "baseline", old, sug["days"], reason, produced_by)
         node = store.nodes.get(row.id)
         if node is not None and node.last_reviewed_at is None:
             store.nodes.mark_reviewed(node.id, now)

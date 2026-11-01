@@ -27,6 +27,7 @@ from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse
 
 from zkc import scheduling as S
+from zkc import expiry as EX
 from zkc.context import ContextAssembler, HigherDimProposal
 from zkc.decay import refresh_decay
 from zkc.repository.models import AttentionObservation
@@ -159,6 +160,20 @@ def record_daily_observation(
     )
     store.attention.record_observation(obs)
     return _obs_to_dict(store.attention.get(today))
+
+
+# ---------------------------------------------------------------- 到期分流流水线（残余 1 收口）
+
+def process_expired_view(store: Storage, attention_pressure: float = 0.0,
+                        now: Optional[datetime] = None) -> dict:
+    """把 spike-08 到期分流路由接入 review/decay 流水线。
+
+    纯函数层（无 HTTP 依赖）：refresh_decay 后路由全部到期动态节点——已捕获节点立即归档
+    （单程票终局），有连接/上下文未捕获节点入队蒸馏，孤儿入队交人审。返回路由计数。
+
+    既可被每日 cron 调用，也可经下方 POST 端点手动触发。
+    """
+    return EX.process_expired_dynamic_nodes(store, attention_pressure=attention_pressure, now=now)
 
 
 # ---------------------------------------------------------------- 更高维聚合提议（P1 收尾·接入复审流）
@@ -416,6 +431,11 @@ def register_review_routes(app, store: Storage) -> None:
     @router.post("/review/api/observe")
     def observe_api(pushed: int = Form(0), queue_remaining: int = Form(0)) -> dict:
         return record_daily_observation(store, pushed, queue_remaining)
+
+    @router.post("/review/api/process-expired")
+    def process_expired_api(attention_pressure: float = Form(0.0)) -> dict:
+        """到期分流流水线钩子：refresh_decay 后路由全部到期动态节点（可接每日 cron）。"""
+        return process_expired_view(store, attention_pressure=attention_pressure)
 
     @router.get("/review/api/higher-dim")
     def higher_dim_api() -> dict:

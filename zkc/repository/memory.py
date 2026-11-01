@@ -14,6 +14,7 @@ from .models import (
     Context,
     Edge,
     MetricInputs,
+    ModelingArtifact,
     Node,
     ReviewItem,
     SchedulableNode,
@@ -21,6 +22,7 @@ from .models import (
 from .. import tuning
 from .errors import ConcurrentModification
 from .protocols import (
+    ArtifactRepository,
     AttentionRepository,
     ClaimRepository,
     ContextRepository,
@@ -157,6 +159,12 @@ class MemoryNodeRepository(NodeRepository):
         cur.decay_score = 0.0
         cur.version_seq += 1
 
+    def archive(self, node_id: UUID, at: datetime) -> None:
+        # 内存实现：与 PG 轻量路径一致 —— 置 archived_at，自增 version_seq 保活 OCC。
+        cur = self._rows[node_id]
+        cur.archived_at = at
+        cur.version_seq += 1
+
 
 class MemoryClaimRepository(ClaimRepository):
     def __init__(self) -> None:
@@ -185,6 +193,30 @@ class MemoryClaimRepository(ClaimRepository):
 
     def list_by_evidence(self, node_id: UUID) -> list[Claim]:
         return [c for c in self._rows.values() if node_id in c.evidence_refs]
+
+    def delete(self, claim_id: UUID) -> None:
+        self._rows.pop(claim_id, None)
+
+
+class MemoryArtifactRepository(ArtifactRepository):
+    def __init__(self) -> None:
+        self._rows: dict[UUID, ModelingArtifact] = {}
+
+    def save(self, artifact: ModelingArtifact) -> ModelingArtifact:
+        if artifact.id is None:
+            artifact.id = uuid4()
+        self._rows[artifact.id] = replace(artifact)
+        return replace(artifact)
+
+    def get(self, artifact_id: UUID) -> ModelingArtifact | None:
+        a = self._rows.get(artifact_id)
+        return replace(a) if a is not None else None
+
+    def list_by_evidence(self, node_id: UUID) -> list[ModelingArtifact]:
+        return [replace(a) for a in self._rows.values() if node_id in a.evidence_refs]
+
+    def delete(self, artifact_id: UUID) -> None:
+        self._rows.pop(artifact_id, None)
 
 
 class MemoryEdgeRepository(EdgeRepository):
@@ -330,6 +362,7 @@ class MemoryStorage(Storage):
     def __init__(self) -> None:
         self.nodes = MemoryNodeRepository()
         self.claims = MemoryClaimRepository()
+        self.artifacts = MemoryArtifactRepository()
         self.edges = MemoryEdgeRepository()
         self.contexts = MemoryContextRepository()
         self.review_queue = MemoryReviewQueueRepository()
@@ -347,7 +380,9 @@ class MemoryStorage(Storage):
             if node.track != "dynamic" or node.archived_at is not None:
                 continue
             nid = node.id
-            captured = any(nid in c.evidence_refs for c in self.claims._rows.values())
+            captured = any(nid in c.evidence_refs for c in self.claims._rows.values()) or any(
+                nid in a.evidence_refs for a in self.artifacts._rows.values()
+            )
             conn_count = sum(
                 1 for e in self.edges._rows.values() if e.src == nid or e.dst == nid
             )
@@ -368,15 +403,15 @@ class MemoryStorage(Storage):
                 interval_days=(iv.total_seconds() / 86400.0) if iv is not None else None,
                 baseline_days=(bi.total_seconds() / 86400.0) if bi is not None else None,
                 source=node.interval_source, archived=False,
+                decay_score=node.decay_score or 0.0,
             ))
         return out
 
     def load_metric_inputs(self) -> MetricInputs:
         """复利度量快照（P5.2）：遍历内存集合。
 
-        注：内存 fake 暂未持久化 modeling_artifact / citation（P3 结合算子落地时补），
-        故 artifact_evidence / citations 返回空 —— 对应分量(methodology_output / 复用率
-        的 citation 部分)在 fake 下为 0；连接密度 / 衰减可控 / claim 复用口径可完整验证。
+        注：citations 在内存 fake 仍返回空（citation 表随 claim 复用路径落地时补）；
+        artifact_evidence 已随 ModelingArtifactRepository 落地补齐（与 PG 对齐）。
         """
         nodes = [
             (n.id, n.track, n.decay_score or 0.0, n.archived_at is not None)
@@ -384,9 +419,12 @@ class MemoryStorage(Storage):
         ]
         edges = [(e.src, e.dst, e.kind) for e in self.edges._rows.values()]
         claim_evidence = [list(c.evidence_refs) for c in self.claims._rows.values()]
+        artifact_evidence = [
+            list(a.evidence_refs) for a in self.artifacts._rows.values()
+        ]
         return MetricInputs(
             nodes=nodes, edges=edges, claim_evidence=claim_evidence,
-            artifact_evidence=[], citations=[],
+            artifact_evidence=artifact_evidence, citations=[],
         )
 
     def revert_interval_transform(self, transform_id: UUID) -> int:

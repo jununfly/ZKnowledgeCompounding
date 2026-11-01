@@ -15,6 +15,7 @@ from .models import (
     Context,
     Edge,
     MetricInputs,
+    ModelingArtifact,
     Node,
     ReviewItem,
     SchedulableNode,
@@ -86,6 +87,16 @@ class NodeRepository(ABC):
         该条目会立刻「再次到期」陷入死循环；同时 decay 归 0 让下一轮从干净状态重新积累。
         """
 
+    @abstractmethod
+    def archive(self, node_id: UUID, at: datetime) -> None:
+        """单程票终局：标记节点已归档（archived_at=at）。
+
+        由 expiry.route_and_apply 在「已捕获节点到期 → ARCHIVE」分支调用；归档后节点
+        退出 load_schedulable（不再参与调度），但保留在 node_history 供溯源。轻量路径：
+        同 update_decay —— 不写历史版本快照、不 bump tx_from（archived_at 是派生状态），
+        仅置列并自增 version_seq 保活 OCC。
+        """
+
 
 class ClaimRepository(ABC):
     @abstractmethod
@@ -96,6 +107,27 @@ class ClaimRepository(ABC):
 
     @abstractmethod
     def list_by_evidence(self, node_id: UUID) -> list[Claim]: ...
+
+    @abstractmethod
+    def delete(self, claim_id: UUID) -> None:
+        """删除一条 claim（蒸馏撤销路径）；级联由调用方负责（见 zkc.distill.revert_claim）。"""
+
+
+class ArtifactRepository(ABC):
+    """modeling_artifact（结合算子产物）：与 ClaimRepository 同构的捕获载体仓库。"""
+
+    @abstractmethod
+    def save(self, artifact: ModelingArtifact) -> ModelingArtifact: ...
+
+    @abstractmethod
+    def get(self, artifact_id: UUID) -> ModelingArtifact | None: ...
+
+    @abstractmethod
+    def list_by_evidence(self, node_id: UUID) -> list[ModelingArtifact]: ...
+
+    @abstractmethod
+    def delete(self, artifact_id: UUID) -> None:
+        """删除一条建模产物（结合撤销路径）；级联由调用方负责（见 zkc.distill.revert_artifact）。"""
 
 
 class EdgeRepository(ABC):
@@ -197,6 +229,7 @@ class Storage(ABC):
 
     nodes: NodeRepository
     claims: ClaimRepository
+    artifacts: ArtifactRepository
     edges: EdgeRepository
     contexts: ContextRepository
     review_queue: ReviewQueueRepository

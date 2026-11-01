@@ -84,6 +84,7 @@ class PgSchedulingTest(unittest.TestCase):
         self.store.contexts.add_member(self.topic.id, self.d3.id)
         c1 = self.store.claims.save(Claim(
             statement="D5 的结论已被提炼", level="insight", evidence_refs=[self.d5.id]))
+        self.c1 = c1
         self.store.edges.link(self.s1.id, self.d5.id, "derived_from")
 
     # ---- L1 ----
@@ -158,6 +159,51 @@ class PgSchedulingTest(unittest.TestCase):
         self.assertTrue(r["applied"])
         after = self.store.nodes.get(self.d4.id).review_interval
         self.assertNotEqual(before, after)
+
+    # ---- 边界 1（ADR-0002）：已捕获被级联撤销 → 重算 + D7 审计 ----
+    def test_capture_loss_recomputes_and_audits(self):
+        S.assign_baselines(self.store)
+        # D5 已捕获 → 28d
+        self.assertEqual(
+            self.store.nodes.get(self.d5.id).baseline_interval, timedelta(days=28))
+
+        # 模拟 produced_by 级联撤销：清空 claim 的 evidence_refs
+        self.store.claims.save(Claim(
+            id=self.c1.id, statement=self.c1.statement, level=self.c1.level,
+            evidence_refs=[], version_seq=self.c1.version_seq))
+
+        res = S.recompute_baseline_on_capture_loss(self.store, self.d5.id)
+        # 重算到未捕获基线：D5 仍有边 s1->d5 → 有连接 14d
+        self.assertTrue(res["applied"])
+        self.assertEqual(
+            self.store.nodes.get(self.d5.id).baseline_interval, timedelta(days=14))
+        self.assertIn("capture-loss", res["reason"])
+
+        # D7 interval_adjustment 留痕，reason 含 capture-loss
+        cur = self.store._conn.cursor()
+        cur.execute(
+            "SELECT reason FROM public.interval_adjustment "
+            "WHERE node_id=%s AND reason LIKE %s ORDER BY created_at DESC",
+            (str(self.d5.id), "%capture-loss%"))
+        rows = cur.fetchall()
+        self.assertTrue(rows, "capture-loss 审计缺失")
+
+    def test_assign_baselines_passively_catches_capture_loss(self):
+        S.assign_baselines(self.store)
+        # 清空 claim 的 evidence_refs 后再跑一次全量 assign（模拟下次定时扫描）
+        self.store.claims.save(Claim(
+            id=self.c1.id, statement=self.c1.statement, level=self.c1.level,
+            evidence_refs=[], version_seq=self.c1.version_seq))
+        S.assign_baselines(self.store)
+        # D5 现在应被重算为 14d（有连接），且审计 reason 含 capture-loss
+        self.assertEqual(
+            self.store.nodes.get(self.d5.id).baseline_interval, timedelta(days=14))
+        cur = self.store._conn.cursor()
+        cur.execute(
+            "SELECT reason FROM public.interval_adjustment "
+            "WHERE node_id=%s AND reason LIKE %s",
+            (str(self.d5.id), "%capture-loss%"))
+        self.assertTrue(cur.fetchall(), "被动扫描未捕获 capture-loss")
 
 
 if __name__ == "__main__":

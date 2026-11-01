@@ -22,11 +22,13 @@ from .models import (
     Context,
     Edge,
     MetricInputs,
+    ModelingArtifact,
     Node,
     ReviewItem,
     SchedulableNode,
 )
 from .protocols import (
+    ArtifactRepository,
     AttentionRepository,
     ClaimRepository,
     ContextRepository,
@@ -318,6 +320,18 @@ class PgNodeRepository(NodeRepository):
         )
         self._conn.commit()
 
+    def archive(self, node_id: UUID, at: datetime) -> None:
+        """单程票终局：置 archived_at（轻量路径，与 update_decay/mark_reviewed 一致）。"""
+        cur = self._conn.cursor(row_factory=dict_row)
+        if self._lock_hook is not None:
+            self._lock_hook()
+        cur.execute(
+            "UPDATE public.node SET archived_at=%(at)s, version_seq = version_seq + 1 "
+            "WHERE id=%(id)s AND archived_at IS NULL RETURNING version_seq",
+            dict(at=at, id=node_id),
+        )
+        self._conn.commit()
+
     @staticmethod
     def _row_to_node(row) -> Node:
         d = dict(row)
@@ -421,6 +435,11 @@ class PgClaimRepository(ClaimRepository):
         )
         return [self._row_to_claim(r) for r in cur.fetchall()]
 
+    def delete(self, claim_id: UUID) -> None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute("DELETE FROM public.meta_claim WHERE id=%(id)s", dict(id=claim_id))
+        self._conn.commit()
+
     @staticmethod
     def _row_to_claim(row) -> Claim:
         d = dict(row)
@@ -434,6 +453,86 @@ class PgClaimRepository(ClaimRepository):
             human_verdict=d.get("human_verdict"), human_verdict_at=d.get("human_verdict_at"),
             version_seq=d.get("version_seq", 1),
             created_at=d.get("created_at"),
+        )
+
+
+class PgArtifactRepository(ArtifactRepository):
+    """modeling_artifact（结合算子产物）。表在 0001 基线已存在；无 version_seq 列，不做 OCC。"""
+
+    def __init__(self, conn) -> None:
+        self._conn = conn
+
+    def save(self, artifact: ModelingArtifact) -> ModelingArtifact:
+        cur = self._conn.cursor(row_factory=dict_row)
+        if artifact.id is None:
+            cur.execute(
+                """
+                INSERT INTO public.modeling_artifact (title, kind, body, evidence_refs,
+                                                      produced_by, revises)
+                VALUES (%(ti)s, %(ki)s, %(bo)s, %(ev)s::uuid[], %(pb)s, %(rv)s)
+                RETURNING id, tx_from
+                """,
+                dict(
+                    ti=artifact.title, ki=artifact.kind,
+                    bo=Json(artifact.body) if artifact.body is not None else Json({}),
+                    ev=artifact.evidence_refs, pb=artifact.produced_by, rv=artifact.revises,
+                ),
+            )
+        else:
+            cur.execute(
+                """
+                INSERT INTO public.modeling_artifact (id, title, kind, body, evidence_refs,
+                                                      produced_by, revises)
+                VALUES (%(id)s, %(ti)s, %(ki)s, %(bo)s, %(ev)s::uuid[], %(pb)s, %(rv)s)
+                ON CONFLICT (id) DO UPDATE SET
+                    title=EXCLUDED.title, kind=EXCLUDED.kind, body=EXCLUDED.body,
+                    evidence_refs=EXCLUDED.evidence_refs,
+                    produced_by=EXCLUDED.produced_by, revises=EXCLUDED.revises
+                RETURNING id, tx_from
+                """,
+                dict(
+                    id=artifact.id, ti=artifact.title, ki=artifact.kind,
+                    bo=Json(artifact.body) if artifact.body is not None else Json({}),
+                    ev=artifact.evidence_refs, pb=artifact.produced_by, rv=artifact.revises,
+                ),
+            )
+        r = cur.fetchone()
+        artifact.id = r["id"]
+        artifact.created_at = r["tx_from"]
+        self._conn.commit()
+        return artifact
+
+    def get(self, artifact_id: UUID) -> ModelingArtifact | None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.modeling_artifact WHERE id=%(id)s",
+            dict(id=artifact_id),
+        )
+        row = cur.fetchone()
+        return self._row_to_artifact(row) if row else None
+
+    def list_by_evidence(self, node_id: UUID) -> list[ModelingArtifact]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.modeling_artifact WHERE %(nid)s::uuid = ANY(evidence_refs)",
+            dict(nid=node_id),
+        )
+        return [self._row_to_artifact(r) for r in cur.fetchall()]
+
+    def delete(self, artifact_id: UUID) -> None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "DELETE FROM public.modeling_artifact WHERE id=%(id)s", dict(id=artifact_id))
+        self._conn.commit()
+
+    @staticmethod
+    def _row_to_artifact(row) -> ModelingArtifact:
+        d = dict(row)
+        return ModelingArtifact(
+            id=d["id"], title=d["title"], kind=d["kind"],
+            body=d.get("body") or {}, evidence_refs=list(d.get("evidence_refs") or []),
+            produced_by=d.get("produced_by"), revises=d.get("revises"),
+            created_at=d.get("tx_from"),
         )
 
 
@@ -725,6 +824,7 @@ class PgStorage(Storage):
         self._conn = conn or connect()
         self.nodes = PgNodeRepository(self._conn)
         self.claims = PgClaimRepository(self._conn)
+        self.artifacts = PgArtifactRepository(self._conn)
         self.edges = PgEdgeRepository(self._conn)
         self.contexts = PgContextRepository(self._conn)
         self.review_queue = PgReviewQueueRepository(self._conn)
@@ -752,6 +852,7 @@ class PgStorage(Storage):
               n.review_interval,
               n.baseline_interval,
               n.interval_source,
+              COALESCE(n.decay_score, 0) AS decay_score,
               n.archived_at IS NOT NULL AS archived,
               ( EXISTS(SELECT 1 FROM public.meta_claim m
                          WHERE m.evidence_refs @> ARRAY[n.id] LIMIT 1)
@@ -781,6 +882,7 @@ class PgStorage(Storage):
                 interval_days=(iv.total_seconds() / 86400.0) if iv is not None else None,
                 baseline_days=(bi.total_seconds() / 86400.0) if bi is not None else None,
                 source=r["interval_source"], archived=bool(r["archived"]),
+                decay_score=float(r["decay_score"]),
             ))
         return out
 

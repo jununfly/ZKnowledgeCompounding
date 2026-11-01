@@ -3,16 +3,17 @@
 覆盖 L1 时间锚解析 / 基线阶梯、L2 优先级延后、L3 AIMD、标注率闸门、budget 删失估计。
 全部走纯函数，可在无 docker 环境运行；PG 集成行为见 tests/test_scheduling_pg.py。
 
-注：本文件对应 1-4-1（P4.1）标准 L1 顺序 = 时间锚 > 已捕获(28d) > self_loop(3d) >
-connected(14d) > orphan(7d)。P4.5 的「self_loop 压过 已捕获」顺序变更属独立节点 1-4-5，
-不在本次范围，故此处按 P4.1 口径断言。
+注：本文件对应 1-4-1（P4.1）标准 L1 顺序 = 时间锚 > self_loop(3d) > 已捕获(28d) >
+connected(14d) > orphan(7d)。「self_loop 压过 已捕获」顺序变更已由节点 1-4-5（ADR-0002
+边界 2）落地，故此处按修正后口径断言。
 """
 from __future__ import annotations
 
 import unittest
 from datetime import date, timedelta
 
-from zkc.repository.models import AttentionObservation, SchedulableNode
+from zkc.repository import get_storage
+from zkc.repository.models import AttentionObservation, Claim, Node, SchedulableNode
 from zkc import scheduling as S
 
 
@@ -56,11 +57,26 @@ class SchedulingPureTest(unittest.TestCase):
         self.assertEqual(r["tier"], "horizon")
         self.assertEqual(r["days"], 7.0)
 
-    def test_baseline_captured_beats_selfloop(self):
-        # P4.1 顺序：已捕获(28d) 压过 self_loop(3d)
+    def test_baseline_selfloop_beats_captured(self):
+        # 1-4-5 边界 2（ADR-0002）：self_loop(3d) 压过已捕获(28d)
         r = S.baseline_for_signals("dynamic", False, "项目 A 阻塞点", "b", True, 1, 0, 0)
+        self.assertEqual(r["tier"], "self_loop")
+        self.assertEqual(r["days"], S._t("BASELINE_SELF_LOOP_DAYS"))
+
+    def test_baseline_captured_standalone_28d(self):
+        # 已捕获但不在 self_loop：28d（单程票拉长观察）
+        r = S.baseline_for_signals("dynamic", False, "t", "b", True, 0, 0, 0)
         self.assertEqual(r["tier"], "captured")
         self.assertEqual(r["days"], S._t("BASELINE_CAPTURED_DAYS"))
+
+    def test_single_ticket_captured_semantics(self):
+        # ADR-0002 单程票语义：已捕获=28d，但 self_loop(3d) 压过它；已捕获永不被压到更短
+        only_captured = S.baseline_for_signals("dynamic", False, "t", "b", True, 0, 0, 0)
+        captured_and_self = S.baseline_for_signals("dynamic", False, "t", "b", True, 1, 0, 0)
+        self.assertEqual(only_captured["tier"], "captured")
+        self.assertEqual(only_captured["days"], S._t("BASELINE_CAPTURED_DAYS"))
+        self.assertEqual(captured_and_self["tier"], "self_loop")
+        self.assertEqual(captured_and_self["days"], S._t("BASELINE_SELF_LOOP_DAYS"))
 
     def test_baseline_selfloop(self):
         r = S.baseline_for_signals("dynamic", False, "t", "b", False, 1, 0, 0)
@@ -271,3 +287,56 @@ class CalibrationReadinessTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------- 边界 1：捕获丢失重算 + D7 审计（内存 fake，无 docker）
+
+class CaptureLossTest(unittest.TestCase):
+    """ADR-0002 边界 1：承载节点的 claim 被级联撤销 → 已捕获消失 → 按未捕获基线重算且留痕。"""
+
+    def setUp(self):
+        self.store = get_storage("memory")
+        self.n = self.store.nodes.save(
+            Node(title="提炼过的记录", content="b", track="dynamic", decay_score=0.0))
+        # 一条独立源节点，用于制造「有连接」信号（重算后应为 14d 而非孤儿 7d）
+        self.src = self.store.nodes.save(
+            Node(title="源", content="b", track="dynamic", decay_score=0.0))
+        self.claim = self.store.claims.save(Claim(
+            statement="结论已被提炼", level="insight", evidence_refs=[self.n.id]))
+        # 一条连接，使「未捕获」重算落到 有连接(14d) 而非孤儿(7d)
+        self.store.edges.link(self.src.id, self.n.id, "derived_from")
+
+    def _days(self, node_id) -> float:
+        iv = self.store.nodes.get(node_id).baseline_interval
+        return iv.total_seconds() / 86400.0
+
+    def test_captured_then_loses_capture_recomputes_with_audit(self):
+        S.assign_baselines(self.store)
+        # 已捕获 → 28d
+        self.assertEqual(self._days(self.n.id), S._t("BASELINE_CAPTURED_DAYS"))
+
+        # 模拟 produced_by 级联撤销：claim 的 evidence_refs 被清空
+        self.store.claims.save(Claim(
+            id=self.claim.id, statement=self.claim.statement, level=self.claim.level,
+            evidence_refs=[], version_seq=self.claim.version_seq))
+
+        res = S.recompute_baseline_on_capture_loss(self.store, self.n.id)
+        # 重算到未捕获基线（有连接 14d）
+        self.assertTrue(res["applied"])
+        self.assertEqual(self._days(self.n.id), S._t("BASELINE_CONNECTED_DAYS"))
+        self.assertIn("capture-loss", res["reason"])
+
+        # D7 audit 留痕，reason 含 capture-loss（禁止静默变化）
+        audit = [a for a in self.store.nodes._audit_log
+                 if a["node_id"] == self.n.id and "capture-loss" in a["reason"]]
+        self.assertTrue(audit, "capture-loss 审计缺失")
+
+    def test_still_captured_no_op(self):
+        res = S.recompute_baseline_on_capture_loss(self.store, self.n.id)
+        self.assertFalse(res["applied"])
+        self.assertEqual(res["reason"], "still captured: no recalc needed")
+
+
+if __name__ == "__main__":
+    unittest.main()
+

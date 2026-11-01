@@ -21,7 +21,9 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional, Sequence
 from uuid import UUID
 
+from . import scheduling
 from . import tuning
+from .repository.protocols import Storage
 
 # ZKC 蒸馏语义不变式（DISTILL_MIN_CITATIONS_PER_CLAIM，见 tuning）：
 # 去繁不是凭空捏造——每条元认知 claim 至少引用 1 个来源。
@@ -146,3 +148,60 @@ class DistillationOperator:
         system_prompt: Optional[str] = None,
     ) -> DistillationResult:
         return distill_node(node_id, source_texts, self.llm, system_prompt=system_prompt)
+
+
+# ---------------------------------------------------------------- 撤销路径（残余 2 hook）
+
+def revert_claim(store: Storage, claim_id, produced_by=None) -> dict:
+    """删除一条 claim 并级联重算其 evidence 节点的「已捕获」基线（单程票边界 1）。
+
+    这是 ``scheduling.recompute_baseline_on_capture_loss`` 的**唯一调用方 hook**：claim 被删
+    → 其 evidence_refs 节点的「已捕获」状态可能消失 → 立即按未捕获基线重算并写 D7
+    capture-loss 审计，禁止调度层静默变化。若节点仍被其他 claim 捕获，recompute 内部 no-op。
+
+    返回 ``{deleted, claim_id, evidence_node_ids, recomputed:[...], reason}``；``recomputed``
+    每项含 ``node_id`` 与 ``recompute_baseline_on_capture_loss`` 的返回值（applied/old_days/
+    new_days/tier/reason）。
+
+    注：artifact 撤销见同级 ``revert_artifact``——ArtifactRepository 已落地（残余 A 消解），
+    两个捕获载体（claim / modeling_artifact）的撤销语义完全同构。
+    """
+    claim = store.claims.get(claim_id)
+    if claim is None:
+        return dict(deleted=False, claim_id=claim_id, evidence_node_ids=[],
+                    recomputed=[], reason="claim not found")
+    evidence = list(claim.evidence_refs)
+    store.claims.delete(claim.id)
+    recomputed = []
+    for nid in evidence:
+        res = scheduling.recompute_baseline_on_capture_loss(
+            store, nid, produced_by=produced_by)
+        recomputed.append(dict(node_id=nid, **res))
+    return dict(deleted=True, claim_id=claim_id, evidence_node_ids=evidence,
+                recomputed=recomputed,
+                reason="claim deleted; cascaded capture-loss recompute to evidence nodes")
+
+
+def revert_artifact(store: Storage, artifact_id, produced_by=None) -> dict:
+    """删除一条建模产物并级联重算其 evidence 节点的「已捕获」基线（残余 A hook）。
+
+    与 ``revert_claim`` 完全同构：ArtifactRepository.delete 后，对每条 evidence_refs
+    节点调 ``scheduling.recompute_baseline_on_capture_loss``（写 D7 capture-loss 审计，
+    禁止调度层静默变化）。若节点仍被其他 claim/artifact 捕获，recompute 内部 no-op。
+
+    返回 ``{deleted, artifact_id, evidence_node_ids, recomputed:[...], reason}``。
+    """
+    artifact = store.artifacts.get(artifact_id)
+    if artifact is None:
+        return dict(deleted=False, artifact_id=artifact_id, evidence_node_ids=[],
+                    recomputed=[], reason="artifact not found")
+    evidence = list(artifact.evidence_refs)
+    store.artifacts.delete(artifact.id)
+    recomputed = []
+    for nid in evidence:
+        res = scheduling.recompute_baseline_on_capture_loss(
+            store, nid, produced_by=produced_by)
+        recomputed.append(dict(node_id=nid, **res))
+    return dict(deleted=True, artifact_id=artifact_id, evidence_node_ids=evidence,
+                recomputed=recomputed,
+                reason="artifact deleted; cascaded capture-loss recompute to evidence nodes")
