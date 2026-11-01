@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 16:20:37
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 16:49:27
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
 ├── [x][X+] 1-1. P0 文档收口（全部完成）
@@ -30,7 +30,7 @@
 ├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
 │   ├── [x][X+] 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
 │   ├── [x][X+] 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11）
-│   ├── [ ][X+] 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）
+│   ├── [x][X+] 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）
 │   ├── [x][X+] 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）
 │   ├── [ ][X+] 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）
 │   └── [ ][X+] 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path）
@@ -60,6 +60,6 @@
 ### 下一步可开工（ready 前 3）
 
 - 1-5. P3 复利变换（最大块，HITL 串行） [ ]
-- 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05） [ ]
 - 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b） [ ]
+- 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path） [ ]
 <!-- ROADMAP_SECTION_END -->

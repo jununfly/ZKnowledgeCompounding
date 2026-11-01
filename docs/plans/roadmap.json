@@ -733,13 +733,20 @@
       "id": "1-5-3",
       "uid": "01a18dff90ff-caaffb6a87",
       "label": "P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5-3 落库形态与失败语义？",
+          "answer": "一个 combine 产物 = 一条 modeling_artifact：body 存完整 artifact dict（claims/local/global/methodology_steps），evidence_refs 由 artifact.evidence_refs UUID 化（必须 ⊆ store 真实节点），produced_by 由调用方传 transform id（可空，MVP 无 transform 记录）。生产入口 apply_combine(store, query, sources, operator, produced_by=None)：校验源节点存在 → operator.combine → 引用全崩塌（ValueError）不落库、applied=False 直接返回（结合是发起式查询操作，发起者在场，不入队人审——区别于 apply_distill 的到期自动分支）。kind 按 DB CHECK 三值校验。revert 复用 distill.revert_artifact（evidence 节点级联 capture-loss recompute），本切片只做联调测试不改语义。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-4": {
       "id": "1-5-4",
@@ -1017,7 +1024,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 16:20:37",
+    "updated": "2026-11-01 16:49:27",
     "md_file": "ROADMAP.md"
   },
   "edges": [
