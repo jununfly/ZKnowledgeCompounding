@@ -709,7 +709,9 @@
       "status": "completed",
       "mode": "explore",
       "parent": "1-5",
-      "children": [],
+      "children": [
+        "1-5-4-1"
+      ],
       "decisions": [
         {
           "q": "1-5-4 第一切片范围？",
@@ -724,6 +726,11 @@
         {
           "q": "T4.1 后续项（全局每日上限 + 占位阈值校准门禁）是否已落地？",
           "answer": "已落地（commit 13f7de0），闭环原决策'登记为后续项'。① 全局每日提议上限：scheduling.proposal_budget_for_day 作上限唯一权威（PROPOSAL_PER_DAY_CAP=5 placeholder），AttentionRepository 加 record_proposal/count_proposals（memory+pg 双实现），migration 0004 proposal_log 落库外生锚，context.propose_higher_dim_daily 在'同种子去重'之上做'全库每日限流'（达 cap 后剩余种子 would_create=False）。② 占位阈值校准门禁：tuning.is_calibrated 探针 + HigherDimProposal.calibrated 字段；propose_higher_dim 据 CONTEXT_HIGHER_DIM_SIM_THRESHOLD/MIN_MEMBERS 的 source 设标志，未校准时 reason 标注'须走 calibrate() 门禁 ≥14天+≥3饱和日'，人审仍生效但明确非真理。真实校准仍待 ≥14 天埋点+≥3 饱和日（与 R13/R14 同批外生锚）。",
+          "note": ""
+        },
+        {
+          "q": "1-5-4 的后续项（接 UI 人审 + calibrate 门禁）是否已落地？",
+          "answer": "已落地（commit b51aae4），由子节点 1-5-4-1 承载：web/review higher-dim 人审流 + calibration_readiness 闸门 + 迁移 0005（proposal_log.seed_id 可空+索引，FK 到 node）/0006（扩展 kind CHECK 含 higher_dim_dismissed，不回改 0004 以保 sha256 闸门）。",
           "note": ""
         }
       ],
@@ -938,11 +945,34 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-5-4-1": {
+      "id": "1-5-4-1",
+      "uid": "01a194f9bbaf-c3b2efa69d",
+      "label": "higher-dim 提议复审流接入 web + calibration_readiness 闸门（迁移 0005/0006）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "higher-dim 提议复审流如何接 web 人审？",
+          "answer": "web/review 新增 GET /review/api/higher-dim 查看 + POST .../approve|dismiss；approve 调 create_higher_dim 落库 higher_dim context 及成员，dismiss 写 proposal_log(kind='higher_dim_dismissed') 供 dismissed_seed_ids 去重跳过。propose_higher_dim_daily 增加 excluded 形参跳过已忽略种子。闭环 B（higher-dim 校准外生锚）经此落库。",
+          "note": ""
+        },
+        {
+          "q": "calibration_readiness 闸门如何判定就绪？",
+          "answer": "scheduling.calibration_readiness(lookback_days, calib_min_days=14, calib_min_saturated_days=3) 复用 R13/R14 同批 attention_observation（queue_remaining>0 口径）统计 days_with_observation 与 saturated_days，双阈值达标才 ready=True。实现已落地，真实就绪仍待 >=14 天埋点 + >=3 饱和日数据累积（固有等待，非代码阻塞）。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 09:19:01",
+    "updated": "2026-11-01 10:39:17",
     "md_file": "ROADMAP.md"
   },
   "edges": [
