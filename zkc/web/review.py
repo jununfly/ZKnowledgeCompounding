@@ -28,6 +28,7 @@ from fastapi.responses import HTMLResponse
 
 from zkc import scheduling as S
 from zkc import expiry as EX
+from zkc import faithfulness as F
 from zkc.context import ContextAssembler, HigherDimProposal
 from zkc.decay import refresh_decay
 from zkc.repository.models import AttentionObservation
@@ -256,6 +257,45 @@ def dismiss_higher_dim(store: Storage, seed_node_id,
                 day=str(now.date()))
 
 
+# ---------------------------------------------------------------- 忠实度人审卡片（1-5-5-1）
+
+def faithfulness_queue_view(store: Storage, now: Optional[datetime] = None) -> dict:
+    """忠实度人审查看视图：F_cap 日队列 + 校准语料概览（纯函数，无 HTTP 依赖）。
+
+    R11 独立预算：本视图与 adjudicate_claim 均不写 attention_observation——
+    蒸馏人审不占复审容量口径，1-7-4 的标注率语义不被 claim 人审污染。
+    校准语料在 judge 上线前恒空（human_only 的 judge_raw 无 atomic_facts，
+    无对照价值），属预期而非缺陷。
+    """
+    now = now or datetime.now(timezone.utc)
+    corpus = F.calibration_corpus(store)
+    correct = sum(1 for c in corpus if c["judge_correct"])
+    return dict(
+        as_of=now.isoformat(),
+        queue=F.daily_faithfulness_queue(store),
+        calibration=dict(
+            size=len(corpus),
+            judge_correct=correct,
+            judge_correct_rate=(correct / len(corpus)) if corpus else None,
+        ),
+    )
+
+
+def adjudicate_claim(
+    store: Storage,
+    claim_id,
+    verdict: str,
+    now: Optional[datetime] = None,
+) -> dict:
+    """审查卡片操作入口：包装 faithfulness.adjudicate（confirm/reject/edit）。
+
+    返回裁决结果 + 刷新后的队列计数。同样不写 attention_observation（R11）。
+    """
+    res = F.adjudicate(store, claim_id, verdict, now=now)
+    res["queue"] = F.daily_faithfulness_queue(store)
+    return res
+
+
 # ---------------------------------------------------------------- SSR 页面
 
 REVIEW_HTML = """<!doctype html>
@@ -319,6 +359,18 @@ REVIEW_HTML = """<!doctype html>
     <div class="card"><b>每日额度</b><span id="hdBudget">…</span></div>
   </div>
   <div id="hdList"><div class="empty">加载中…</div></div>
+</div>
+
+<div id="faithPanel">
+  <h2 style="font-size:1.1rem;margin-top:1.6rem;">忠实度人审（蒸馏 claim）</h2>
+  <p class="hint">LLM 蒸馏/结合产出的断言须人审其忠实性（judge 不可用时全部进队，绝不静默放行）。强制项（矛盾/空分解/全人工模式）永无上限；抽检与审计侧按 F_cap 比例封顶、留痕轮转。裁决走独立预算，不占上方复审计数。</p>
+  <div class="status">
+    <div class="card"><b>待人审</b><span id="fTotal">…</span></div>
+    <div class="card"><b>强制 / 封顶</b><span id="fSplit">…</span></div>
+    <div class="card"><b>今日封顶额</b><span id="fCap">…</span></div>
+    <div class="card"><b>校准语料</b><span id="fCorpus">…</span></div>
+  </div>
+  <div id="fList"><div class="empty">加载中…</div></div>
 </div>
 
 <script>
@@ -404,6 +456,39 @@ REVIEW_HTML = """<!doctype html>
     await loadHd();
   }
   loadHd();
+
+  async function loadF() {
+    const j = await (await fetch('/review/api/faithfulness')).json();
+    const q = j.queue;
+    $('fTotal').innerHTML = q.total_pending;
+    $('fSplit').innerHTML = `${q.forced_total} / ${q.capped_total}` +
+      (q.capped_withheld ? ` <span class="warn">(留痕 ${q.capped_withheld})</span>` : '');
+    $('fCap').innerHTML = `${q.capped_shown}/${q.cap} <span style="font-size:.75rem;color:#888;">${(q.f_cap_ratio*100).toFixed(0)}% · ${q.f_cap_source}</span>`;
+    const cal = j.calibration;
+    $('fCorpus').innerHTML = cal.size
+      ? `${cal.size} 条 · 判对 ${(cal.judge_correct_rate*100).toFixed(0)}%`
+      : '0 条（judge 上线后自然生长）';
+    const list = $('fList');
+    if (!q.items.length) { list.innerHTML = '<div class="empty">没有待人审的断言 ✓</div>'; return; }
+    list.innerHTML = q.items.map(c => `
+      <div class="item" id="fc-${c.id}">
+        <div class="title">${escapeHtml(c.statement)}</div>
+        <div class="meta">路由 ${c.faithfulness_route || '—'}${c.judge_reason ? ' · ' + escapeHtml(c.judge_reason) : ''}${c.human_verdict ? ' · 判定 ' + c.human_verdict : ''}</div>
+        <button class="valid"  onclick="fAdjudicate('${c.id}','confirm')">忠实</button>
+        <button class="stale"  onclick="fAdjudicate('${c.id}','reject')">不忠实</button>
+      </div>`).join('');
+  }
+  async function fAdjudicate(id, verdict) {
+    const r = await fetch('/review/api/faithfulness/adjudicate', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'claim_id=' + encodeURIComponent(id) + '&verdict=' + verdict });
+    const j = await r.json();
+    const el = $('fc-' + id);
+    if (el) { el.style.opacity = .5; el.querySelector('.title').insertAdjacentHTML('beforeend',
+      ` <span style="font-size:.75rem;color:#16a34a;">✓ ${j.verdict}</span>`); }
+    await loadF();
+  }
+  loadF();
 </script>
 </body>
 </html>
@@ -448,5 +533,15 @@ def register_review_routes(app, store: Storage) -> None:
     @router.post("/review/api/higher-dim/dismiss")
     def higher_dim_dismiss_api(seed_node_id: str = Form(...)) -> dict:
         return dismiss_higher_dim(store, seed_node_id)
+
+    @router.get("/review/api/faithfulness")
+    def faithfulness_api() -> dict:
+        """忠实度人审查看：F_cap 日队列 + 校准语料概览（1-5-5-1）。"""
+        return faithfulness_queue_view(store)
+
+    @router.post("/review/api/faithfulness/adjudicate")
+    def faithfulness_adjudicate_api(claim_id: str = Form(...), verdict: str = Form(...)) -> dict:
+        """审查卡片操作：confirm/reject/edit（独立预算，不写复审埋点）。"""
+        return adjudicate_claim(store, claim_id, verdict)
 
     app.include_router(router)

@@ -370,6 +370,49 @@ def pending_human_queue(store: Storage, limit: int = 50) -> list[dict]:
     return [_claim_to_dict(c) for c in items[:limit]]
 
 
+# ---------------------------------------------------------------- F_cap 日队列（1-5-5-1 · R11 独立预算联动）
+
+# 强制侧路由：永无预算上限（judge 不可用全人工 = forced 语义；judge 模式下四分支中
+# 空分解/矛盾也是 forced_*）。封顶侧 = 抽检命中 + 周期审计——这些「可延后」。
+FORCED_ROUTE_PREFIX = "forced"
+HUMAN_ONLY_ROUTE = "human_only"
+
+
+def _is_forced(route: Optional[str]) -> bool:
+    return (route or "").startswith(FORCED_ROUTE_PREFIX) or route == HUMAN_ONLY_ROUTE
+
+
+def daily_faithfulness_queue(store: Storage) -> dict:
+    """忠实度人审的**每日展示切片**：F_cap 只封顶抽检+审计侧（R11 独立预算联动）。
+
+    语义（1-5-5-1 decide 已登记）：
+    - 强制侧（forced_* / human_only）**全量展示，永无上限、绝不丢弃**——安全关键，
+      与注意力预算解耦（R11：蒸馏人审是独立预算，不占 decay 复审预算）。
+    - 封顶侧（periodic_audit / sampled_unsupported 抽检命中）每日最多展示
+      ``int(F_CAP_RATIO × (强制 + 封顶总数))`` 条（按 pending_human_queue 的
+      红旗加权序取前 cap 条），其余**留痕不丢弃**（状态仍是 pending_human，
+      只是今天不推进屏幕——明天的 cap 会轮到它们）。
+    - 阈值带来源标签（1-2-7 铁律）：f_cap_source 随展示值一起返回。
+    """
+    queue = pending_human_queue(store, limit=10 ** 9)
+    forced = [d for d in queue if _is_forced(d["faithfulness_route"])]
+    capped_all = [d for d in queue if not _is_forced(d["faithfulness_route"])]
+    ratio = float(tuning.get("F_CAP_RATIO"))
+    cap = int(ratio * (len(forced) + len(capped_all)))
+    capped_shown = capped_all[:cap]
+    return dict(
+        items=forced + capped_shown,
+        total_pending=len(queue),
+        forced_total=len(forced),
+        capped_total=len(capped_all),
+        capped_shown=len(capped_shown),
+        capped_withheld=len(capped_all) - len(capped_shown),
+        cap=cap,
+        f_cap_ratio=ratio,
+        f_cap_source=tuning.param("F_CAP_RATIO").source,
+    )
+
+
 def _flags_of(claim: Claim) -> list[str]:
     """从 judge_raw 还原红旗（两种模式都把 flags 存进 judge_raw，见 route_claim）。"""
     if isinstance(claim.judge_raw, dict):
