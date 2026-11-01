@@ -981,11 +981,17 @@
       "id": "1-8-1",
       "uid": "01a18dffd658-c38ad5f091",
       "label": "R13 9B GGUF + num_ctx 8192 常驻实测（P3 前，不阻塞）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "9B GGUF + num_ctx 8192 常驻实测结果？「16GB 不可用」结论是否松动？",
+          "answer": "实测（scripts/r13_9b_resident_probe.py，主指标=ollama ps SIZE，num_ctx=8192，探针前后自动卸载保基线干净）：**qwen3.5:9b GGUF 常驻 7.7GB**（100% GPU，eval 26.5 tok/s，加载 4.85s，warm 生成 2.39s）；对照 **qwen3.5:9b-mlx 常驻 9.0GB**（eval 19.6 tok/s）。关键修正：spike-10 的「GGUF 常驻 15GB」是**原生 256K num_ctx 的伪影**——限到生产口径 8192 后，KV cache 缩到可忽略，GGUF 反而比 mlx 轻 1.3GB 且快 35%。**结论：「9B 在 16GB 不可用于迭代」废止，降级为「不作常驻默认」**：7.7GB 常驻在 16GB 机器上与 Docker PG/编辑器共存是紧但可行（需 keep_alive 管理；模型加载仅 ~5s，按需装卸即可）。默认仍 4B（3.7GB/更快），9B 上限档选 **GGUF（非 mlx）**。风险登记册 R13 → 已解决。附带：GGUF 9b 已在本地（磁盘 7.6GB）。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1194,7 +1200,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 22:38:33",
+    "updated": "2026-11-01 23:36:02",
     "md_file": "ROADMAP.md"
   },
   "edges": [
