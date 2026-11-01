@@ -194,6 +194,10 @@ class MemoryClaimRepository(ClaimRepository):
     def list_by_evidence(self, node_id: UUID) -> list[Claim]:
         return [c for c in self._rows.values() if node_id in c.evidence_refs]
 
+    def list_by_status(self, faithfulness_status: str) -> list[Claim]:
+        return [c for c in self._rows.values()
+                if c.faithfulness_status == faithfulness_status]
+
     def delete(self, claim_id: UUID) -> None:
         self._rows.pop(claim_id, None)
 

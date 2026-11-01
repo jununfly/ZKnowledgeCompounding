@@ -109,6 +109,11 @@ class ClaimRepository(ABC):
     def list_by_evidence(self, node_id: UUID) -> list[Claim]: ...
 
     @abstractmethod
+    def list_by_status(self, faithfulness_status: str) -> list[Claim]:
+        """按 D9 忠实度状态列 claims（P3.5 闸门消费口：pending_human 人审队列、
+        human_* 校准语料导出）。值域见 zkc.faithfulness.FAITHFULNESS_STATUSES。"""
+
+    @abstractmethod
     def delete(self, claim_id: UUID) -> None:
         """删除一条 claim（蒸馏撤销路径）；级联由调用方负责（见 zkc.distill.revert_claim）。"""
 

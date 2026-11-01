@@ -181,6 +181,21 @@ REGISTRY: dict[str, Parameter] = {
            "去重闸门只防「同种子重复」，不防「全库每日过量提议」——本参数补该缺口。"
            "属注意力预算一类：每日提议也占人审注意力，须与复审预算同源受限。"
            "真实值须走 calibrate() 门禁（≥14 天埋点 + ≥3 饱和日），当前 5 为保守占位"),
+        # ---- 忠实度闸门（P3.5 · Spike 12/13/13b；降级链第 2 级：rubric 预过滤 + 人工兜底）
+        _p("FAITH_RUBRIC_VERBATIM_MAX", 0.50, PLACEHOLDER,
+           "字面 rubric 红旗：claim 与其引用来源的最长公共子串比例上限，超过即标「疑似抄袭」。"
+           "移植自 spike-10 quality_rubric（占位值同源）。注意：rubric 抓不到内容幻觉"
+           "（好抽象与无据编造字面重叠都低，spike-10 盲点），红旗仅是 reason 标注、不是放行信号"),
+        _p("FAITH_RUBRIC_OVERLAP_MAX", 0.70, PLACEHOLDER,
+           "字面 rubric 红旗：3-gram 重叠上限，超过即标「疑似拼接复述」。"
+           "spike-10 实证：LCS 抓不到 patchwork 抄袭（拼接短语 verbatim 0.48 可过 0.50 门），"
+           "overlap 是第二独立信号。同样仅标注、不放行"),
+        _p("FAITH_R_UNSUPPORTED", 0.30, PLACEHOLDER,
+           "judge 可用模式下，verdict 含 unsupported（无 contradicted）的 claim 抽检比例。"
+           "Spike 13 §3；未被抽中的标 sampled_pending 留痕，可被审计或人工翻查"),
+        _p("FAITH_AUDIT_RATE", 0.05, PLACEHOLDER,
+           "judge 可用模式下，全 supported（auto_pass）claim 的周期审计抽样比例。"
+           "Spike 13 §3：auto-pass 也可能错（危险漏检视角），用审计估计真实危险漏检率"),
     ]
 }
 

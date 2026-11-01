@@ -435,6 +435,14 @@ class PgClaimRepository(ClaimRepository):
         )
         return [self._row_to_claim(r) for r in cur.fetchall()]
 
+    def list_by_status(self, faithfulness_status: str) -> list[Claim]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.meta_claim WHERE faithfulness_status=%(fs)s ORDER BY created_at",
+            dict(fs=faithfulness_status),
+        )
+        return [self._row_to_claim(r) for r in cur.fetchall()]
+
     def delete(self, claim_id: UUID) -> None:
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute("DELETE FROM public.meta_claim WHERE id=%(id)s", dict(id=claim_id))
