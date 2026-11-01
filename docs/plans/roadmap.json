@@ -132,7 +132,7 @@
       "id": "1-6",
       "uid": "01a18dff04d4-4d0d3e55b8",
       "label": "P5 复用+度量",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -142,7 +142,8 @@
       ],
       "decisions": [],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-7": {
       "id": "1-7",
@@ -825,11 +826,27 @@
       "id": "1-6-1",
       "uid": "01a18dffd02b-33fac05197",
       "label": "P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "检索形态怎么定（R18 暴露面）？",
+          "answer": "双路：①结构化检索为主（track/kind/decay 区间/时间排序，纯过滤零新依赖）；②embedding 文本候选召回为辅——encoder callable seam + Storage.search_by_embedding（pg 用 <=> kNN，memory 用余弦），Ollama 不可用→自动降级纯结构化。符合 R18 既定缓解：embedding 只做候选召回+人确认，不做安全判定。",
+          "note": ""
+        },
+        {
+          "q": "浏览视图范围？",
+          "answer": "复利产物页（claim/artifact 列表 + evidence 反查）+ 节点反向连接（谁连我 + citation 入边）。时间线不单独建视图，并入列表 created_at 排序。Web 新页 /browse（检索 tab + 产物 tab）。",
+          "note": ""
+        },
+        {
+          "q": "落地形态与验证证据？",
+          "answer": "zkc/encoder.py（/api/embed nomic 768d，no-proxy opener 绕 Clash，EncoderError 降级语义）+ NodeRepository.search/search_by_embedding（memory 余弦 / pg <=> kNN，order 白名单防注入）+ zkc/search.py 双路编排（去重合并，encoder 失败 degraded=True 不抛）+ zkc/web/browse.py /browse 双 tab（检索+产物，evidence 反查+citation 计数）。真实 nomic dogfood PASS（dim 768 / L2=1.0）。tests：encoder 6 + storage 14（含真实 PG）+ 编排 6 + web 8。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -860,11 +877,22 @@
       "id": "1-6-3",
       "uid": "01a18dffd1e6-30e35e68cd",
       "label": "P5.3 度量 operationalize（判定者全自动 + 等权 0.25 起步）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "operationalize 落成什么形态？",
+          "answer": "§7 已拍板项（全自动判定者/每周节奏/等权 0.25）落成『每周复盘 bundle』：/metrics/api 扩展输入 = 5 度量 + 标注率(滚动7d labeled/completed) + 腐化率 + attention budget demand，一次调用取全。不建快照表——MVP 每周人工跑 API 记录（P6.3 已定节奏），趋势持久化待真实数据后按需加迁移。",
+          "note": ""
+        },
+        {
+          "q": "落地形态与验证证据？",
+          "answer": "zkc/metrics.py 增 rot_rate 纯函数（活跃动态中 decay≥ROT 占比，与衰减可控互补：当期暴露 vs 事后追溯）+ zkc/web/metrics.py weekly_review_bundle（rot_rate + labeling_rate_from 滚动 7 天 D8 口径含闸门状态）。/metrics/api 一次调用取全 = 5 度量 + 每周复盘输入。不建快照表（decide 已落盘）。tests：weekly bundle 6。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1094,7 +1122,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 19:57:41",
+    "updated": "2026-11-01 20:59:10",
     "md_file": "ROADMAP.md"
   },
   "edges": [
