@@ -1,55 +1,13 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 16:49:27
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 17:21:05
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
-├── [x][X+] 1-1. P0 文档收口（全部完成）
-│   ├── [x][X+] 1-1-1. P0.1 架构三角审计清零
-│   ├── [x][X+] 1-1-2. P0.2 RESEARCH-TOPICS 冻结为只读索引
-│   ├── [x][X+] 1-1-3. P0.4 ZJ-CONTEXT 术语表 + ADR-0001/0002
-│   └── [x][X+] 1-1-4. P0.3 §2 决策基线 + §5 风险登记册评审签字（P0 唯一剩余）
-├── [x][X+] 1-2. P1 存储地基（全部完成）
-│   ├── [x][X+] 1-2-1. P1.0 定死 embedding 编码器 → vector(768)
-│   ├── [x][X+] 1-2-2. P1.1 迁移 0001（D1–D9）落地 zkc_dev
-│   ├── [x][X+] 1-2-3. P1.4 阈值表 zkc/tuning.py（29 参数）
-│   ├── [x][X+] 1-2-4. P1.5 决定是否回迁 Alembic（R19，窗口=写业务代码前）
-│   ├── [x][X+] 1-2-5. P1.2 repository seam（保持 Kuzu/TerminusDB 可替换）
-│   ├── [x][X+] 1-2-6. P1.3 双时态 + decay 触发器（线性）实测
-│   └── [x][X+] 1-2-7. P1.4 剩余：业务代码一律 tuning.get() + UI/日志显示来源标签
-├── [x][X+] 1-3. P2 摄入+分流
-│   ├── [x][X+] 1-3-1. P2.1 快捕获 UX（本地优先离线，T0.2）
-│   ├── [x][X+] 1-3-2. P2.2 DecisionRouter 接入 + 双信号弃权 + 人工兜底（Spike 02/03）
-│   └── [x][X+] 1-3-3. P2.3 分流 → review_queue 写入联调
-├── [x][X+] 1-4. P4 调度+复审闭环（S1：先于 P3）
-│   ├── [x][X+] 1-4-1. P4.1 review_interval 三层（L1 基线/L2 预算归一/L3 AIMD）
-│   ├── [x][X+] 1-4-2. P4.2 每日复审队列 UI（MVP 必选，两个闭环的唯一外生锚）
-│   ├── [x][X+] 1-4-3. P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe）
-│   ├── [x][X+] 1-4-4. P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机）
-│   └── [x][X+] 1-4-5. P4.5 已捕获条目「单程票」规则（ADR-0002，含边界 1/2）
-├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
-│   ├── [x][X+] 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
-│   ├── [x][X+] 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11）
-│   ├── [x][X+] 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）
-│   ├── [x][X+] 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）
-│   ├── [ ][X+] 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）
-│   └── [ ][X+] 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path）
-├── [ ][X+] 1-6. P5 复用+度量
-│   ├── [ ][X+] 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖）
-│   ├── [x][X+] 1-6-2. P5.2 5 度量面板（连接密度/复用率/方法论产出/衰减可控/复利系数）
-│   └── [ ][X+] 1-6-3. P5.3 度量 operationalize（判定者全自动 + 等权 0.25 起步）
-├── [ ][X+] 1-7. P6 上线
-│   ├── [ ][X+] 1-7-1. P6.1 明确不做打包/分发，只保证本机可启动（ADR-0001）
-│   ├── [ ][X+] 1-7-2. P6.2 真实数据冷启动引导（导入 ≥60 条动态型素材）
-│   ├── [x][X+] 1-7-3. P6.3 用户文档 + 度量复盘节奏（每周）
-│   └── [!][X+] 1-7-4. P6.4 达成累计 ≥20 个带标注复审动作 + 标注率 ≥70%（R10 降级判定）
-└── [ ][X+] 1-8. 风险 open 项关停（横切 R1/R4/R13/R14/R15/R18）
-    ├── [ ][X+] 1-8-1. R13 9B GGUF + num_ctx 8192 常驻实测（P3 前，不阻塞）
-    ├── [x][X+] 1-8-2. R14 补全延迟成本埋点（1-5-2 已落地埋点+kill switch；聚合判定并入 1-7-4 观察期）
-    ├── [x][X+] 1-8-3. R15 context_member 写放大压测（先做查询时动态视图）
-    ├── [ ][X+] 1-8-4. R18 中文检索召回质量验证（P5 真实语料，不合格走加列 4096 路径）
-    ├── [ ][X+] 1-8-5. R1 自动忠实度判定（上线前，4B/9B 本机已否决，可选启用 judge.py）
-    └── [ ][X+] 1-8-6. R4 注意力预算校验 n/(0.6×interval)（上线前必做，否则衰减可控恒 0）
+    ├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
+    │   ├── [~][X+] 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）
+    │   ... 该层还有 5 个兄弟，0 个 in_progress ▸
+    ... 该层还有 7 个兄弟，0 个 in_progress ▸
 <details><summary>阻塞链：1 个节点被阻塞</summary>
 
 - 1-7-4. P6.4 达成累计 ≥20 个带标注复审动作 + 标注率 ≥70%（R10 降级判定） ← e20: 1-7-2. P6.2 真实数据冷启动引导（导入 ≥60 条动态型素材） [ ]
@@ -57,9 +15,14 @@
 </details>
 
 
+### 当前施工：1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）
+
+**决策：**
+- Q: 1-5-5 第一切片范围与路由语义？ → zkc/faithfulness.py 纯函数闸门核心：① 字面 rubric 预过滤=spike-10 normalize/ngrams/verbatim/overlap 移植（不 import spikes），红旗=verbatim/overlap 超 tuning 阈值，仅作 reason 标注**不是放行信号**（spike-10 盲点：rubric 抓不到内容幻觉）；② judge seam 移植 spike-12 分解式判定（atomic_facts + aggregate 确定性推导 + parse_judgment 防御解析），pydantic 可用（fastapi 传递依赖）；③ 路由双模式：judge_fn=None（本机现状，13b-probe 4B/9B 双否决）→ 全部 pending_human/human_only，绝不 auto-pass；judge_fn 可用 → Spike 13 §3 四分支（空分解/矛盾→forced 人审；unsupported→抽检 R_unsupported；supported→auto_pass+periodic_audit 5% 审计）。R11 独立预算：F_CAP_RATIO(0.20 已有)只封顶抽检+审计侧，强制项永无上限。④ 人工兜底 adjudicate(store, claim_id, verdict)：confirm/reject/edit → human_confirmed/human_rejected + human_verdict_at；校准语料**不建新表**=judge_raw 非空且有人判的 claim 行本身（judge vs 人判同 row 可查询导出，Spike 13 §7 最小实现）。⑤ ClaimRepository.list_by_status 消费口（memory+pg 同构）。验收③（无记录人判或带 judge_raw 的显式 auto-pass 不得离开 pending）在 route/adjudicate 内 enforcement + 测试。Web UI 卡片/F_cap 与每日队列联动/dogfood 脚本属后续切片。
+
 ### 下一步可开工（ready 前 3）
 
 - 1-5. P3 复利变换（最大块，HITL 串行） [ ]
-- 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b） [ ]
 - 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path） [ ]
+- 1-6. P5 复用+度量 [ ]
 <!-- ROADMAP_SECTION_END -->
