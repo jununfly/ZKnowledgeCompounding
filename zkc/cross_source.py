@@ -23,10 +23,13 @@ from __future__ import annotations
 
 import time
 from typing import Callable, Optional
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 from . import tuning
+from .repository.models import ModelingArtifact
+from .repository.protocols import Storage
 
 # LLM 调用契约（provider 无关；真实环境由 Instructor + Ollama 实现）。
 SummarizeFn = Callable[[dict, str], str]        # (source, query) -> summary
@@ -267,3 +270,96 @@ class CrossSourceOperator:
                 },
             },
         }
+
+
+# ---------------------------------------------------------------- 落库接线（1-5-3）
+# kind 三值与 DB CHECK（migration 0001 modeling_artifact）一致——落库前预校验，
+# 让 memory/pg 双实现走同一条失败路径（PG 侧 CHECK 只是最后防线）。
+ARTIFACT_KINDS = ("methodology", "mental_model", "tradeoff_map")
+
+# 撤销路径复用 distill.revert_artifact（捕获载体 claim/artifact 撤销语义同构）；
+# 在本模块重导出，结合算子的调用方只需 import zkc.cross_source。
+from .distill import revert_artifact  # noqa: E402,F401
+
+
+def to_modeling_artifact(artifact: dict, *, produced_by=None) -> ModelingArtifact:
+    """算子产物 -> ModelingArtifact（evidence_refs UUID 化，produced_by 溯源）。
+
+    - evidence_refs：enforce_citations 已保证 ⊆ 来源集合；来源 id 即 store 节点 UUID
+      （apply_combine 负责校验），此处仅做 str -> UUID 转换；
+    - body：完整 artifact dict（claims/local/global/methodology_steps），剔除内部
+      下划线键与已升为列的 evidence_refs——落库形态单列一行即完整可回放。
+    """
+    body = {k: v for k, v in artifact.items()
+            if not k.startswith("_") and k != "evidence_refs"}
+    return ModelingArtifact(
+        title=artifact.get("title", ""),
+        kind=artifact.get("kind", ""),
+        body=body,
+        evidence_refs=[UUID(e) for e in artifact.get("evidence_refs", [])],
+        produced_by=produced_by,
+    )
+
+
+def apply_combine(
+    store: Storage,
+    query: str,
+    sources: list[dict],
+    operator: CrossSourceOperator,
+    *,
+    produced_by=None,
+) -> dict:
+    """生产入口：跨源结合 -> 落库一条 modeling_artifact（1-5-3 接线）。
+
+    语义流程：
+      1. 源节点校验（fail-fast）：每个 source id 必须是 store 中的真实节点 UUID——
+         校验失败不调 LLM 直接返回 applied=False（省一次必然幻觉引用的调用）；
+      2. operator.combine（RCS 漏斗 + 引用强制 + 单次补全）；
+      3. 引用全崩塌（ValueError）→ applied=False **不落库不入队**：结合是发起式
+         查询操作，发起者在场，区别于 apply_distill 的到期自动分支（宁少勿错，
+         失败必须显式返回给发起者，绝不静默丢）；
+      4. kind 预校验（DB CHECK 同值域）→ to_modeling_artifact 落库。
+
+    返回 ``{applied, artifact_id, evidence_node_ids, report, reason}``；report 含
+    R14 埋点（completion_fired / latency 字段），由调用方按 run 聚合。
+    """
+    # 1) 源节点校验（fail-fast，LLM 未调用）
+    for src in sources:
+        try:
+            uid = UUID(str(src["id"]))
+        except (KeyError, TypeError, ValueError):
+            return dict(applied=False, artifact_id=None, evidence_node_ids=[],
+                        report=None,
+                        reason=f"source id is not a node UUID: {src.get('id')!r}")
+        if store.nodes.get(uid) is None:
+            return dict(applied=False, artifact_id=None, evidence_node_ids=[],
+                        report=None, reason=f"source node not found: {uid}")
+
+    # 2) 跑算子；引用全崩塌 -> 不落库（发起式操作不入队人审）
+    try:
+        result = operator.combine(query, sources)
+    except ValueError as e:
+        return dict(applied=False, artifact_id=None, evidence_node_ids=[],
+                    report=None, reason=f"artifact rejected, nothing persisted: {e}")
+    artifact = result["artifact"]
+    report = result["report"]
+
+    # 3) kind 预校验（与 DB CHECK 同值域，双实现同路径）
+    if artifact.get("kind") not in ARTIFACT_KINDS:
+        return dict(applied=False, artifact_id=None, evidence_node_ids=[],
+                    report=report,
+                    reason=f"invalid kind {artifact.get('kind')!r}; "
+                           f"must be one of {ARTIFACT_KINDS}")
+
+    # 4) 落库（evidence_refs 已被引用强制约束 ⊆ 来源集合 = 真实节点）
+    ma = store.artifacts.save(
+        to_modeling_artifact(artifact, produced_by=produced_by))
+    return dict(
+        applied=True,
+        artifact_id=ma.id,
+        evidence_node_ids=list(ma.evidence_refs),
+        report=report,
+        reason=f"combine persisted 1 modeling_artifact "
+               f"({len(artifact.get('claims', []))} claims, "
+               f"{len(ma.evidence_refs)} evidence nodes)",
+    )
