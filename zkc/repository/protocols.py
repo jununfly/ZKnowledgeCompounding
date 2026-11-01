@@ -98,6 +98,34 @@ class NodeRepository(ABC):
         仅置列并自增 version_seq 保活 OCC。
         """
 
+    @abstractmethod
+    def search(
+        self,
+        track: str | None = None,
+        q: str | None = None,
+        decay_min: float | None = None,
+        decay_max: float | None = None,
+        include_archived: bool = False,
+        order: str = "created_desc",
+        limit: int = 50,
+    ) -> list[Node]:
+        """P5.1 结构化检索（R18 缓解：主检索路）。
+
+        q 对 title/content 大小写不敏感子串匹配；track 精确过滤；decay 区间对
+        decay_score（仅动态轨有语义）；order ∈ {created_desc, created_asc, decay_desc}；
+        默认排除已归档。全部可选，组合生效。
+        """
+
+    @abstractmethod
+    def search_by_embedding(
+        self, vector: list[float], k: int = 10, include_archived: bool = False
+    ) -> list[tuple[Node, float]]:
+        """P5.1 候选召回（R18 缓解：embedding 只做候选，结果交人工确认）。
+
+        query 向量与 node.embedding 余弦相似 top-k（pg 用 pgvector <=>，memory 用
+        Python 余弦）；无 embedding 的节点跳过。返回 (node, sim) 按 sim 降序。
+        """
+
 
 class ClaimRepository(ABC):
     @abstractmethod
@@ -115,6 +143,10 @@ class ClaimRepository(ABC):
         human_* 校准语料导出）。值域见 zkc.faithfulness.FAITHFULNESS_STATUSES。"""
 
     @abstractmethod
+    def list_all(self, limit: int = 200) -> list[Claim]:
+        """P5.1 复利产物浏览：全部 claims，created_at 降序。"""
+
+    @abstractmethod
     def delete(self, claim_id: UUID) -> None:
         """删除一条 claim（蒸馏撤销路径）；级联由调用方负责（见 zkc.distill.revert_claim）。"""
 
@@ -130,6 +162,10 @@ class ArtifactRepository(ABC):
 
     @abstractmethod
     def list_by_evidence(self, node_id: UUID) -> list[ModelingArtifact]: ...
+
+    @abstractmethod
+    def list_all(self, limit: int = 200) -> list[ModelingArtifact]:
+        """P5.1 复利产物浏览：全部 artifacts，created_at 降序。"""
 
     @abstractmethod
     def delete(self, artifact_id: UUID) -> None:
@@ -289,3 +325,7 @@ class Storage(ABC):
     @abstractmethod
     def discover_higher_dim(self, seed_node_id: UUID, k: int = 5) -> list:
         """T4.1：种子节点的 k 近邻（pgvector 余弦）。内存 fake 不做向量运算，返回空。"""
+
+    @abstractmethod
+    def citation_counts(self) -> dict[UUID, int]:
+        """P5.1 产物浏览：claim_id -> 被后续条目引用次数（citation 表聚合；内存 fake 恒空）。"""

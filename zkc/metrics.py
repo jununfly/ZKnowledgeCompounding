@@ -80,6 +80,22 @@ def decay_controllability(inp: MetricInputs, rot_threshold: float | None = None)
     return len(handled_expired) / len(expired)
 
 
+def rot_rate(inp: MetricInputs, rot_threshold: float | None = None) -> float:
+    """腐化率（P5.3 每周复盘输入）：当前「正在腐烂」的活跃动态节点占比。
+
+    口径 = decay>=ROT_THRESHOLD 的**未归档**动态节点 / 全部未归档动态节点。
+    与 decay_controllability 互补：后者看「到期的被处理了吗」（事后追溯），
+    本口径看「现在有多少在腐烂」（当期暴露）——复盘时腐化率高先查预算
+    n/(0.6×interval)（R4），再查指标本身。
+    """
+    rot = rot_threshold if rot_threshold is not None else tuning.get("ROT_THRESHOLD")
+    active = [(decay or 0.0) for (nid, track, decay, archived) in inp.nodes
+              if track == "dynamic" and not archived]
+    if not active:
+        return 0.0
+    return sum(1 for d in active if d >= rot) / len(active)
+
+
 def compounding_factor(
     cd: float, rr: float, mo: int, dc: float,
     weights: tuple[float, float, float, float] | None = None,

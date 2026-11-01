@@ -85,6 +85,67 @@ class MemoryNodeRepository(NodeRepository):
     def list_by_track(self, track: str) -> list[Node]:
         return [n for n in self._rows.values() if n.track == track]
 
+    # P5.1 结构化检索（内存实现：Python 过滤，语义与 Pg SQL 一致）
+    def search(
+        self,
+        track: str | None = None,
+        q: str | None = None,
+        decay_min: float | None = None,
+        decay_max: float | None = None,
+        include_archived: bool = False,
+        order: str = "created_desc",
+        limit: int = 50,
+    ) -> list[Node]:
+        if order not in ("created_desc", "created_asc", "decay_desc"):
+            raise ValueError(f"invalid order: {order}")
+        ql = q.lower() if q else None
+        out = []
+        for n in self._rows.values():
+            if not include_archived and n.archived_at is not None:
+                continue
+            if track is not None and n.track != track:
+                continue
+            if decay_min is not None and (n.decay_score or 0.0) < decay_min:
+                continue
+            if decay_max is not None and (n.decay_score or 0.0) > decay_max:
+                continue
+            if ql is not None:
+                hay = ((n.title or "") + "\n" + (n.content or "")).lower()
+                if ql not in hay:
+                    continue
+            out.append(replace(n))
+        if order == "created_asc":
+            out.sort(key=lambda n: (n.created_at or datetime.min))
+        elif order == "decay_desc":
+            out.sort(key=lambda n: n.decay_score or 0.0, reverse=True)
+        else:  # created_desc
+            out.sort(
+                key=lambda n: (n.created_at or datetime.min), reverse=True
+            )
+        return out[: max(1, int(limit))]
+
+    def search_by_embedding(
+        self, vector: list[float], k: int = 10, include_archived: bool = False
+    ) -> list[tuple[Node, float]]:
+        import math
+
+        def _cos(a: list[float], b: list[float]) -> float:
+            na = math.sqrt(sum(x * x for x in a))
+            nb = math.sqrt(sum(x * x for x in b))
+            if na == 0 or nb == 0:
+                return 0.0
+            return sum(x * y for x, y in zip(a, b)) / (na * nb)
+
+        hits = []
+        for n in self._rows.values():
+            if not include_archived and n.archived_at is not None:
+                continue
+            if n.embedding is None:
+                continue
+            hits.append((replace(n), _cos(vector, n.embedding)))
+        hits.sort(key=lambda t: t[1], reverse=True)
+        return hits[: max(1, int(k))]
+
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
         # 阈值走 tuning（禁止裸数字，P1.4 铁律）：SURFACE_THRESHOLD=0.6 进入注意力
         surface = tuning.get("SURFACE_THRESHOLD")
@@ -200,6 +261,14 @@ class MemoryClaimRepository(ClaimRepository):
         return [c for c in self._rows.values()
                 if c.faithfulness_status == faithfulness_status]
 
+    def list_all(self, limit: int = 200) -> list[Claim]:
+        out = sorted(
+            self._rows.values(),
+            key=lambda c: (c.created_at or datetime.min),
+            reverse=True,
+        )
+        return [replace(c) for c in out[: max(1, int(limit))]]
+
     def delete(self, claim_id: UUID) -> None:
         self._rows.pop(claim_id, None)
 
@@ -220,6 +289,14 @@ class MemoryArtifactRepository(ArtifactRepository):
 
     def list_by_evidence(self, node_id: UUID) -> list[ModelingArtifact]:
         return [replace(a) for a in self._rows.values() if node_id in a.evidence_refs]
+
+    def list_all(self, limit: int = 200) -> list[ModelingArtifact]:
+        out = sorted(
+            self._rows.values(),
+            key=lambda a: (a.created_at or datetime.min),
+            reverse=True,
+        )
+        return [replace(a) for a in out[: max(1, int(limit))]]
 
     def delete(self, artifact_id: UUID) -> None:
         self._rows.pop(artifact_id, None)
@@ -493,3 +570,7 @@ class MemoryStorage(Storage):
     def discover_higher_dim(self, seed_node_id, k: int = 5) -> list:
         # 内存 fake 不做向量相似度，返回空（discovery 是 pgvector 运算，由 PG 实现）
         return []
+
+    def citation_counts(self) -> dict:
+        # 内存 fake 无 citation 行（与 load_metric_inputs 的 citations=[] 同口径）
+        return {}

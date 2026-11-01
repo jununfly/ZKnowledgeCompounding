@@ -84,6 +84,9 @@ def register_metrics_routes(app, store: Storage) -> None:
             "decay_controllability_precondition": "需满足注意力预算 n/(0.6×interval)，否则预期偏低",
             "attention_budget_demand": _budget_demand(store),
         }
+        # P5.3 每周复盘 bundle（§7 已拍板：判定者全自动 / 每周节奏）：
+        # 一次调用取全 = 5 度量 + 腐化率 + 标注率（滚动 7 天，D8 口径）+ 预算需求。
+        report["weekly_review"] = weekly_review_bundle(store)
         return report
 
     app.include_router(router)
@@ -94,3 +97,21 @@ def _budget_demand(store: Storage) -> float | None:
         return round(S.daily_demand(store.load_schedulable()), 4)
     except Exception:
         return None
+
+
+def weekly_review_bundle(store: Storage) -> dict:
+    """P5.3 每周复盘输入（不建快照表：每周人工跑本函数记录到风险登记册）。
+
+    输入 = 腐化率（rot_rate，当期暴露）+ 标注率（滚动 7 天 D8 口径，含闸门状态）。
+    输出去向 = 阈值校准提案 + 风险登记册更新（§7 复盘节奏）。
+    """
+    inp = store.load_metric_inputs()
+    try:
+        rot = round(M.rot_rate(inp), 4)
+    except Exception:
+        rot = None
+    try:
+        labeling = S.labeling_rate_from(store.attention.list_recent(days=7))
+    except Exception:
+        labeling = None
+    return {"rot_rate": rot, "labeling": labeling}

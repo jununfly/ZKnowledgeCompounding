@@ -189,6 +189,66 @@ class PgNodeRepository(NodeRepository):
         cur.execute("SELECT * FROM public.node WHERE track=%(t)s", dict(t=track))
         return [self._row_to_node(r) for r in cur.fetchall()]
 
+    # P5.1 结构化检索（R18：主检索路）。order 白名单防注入，参数化拼接。
+    _SEARCH_ORDERS = {
+        "created_desc": "ORDER BY created_at DESC NULLS LAST",
+        "created_asc": "ORDER BY created_at ASC NULLS LAST",
+        "decay_desc": "ORDER BY decay_score DESC NULLS LAST",
+    }
+
+    def search(
+        self,
+        track: str | None = None,
+        q: str | None = None,
+        decay_min: float | None = None,
+        decay_max: float | None = None,
+        include_archived: bool = False,
+        order: str = "created_desc",
+        limit: int = 50,
+    ) -> list[Node]:
+        if order not in self._SEARCH_ORDERS:
+            raise ValueError(f"invalid order: {order}")
+        where = []
+        params: dict = dict(limit=max(1, int(limit)))
+        if not include_archived:
+            where.append("archived_at IS NULL")
+        if track is not None:
+            where.append("track = %(track)s")
+            params["track"] = track
+        if q:
+            where.append("(title ILIKE %(q)s OR content ILIKE %(q)s)")
+            params["q"] = f"%{q}%"
+        if decay_min is not None:
+            where.append("COALESCE(decay_score, 0) >= %(dmin)s")
+            params["dmin"] = float(decay_min)
+        if decay_max is not None:
+            where.append("COALESCE(decay_score, 0) <= %(dmax)s")
+            params["dmax"] = float(decay_max)
+        sql = "SELECT * FROM public.node"
+        if where:
+            sql += " WHERE " + " AND ".join(where)
+        sql += " " + self._SEARCH_ORDERS[order] + " LIMIT %(limit)s"
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(sql, params)
+        return [self._row_to_node(r) for r in cur.fetchall()]
+
+    def search_by_embedding(
+        self, vector: list[float], k: int = 10, include_archived: bool = False
+    ) -> list[tuple[Node, float]]:
+        where = "AND archived_at IS NULL" if not include_archived else ""
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            f"""
+            SELECT *, 1 - (embedding <=> %(v)s::vector) AS sim
+            FROM public.node
+            WHERE embedding IS NOT NULL {where}
+            ORDER BY embedding <=> %(v)s::vector
+            LIMIT %(k)s
+            """,
+            dict(v=_vec_to_sql(vector), k=max(1, int(k))),
+        )
+        return [(self._row_to_node(r), float(r["sim"])) for r in cur.fetchall()]
+
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
         # 阈值走 tuning（禁止裸数字，P1.4 铁律）：SURFACE_THRESHOLD=0.6 进入注意力
         surface = tuning.get("SURFACE_THRESHOLD")
@@ -445,6 +505,14 @@ class PgClaimRepository(ClaimRepository):
         )
         return [self._row_to_claim(r) for r in cur.fetchall()]
 
+    def list_all(self, limit: int = 200) -> list[Claim]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.meta_claim ORDER BY created_at DESC NULLS LAST LIMIT %(limit)s",
+            dict(limit=max(1, int(limit))),
+        )
+        return [self._row_to_claim(r) for r in cur.fetchall()]
+
     def delete(self, claim_id: UUID) -> None:
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute("DELETE FROM public.meta_claim WHERE id=%(id)s", dict(id=claim_id))
@@ -526,6 +594,14 @@ class PgArtifactRepository(ArtifactRepository):
         cur.execute(
             "SELECT * FROM public.modeling_artifact WHERE %(nid)s::uuid = ANY(evidence_refs)",
             dict(nid=node_id),
+        )
+        return [self._row_to_artifact(r) for r in cur.fetchall()]
+
+    def list_all(self, limit: int = 200) -> list[ModelingArtifact]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.modeling_artifact ORDER BY tx_from DESC NULLS LAST LIMIT %(limit)s",
+            dict(limit=max(1, int(limit))),
         )
         return [self._row_to_artifact(r) for r in cur.fetchall()]
 
@@ -1052,6 +1128,15 @@ class PgStorage(Storage):
             dict(sid=str(seed_node_id), k=k),
         )
         return cur.fetchall()
+
+    def citation_counts(self) -> dict:
+        """P5.1 产物浏览：claim_id -> 被引用次数（citation 表聚合，D3/T6.2）。"""
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT cited_claim_id, count(*) AS n FROM public.citation "
+            "GROUP BY cited_claim_id"
+        )
+        return {r["cited_claim_id"]: int(r["n"]) for r in cur.fetchall()}
 
     def clear_all(self) -> None:
         """测试用：清空所有领域表（保留 schema）。"""

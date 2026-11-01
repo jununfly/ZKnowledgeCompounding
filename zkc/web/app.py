@@ -27,6 +27,7 @@ from zkc.routing import (
 from zkc.repository import get_storage
 from zkc.web.review import register_review_routes
 from zkc.web.metrics import register_metrics_routes
+from zkc.web.browse import register_browse_routes
 
 CAPTURE_HTML = """<!doctype html>
 <html lang="zh">
@@ -197,5 +198,8 @@ def create_app(
 
     # P5.2 复利度量面板：挂载到同一 app（共享 store_）。
     register_metrics_routes(app, store_)
+
+    # P5.1 检索/复利产物浏览：挂载到同一 app（共享 store_）。
+    register_browse_routes(app, store_)
 
     return app
