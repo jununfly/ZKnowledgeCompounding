@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 19:14:07
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-01 19:38:31
 
 [~][X+] 1. ZKC MVP 上线（P0→P6，4h/周）
 ├── [x][X+] 1-1. P0 文档收口（全部完成）
@@ -27,13 +27,13 @@
 │   ├── [x][X+] 1-4-3. P4.3 budget_per_day 统计估计（删失感知+单调护栏+EMA+oversubscribe）
 │   ├── [x][X+] 1-4-4. P4.4 标注率闸门（滚动 7 天 ≥70%，否则 L3 停机）
 │   └── [x][X+] 1-4-5. P4.5 已捕获条目「单程票」规则（ADR-0002，含边界 1/2）
-├── [ ][X+] 1-5. P3 复利变换（最大块，HITL 串行）
+├── [x][X+] 1-5. P3 复利变换（最大块，HITL 串行）
 │   ├── [x][X+] 1-5-1. P3.1 蒸馏算子：Ollama 4B + Instructor + LangGraph HITL
 │   ├── [x][X+] 1-5-2. P3.2 跨源强制算子（≥2 断言 + 单次补全回路，Spike 11）
 │   ├── [x][X+] 1-5-3. P3.3 结合算子 RCS 漏斗 + 引用强制 + 级联撤销（Spike 05）
 │   ├── [x][X+] 1-5-4. P3.4 context 拓扑装配 + produced_by 级联撤销（Spike 06）
 │   ├── [x][X+] 1-5-5. P3.5 忠实度闸门：字面 rubric 预过滤 + 人工兜底（Spike 12/13/13b）
-│   └── [ ][X+] 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path）
+│   └── [x][X+] 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path）
 ├── [ ][X+] 1-6. P5 复用+度量
 │   ├── [ ][X+] 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖）
 │   ├── [x][X+] 1-6-2. P5.2 5 度量面板（连接密度/复用率/方法论产出/衰减可控/复利系数）
@@ -59,7 +59,7 @@
 
 ### 下一步可开工（ready 前 3）
 
-- 1-5. P3 复利变换（最大块，HITL 串行） [ ]
-- 1-5-6. P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path） [ ]
 - 1-6. P5 复用+度量 [ ]
+- 1-6-1. P5.1 复利产出检索/浏览（T6.1，原无 spike 覆盖） [ ]
+- 1-6-3. P5.3 度量 operationalize（判定者全自动 + 等权 0.25 起步） [ ]
 <!-- ROADMAP_SECTION_END -->

@@ -113,7 +113,7 @@
       "id": "1-5",
       "uid": "01a18dff03ce-e40bd6a592",
       "label": "P3 复利变换（最大块，HITL 串行）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -1004,13 +1004,35 @@
       "id": "1-5-6",
       "uid": "01a192fb7966-6a3148d63e",
       "label": "P3.1 后续切片：Ollama/Instructor/LangGraph 接线 + score 表/rubric（延后，不阻塞 critical path）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Instructor 是否引入？",
+          "answer": "不引入（对齐 1-5-2 先例）。结构化契约 = prompt 层 JSON schema 提示 + 手写解析 + 有限重试(≤DISTILL_MAX_ATTEMPTS)。铁律：①/ v1+response_format 对 qwen3.5-mlx 永久挂死，Instructor Mode.JSON_SCHEMA/OPENAI_TOOLS 禁用；② 真实调用必须 think=false + num_ctx=8192 + num_predict 显式给足。Instructor 的核心价值（校验重试）由手写重试循环等价实现。",
+          "note": ""
+        },
+        {
+          "q": "LangGraph HITL 是否引入？",
+          "answer": "不引入。HITL 语义已由 apply_distill 承载：DISTILL 到期自动分支 = 自动执行，蒸馏失败回落 review_queue = interrupt，classify/review UI 消费 = resume。这是 ZKC 最小 HITL 实现且已落地（1-5-1）。LangGraph 延后到出现多步蒸馏编排需求再评估。",
+          "note": ""
+        },
+        {
+          "q": "score 表/rubric 用什么形态？",
+          "answer": "轻量 score 表（migration 0007 llm_call_score），替代 Langfuse（ClickHouse/Redis 太重）：记录每次蒸馏 LLM 调用的 operation/model/latency_ms/parse_ok/attempts/n_claims/n_citations/error，外加 human_verdict 可空列（rubric 的人工打分入口，由复审流回填）。落库点 = expiry.apply_distill。",
+          "note": ""
+        },
+        {
+          "q": "验收结果？",
+          "answer": "全仓 351 tests OK（基线 312 → +39：distill 结构化 9 + llm 铁律 7 + expiry score memory 5 + PG score 4 + 其余既有回归）。真实 Ollama dogfood（qwen3.5:4b-mlx）PASS：18.8s、3 claims、attempts=2（重试回路真实生效）、score 落库 1 行、claim 落库。0007 已应用 zkc_dev 且 verify sha 一致。遗留：score.latency 在 dogfood 里因传入缓存 result 而为 0ms（真实流为真实耗时）；score 观测面板/rubric UI 消费口未建（属 P4 UI 层）；改动未 commit（等显式触发）。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-4-1": {
       "id": "1-5-4-1",
@@ -1061,7 +1083,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 19:14:07",
+    "updated": "2026-11-01 19:38:31",
     "md_file": "ROADMAP.md"
   },
   "edges": [
