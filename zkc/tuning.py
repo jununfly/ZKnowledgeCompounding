@@ -167,6 +167,14 @@ REGISTRY: dict[str, Parameter] = {
            "仅作触发初筛，最终创建仍过人审闸门（稀缺注意力：系统提议、人确认）"),
         _p("CONTEXT_HIGHER_DIM_MIN_MEMBERS", 2, PLACEHOLDER,
            "触发提议所需的最小近邻数（不含种子自身）；低于此数不构成「聚合」价值"),
+        # ---- 跨源强制算子（P3.2 · Spike 11 移植；阈值待真实语料校准）
+        _p("CROSS_SOURCE_MIN_ASSERTIONS", 2, PLACEHOLDER,
+           "跨源综合断言下限（每条 evidence_ids 含 >=2 个不同来源 id）。"
+           "Spike 10 教训：比率指标可被「少发 claim」刷高，必须要求绝对数量。"
+           "Spike 11 实证 4B 在该硬约束下 3/3 达标；真实语料后可校准"),
+        _p("COMBINE_MAX_SOURCES", 4, PLACEHOLDER,
+           "RCS 漏斗保留来源上限（PaperQA2 模式：per-source 摘要→打分→截断）。"
+           "占位值 4 沿用 Spike 05/11 实验设定"),
         # ---- 更高维提议频率限流（调度层·注意力预算；P1 收尾切片）
         _p("PROPOSAL_PER_DAY_CAP", 5, PLACEHOLDER,
            "全局每日更高维 context 提议数上限（调度层·注意力预算）。"
