@@ -168,7 +168,7 @@
       "id": "1-8",
       "uid": "01a18dff069d-cbcc0acc91",
       "label": "风险 open 项关停（横切 R1/R4/R13/R14/R15/R18）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -1061,25 +1061,49 @@
       "id": "1-8-5",
       "uid": "01a18dffd9fe-27c1ce172f",
       "label": "R1 自动忠实度判定（上线前，4B/9B 本机已否决，可选启用 judge.py）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "复测思路与判据（judge 真的被否决死了吗）？",
+          "answer": "关键质疑：spike-13b 对 9B 的否决（~6min/条 + 不产 JSON）是在 **9b-mlx @ 原生 256K ctx** 下测的——与 1-8-1 R13 同源伪影。复测口径：qwen3.5:9b **GGUF**（1-8-1 已实测 7.7GB/26.5tok/s）+ Ollama 铁律全套（原生 /api/chat + format:json、think=false、num_ctx=8192、num_predict=2048 给足）+ zkc/faithfulness.py 现成 judge seam（build_judge_prompt + parse_judgment + aggregate，零改动）。判据：4 条合成 claim（2 supported / 1 unsupported / 1 contradicted）对一篇真实语料源文档——JSON 全部可解析（4/4）且判定与预期一致（≥3/4）且延迟 ≤60s/条 → 「judge 可选启用」实证成立（抽检 FAITH_R_UNSUPPORTED=0.30 + 审计 FAITH_AUDIT_RATE=0.05 模式，默认仍 HITL 不变，启用开关另行拍板）；任一不达 → 维持 MVP 结论并记录复测证据。探针 scripts/r1_judge_probe.py 可重跑。",
+          "note": ""
+        },
+        {
+          "q": "复测结果与 R1 处置？",
+          "answer": "**两轮实测（scripts/r1_judge_probe.py，qwen3.5:9b GGUF + 铁律全套 + 现成 judge seam）**：首轮 4/4 JSON 可解析但 atomic_facts 全空（3/4 判定错）——根因不是模型不会分解，而是 **build_judge_prompt 没给显式 JSON schema**，9B 自造键名（claim_decomposition[].label）；抓原始输出确认分解质量其实全对。修复：build_judge_prompt 追加【输出格式】显式键名合同（1 处 prompt 修改，26 tests 全绿）。修复后复测：**JSON 4/4、判定 3/4、延迟 3.8–5.8s/条 → 合格**。唯一失误是 75% 那条判 contradicted（预期 unsupported）——方向 fail-safe（更严不放行，强制人审），可接受。对比 spike-13b 的 ~6min/条：**提速 ~60×**，全部来自 num_ctx 8192 + think=false + GGUF（又一批 256K 伪影受害者）。**R1 处置：从「自动判定本机不可用」改为「本机可用（有条件）」**——judge.py 路径实证可行（抽检 0.30 + 审计 0.05 模式），但**默认仍 HITL 不变**，自动判定启用开关需 zj 显式拍板（涉及 auto_pass 放行语义 + 真实漏检率需校准语料，观察期攒人判对照后再议）。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8-6": {
       "id": "1-8-6",
       "uid": "01a18dffdadb-3baa84569d",
       "label": "R4 注意力预算校验 n/(0.6×interval)（上线前必做，否则衰减可控恒 0）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "校验口径与判定形式？",
+          "answer": "复用 zkc/scheduling.py 现成机器（daily_demand=Σ1/(0.6×I)、fit_budget_rows L2 归一、estimate_budget 删失感知、l2_target oversubscribe×1.5），对 zkc_dev 真实语料（60 条动态）跑数。产出 scripts/r4_budget_check.py：① L1 基线需求 vs 预算（观察期估计 confidence=none → 回退 BUDGET_PER_DAY_DEFAULT=1.0）；② L2 拟合后 infeasible/max_dynamic_items；③ **健康度量（R4 真信号）**：被延后条目中「复审前已到 ROT」的比例（0.6×I_eff/I_base ≥ 0.9，即拉长到复审时 decay 已 ≥0.9=注定腐化）——这个数 >0 就说明当前预算撑不住真实腐化节奏，衰减可控指标将恒 0，必须显式报告选项（① 观察期产出真实 budget 后重跑；② 缩动态集 DISTILL/ARCHIVE；③ 调 SURFACE_THRESHOLD），**不静默调参**。节点收口 = 校验机制落盘可重跑 + 当前判定显式报告，最终预算数字由 1-7-4 观察期外生锚决定。",
+          "note": ""
+        },
+        {
+          "q": "校验执行结果与 R4 处置？",
+          "answer": "**scripts/r4_budget_check.py 对 zkc_dev 真实语料跑数（复用 scheduling 现成机器，只读不落库）**：n=61 条可调度动态节点；预算 estimator confidence=none（观察期 warm-up）→ 回退 DEFAULT=1.0/天（L2 目标 ×1.5=1.5）；**L1 需求 Σ1/(0.6×I)=51.6 条/天 → 超预算 34 倍**；L2 单轮 ×2 延后 59 条后 demand_after=25.8 仍超 → **infeasible=True**（max_dynamic_items=161，61 条理论上可全压 180d 但已退化）；**健康信号：58/61 条被延后后复审时 decay≥0.9（复审前必腐化）→ 当前预算下「衰减可控」指标恒 0，与风险登记册预警完全一致**。**R4 处置：校验机制落盘可重跑 + 判定显式报告（infeasible，不静默拉长——诚实降级契约生效）**。结论：默认预算 1.0/天撑不住 60+ 条 @ 真实腐化节奏；**最终判定依赖 1-7-4 观察期外生锚**（真实 budget 数字），届时三选一：① budget 足够→重跑探针确认 feasible；② 不足→缩动态集（DISTILL/ARCHIVE，spike-08 语义本来就是「让该死的死」）；③ 调 SURFACE_THRESHOLD（需留痕）。上线门槛语义更新：R4 从「需校验」转为「已校验·infeasible 已显式化·终判挂观察期」。",
+          "note": ""
+        }
+      ],
       "notes": "上线硬门槛之一：注意力预算需求 = n/(0.6×interval)。不满足则「衰减可控」指标恒 0，且不是指标问题而是供给问题——先查预算再查指标。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-6": {
       "id": "1-5-6",
@@ -1200,7 +1224,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 23:36:02",
+    "updated": "2026-11-02 01:09:31",
     "md_file": "ROADMAP.md"
   },
   "edges": [
