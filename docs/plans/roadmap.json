@@ -95,7 +95,7 @@
       "id": "1-4",
       "uid": "01a18dff02ed-2137e9ce90",
       "label": "P4 调度+复审闭环（S1：先于 P3）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -646,7 +646,7 @@
       "id": "1-4-5",
       "uid": "01a18dff8e71-f56ac636b3",
       "label": "P4.5 已捕获条目「单程票」规则（ADR-0002，含边界 1/2）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
@@ -655,10 +655,26 @@
           "q": "已捕获条目规则：spike 08 判 ARCHIVE、spike 09 判 28d，怎么统一？",
           "answer": "不是真冲突，是两个问题：spike 09 答「到期前多久看」，spike 08 答「已到期怎么办」。合并为单程票：已捕获 → 28d 拉长观察 → 到期（decay≥0.9）即 ARCHIVE，永不回 DISTILL。",
           "note": "边界 1：produced_by 级联撤销导致「已捕获」消失时，按未捕获基线重算（有连接 14d / 孤儿 7d）并写 D7 interval_adjustment 留痕，禁止静默变。边界 2：self_loop(3d) 压过已捕获(28d)——修 spike 09 内 L1/L2 顺序相反的矛盾。ADR-0002。"
+        },
+        {
+          "q": "1-4-5 落地产什么？spike-08 的 expiry→ARCHIVE 路由提升是否在本节点范围？",
+          "answer": "边界 2（L1 self_loop 压过 captured：scheduling.baseline_for_signals 改序，self_loop 3d 先于 captured 28d）+ 边界 1（新增 recompute_baseline_on_capture_loss 显式路径 + assign_baselines 被动检测，两者均写 D7 interval_adjustment 且 reason 含 capture-loss）已落地。测试：memory 2 + PG 2 全绿，全仓 223 passed 无回归。残余：spike-08 的 expiry→ARCHIVE 路由（route_expired/apply_archive）未在本节点提升进 zkc/（仍 design-complete，9 tests passed）；单程票『终局 ARCHIVE』在调度层经 28d 基线+改序已保证 pacing，但真正的到期归档动作需把 spike-08 路由接入 review/decay 流水线（集成在 P3 distill/claim-revert 路径），延后。边界 1 的显式函数已就位，待 claim/artifact 级联撤销路径暴露 hook 即接线。",
+          "note": ""
+        },
+        {
+          "q": "1-4-5 两个残余（spike-08 路由提升 / capture-loss hook 接线）如何消解？",
+          "answer": "已按 TDD 消解（2026-11-01）：① spike-08 expiry→ARCHIVE 路由正式提升为 zkc/expiry.py（route_expired 决策表 captured→archive / conn|context 未捕获→distill(压力≥0.8 abstain) / orphan→abstain；apply_archive/enqueue_review/route_and_apply 去重/process_expired_dynamic_nodes 全量流水线），接入 zkc/web/review.py 新增 POST /review/api/process-expired（可挂 cron）；repo seam 新增 NodeRepository.archive + SchedulableNode.decay_score（pg/memory 双实现）。② distill.revert_claim 删 claim 后对每条 evidence 节点级联调 recompute_baseline_on_capture_loss（写 D7 capture-loss 审计；仍被其他 claim 捕获则 no-op），ClaimRepository.delete 落 pg/memory。测试：新增 test_expiry(17 例含 PG) + test_claim_revert(含 PG)，全仓 245 passed 无回归。残余更新：artifact 撤销 hook 因协议层暂无 artifact repo 仍 documented-only；route_and_apply 的 distill 决策目前只入队 review_queue，真实蒸馏生成仍走 distill.py 既有入口。",
+          "note": ""
+        },
+        {
+          "q": "1-4-5 二轮残余（artifact repo / 真蒸馏接线）如何消解？",
+          "answer": "已按 TDD 消解（2026-11-01 二轮）：① ArtifactRepository 落地（协议+pg+memory 三层，modeling_artifact 表 0001 已有无需迁移）+ distill.revert_artifact（镜像 revert_claim：删 artifact → evidence 节点级联 recompute_baseline_on_capture_loss 写 D7 capture-loss 审计）；memory load_schedulable 的 captured 补 artifact 信号（与 PG SQL 对齐）、load_metric_inputs.artifact_evidence 补齐。② expiry.apply_distill(store, node_id, distiller)：distiller 可注入 callable (store, node_id)->DistillationResult；成功 → 每条 MetaClaim 落 Claim(evidence_refs=citations) + mark_reviewed 复位衰减钟（节点进 captured 28d 单程票 pacing）+ resolve 已开 distill 人审项；失败（DistillationError/LLM 异常）→ 回落 enqueue 人审绝不静默丢。route_and_apply/process_expired_dynamic_nodes 加 distiller=None 注入口，默认 None 仍入队（HTTP 端点 /review/api/process-expired 维持缺省安全欠覆盖，接 LLM 后在调用层注入）。测试：新增 14 例（memory 9 + PG 5），全仓 265 passed（含 PG）/ 254（memory）双绿无回归。TDD 修正：PG save 需省略 id 列让 gen_random_uuid() 生成；PG 复用 _seed 时种子 claim 也捕获同节点 → 测试先删种子 claim 隔离单变量。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-1": {
       "id": "1-5-1",
@@ -978,7 +994,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-01 11:06:46",
+    "updated": "2026-11-01 12:12:27",
     "md_file": "ROADMAP.md"
   },
   "edges": [
