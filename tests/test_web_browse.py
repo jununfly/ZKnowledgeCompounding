@@ -17,10 +17,15 @@ from zkc.repository.models import Claim, ModelingArtifact, Node
 from zkc.web.browse import artifacts_payload, register_browse_routes, search_payload
 
 DIM = 768
+DIM4096 = 4096  # R18 加列（1-8-4-1）：/browse 候选召回默认走 embedding_4096
 
 
 def _vec(*vals):
     return list(vals) + [0.0] * (DIM - len(vals))
+
+
+def _vec4096(*vals):
+    return list(vals) + [0.0] * (DIM4096 - len(vals))
 
 
 def _store():
@@ -29,9 +34,11 @@ def _store():
     n1 = st.nodes.save(Node(track="dynamic", title="Rust 重写计划",
                             content="brain engine trait 迁移",
                             decay_score=0.2, embedding=_vec(1.0, 0.0),
+                            embedding_4096=_vec4096(1.0, 0.0),
                             created_at=base))
     n2 = st.nodes.save(Node(track="dynamic", title="brain 引擎笔记",
                             decay_score=0.7, embedding=_vec(0.95, 0.05),
+                            embedding_4096=_vec4096(0.95, 0.05),
                             created_at=base))
     c = st.claims.save(Claim(statement="Rust trait 优先迁移纯函数",
                              evidence_refs=[n1.id],
@@ -47,7 +54,7 @@ def _store():
 def _enc(texts):
     out = []
     for _ in texts:
-        out.append(_vec(0.95, 0.05))
+        out.append(_vec4096(0.95, 0.05))
     return out
 
 
@@ -70,6 +77,21 @@ class ServicePayloadTest(unittest.TestCase):
         self.assertEqual(cand["id"], str(n2.id))
         self.assertEqual(cand["source"], "embedding")
         self.assertAlmostEqual(cand["sim"], 1.0, delta=1e-6)
+
+    def test_search_payload_768_column_opt_in(self):
+        # 双列共存（1-8-4-1）：column="embedding" 可切回 nomic 768 列，
+        # 同一 fixture 下 768 列召回结果独立成立（n1 被结构化去重，n2 追加）
+        st, _n1, n2, *_ = _store()
+        p = search_payload(st, q="rust", encoder=_enc, k=5, column="embedding")
+        self.assertEqual(p["embedding_count"], 1)
+        self.assertEqual(p["hits"][-1]["id"], str(n2.id))
+
+    def test_search_payload_4096_column_independent(self):
+        # 双列独立（1-8-4-1）：4096 列与 768 列各走各的，不静默回退
+        st, _n1, n2, *_ = _store()
+        st.nodes.set_embedding_column(n2.id, "embedding_4096", _vec4096(0.0, 1.0))
+        p = search_payload(st, q="rust", encoder=_enc, k=5)
+        self.assertEqual(p["embedding_count"], 1)  # n2 已与查询正交，仅 n1 召回
 
     def test_artifacts_payload(self):
         st, n1, n2, c, a = _store()

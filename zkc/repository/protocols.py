@@ -118,12 +118,29 @@ class NodeRepository(ABC):
 
     @abstractmethod
     def search_by_embedding(
-        self, vector: list[float], k: int = 10, include_archived: bool = False
+        self,
+        vector: list[float],
+        k: int = 10,
+        include_archived: bool = False,
+        column: str = "embedding",
     ) -> list[tuple[Node, float]]:
         """P5.1 候选召回（R18 缓解：embedding 只做候选，结果交人工确认）。
 
-        query 向量与 node.embedding 余弦相似 top-k（pg 用 pgvector <=>，memory 用
-        Python 余弦）；无 embedding 的节点跳过。返回 (node, sim) 按 sim 降序。
+        query 向量与指定列余弦相似 top-k（pg 用 pgvector <=>，memory 用 Python
+        余弦）；无该列向量的节点跳过。返回 (node, sim) 按 sim 降序。
+        column ∈ {"embedding"(nomic 768d), "embedding_4096"(qwen3 4096d)}，
+        实现必须白名单校验（防注入）。
+        """
+
+    @abstractmethod
+    def set_embedding_column(
+        self, node_id: UUID, column: str, vector: list[float]
+    ) -> None:
+        """写入指定 embedding 列（1-8-4-1 双列共存；回填/补齐用）。
+
+        派生数据轻量路径（与 update_decay 同理由）：FOR UPDATE 持锁 + version_seq
+        自增保活 OCC，但不写 node_history、不 bump tx_from（embedding 非事实）。
+        column 白名单同 search_by_embedding。
         """
 
 

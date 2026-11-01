@@ -17,7 +17,11 @@ from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
 from zkc import search as S
-from zkc.encoder import make_encoder
+from zkc.encoder import make_encoder_4096
+
+# R18 加列路径（1-8-4-1）：候选召回默认走 4096 列（qwen3-embedding，
+# 1-8-4 实测中文召回合格）；nomic 768 列保留，可用 column="embedding" 切回。
+RETRIEVAL_COLUMN = "embedding_4096"
 
 BROWSE_HTML = """<!doctype html>
 <html lang="zh">
@@ -53,7 +57,7 @@ BROWSE_HTML = """<!doctype html>
 </head>
 <body>
 <h1>ZKC · 检索与复利产物</h1>
-<p class="hint">检索：结构化过滤为主（R18），文本经 nomic 候选召回（仅候选+人确认）。产物：蒸馏 claim / 结合 artifact 及其来源反查。</p>
+<p class="hint">检索：结构化过滤为主（R18），文本经 4096d 语义模型候选召回（仅候选+人确认；768d nomic 列保留备用）。产物：蒸馏 claim / 结合 artifact 及其来源反查。</p>
 <div class="tabs">
   <button id="tab-s" class="on" onclick="show('s')">检索</button>
   <button id="tab-p" onclick="show('p')">复利产物</button>
@@ -157,11 +161,13 @@ def search_payload(
     limit: int = 50,
     encoder=None,
     k: int = 10,
+    column: str = RETRIEVAL_COLUMN,
 ) -> dict:
     """检索 → JSON 友好 payload（SSR 页与测试共用）。"""
     r = S.search(
         store, q=q, track=track, decay_min=decay_min, decay_max=decay_max,
         include_archived=include_archived, limit=limit, encoder=encoder, k=k,
+        column=column,
     )
     hits = []
     for h in r["hits"]:
@@ -214,9 +220,9 @@ def artifacts_payload(store, *, limit: int = 100) -> dict:
 
 
 def register_browse_routes(app, store, encoder=None) -> None:
-    """挂载 /browse。encoder 缺省用真实 nomic 编码器（q 非空时才触发调用）。"""
+    """挂载 /browse。encoder 缺省用 4096 编码器（qwen3，q 非空时才触发调用）。"""
     router = APIRouter()
-    enc = encoder if encoder is not None else make_encoder()
+    enc = encoder if encoder is not None else make_encoder_4096()
 
     @router.get("/browse", response_class=HTMLResponse)
     def browse_page() -> HTMLResponse:

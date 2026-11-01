@@ -66,6 +66,7 @@ class Parameter:
 # ---------------------------------------------------------------- 常量表
 
 SPIKE14_AT = date(2026, 10, 31)   # spike 14 实测日期：编码器与维度在此定死
+R18_EVAL_AT = date(2026, 11, 1)   # 1-8-4 R18 中文召回实测日期：4096 加列路径依据
 
 
 def _p(name: str, value: Any, source: str, note: str = "",
@@ -141,6 +142,18 @@ REGISTRY: dict[str, Parameter] = {
            "spike 14 实测 768d（9.5ms/条、274MB）vs qwen3 4096d（183.2ms/条、4.7GB）。"
            "**换维度 = 重建索引**，如需升级走加列路径而非改本值",
            calibrated_at=SPIKE14_AT,
+           ),
+        # ---- embedding 4096 候选召回列（1-8-4/1-8-4-1 实测定死，2026-11-01）
+        _p("EMBEDDING_4096_MODEL", "qwen3-embedding:latest", CALIBRATED,
+           "1-8-4 实测（61 条真实语料 × 32 条改写中文 query）：768d 中文召回不合格"
+           "（Recall@10=0.562/MRR=0.345），本模型 4096d 合格（@10=0.938/MRR=0.824）→"
+           "加列路径当选。仅限检索召回候选，严禁安全判定（R16 同 768 列）",
+           calibrated_at=R18_EVAL_AT,
+           ),
+        _p("EMBEDDING_4096_DIM", 4096, CALIBRATED,
+           "qwen3-embedding 实测维度（/api/embed 返回 4096，1-8-4-1 复核）。"
+           "列 node.embedding_4096 vector(4096)；768 列保留（nomic 双列共存）",
+           calibrated_at=R18_EVAL_AT,
            ),
         # ---- 双轨分流（P2.2 · DecisionRouter + 词法三路双信号弃权）
         _p("ROUTING_LLM_CONF_GATE", 0.5, SIMULATION,

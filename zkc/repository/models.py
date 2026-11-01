@@ -45,6 +45,9 @@ class Node:
     last_reviewed_at: datetime | None = None
     attention_signal: float = 0.0
     embedding: list[float] | None = None
+    # R18 加列路径（1-8-4-1）：qwen3-embedding 4096d 候选召回列。
+    # 派生数据：nomic 768 列保留（双列共存）；不入 node_history（非事实）。
+    embedding_4096: list[float] | None = None
     archived_at: datetime | None = None
     # D6：基线 interval + 来源（human 不被自动化改写）
     baseline_interval: timedelta | None = None

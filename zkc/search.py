@@ -39,8 +39,13 @@ def search(
     limit: int = 50,
     encoder: Optional[Encoder] = None,
     k: int = 10,
+    column: str = "embedding",
 ) -> dict:
     """双路检索：结构化命中在前（按 order），embedding 候选追加在后（按 sim 降序）。
+
+    column 指定候选召回用的 embedding 列（1-8-4-1 双列共存）：
+      "embedding"=nomic 768d，"embedding_4096"=qwen3 4096d（/browse 生产默认，见 browse.py）。
+      encoder 与 column 的模型/维度必须配对，配对错会因维度校验失败而降级——不静默混用。
 
     返回 dict（SSR/JSON 两用）：
       hits / structured_count / embedding_count / degraded / degrade_reason
@@ -59,7 +64,7 @@ def search(
         try:
             vecs = encoder([q])
             candidates = store.nodes.search_by_embedding(
-                vecs[0], k=k, include_archived=include_archived
+                vecs[0], k=k, include_archived=include_archived, column=column
             )
         except EncoderError as e:
             degraded = True

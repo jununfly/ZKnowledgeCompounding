@@ -70,16 +70,55 @@ class EncodeTextsTest(unittest.TestCase):
     def test_make_encoder_uses_default_model_and_attr(self):
         seen = {}
 
-        def fake_encode(texts, *, url, model, timeout):
+        def fake_encode(texts, *, url, model, timeout, dim=None):
             seen["model"] = model
+            seen["dim"] = dim
             return [[0.0] * int(tuning.get("EMBEDDING_DIM")) for _ in texts]
 
         with mock.patch.object(E, "encode_texts", side_effect=fake_encode):
             enc = E.make_encoder()
             out = enc(["x"])
         self.assertIsNone(seen["model"])  # None = 延迟到 encode_texts 内部按 tuning 解析
+        self.assertIsNone(seen["dim"])
         self.assertEqual(len(out), 1)
         self.assertEqual(enc.model_name, tuning.get("EMBEDDING_MODEL"))
+
+    def test_dim_override_validates_against_explicit_dim(self):
+        # 1-8-4-1：dim 覆写（4096 列）按显式维度校验，不再绑定 768
+        with mock.patch.object(E, "_OPENER") as op:
+            resp = mock.MagicMock()
+            resp.read.return_value = json.dumps(
+                {"embeddings": [[0.5] * 4096]}).encode()
+            resp.__enter__.return_value = resp
+            op.open.return_value = resp
+            out = E.encode_texts(["a"], dim=4096)
+        self.assertEqual(len(out[0]), 4096)
+        # 维度不符仍按显式值拒绝
+        with mock.patch.object(E, "_OPENER") as op2:
+            resp2 = mock.MagicMock()
+            resp2.read.return_value = json.dumps(
+                {"embeddings": [[0.5] * 4096]}).encode()
+            resp2.__enter__.return_value = resp2
+            op2.open.return_value = resp2
+            with self.assertRaises(E.EncoderError) as ctx:
+                E.encode_texts(["a"], dim=1024)
+            self.assertIn("维度不符", str(ctx.exception))
+
+    def test_make_encoder_4096_uses_4096_tuning(self):
+        seen = {}
+
+        def fake_encode(texts, *, url, model, timeout, dim=None):
+            seen["model"] = model
+            seen["dim"] = dim
+            return [[0.0] * int(dim or 768) for _ in texts]
+
+        with mock.patch.object(E, "encode_texts", side_effect=fake_encode):
+            enc = E.make_encoder_4096()
+            out = enc(["x"])
+        self.assertEqual(seen["model"], tuning.get("EMBEDDING_4096_MODEL"))
+        self.assertEqual(seen["dim"], int(tuning.get("EMBEDDING_4096_DIM")))
+        self.assertEqual(len(out), 1)
+        self.assertEqual(enc.model_name, tuning.get("EMBEDDING_4096_MODEL"))
 
 
 if __name__ == "__main__":

@@ -125,7 +125,11 @@ def import_entries(entries: list[dict], *, store, mode: str) -> dict:
 
 
 def fill_embeddings(store) -> int:
-    """给缺 embedding 的节点补向量（/browse 语义召回用）。失败降级返回 0。"""
+    """给缺 embedding 的节点补向量（/browse 语义召回用）。失败降级返回 0。
+
+    1-8-4-1 双列共存：nomic 768 列经 save() 常规写入；qwen3 4096 列走
+    set_embedding_column 轻量路径补齐（4096 不可达不阻塞 768）。
+    """
     try:
         from zkc.encoder import EncoderError, encode_texts
     except Exception as e:  # pragma: no cover - 依赖缺失
@@ -143,7 +147,44 @@ def fill_embeddings(store) -> int:
     for n, v in zip(nodes, vecs):
         n.embedding = v
         store.nodes.save(n)
+
+    # 4096 候选召回列补齐（新导入节点 4096 列为空）
+    from zkc import tuning
+
+    n4096 = backfill_embedding_column(
+        store,
+        column="embedding_4096",
+        model=tuning.get("EMBEDDING_4096_MODEL"),
+        dim=int(tuning.get("EMBEDDING_4096_DIM")),
+    )
+    print(f"  embedding_4096 补齐 {n4096} 条")
     return len(nodes)
+
+
+def backfill_embedding_column(store, *, column: str, model: str, dim: int,
+                              batch: int = 8) -> int:
+    """给指定 embedding 列缺向量的动态节点回填（轻量路径，长文分批编码）。"""
+    from zkc.encoder import EncoderError, encode_texts
+
+    nodes = [
+        n for n in store.nodes.list_by_track("dynamic")
+        if getattr(n, column) is None and n.content
+    ]
+    if not nodes:
+        return 0
+    done = 0
+    for i in range(0, len(nodes), batch):
+        chunk = nodes[i:i + batch]
+        texts = [n.title + ("\n" + n.content if n.content else "") for n in chunk]
+        try:
+            vecs = encode_texts(texts, model=model, dim=dim)
+        except EncoderError as e:
+            print(f"  ! {column} 回填降级（Ollama 不可达?）: {e}")
+            break
+        for n, v in zip(chunk, vecs):
+            store.nodes.set_embedding_column(n.id, column, v)
+            done += 1
+    return done
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -24,12 +24,19 @@ def _node(track="dynamic", title="", content=None, decay=0.0, emb=None,
 
 
 DIM = 768  # 与 node.embedding vector(768) 对齐（spike 14）
+DIM4096 = 4096  # 与 node.embedding_4096 vector(4096) 对齐（1-8-4-1）
 
 
 def _vec(*vals):
     """补零到 768 维，memory/PG 两用。"""
     v = list(vals) + [0.0] * (DIM - len(vals))
     return v[:DIM]
+
+
+def _vec4096(*vals):
+    """补零到 4096 维，memory/PG 两用（embedding_4096 列）。"""
+    v = list(vals) + [0.0] * (DIM4096 - len(vals))
+    return v[:DIM4096]
 
 
 class MemorySearchTest(unittest.TestCase):
@@ -105,6 +112,32 @@ class MemorySearchTest(unittest.TestCase):
                                                     include_archived=True)
         self.assertIn(self.n3.id, [n.id for n, _ in hits])
 
+    def test_embedding_column_whitelist_rejected(self):
+        with self.assertRaises(ValueError):
+            self.store.nodes.search_by_embedding([1.0, 0.0], column="title; DROP TABLE node")
+        with self.assertRaises(ValueError):
+            self.store.nodes.set_embedding_column(self.n1.id, "embedding_4096; hack",
+                                                  [1.0, 0.0])
+
+    def test_embedding_4096_dual_column_independent(self):
+        # 1-8-4-1 双列共存：4096 列与 768 列互不影响
+        self.store.nodes.set_embedding_column(
+            self.n4.id, "embedding_4096", _vec4096(1.0, 0.0))
+        hits = self.store.nodes.search_by_embedding(
+            _vec4096(1.0, 0.0), k=3, column="embedding_4096")
+        # 只有 n4 有 4096 向量（n1/n2/n3 未回填该列）
+        self.assertEqual([n.id for n, _ in hits], [self.n4.id])
+        self.assertAlmostEqual(hits[0][1], 1.0, delta=1e-9)
+        # 768 列召回不受 4096 写入影响
+        hits768 = self.store.nodes.search_by_embedding([1.0, 0.0], k=3)
+        self.assertEqual(hits768[0][0].id, self.n1.id)
+        self.assertNotIn(self.n4.id, [n.id for n, _ in hits768])
+
+    def test_set_embedding_column_missing_node(self):
+        with self.assertRaises(KeyError):
+            self.store.nodes.set_embedding_column(uuid4(), "embedding_4096",
+                                                  _vec4096(1.0))
+
     def test_claims_list_all_created_desc(self):
         c1 = self.store.claims.save(Claim(statement="早", created_at=datetime(2026, 10, 1)))
         c2 = self.store.claims.save(Claim(statement="晚", created_at=datetime(2026, 11, 1)))
@@ -146,6 +179,23 @@ def _run_pg_contract(store):
     assert knn[0][0].id == n1.id, "kNN 首位不符"
     assert abs(knn[0][1] - 1.0) < 1e-6, "cosine sim 不符"
     assert n3.id not in [n.id for n, _ in knn], "kNN 应排除归档"
+    # 4096 列（1-8-4-1 双列共存）：先空召回，回填后命中且互不干扰
+    n4 = store.nodes.save(_node(title="仅4096列", decay=0.1, created=base))
+    assert store.nodes.search_by_embedding(_vec4096(1.0, 0.0), k=5,
+                                           column="embedding_4096") == []
+    store.nodes.set_embedding_column(n4.id, "embedding_4096", _vec4096(1.0, 0.0))
+    knn4096 = store.nodes.search_by_embedding(_vec4096(1.0, 0.0), k=5,
+                                              column="embedding_4096")
+    assert [n.id for n, _ in knn4096] == [n4.id], "4096 列回填后应命中 n4"
+    assert abs(knn4096[0][1] - 1.0) < 1e-6, "4096 cosine sim 不符"
+    got = store.nodes.get(n4.id)
+    assert got.embedding_4096 is not None and got.embedding is None, \
+        "4096 写入不得污染 768 列"
+    try:
+        store.nodes.search_by_embedding(_vec(1.0), column="evil")
+        assert False, "非法列名必须拒绝"
+    except ValueError:
+        pass
     # list_all + citation_counts
     c = store.claims.save(Claim(statement="s", created_at=base))
     assert [x.id for x in store.claims.list_all()] == [c.id]

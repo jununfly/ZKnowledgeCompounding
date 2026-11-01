@@ -40,12 +40,17 @@ def encode_texts(
     url: str = DEFAULT_OLLAMA_URL,
     model: Optional[str] = None,
     timeout: float = 60.0,
+    dim: Optional[int] = None,
 ) -> list[list[float]]:
-    """批量编码：list[text] -> list[vector]（校验维度与 tuning.EMBEDDING_DIM 一致）。"""
+    """批量编码：list[text] -> list[vector]（校验维度与指定 dim 一致）。
+
+    dim 缺省 = tuning.EMBEDDING_DIM（nomic 768）；4096 候选召回列传
+    tuning.EMBEDDING_4096_DIM 覆写（1-8-4-1 双列共存，见 make_encoder_4096）。
+    """
     if not texts:
         return []
     mdl = model if model is not None else tuning.get("EMBEDDING_MODEL")
-    dim = int(tuning.get("EMBEDDING_DIM"))
+    expected_dim = dim if dim is not None else int(tuning.get("EMBEDDING_DIM"))
     body = json.dumps({"model": mdl, "input": list(texts)}).encode()
     req = urllib.request.Request(
         url.rstrip("/") + "/api/embed",
@@ -61,9 +66,11 @@ def encode_texts(
     if not isinstance(vecs, list) or len(vecs) != len(texts):
         raise EncoderError(f"embed 返回条数不符: 期望 {len(texts)}，收到 {type(vecs)}")
     for v in vecs:
-        if not isinstance(v, list) or len(v) != dim:
+        if not isinstance(v, list) or len(v) != expected_dim:
             got = len(v) if isinstance(v, list) else None
-            raise EncoderError(f"embed 维度不符: 期望 {dim}（{mdl}），收到 {got}")
+            raise EncoderError(
+                f"embed 维度不符: 期望 {expected_dim}（{mdl}），收到 {got}"
+            )
     return [list(map(float, v)) for v in vecs]
 
 
@@ -72,11 +79,33 @@ def make_encoder(
     model: Optional[str] = None,
     *,
     timeout: float = 60.0,
+    dim: Optional[int] = None,
 ) -> Encoder:
     """返回可注入 search 层的 encoder callable（带 model_name 属性供观测）。"""
 
     def _encode(texts: list[str]) -> list[list[float]]:
-        return encode_texts(texts, url=url, model=model, timeout=timeout)
+        return encode_texts(texts, url=url, model=model, timeout=timeout, dim=dim)
 
     _encode.model_name = model if model is not None else tuning.get("EMBEDDING_MODEL")
+    return _encode
+
+
+def make_encoder_4096(
+    url: str = DEFAULT_OLLAMA_URL, *, timeout: float = 60.0
+) -> Encoder:
+    """4096 候选召回列专用编码器（qwen3-embedding，1-8-4-1）。
+
+    模型/维度均取 tuning.EMBEDDING_4096_*，与 nomic 768 编码器并存、互不覆盖。
+    """
+
+    def _encode(texts: list[str]) -> list[list[float]]:
+        return encode_texts(
+            texts,
+            url=url,
+            model=tuning.get("EMBEDDING_4096_MODEL"),
+            timeout=timeout,
+            dim=int(tuning.get("EMBEDDING_4096_DIM")),
+        )
+
+    _encode.model_name = tuning.get("EMBEDDING_4096_MODEL")
     return _encode

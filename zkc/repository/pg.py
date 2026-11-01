@@ -47,6 +47,10 @@ def _vec_to_sql(emb) -> Optional[str]:
     return "[" + ",".join(repr(float(x)) for x in emb) + "]"
 
 
+# embedding 列白名单（1-8-4-1 双列共存）：防列名注入，search/set 共用。
+EMBEDDING_COLUMNS = {"embedding", "embedding_4096"}
+
+
 def _sql_to_vec(val):
     if val is None:
         return None
@@ -108,10 +112,10 @@ class PgNodeRepository(NodeRepository):
                 INSERT INTO public.node
                     (track, routing_confidence, title, content, valid_from, valid_to,
                      decay_score, review_interval, last_reviewed_at, attention_signal,
-                     embedding, archived_at, baseline_interval, interval_source)
+                     embedding, embedding_4096, archived_at, baseline_interval, interval_source)
                 VALUES (%(track)s, %(rc)s, %(title)s, %(content)s, %(vf)s, %(vt)s,
                         %(decay)s, %(ri)s, %(lr)s, %(att)s, %(emb)s::vector,
-                        %(arch)s, %(bi)s, %(isrc)s)
+                        %(emb4096)s::vector, %(arch)s, %(bi)s, %(isrc)s)
                 RETURNING id, created_at, tx_from, version_seq
                 """,
                 dict(
@@ -119,6 +123,7 @@ class PgNodeRepository(NodeRepository):
                     content=node.content, vf=node.valid_from, vt=node.valid_to,
                     decay=node.decay_score, ri=node.review_interval, lr=node.last_reviewed_at,
                     att=node.attention_signal, emb=_vec_to_sql(node.embedding),
+                    emb4096=_vec_to_sql(node.embedding_4096),
                     arch=node.archived_at, bi=node.baseline_interval, isrc=node.interval_source,
                 ),
             )
@@ -131,6 +136,7 @@ class PgNodeRepository(NodeRepository):
                 content=node.content, vf=node.valid_from, vt=node.valid_to,
                 decay=node.decay_score, ri=node.review_interval, lr=node.last_reviewed_at,
                 att=node.attention_signal, emb=_vec_to_sql(node.embedding),
+                emb4096=_vec_to_sql(node.embedding_4096),
                 arch=node.archived_at, bi=node.baseline_interval, isrc=node.interval_source,
             )
             # append-only 版本链 + OCC：单事务内「FOR UPDATE 锁行 → 快照 → 更新当前行」。
@@ -149,7 +155,8 @@ class PgNodeRepository(NodeRepository):
                     content=%(content)s, valid_from=%(vf)s, valid_to=%(vt)s,
                     decay_score=%(decay)s, review_interval=%(ri)s,
                     last_reviewed_at=%(lr)s, attention_signal=%(att)s,
-                    embedding=%(emb)s::vector, archived_at=%(arch)s,
+                    embedding=%(emb)s::vector, embedding_4096=%(emb4096)s::vector,
+                    archived_at=%(arch)s,
                     baseline_interval=%(bi)s, interval_source=%(isrc)s,
                     version_seq = version_seq + 1,
                     tx_from=clock_timestamp()
@@ -172,12 +179,19 @@ class PgNodeRepository(NodeRepository):
         return self._row_to_node(row) if row else None
 
     def history(self, node_id: UUID) -> list[Node]:
+        # 显式列清单（1-8-4-1 起禁止 SELECT *）：node 已比 node_history 多出
+        # embedding_4096（派生数据，按决策不入双时态历史），UNION 两侧必须同列。
+        # 新增派生列时同样只加在 node、不改本清单。
+        cols = ("id, track, routing_confidence, title, content, valid_from, valid_to, "
+                "tx_from, decay_score, review_interval, last_reviewed_at, "
+                "attention_signal, created_at, embedding, archived_at, "
+                "baseline_interval, interval_source, tx_to, version_seq")
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute(
-            """
-            SELECT * FROM public.node_history WHERE id=%(id)s
+            f"""
+            SELECT {cols} FROM public.node_history WHERE id=%(id)s
             UNION ALL
-            SELECT * FROM public.node WHERE id=%(id)s
+            SELECT {cols} FROM public.node WHERE id=%(id)s
             ORDER BY tx_from
             """,
             dict(id=node_id),
@@ -233,21 +247,50 @@ class PgNodeRepository(NodeRepository):
         return [self._row_to_node(r) for r in cur.fetchall()]
 
     def search_by_embedding(
-        self, vector: list[float], k: int = 10, include_archived: bool = False
+        self,
+        vector: list[float],
+        k: int = 10,
+        include_archived: bool = False,
+        column: str = "embedding",
     ) -> list[tuple[Node, float]]:
+        if column not in EMBEDDING_COLUMNS:
+            raise ValueError(f"invalid embedding column: {column!r}")
         where = "AND archived_at IS NULL" if not include_archived else ""
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute(
             f"""
-            SELECT *, 1 - (embedding <=> %(v)s::vector) AS sim
+            SELECT *, 1 - ({column} <=> %(v)s::vector) AS sim
             FROM public.node
-            WHERE embedding IS NOT NULL {where}
-            ORDER BY embedding <=> %(v)s::vector
+            WHERE {column} IS NOT NULL {where}
+            ORDER BY {column} <=> %(v)s::vector
             LIMIT %(k)s
             """,
             dict(v=_vec_to_sql(vector), k=max(1, int(k))),
         )
         return [(self._row_to_node(r), float(r["sim"])) for r in cur.fetchall()]
+
+    def set_embedding_column(
+        self, node_id: UUID, column: str, vector: list[float]
+    ) -> None:
+        """写入指定 embedding 列（轻量路径：不写 history、不 bump tx_from）。"""
+        if column not in EMBEDDING_COLUMNS:
+            raise ValueError(f"invalid embedding column: {column!r}")
+        cur = self._conn.cursor(row_factory=dict_row)
+        if self._lock_hook is not None:
+            self._lock_hook()
+        cur.execute(
+            "SELECT id, version_seq FROM public.node WHERE id=%(id)s FOR UPDATE",
+            dict(id=node_id),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise KeyError(f"node not found: {node_id}")
+        cur.execute(
+            f"UPDATE public.node SET {column}=%(v)s::vector, "
+            f"version_seq = version_seq + 1 WHERE id=%(id)s RETURNING version_seq",
+            dict(v=_vec_to_sql(vector), id=node_id),
+        )
+        self._conn.commit()
 
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
         # 阈值走 tuning（禁止裸数字，P1.4 铁律）：SURFACE_THRESHOLD=0.6 进入注意力
@@ -405,7 +448,9 @@ class PgNodeRepository(NodeRepository):
             decay_score=d["decay_score"], review_interval=d.get("review_interval"),
             last_reviewed_at=d.get("last_reviewed_at"),
             attention_signal=d.get("attention_signal", 0.0),
-            embedding=_sql_to_vec(d.get("embedding")), archived_at=d.get("archived_at"),
+            embedding=_sql_to_vec(d.get("embedding")),
+            embedding_4096=_sql_to_vec(d.get("embedding_4096")),
+            archived_at=d.get("archived_at"),
             baseline_interval=d.get("baseline_interval"),
             interval_source=d.get("interval_source", "auto"),
             version_seq=d.get("version_seq", 1),

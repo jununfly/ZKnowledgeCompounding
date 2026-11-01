@@ -124,10 +124,20 @@ class MemoryNodeRepository(NodeRepository):
             )
         return out[: max(1, int(limit))]
 
+    # 1-8-4-1 双列共存白名单（与 pg.EMBEDDING_COLUMNS 同口径）
+    EMBEDDING_COLUMNS = {"embedding", "embedding_4096"}
+
     def search_by_embedding(
-        self, vector: list[float], k: int = 10, include_archived: bool = False
+        self,
+        vector: list[float],
+        k: int = 10,
+        include_archived: bool = False,
+        column: str = "embedding",
     ) -> list[tuple[Node, float]]:
         import math
+
+        if column not in self.EMBEDDING_COLUMNS:
+            raise ValueError(f"invalid embedding column: {column!r}")
 
         def _cos(a: list[float], b: list[float]) -> float:
             na = math.sqrt(sum(x * x for x in a))
@@ -140,11 +150,23 @@ class MemoryNodeRepository(NodeRepository):
         for n in self._rows.values():
             if not include_archived and n.archived_at is not None:
                 continue
-            if n.embedding is None:
+            vec = getattr(n, column)
+            if vec is None:
                 continue
-            hits.append((replace(n), _cos(vector, n.embedding)))
+            hits.append((replace(n), _cos(vector, vec)))
         hits.sort(key=lambda t: t[1], reverse=True)
         return hits[: max(1, int(k))]
+
+    def set_embedding_column(
+        self, node_id: UUID, column: str, vector: list[float]
+    ) -> None:
+        """轻量路径（对齐 pg 实现）：只写派生列，不动 tx_from/version 链语义。"""
+        if column not in self.EMBEDDING_COLUMNS:
+            raise ValueError(f"invalid embedding column: {column!r}")
+        n = self._rows.get(node_id)
+        if n is None:
+            raise KeyError(f"node not found: {node_id}")
+        self._rows[node_id] = replace(n, **{column: list(vector)})
 
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
         # 阈值走 tuning（禁止裸数字，P1.4 铁律）：SURFACE_THRESHOLD=0.6 进入注意力
