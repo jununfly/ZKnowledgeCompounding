@@ -234,12 +234,16 @@ class ContextAssembler:
         k: int = 5,
         llm: Optional[LLM] = None,
         max_per_day: Optional[int] = None,
+        excluded: Optional["set[UUID]"] = None,
     ) -> tuple[list[HigherDimProposal], dict]:
         """每日提议 sweep（调度层·注意力预算）：在「同种子去重」之上加「全库每日上限」。
 
         逐种子调 ``propose_higher_dim``；一旦当日已提议数达上限，剩余种子返回
         ``would_create=False``（reason=全局每日上限已达），不再计入。每次真正产出提议
-        (``would_create=True``) 都落 ``proposal_log``，使调度层能跨种子累计限流。
+        (``would_create=True``) 都落 ``proposal_log``（带 seed_id），使调度层能跨种子累计限流。
+
+        ``excluded`` = 当日已被人工忽略的种子（``AttentionObservation.dismissed_seed_ids``），
+        跳过它们并返回 ``would_create=False``（reason=已被人工忽略），确保 dismiss 真生效。
 
         ``max_per_day`` 缺省读 ``tuning.PROPOSAL_PER_DAY_CAP``（占位，待 calibrate 校准）；
         也可显式传入（如 UI 展示剩余额度）。返回 ``(proposals, budget_status)``。
@@ -247,6 +251,7 @@ class ContextAssembler:
         if max_per_day is None:
             budget = scheduling.proposal_budget_for_day(self.store, day)
             max_per_day = budget["cap"]
+        excluded_set = set(excluded) if excluded else set()
         used = self.store.attention.count_proposals(day, "higher_dim")
         out: list[HigherDimProposal] = []
         for sid in seed_ids:
@@ -258,9 +263,17 @@ class ContextAssembler:
                     existing_context_id=None,
                 ))
                 continue
+            if sid in excluded_set:
+                out.append(HigherDimProposal(
+                    seed_node_id=sid, neighbor_ids=[], similarities=[],
+                    suggested_title="", would_create=False,
+                    reason="已被人工忽略（当日），跳过",
+                    existing_context_id=None,
+                ))
+                continue
             prop = self.propose_higher_dim(sid, k=k, llm=llm)
             if prop.would_create:
-                self.store.attention.record_proposal(day, "higher_dim")
+                self.store.attention.record_proposal(day, "higher_dim", sid)
                 used += 1
             out.append(prop)
         return out, dict(cap=max_per_day, used=used, truncated=used >= max_per_day)

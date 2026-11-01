@@ -6,7 +6,6 @@ assemble / 级联撤消 / 人审成员隔离 两个实现一致；discovery 是 
 from __future__ import annotations
 
 import os
-import pathlib
 import unittest
 from datetime import date
 from uuid import UUID, uuid4
@@ -17,14 +16,7 @@ from zkc.repository import get_storage
 from zkc.repository.models import Node
 from zkc.tuning import PLACEHOLDER
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIGRATIONS_DIR = REPO_ROOT / "migrations"
-ALL_UP_SQL = "\n".join(
-    sorted(
-        (MIGRATIONS_DIR / p).read_text()
-        for p in [f.name for f in MIGRATIONS_DIR.glob("*.up.sql")]
-    )
-)
+from zkc import migrate
 
 
 def run_assembly_contract(store, asm) -> None:
@@ -171,6 +163,23 @@ class MemoryContextTest(unittest.TestCase):
         assert fb and "条）" in fb
         assert namer.name(["机器学习模型训练方法", "模型训练中的过拟合"], None) == fb
 
+    def test_daily_excludes_dismissed_seeds(self):
+        # 当日被忽略的种子须被 sweep 跳过（dismiss 真生效，否则每刷新都再提议）
+        store = get_storage("memory")
+        asm = ContextAssembler(store)
+        sid = uuid4()
+        day = date(2026, 11, 3)
+        # 模拟人工忽略：落 proposal_log(kind='higher_dim_dismissed', seed_id)
+        store.attention.record_proposal(day, "higher_dim_dismissed", sid)
+        self.assertIn(sid, store.attention.dismissed_seed_ids(day))
+        props, status = asm.propose_higher_dim_daily(
+            [sid], day, max_per_day=5, excluded=store.attention.dismissed_seed_ids(day))
+        self.assertEqual(len(props), 1)
+        self.assertFalse(props[0].would_create)
+        self.assertIn("已被人工忽略", props[0].reason)
+        # 未创建的被忽略种子不占每日额度
+        self.assertEqual(store.attention.count_proposals(day, "higher_dim"), 0)
+
 
 @unittest.skipUnless(
     os.environ.get("ZKC_RUN_PG_TESTS", "1") == "1",
@@ -190,9 +199,8 @@ class PgContextTest(unittest.TestCase):
         cls._pg.execute(f'CREATE DATABASE "{cls.TEST_DB}"')
         cls._pg.close()
         cls._test_dsn = base_dsn.replace("/zkc_dev", f"/{cls.TEST_DB}")
-        c = psycopg.connect(cls._test_dsn, autocommit=True)
-        c.execute(ALL_UP_SQL)
-        c.close()
+        # 经迁移权威按文件 apply（不再拼接 SQL）
+        migrate.apply_all(cls.TEST_DB)
         os.environ["ZKC_PG_DSN"] = cls._test_dsn
 
     def setUp(self):
@@ -293,6 +301,21 @@ class PgContextTest(unittest.TestCase):
         self.assertEqual(status["used"], 1)
         self.assertTrue(status["truncated"])
         self.assertEqual(self.store.attention.count_proposals(day, "higher_dim"), 1)
+
+    def test_daily_excludes_dismissed_seeds_pg(self):
+        # PG 路径：dismiss 落 proposal_log(seed_id)，dismissed_seed_ids 当日返回该种子
+        # seed_id 有 FK 到 node，必须用真实存在的节点 id（否则 ForeignKeyViolation）
+        day = date(2026, 11, 4)
+        seed = self.store.nodes.save(Node(
+            track="dynamic", title="dismiss-seed", decay_score=0.0,
+            embedding=_vec_close(768, 1, 1, 0.0)))
+        sid = seed.id
+        self.store.attention.record_proposal(day, "higher_dim_dismissed", sid)
+        self.assertIn(sid, self.store.attention.dismissed_seed_ids(day))
+        # 创建型提议也带 seed_id 但不进 dismissed 集
+        self.store.attention.record_proposal(day, "higher_dim", sid)
+        self.assertEqual(self.store.attention.count_proposals(day, "higher_dim"), 1)
+        self.assertIn(sid, self.store.attention.dismissed_seed_ids(day))
 
     @classmethod
     def tearDownClass(cls):

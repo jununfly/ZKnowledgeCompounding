@@ -681,12 +681,13 @@ class PgAttentionRepository(AttentionRepository):
                                      labeled_completed=r["labeled_completed"])
                 for r in cur.fetchall()]
 
-    def record_proposal(self, day, kind: str = "higher_dim") -> None:
+    def record_proposal(self, day, kind: str = "higher_dim", seed_id=None) -> None:
         cur = self._conn.cursor()
         d = day.date() if isinstance(day, datetime) else day
+        sid = str(seed_id) if seed_id is not None else None
         cur.execute(
-            "INSERT INTO public.proposal_log (day, kind) VALUES (%s::date, %s)",
-            (d, kind),
+            "INSERT INTO public.proposal_log (day, kind, seed_id) VALUES (%s::date, %s, %s)",
+            (d, kind, sid),
         )
         self._conn.commit()
 
@@ -699,6 +700,24 @@ class PgAttentionRepository(AttentionRepository):
         )
         r = cur.fetchone()
         return int(r["n"]) if r else 0
+
+    def dismissed_seed_ids(self, day) -> set:
+        cur = self._conn.cursor(row_factory=dict_row)
+        d = day.date() if isinstance(day, datetime) else day
+        cur.execute(
+            "SELECT seed_id FROM public.proposal_log "
+            "WHERE day=%s::date AND kind='higher_dim_dismissed' AND seed_id IS NOT NULL",
+            (d,),
+        )
+        from uuid import UUID
+
+        # psycopg 已把 uuid 列转成 uuid.UUID 对象；内存 fake 返回 str。
+        # 统一成 UUID：避免对 UUID 对象再包 UUID() 触发 'UUID' object has no attribute 'replace'。
+        out: set = set()
+        for r in cur.fetchall():
+            sid = r["seed_id"]
+            out.add(sid if isinstance(sid, UUID) else UUID(sid))
+        return out
 
 
 class PgStorage(Storage):

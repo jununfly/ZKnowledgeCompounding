@@ -298,6 +298,7 @@ class MemoryAttentionRepository(AttentionRepository):
     def __init__(self) -> None:
         self._rows: dict[datetime, AttentionObservation] = {}
         self._proposals: dict[object, dict[str, int]] = {}
+        self._dismissed: dict[object, set] = {}
 
     def record_observation(self, obs: AttentionObservation) -> None:
         self._rows[obs.day] = obs
@@ -310,12 +311,17 @@ class MemoryAttentionRepository(AttentionRepository):
         items = list(self._rows.values())
         return items[-days:] if days else items
 
-    def record_proposal(self, day, kind: str = "higher_dim") -> None:
+    def record_proposal(self, day, kind: str = "higher_dim", seed_id=None) -> None:
         self._proposals.setdefault(day, {}).setdefault(kind, 0)
         self._proposals[day][kind] += 1
+        if kind == "higher_dim_dismissed" and seed_id is not None:
+            self._dismissed.setdefault(day, set()).add(seed_id)
 
     def count_proposals(self, day, kind: str = "higher_dim") -> int:
         return self._proposals.get(day, {}).get(kind, 0)
+
+    def dismissed_seed_ids(self, day) -> set:
+        return set(self._dismissed.get(day, set()))
 
 
 class MemoryStorage(Storage):

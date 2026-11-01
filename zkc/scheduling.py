@@ -366,6 +366,52 @@ def l2_target(budget: Optional[float], confidence: str) -> Optional[float]:
     return budget
 
 
+# ---------------------------------------------------------------- 校准就绪度（同批外生锚）
+
+def calibration_readiness(
+    store: Storage,
+    *,
+    lookback_days: Optional[int] = None,
+    calib_min_days: Optional[int] = None,
+    calib_min_saturated_days: Optional[int] = None,
+) -> dict:
+    """更高维阈值校准是否攒够「同批外生锚」。
+
+    与 R13/R14（预算/节奏校准）吃**同一批** ``attention_observation`` 埋点：
+    - ``days_with_observation`` = 有观测记录的不同日期数；
+    - ``saturated_days``        = 其中 ``queue_remaining > 0`` 的天数（与
+      ``estimate_budget_from`` 同一饱和日口径，避免各自重算漂移）。
+
+    两条都达 ``CALIB_MIN_DAYS`` / ``CALIB_MIN_SATURATED_DAYS`` 阈值 → ``can_calibrate``
+    通过（``ready=True``），此时 ``tuning.calibrate(CONTEXT_HIGHER_DIM_*, ...)`` 才被放行。
+
+    纯函数层：只吃 ``store.attention.list_recent``，provider 无关（内存 fake / PG 同行为）。
+    """
+    lookback_days = lookback_days or 28
+    c_min_days = calib_min_days or _t("CALIB_MIN_DAYS")
+    c_min_sat = calib_min_saturated_days or _t("CALIB_MIN_SATURATED_DAYS")
+    rows = store.attention.list_recent(lookback_days)
+    days_with_obs = {_as_date(o.day) for o in rows}
+    saturated = {_as_date(o.day) for o in rows if o.queue_remaining > 0}
+    n_days = len(days_with_obs)
+    n_sat = len(saturated)
+    ok = tuning.can_calibrate(
+        days_with_observation=n_days, saturated_days=n_sat)
+    return dict(
+        days_with_observation=n_days,
+        saturated_days=n_sat,
+        calib_min_days=c_min_days,
+        calib_min_saturated_days=c_min_sat,
+        can_calibrate=ok,
+        ready=ok,
+        reason=(
+            "同批外生锚攒够，可校准" if ok else
+            f"外生锚不足：需 ≥{c_min_days} 天埋点(现有 {n_days}) 且 "
+            f"≥{c_min_sat} 个饱和日(现有 {n_sat})"
+        ),
+    )
+
+
 # ---------------------------------------------------------------- 更高维提议限流（调度层·注意力预算，P1）
 
 def proposal_budget_for_day(store: Storage, day) -> dict:

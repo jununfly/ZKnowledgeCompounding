@@ -204,5 +204,70 @@ class SchedulingPureTest(unittest.TestCase):
         self.assertEqual(S.l2_target(3.0, "observed"), 3.0)
 
 
+# ------------------------------------------------------------ 校准就绪度（同批外生锚）
+# 更高维阈值（CONTEXT_HIGHER_DIM_* / PROPOSAL_PER_DAY_CAP）与 R13/R14 预算/节奏校准
+# 吃同一批 attention_observation 外生锚：≥CALIB_MIN_DAYS 天埋点 + ≥CALIB_MIN_SATURATED_DAYS
+# 个饱和日（queue_remaining>0，与 estimate_budget_from 同一口径）。本接缝把"是否攒够批"
+# 显式可测，避免各自重算口径漂移。
+def _fill_obs(store, n_days, n_saturated, start=date(2026, 6, 1)):
+    for d in range(n_days):
+        day = start + timedelta(days=d)
+        saturated = d < n_saturated
+        store.attention.record_observation(AttentionObservation(
+            day=day, pushed=1, completed=1,
+            queue_remaining=(2 if saturated else 0),
+            labeled_completed=1))
+
+
+class CalibrationReadinessTest(unittest.TestCase):
+    def setUp(self):
+        from zkc.repository import get_storage
+        self.store = get_storage("memory")
+
+    def test_warmup_no_observations_not_ready(self):
+        r = S.calibration_readiness(self.store)
+        self.assertEqual(r["days_with_observation"], 0)
+        self.assertEqual(r["saturated_days"], 0)
+        self.assertFalse(r["ready"])
+        self.assertFalse(r["can_calibrate"])
+
+    def test_insufficient_days_not_ready(self):
+        # 10 天 + 3 饱和日：饱和日够，但天数不足 14 -> 不就绪
+        _fill_obs(self.store, n_days=10, n_saturated=3)
+        r = S.calibration_readiness(self.store)
+        self.assertEqual(r["days_with_observation"], 10)
+        self.assertEqual(r["saturated_days"], 3)
+        self.assertFalse(r["ready"])
+
+    def test_insufficient_saturated_not_ready(self):
+        # 14 天但仅 1 饱和日：天数够，饱和日不足 3 -> 不就绪
+        _fill_obs(self.store, n_days=14, n_saturated=1)
+        r = S.calibration_readiness(self.store)
+        self.assertEqual(r["days_with_observation"], 14)
+        self.assertEqual(r["saturated_days"], 1)
+        self.assertFalse(r["ready"])
+
+    def test_ready_when_batch_sufficient(self):
+        # 14 天 + 3 饱和日：同批外生锚攒够 -> 就绪
+        _fill_obs(self.store, n_days=14, n_saturated=3)
+        r = S.calibration_readiness(self.store)
+        self.assertEqual(r["days_with_observation"], 14)
+        self.assertEqual(r["saturated_days"], 3)
+        self.assertTrue(r["ready"])
+        self.assertTrue(r["can_calibrate"])
+
+    def test_distinct_day_count_not_row_count(self):
+        # 同一天多次 record_observation 是整行 upsert（两实现都覆盖同天），
+        # 故 distinct days 按 day 去重：两次写入同一天 -> 1 天；以最后一次快照为准。
+        store = self.store
+        store.attention.record_observation(AttentionObservation(
+            day=date(2026, 6, 1), pushed=1, completed=1, queue_remaining=0, labeled_completed=1))
+        store.attention.record_observation(AttentionObservation(
+            day=date(2026, 6, 1), pushed=1, completed=1, queue_remaining=2, labeled_completed=1))
+        r = S.calibration_readiness(store)
+        self.assertEqual(r["days_with_observation"], 1)
+        self.assertEqual(r["saturated_days"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

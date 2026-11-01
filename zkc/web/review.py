@@ -27,6 +27,7 @@ from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse
 
 from zkc import scheduling as S
+from zkc.context import ContextAssembler, HigherDimProposal
 from zkc.decay import refresh_decay
 from zkc.repository.models import AttentionObservation
 from zkc.repository.protocols import Storage
@@ -160,6 +161,86 @@ def record_daily_observation(
     return _obs_to_dict(store.attention.get(today))
 
 
+# ---------------------------------------------------------------- 更高维聚合提议（P1 收尾·接入复审流）
+
+def _proposal_to_dict(p: HigherDimProposal) -> dict:
+    return dict(
+        seed_node_id=str(p.seed_node_id),
+        neighbor_ids=[str(n) for n in p.neighbor_ids],
+        similarities=[round(s, 4) for s in p.similarities],
+        suggested_title=p.suggested_title,
+        would_create=p.would_create,
+        reason=p.reason,
+        existing_context_id=(str(p.existing_context_id)
+                             if p.existing_context_id is not None else None),
+        calibrated=p.calibrated,
+    )
+
+
+def higher_dim_proposals_view(store: Storage, now: Optional[datetime] = None,
+                              k: int = 5, llm=None) -> dict:
+    """把 propose_higher_dim_daily 接入复审流：种子 = 当日待复审节点（已在该人类注意力里，
+    与复审同会话，自然攒出校准埋点批）。返回可序列化提议 + 预算状态 + 校准就绪度。
+
+    纯函数层（无 HTTP 依赖），可脱离 web 栈单测（内存 fake / PG 同构）。
+    """
+    now = now or datetime.now(timezone.utc)
+    refresh_decay(store.nodes, now)
+    day = now.date()
+    excluded = store.attention.dismissed_seed_ids(day)
+    # 候选 = 当日待复审节点，排除已被人工忽略的种子（dismiss 真生效）
+    seeds = [n.id for n in store.nodes.list_due_for_review(now)
+             if n.id not in excluded]
+    asm = ContextAssembler(store)
+    proposals, budget_status = asm.propose_higher_dim_daily(
+        seeds, day, k=k, llm=llm, excluded=excluded)
+    return dict(
+        as_of=now.isoformat(),
+        day=str(day),
+        seeds_total=len(seeds),
+        proposals=[_proposal_to_dict(p) for p in proposals],
+        actionable=[_proposal_to_dict(p) for p in proposals if p.would_create],
+        budget_status=budget_status,
+        calibration=S.calibration_readiness(store),
+    )
+
+
+def approve_higher_dim(store: Storage, seed_node_id, k: int = 5,
+                       llm=None, now: Optional[datetime] = None) -> dict:
+    """人工确认：从种子重新派生提议（重过门槛/校准/去重），通过则落库为 higher_dim context。
+
+    与「系统提议」同源：人类确认创建也消耗当日 higher_dim 注意力预算，故落 proposal_log。
+    纯函数层，可脱离 web 栈单测。
+    """
+    now = now or datetime.now(timezone.utc)
+    if isinstance(seed_node_id, str):
+        seed_node_id = UUID(seed_node_id)
+    asm = ContextAssembler(store)
+    prop = asm.propose_higher_dim(seed_node_id, k=k, llm=llm)
+    if not prop.would_create:
+        return dict(seed_node_id=str(seed_node_id), created=False,
+                    reason=prop.reason, context_id=None)
+    cid, tid = asm.create_higher_dim(prop)
+    store.attention.record_proposal(now.date(), "higher_dim", seed_node_id)
+    return dict(seed_node_id=str(seed_node_id), created=True,
+                context_id=str(cid), transform_id=str(tid),
+                suggested_title=prop.suggested_title, reason="人工确认创建")
+
+
+def dismiss_higher_dim(store: Storage, seed_node_id,
+                       now: Optional[datetime] = None) -> dict:
+    """人工忽略：落 proposal_log(kind='higher_dim_dismissed', seed_id)，当日 sweep 跳过该种子。
+
+    纯函数层，可脱离 web 栈单测。
+    """
+    now = now or datetime.now(timezone.utc)
+    if isinstance(seed_node_id, str):
+        seed_node_id = UUID(seed_node_id)
+    store.attention.record_proposal(now.date(), "higher_dim_dismissed", seed_node_id)
+    return dict(seed_node_id=str(seed_node_id), dismissed=True,
+                day=str(now.date()))
+
+
 # ---------------------------------------------------------------- SSR 页面
 
 REVIEW_HTML = """<!doctype html>
@@ -214,6 +295,17 @@ REVIEW_HTML = """<!doctype html>
   <span class="flash" id="closeFlash"></span>
 </form>
 
+<div id="hdPanel">
+  <h2 style="font-size:1.1rem;margin-top:1.6rem;">更高维聚合提议</h2>
+  <p class="hint">系统基于「当日待复审节点」提议可聚合的更高维 context（稀缺注意力：系统提议、人确认）。阈值未校准时为实验性提议，须人审；真实校准需吃同一批外生锚埋点（见下方状态）。</p>
+  <div class="status">
+    <div class="card"><b>校准就绪</b><span id="hdCalib">…</span></div>
+    <div class="card"><b>可操作提议</b><span id="hdCount">…</span></div>
+    <div class="card"><b>每日额度</b><span id="hdBudget">…</span></div>
+  </div>
+  <div id="hdList"><div class="empty">加载中…</div></div>
+</div>
+
 <script>
   const $ = (id) => document.getElementById(id);
   async function load() {
@@ -262,6 +354,41 @@ REVIEW_HTML = """<!doctype html>
   });
   function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
   load();
+
+  async function loadHd() {
+    const j = await (await fetch('/review/api/higher-dim')).json();
+    const cal = j.calibration;
+    $('hdCalib').innerHTML = cal.ready
+      ? `<span class="ok">就绪</span>` : `<span class="warn">未就绪</span> ${cal.days_with_observation}/${cal.calib_min_days}天 · ${cal.saturated_days}/${cal.calib_min_saturated_days}饱和`;
+    $('hdCount').innerHTML = j.actionable.length + ' / 候选 ' + j.seeds_total;
+    const b = j.budget_status;
+    $('hdBudget').innerHTML = `${b.used}/${b.cap}` + (b.truncated ? '（已封顶）' : '');
+    const list = $('hdList');
+    if (!j.actionable.length) { list.innerHTML = '<div class="empty">暂无可操作的聚合提议 ✓</div>'; return; }
+    list.innerHTML = j.actionable.map(p => `
+      <div class="item" id="hd-${p.seed_node_id}">
+        <div class="title">${escapeHtml(p.suggested_title)}</div>
+        <div class="meta">${p.neighbor_ids.length} 个近邻 · 相似度 ${p.similarities.map(s=>(s*100).toFixed(0)+'%').join('/')} · ${p.calibrated ? '已校准' : '未校准'}</div>
+        <button class="valid" onclick="hdApprove('${p.seed_node_id}')">创建</button>
+        <button class="browse" onclick="hdDismiss('${p.seed_node_id}')">忽略</button>
+      </div>`).join('');
+  }
+  async function hdApprove(seed) {
+    const r = await fetch('/review/api/higher-dim/approve', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'seed_node_id=' + encodeURIComponent(seed) });
+    const j = await r.json();
+    const el = $('hd-' + seed);
+    if (el) el.style.opacity = .5;
+    await loadHd();
+  }
+  async function hdDismiss(seed) {
+    await fetch('/review/api/higher-dim/dismiss', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'seed_node_id=' + encodeURIComponent(seed) });
+    await loadHd();
+  }
+  loadHd();
 </script>
 </body>
 </html>
@@ -289,5 +416,17 @@ def register_review_routes(app, store: Storage) -> None:
     @router.post("/review/api/observe")
     def observe_api(pushed: int = Form(0), queue_remaining: int = Form(0)) -> dict:
         return record_daily_observation(store, pushed, queue_remaining)
+
+    @router.get("/review/api/higher-dim")
+    def higher_dim_api() -> dict:
+        return higher_dim_proposals_view(store)
+
+    @router.post("/review/api/higher-dim/approve")
+    def higher_dim_approve_api(seed_node_id: str = Form(...)) -> dict:
+        return approve_higher_dim(store, seed_node_id)
+
+    @router.post("/review/api/higher-dim/dismiss")
+    def higher_dim_dismiss_api(seed_node_id: str = Form(...)) -> dict:
+        return dismiss_higher_dim(store, seed_node_id)
 
     app.include_router(router)

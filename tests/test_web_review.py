@@ -7,14 +7,19 @@ from __future__ import annotations
 
 import unittest
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
 from zkc import scheduling as S
+from zkc.context import HigherDimProposal
 from zkc.decay import refresh_decay
 from zkc.repository import get_storage
 from zkc.repository.models import AttentionObservation, Node
 from zkc.web.review import (
     OUTCOME_VERDICT,
+    approve_higher_dim,
     decide_review,
+    dismiss_higher_dim,
+    higher_dim_proposals_view,
     record_daily_observation,
     review_queue_view,
 )
@@ -175,6 +180,135 @@ class ReviewHttpTest(unittest.TestCase):
         )
         r1 = self.client.get("/review/api/queue").json()
         self.assertEqual(r1["due_count"], 1)
+
+
+# ------------------------------------------------------------ 更高维聚合接入复审流
+class HigherDimReviewPureTest(unittest.TestCase):
+    def setUp(self):
+        self.store = get_storage("memory")
+        self.ids = _seed_due(self.store, 2)
+
+    def test_view_structure_includes_calibration_and_budget(self):
+        view = higher_dim_proposals_view(self.store, NOW)
+        self.assertEqual(view["seeds_total"], 2)
+        self.assertEqual(len(view["proposals"]), 2)
+        self.assertEqual(len(view["actionable"]), 0)  # 内存 discover 返回 [] -> 无 would_create
+        self.assertIn("budget_status", view)
+        self.assertIn("calibration", view)
+        # 无埋点 -> 校准未就绪（同批外生锚不足）
+        self.assertFalse(view["calibration"]["ready"])
+
+    def test_view_excludes_dismissed_seeds(self):
+        # 忽略一个种子 -> 视图不再把它列为候选（dismiss 真生效）
+        dismiss_higher_dim(self.store, self.ids[0], NOW)
+        view = higher_dim_proposals_view(self.store, NOW)
+        self.assertEqual(view["seeds_total"], 1)
+        seed_strs = [p["seed_node_id"] for p in view["proposals"]]
+        self.assertNotIn(str(self.ids[0]), seed_strs)
+
+    def test_approve_creates_context(self):
+        created = {}
+
+        class FakeAsm:
+            def propose_higher_dim(self, sid, k=5, llm=None):
+                return HigherDimProposal(seed_node_id=sid, neighbor_ids=[uuid4()],
+                                         similarities=[0.9], suggested_title="聚合X",
+                                         would_create=True, reason="ok",
+                                         existing_context_id=None, calibrated=False)
+
+            def create_higher_dim(self, prop):
+                cid = uuid4()
+                created["cid"] = cid
+                return cid, uuid4()
+
+        import zkc.web.review as R
+        orig = R.ContextAssembler
+        R.ContextAssembler = lambda store: FakeAsm()
+        try:
+            res = approve_higher_dim(self.store, self.ids[0], now=NOW)
+        finally:
+            R.ContextAssembler = orig
+        self.assertTrue(res["created"])
+        self.assertEqual(res["context_id"], str(created["cid"]))
+        # 人类确认创建也计入当日 higher_dim 额度（与系统提议同源预算）
+        self.assertEqual(self.store.attention.count_proposals(NOW.date(), "higher_dim"), 1)
+
+    def test_approve_rejects_when_gate_fails(self):
+        class FakeAsm:
+            def propose_higher_dim(self, sid, k=5, llm=None):
+                return HigherDimProposal(seed_node_id=sid, neighbor_ids=[],
+                                         similarities=[], suggested_title="",
+                                         would_create=False, reason="近邻不足",
+                                         existing_context_id=None, calibrated=False)
+
+            def create_higher_dim(self, prop):
+                raise AssertionError("闸门未过不应创建")
+
+        import zkc.web.review as R
+        orig = R.ContextAssembler
+        R.ContextAssembler = lambda store: FakeAsm()
+        try:
+            res = approve_higher_dim(self.store, self.ids[0], now=NOW)
+        finally:
+            R.ContextAssembler = orig
+        self.assertFalse(res["created"])
+        self.assertIn("近邻不足", res["reason"])
+
+
+class HigherDimHttpTest(unittest.TestCase):
+    def setUp(self):
+        from fastapi.testclient import TestClient
+
+        from zkc.web.app import create_app
+
+        self.store = get_storage("memory")
+        self.ids = _seed_due(self.store, 2)
+        self.app = create_app(
+            store=self.store, decision_router=object(), lexical_router=object())
+        self.client = TestClient(self.app)
+
+    def test_review_page_has_higher_dim_panel(self):
+        r = self.client.get("/review")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("更高维聚合提议", r.text)
+        self.assertIn("/review/api/higher-dim", r.text)
+
+    def test_higher_dim_api_structure(self):
+        r = self.client.get("/review/api/higher-dim")
+        self.assertEqual(r.status_code, 200)
+        body = r.json()
+        self.assertEqual(body["seeds_total"], 2)
+        self.assertIn("calibration", body)
+        self.assertIn("budget_status", body)
+
+    def test_approve_and_dismiss_via_api(self):
+        import zkc.web.review as R
+
+        class FakeAsm:
+            def propose_higher_dim(self, sid, k=5, llm=None):
+                return HigherDimProposal(seed_node_id=sid, neighbor_ids=[uuid4()],
+                                         similarities=[0.9], suggested_title="聚合X",
+                                         would_create=True, reason="ok",
+                                         existing_context_id=None, calibrated=False)
+
+            def create_higher_dim(self, prop):
+                return uuid4(), uuid4()
+
+        orig = R.ContextAssembler
+        R.ContextAssembler = lambda store: FakeAsm()
+        try:
+            r = self.client.post(
+                "/review/api/higher-dim/approve",
+                data={"seed_node_id": str(self.ids[0])})
+            self.assertEqual(r.status_code, 200)
+            self.assertTrue(r.json()["created"])
+            r2 = self.client.post(
+                "/review/api/higher-dim/dismiss",
+                data={"seed_node_id": str(self.ids[1])})
+            self.assertEqual(r2.status_code, 200)
+            self.assertTrue(r2.json()["dismissed"])
+        finally:
+            R.ContextAssembler = orig
 
 
 if __name__ == "__main__":
