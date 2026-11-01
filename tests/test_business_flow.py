@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
 import unittest
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -20,11 +19,7 @@ from zkc.ingest import (
     record_review,
 )
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIGRATIONS_DIR = REPO_ROOT / "migrations"
-ALL_UP_SQL = "\n".join(
-    sorted((MIGRATIONS_DIR / p).read_text() for p in [f.name for f in MIGRATIONS_DIR.glob("*.up.sql")])
-)
+from zkc import migrate
 
 
 def run_flow(store) -> None:
@@ -89,9 +84,8 @@ class PgBusinessFlowTest(unittest.TestCase):
         cls._pg.execute(f'CREATE DATABASE "{cls.TEST_DB}"')
         cls._pg.close()
         cls._test_dsn = base_dsn.replace("/zkc_dev", f"/{cls.TEST_DB}")
-        c = psycopg.connect(cls._test_dsn, autocommit=True)
-        c.execute(ALL_UP_SQL)
-        c.close()
+        # 经迁移权威按文件 apply（不再拼接 SQL）
+        migrate.apply_all(cls.TEST_DB)
         os.environ["ZKC_PG_DSN"] = cls._test_dsn
 
     def setUp(self):

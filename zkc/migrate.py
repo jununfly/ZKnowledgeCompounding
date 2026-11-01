@@ -140,24 +140,43 @@ def cmd_status(db: str) -> int:
     return 0
 
 
+def apply_one(db: str, version: str, up: Path) -> None:
+    """应用单个迁移（单事务），并写入版本留痕（sha256）。"""
+    sha = _sha(up)
+    sql = up.read_text() + "\n"
+    sql += (
+        "\nINSERT INTO schema_migration (version, sha256, note) VALUES "
+        f"('{version}', '{sha}', '{up.name}');\n"
+    )
+    psql(db, sql, single_transaction=True)
+
+
+def apply_all(db: str) -> None:
+    """在**已存在**的库上应用全部待执行迁移——按文件、单事务。
+
+    这是「迁移权威」的程序化入口，测试脚手架用它来准备测试库 schema，
+    替代此前「拼接所有 *.up.sql 成一条 + psycopg.execute」的错误做法
+    （psycopg3 的 execute 只执行第一条语句，导致只有 0001 生效）。
+    """
+    bootstrap(db)
+    done = applied(db)
+    for version, up, _ in discover():
+        if version in done:
+            continue
+        apply_one(db, version, up)
+
+
 def cmd_upgrade(db: str, to: str | None) -> int:
     ensure_database(db)
-    bootstrap(db)
     done = applied(db)
     for version, up, _ in discover():
         if version in done:
             continue
         if to is not None and version > to:
             break
-        sha = _sha(up)
         print(f"applying {up.name} ...")
-        sql = up.read_text() + "\n"
-        sql += (
-            "\nINSERT INTO schema_migration (version, sha256, note) VALUES "
-            f"('{version}', '{sha}', '{up.name}');\n"
-        )
-        psql(db, sql, single_transaction=True)
-        print(f"  ✓ {version} applied (sha={sha[:12]})")
+        apply_one(db, version, up)
+        print(f"  ✓ {version} applied (sha={_sha(up)[:12]})")
     return 0
 
 

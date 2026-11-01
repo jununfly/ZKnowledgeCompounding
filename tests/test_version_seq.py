@@ -15,7 +15,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
 import unittest
 from uuid import UUID, uuid4
 
@@ -23,14 +22,7 @@ from zkc.repository.errors import ConcurrentModification
 from zkc.repository.models import Claim, Context, Node, Track
 from zkc.repository.memory import MemoryStorage
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIGRATIONS_DIR = REPO_ROOT / "migrations"
-ALL_UP_SQL = "\n".join(
-    sorted(
-        (MIGRATIONS_DIR / p).read_text()
-        for p in [f.name for f in MIGRATIONS_DIR.glob("*.up.sql")]
-    )
-)
+from zkc import migrate
 DEFAULT_DSN = os.environ.get("ZKC_PG_DSN", "postgresql://postgres:zkc@localhost:55433/zkc_dev")
 
 
@@ -101,9 +93,8 @@ class PgVersionSeqTest(unittest.TestCase):
         cls._admin.execute(f'CREATE DATABASE "{cls.TEST_DB}"')
         cls._admin.close()
         cls._test_dsn = base.replace("/zkc_dev", f"/{cls.TEST_DB}")
-        c = __import__("psycopg").connect(cls._test_dsn, autocommit=True)
-        c.execute(ALL_UP_SQL)
-        c.close()
+        # 经迁移权威按文件 apply（不再拼接 SQL）
+        migrate.apply_all(cls.TEST_DB)
         os.environ["ZKC_PG_DSN"] = cls._test_dsn
 
     @classmethod

@@ -19,7 +19,6 @@ node_history，最后 UPDATE 当前行。FOR UPDATE 让后到的事务阻塞到�
 from __future__ import annotations
 
 import os
-import pathlib
 import threading
 import unittest
 from datetime import timedelta
@@ -29,14 +28,7 @@ import psycopg
 from zkc.repository.models import Node, Track
 from zkc.repository.pg import PgNodeRepository
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIGRATIONS_DIR = REPO_ROOT / "migrations"
-ALL_UP_SQL = "\n".join(
-    sorted(
-        (MIGRATIONS_DIR / p).read_text()
-        for p in [f.name for f in MIGRATIONS_DIR.glob("*.up.sql")]
-    )
-)
+from zkc import migrate
 
 DEFAULT_DSN = os.environ.get("ZKC_PG_DSN", "postgresql://postgres:zkc@localhost:55433/zkc_dev")
 TEST_DB = "zkc_conc_test"
@@ -56,9 +48,8 @@ class PgNodeConcurrentWriteTest(unittest.TestCase):
         cls._admin.execute(f'CREATE DATABASE "{TEST_DB}"')
         cls._admin.close()
         cls._test_dsn = base.replace("/zkc_dev", f"/{TEST_DB}")
-        c = psycopg.connect(cls._test_dsn, autocommit=True)
-        c.execute(ALL_UP_SQL)
-        c.close()
+        # 经迁移权威按文件 apply（不再拼接 SQL）
+        migrate.apply_all(TEST_DB)
         os.environ["ZKC_PG_DSN"] = cls._test_dsn
 
     @classmethod

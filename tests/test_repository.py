@@ -7,7 +7,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
 import unittest
 from datetime import datetime, timedelta
 from uuid import UUID, uuid4
@@ -22,15 +21,7 @@ from zkc.repository.models import (
     ReviewItem,
 )
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
-MIGRATIONS_DIR = REPO_ROOT / "migrations"
-# 按 version 升序拼接全部 up 脚本（含 0002 node_history），保证测试库 schema 与磁盘一致
-ALL_UP_SQL = "\n".join(
-    sorted(
-        (MIGRATIONS_DIR / p).read_text()
-        for p in [f.name for f in MIGRATIONS_DIR.glob("*.up.sql")]
-    )
-)
+from zkc import migrate
 
 
 def _emb768() -> list[float]:
@@ -166,11 +157,9 @@ class PgRepositoryTest(unittest.TestCase):
         cls._pg.execute(f'DROP DATABASE IF EXISTS "{cls.TEST_DB}" WITH (FORCE)')
         cls._pg.execute(f'CREATE DATABASE "{cls.TEST_DB}"')
         cls._pg.close()
-        # 在测试库上跑全部迁移（含 0002 node_history）
+        # 经迁移权威按文件 apply（不再拼接 SQL）
         cls._test_dsn = base_dsn.replace("/zkc_dev", f"/{cls.TEST_DB}")
-        c = psycopg.connect(cls._test_dsn, autocommit=True)
-        c.execute(ALL_UP_SQL)
-        c.close()
+        migrate.apply_all(cls.TEST_DB)
         os.environ["ZKC_PG_DSN"] = cls._test_dsn
 
     def setUp(self):
