@@ -8,11 +8,14 @@ from __future__ import annotations
 import os
 import pathlib
 import unittest
+from datetime import date
 from uuid import UUID, uuid4
 
+from zkc import tuning
 from zkc.context import ContextAssembler, ContextNamer, HigherDimProposal
 from zkc.repository import get_storage
 from zkc.repository.models import Node
+from zkc.tuning import PLACEHOLDER
 
 REPO_ROOT = pathlib.Path(__file__).resolve().parent.parent
 MIGRATIONS_DIR = REPO_ROOT / "migrations"
@@ -103,6 +106,61 @@ class MemoryContextTest(unittest.TestCase):
             assert False, "expected ValueError"
         except ValueError:
             pass
+
+    def test_propose_flags_uncalibrated_placeholder(self):
+        # P3：占位阈值驱动的行为必须显式标注 calibrated=False（仍交人审，不自动当真理）
+        store = get_storage("memory")
+        asm = ContextAssembler(store)
+        n1 = store.nodes.save(Node(track="dynamic", title="seed"))
+        prop = asm.propose_higher_dim(n1.id, llm=_fake_llm)
+        self.assertFalse(prop.calibrated)
+        self.assertIn("未校准", prop.reason)
+
+    def test_propose_calibrated_after_gate(self):
+        # 经 calibrate() 门禁（≥14天+≥3饱和日）校准后，提议标注 calibrated=True
+        store = get_storage("memory")
+        asm = ContextAssembler(store)
+        n1 = store.nodes.save(Node(track="dynamic", title="seed"))
+        try:
+            for name in ("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", "CONTEXT_HIGHER_DIM_MIN_MEMBERS"):
+                tuning.calibrate(name, tuning.get(name), date(2026, 12, 1),
+                                 "14d+3sat", days_with_observation=14, saturated_days=3)
+            prop = asm.propose_higher_dim(n1.id, llm=_fake_llm)
+            self.assertTrue(prop.calibrated)
+        finally:
+            for name in ("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", "CONTEXT_HIGHER_DIM_MIN_MEMBERS"):
+                p = tuning.param(name)
+                p.source = PLACEHOLDER
+                p.calibrated_at = None
+                p.history = []
+
+    def test_propose_higher_dim_daily_caps_global(self):
+        # P1：每日 sweep 跨种子限流（去重只防同种子，本函数防全库每日过量）
+        store = get_storage("memory")
+        asm = ContextAssembler(store)
+        seeds = [uuid4() for _ in range(3)]
+
+        def fake_propose(sid, k=5, llm=None, *, sim_threshold=None, min_members=None):
+            return HigherDimProposal(seed_node_id=sid, neighbor_ids=[uuid4()],
+                                    similarities=[0.9], suggested_title="x",
+                                    would_create=True, reason="ok",
+                                    existing_context_id=None, calibrated=True)
+
+        asm.propose_higher_dim = fake_propose  # 绕过向量发现，隔离 sweep 逻辑
+        day = date(2026, 11, 1)
+        props, status = asm.propose_higher_dim_daily(seeds, day, max_per_day=2)
+        self.assertEqual(status["cap"], 2)
+        self.assertEqual(status["used"], 2)
+        self.assertTrue(status["truncated"])
+        self.assertTrue(props[0].would_create)
+        self.assertTrue(props[1].would_create)
+        self.assertFalse(props[2].would_create)
+        self.assertIn("上限已达", props[2].reason)
+        self.assertEqual(store.attention.count_proposals(day, "higher_dim"), 2)
+        # 同日再 sweep：已达 cap，全部截断
+        props2, status2 = asm.propose_higher_dim_daily(seeds, day, max_per_day=2)
+        self.assertEqual(status2["used"], 2)
+        self.assertFalse(any(p.would_create for p in props2))
 
     def test_naming_llm_and_fallback(self):
         namer = ContextNamer()
@@ -211,6 +269,30 @@ class PgContextTest(unittest.TestCase):
         prop = self.asm.propose_higher_dim(seed.id, llm=None)
         assert prop.would_create is True
         assert prop.suggested_title and "条）" in prop.suggested_title
+
+    def test_propose_higher_dim_daily_caps_across_seeds(self):
+        # P1：PG 下验证跨种子每日限流 + proposal_log 持久化（去重只防同种子，本函数防全库过量）
+        seed = self.store.nodes.save(
+            Node(track="dynamic", title="种子主题", embedding=_vec_close(768, 0)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="近邻A", embedding=_vec_close(768, 0, 1, 0.01)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="近邻B", embedding=_vec_close(768, 0, 2, 0.02)))
+        other_seed = self.store.nodes.save(
+            Node(track="dynamic", title="另一个种子", embedding=_vec_close(768, 3)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="os近邻A", embedding=_vec_close(768, 3, 4, 0.01)))
+        self.store.nodes.save(
+            Node(track="dynamic", title="os近邻B", embedding=_vec_close(768, 3, 5, 0.02)))
+
+        day = date(2026, 11, 2)
+        props, status = self.asm.propose_higher_dim_daily(
+            [seed.id, other_seed.id], day, k=5, llm=_fake_llm, max_per_day=1)
+        created = [p for p in props if p.would_create]
+        self.assertEqual(len(created), 1, "cap=1 -> 仅首条种子可创建")
+        self.assertEqual(status["used"], 1)
+        self.assertTrue(status["truncated"])
+        self.assertEqual(self.store.attention.count_proposals(day, "higher_dim"), 1)
 
     @classmethod
     def tearDownClass(cls):

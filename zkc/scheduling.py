@@ -366,6 +366,24 @@ def l2_target(budget: Optional[float], confidence: str) -> Optional[float]:
     return budget
 
 
+# ---------------------------------------------------------------- 更高维提议限流（调度层·注意力预算，P1）
+
+def proposal_budget_for_day(store: Storage, day) -> dict:
+    """全局每日更高维 context 提议上限（注意力预算一类）。
+
+    归属：调度层，不属 T4.1 切片（去重闸门只防同种子，不防全库每日过量）。本函数是
+    该上限的唯一权威来源；逐种子 propose 只防同种子重复，跨种子限流由
+    ``ContextAssembler.propose_higher_dim_daily`` 调本函数完成。
+
+    返回 {cap, used, remaining, source}：cap 来自 tuning.PROPOSAL_PER_DAY_CAP
+    （占位，待 calibrate() 校准），used 来自 store.attention.count_proposals（当日已提议）。
+    """
+    p = tuning.param("PROPOSAL_PER_DAY_CAP")
+    cap = int(p.value)
+    used = store.attention.count_proposals(day, "higher_dim")
+    return dict(cap=cap, used=used, remaining=max(0, cap - used), source=p.source)
+
+
 # ================================================================ 存储编排层
 
 def days_to_interval(days: Optional[float]) -> Optional[timedelta]:

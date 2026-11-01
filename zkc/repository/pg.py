@@ -681,6 +681,25 @@ class PgAttentionRepository(AttentionRepository):
                                      labeled_completed=r["labeled_completed"])
                 for r in cur.fetchall()]
 
+    def record_proposal(self, day, kind: str = "higher_dim") -> None:
+        cur = self._conn.cursor()
+        d = day.date() if isinstance(day, datetime) else day
+        cur.execute(
+            "INSERT INTO public.proposal_log (day, kind) VALUES (%s::date, %s)",
+            (d, kind),
+        )
+        self._conn.commit()
+
+    def count_proposals(self, day, kind: str = "higher_dim") -> int:
+        cur = self._conn.cursor(row_factory=dict_row)
+        d = day.date() if isinstance(day, datetime) else day
+        cur.execute(
+            "SELECT count(*) AS n FROM public.proposal_log WHERE day=%s::date AND kind=%s",
+            (d, kind),
+        )
+        r = cur.fetchone()
+        return int(r["n"]) if r else 0
+
 
 class PgStorage(Storage):
     def __init__(self, conn=None) -> None:

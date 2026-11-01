@@ -167,6 +167,12 @@ REGISTRY: dict[str, Parameter] = {
            "仅作触发初筛，最终创建仍过人审闸门（稀缺注意力：系统提议、人确认）"),
         _p("CONTEXT_HIGHER_DIM_MIN_MEMBERS", 2, PLACEHOLDER,
            "触发提议所需的最小近邻数（不含种子自身）；低于此数不构成「聚合」价值"),
+        # ---- 更高维提议频率限流（调度层·注意力预算；P1 收尾切片）
+        _p("PROPOSAL_PER_DAY_CAP", 5, PLACEHOLDER,
+           "全局每日更高维 context 提议数上限（调度层·注意力预算）。"
+           "去重闸门只防「同种子重复」，不防「全库每日过量提议」——本参数补该缺口。"
+           "属注意力预算一类：每日提议也占人审注意力，须与复审预算同源受限。"
+           "真实值须走 calibrate() 门禁（≥14 天埋点 + ≥3 饱和日），当前 5 为保守占位"),
     ]
 }
 
@@ -194,6 +200,16 @@ def can_calibrate(*, days_with_observation: int, saturated_days: int) -> bool:
         days_with_observation >= get("CALIB_MIN_DAYS")
         and saturated_days >= get("CALIB_MIN_SATURATED_DAYS")
     )
+
+
+def is_calibrated(name: str) -> bool:
+    """该参数是否已过门禁（source == calibrated）。消费侧据此判断是否可驱动真实行为。
+
+    用于 env 门禁：占位/仿真阈值不得被当成已验证真理去自动行动；只有 calibrated
+    才表示「真实埋点校准过」。例：T4.1 的 CONTEXT_HIGHER_DIM_* 在 PLACEHOLDER 时，
+    propose_higher_dim 产出的提议必须显式标注 calibrated=False（仍需人审）。
+    """
+    return param(name).source == CALIBRATED
 
 
 def calibrate(name: str, value: Any, when: date, reason: str,

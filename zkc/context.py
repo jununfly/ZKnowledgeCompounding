@@ -14,8 +14,12 @@ T4.1 收尾（原 spike-06 open 项）：
 - **触发策略（人审闸门）**：`propose_higher_dim` 只「提议」不「自动创建」——过相似度阈值 +
   最小近邻数 + 去重闸门（同种子已存在则跳过）三道关后才 `would_create=True`；真正落库由
   `create_higher_dim`（或未来 UI/review_queue 人审确认）显式触发。契合稀缺注意力原则：
-  系统决定「此刻该聚合什么」，但写图动作交人确认。全局频率上限（每日提议数）属调度层，
-  不在本切片内（见 §8 限定）。
+  系统决定「此刻该聚合什么」，但写图动作交人确认。
+- **频率限流（调度层·注意力预算）**：去重闸门只防「同种子重复」，不防「全库每日过量提议」。
+  全局每日提议数上限属调度层，由 `scheduling.proposal_budget_for_day` 归属；跨种子的每日
+  限流由 `propose_higher_dim_daily` 统一执行（见 §8 限定）。阈值 CONTEXT_HIGHER_DIM_* 当前
+  为 PLACEHOLDER，真实行为须经 tuning.calibrate() 门禁校准（≥14 天埋点 + ≥3 饱和日），
+  未校准时提议显式标注 calibrated=False（仍交人审，不自动当作已验证）。
 
 铁律（P1.4）：scope 仅限 ('self_loop' | 'higher_dim')，越界即 ValueError；阈值走 zkc.tuning。
 """
@@ -27,9 +31,10 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional
 from uuid import UUID
 
-from . import tuning
+from . import scheduling, tuning
 from .distill import LLM
 from .repository.protocols import Storage
+from .tuning import CALIBRATED
 
 # LLM 命名 system prompt（确定性、可注入、与具体模型解耦）
 HIGHER_DIM_NAMING_SYSTEM = (
@@ -102,6 +107,7 @@ class HigherDimProposal:
     would_create: bool                  # 三道闸门全过才 True
     reason: str                         # would_create 为 False 时说明原因
     existing_context_id: Optional[UUID] = None  # 已存在则记录，便于调用方跳转
+    calibrated: bool = True             # 触发阈值是否已过 calibrate() 门禁（P3）
 
 
 class ContextAssembler:
@@ -173,6 +179,16 @@ class ContextAssembler:
         member_texts = [seed_title] + [n.get("title") or "" for n in kept]
         suggested_title = self.namer.name(member_texts, llm)
 
+        # 校准门禁（P3）：占位阈值不得被当成已验证真理去自动行动。
+        calibrated = (
+            tuning.param("CONTEXT_HIGHER_DIM_SIM_THRESHOLD").source == CALIBRATED
+            and tuning.param("CONTEXT_HIGHER_DIM_MIN_MEMBERS").source == CALIBRATED
+        )
+        uncalib_note = "" if calibrated else (
+            "（阈值未校准·占位值：真实行为须经 calibrate() 门禁 ≥14 天埋点 + ≥3 饱和日，"
+            "当前为实验性提议，须人审确认）"
+        )
+
         # 去重闸门
         existing = self.store.contexts.find_higher_dim_for_seed(seed_node_id)
         if existing is not None:
@@ -184,6 +200,7 @@ class ContextAssembler:
                 would_create=False,
                 reason="higher_dim context 已存在，跳过重复提议",
                 existing_context_id=existing,
+                calibrated=calibrated,
             )
         if len(neighbor_ids) < min_members:
             return HigherDimProposal(
@@ -194,9 +211,10 @@ class ContextAssembler:
                 would_create=False,
                 reason=(
                     f"近邻不足：{len(neighbor_ids)} < {min_members}"
-                    f"（相似度阈值 {sim_threshold}）"
+                    f"（相似度阈值 {sim_threshold}）{uncalib_note}"
                 ),
                 existing_context_id=None,
+                calibrated=calibrated,
             )
         return HigherDimProposal(
             seed_node_id=seed_node_id,
@@ -204,9 +222,48 @@ class ContextAssembler:
             similarities=sims,
             suggested_title=suggested_title,
             would_create=True,
-            reason="通过相似度阈值、最小近邻数与去重闸门",
+            reason=f"通过相似度阈值、最小近邻数与去重闸门{uncalib_note}",
             existing_context_id=None,
+            calibrated=calibrated,
         )
+
+    def propose_higher_dim_daily(
+        self,
+        seed_ids: list[UUID],
+        day,
+        k: int = 5,
+        llm: Optional[LLM] = None,
+        max_per_day: Optional[int] = None,
+    ) -> tuple[list[HigherDimProposal], dict]:
+        """每日提议 sweep（调度层·注意力预算）：在「同种子去重」之上加「全库每日上限」。
+
+        逐种子调 ``propose_higher_dim``；一旦当日已提议数达上限，剩余种子返回
+        ``would_create=False``（reason=全局每日上限已达），不再计入。每次真正产出提议
+        (``would_create=True``) 都落 ``proposal_log``，使调度层能跨种子累计限流。
+
+        ``max_per_day`` 缺省读 ``tuning.PROPOSAL_PER_DAY_CAP``（占位，待 calibrate 校准）；
+        也可显式传入（如 UI 展示剩余额度）。返回 ``(proposals, budget_status)``。
+        """
+        if max_per_day is None:
+            budget = scheduling.proposal_budget_for_day(self.store, day)
+            max_per_day = budget["cap"]
+        used = self.store.attention.count_proposals(day, "higher_dim")
+        out: list[HigherDimProposal] = []
+        for sid in seed_ids:
+            if used >= max_per_day:
+                out.append(HigherDimProposal(
+                    seed_node_id=sid, neighbor_ids=[], similarities=[],
+                    suggested_title="", would_create=False,
+                    reason=f"全局每日提议上限已达（cap={max_per_day}）",
+                    existing_context_id=None,
+                ))
+                continue
+            prop = self.propose_higher_dim(sid, k=k, llm=llm)
+            if prop.would_create:
+                self.store.attention.record_proposal(day, "higher_dim")
+                used += 1
+            out.append(prop)
+        return out, dict(cap=max_per_day, used=used, truncated=used >= max_per_day)
 
     def create_higher_dim(
         self, proposal: HigherDimProposal, llm: Optional[LLM] = None

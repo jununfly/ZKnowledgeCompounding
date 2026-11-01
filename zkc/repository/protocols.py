@@ -176,6 +176,15 @@ class AttentionRepository(ABC):
     @abstractmethod
     def list_recent(self, days: int = 30) -> list[AttentionObservation]: ...
 
+    @abstractmethod
+    def record_proposal(self, day, kind: str = "higher_dim") -> None:
+        """记录一条「系统提议」（调度层·注意力预算）。kind 区分 higher_dim / self_loop。
+        用于全局每日提议数限流（去重闸门只防同种子，不防全库每日过量）。"""
+
+    @abstractmethod
+    def count_proposals(self, day, kind: str = "higher_dim") -> int:
+        """当日已提议数（按 kind）。供 scheduling.proposal_budget_for_day 跨种子累计限流。"""
+
 
 class Storage(ABC):
     """门面：聚合 6 个仓库 + provenance 助手。应用只依赖此门面。"""

@@ -134,5 +134,33 @@ class TestLexicalParamsGovernance(unittest.TestCase):
         p.value, p.source, p.calibrated_at, p.history = 0.5, PLACEHOLDER, None, []
 
 
+class TestIsCalibrated(unittest.TestCase):
+    """is_calibrated 是消费侧的门禁探针：占位/仿真阈值不得被当成已验证真理。"""
+
+    def test_placeholder_is_not_calibrated(self):
+        self.assertFalse(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
+        self.assertFalse(tuning.is_calibrated("CONTEXT_HIGHER_DIM_MIN_MEMBERS"))
+
+    def test_simulated_is_not_calibrated(self):
+        self.assertFalse(tuning.is_calibrated("ROUTING_LLM_CONF_GATE"))
+
+    def test_calibrated_is_calibrated(self):
+        self.assertTrue(tuning.is_calibrated("EMBEDDING_DIM"))
+
+    def test_calibrate_gate_blocks_context_placeholders(self):
+        # T4.1 的 0.7/2 占位阈值：无真实埋点不得被提升为 calibrated（真实行为须过门禁）
+        with self.assertRaises(PermissionError):
+            tuning.calibrate("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, date(2026, 11, 1),
+                             "凭直觉调", days_with_observation=2, saturated_days=0)
+        self.assertFalse(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
+        # 过门禁后才可提升
+        tuning.calibrate("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, date(2026, 12, 1),
+                         "14d+3sat", days_with_observation=14, saturated_days=3)
+        self.assertTrue(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
+        # 还原，避免污染
+        p = tuning.param("CONTEXT_HIGHER_DIM_SIM_THRESHOLD")
+        p.source, p.calibrated_at, p.history = PLACEHOLDER, None, []
+
+
 if __name__ == "__main__":
     unittest.main()

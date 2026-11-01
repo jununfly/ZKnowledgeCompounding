@@ -297,6 +297,7 @@ class MemoryReviewQueueRepository(ReviewQueueRepository):
 class MemoryAttentionRepository(AttentionRepository):
     def __init__(self) -> None:
         self._rows: dict[datetime, AttentionObservation] = {}
+        self._proposals: dict[object, dict[str, int]] = {}
 
     def record_observation(self, obs: AttentionObservation) -> None:
         self._rows[obs.day] = obs
@@ -308,6 +309,13 @@ class MemoryAttentionRepository(AttentionRepository):
         # 内存实现按插入序返回最近 days 条（不做真实日期计算，仅供单测）
         items = list(self._rows.values())
         return items[-days:] if days else items
+
+    def record_proposal(self, day, kind: str = "higher_dim") -> None:
+        self._proposals.setdefault(day, {}).setdefault(kind, 0)
+        self._proposals[day][kind] += 1
+
+    def count_proposals(self, day, kind: str = "higher_dim") -> int:
+        return self._proposals.get(day, {}).get(kind, 0)
 
 
 class MemoryStorage(Storage):
