@@ -31,6 +31,7 @@ from zkc import expiry as EX
 from zkc import faithfulness as F
 from zkc.context import ContextAssembler, HigherDimProposal
 from zkc.decay import refresh_decay
+from zkc.ingest import list_pending_classify, resolve_classify
 from zkc.repository.models import AttentionObservation
 from zkc.repository.protocols import Storage
 
@@ -140,6 +141,32 @@ def decide_review(
     result["gate"] = S.labeling_rate_from(store.attention.list_recent(30))
     result["today_observation"] = _obs_to_dict(store.attention.get(today))
     return result
+
+
+def classify_queue_view(store: Storage) -> dict:
+    """捕获弃权的人工定轨队列视图（P2.3 消费端上 UI，2026-11-02 补齐）。
+
+    路由引擎弃权（vague/低置信/离线不可判）的条目在此等待人工定轨；
+    resolve 后节点落轨 + review_queue 条目标记 resolved。
+    """
+    items = []
+    for it in list_pending_classify(store=store):
+        node = store.nodes.get(it.node_id)
+        # preview 服务端截断：全文可能上百 KB，API 不该整包下发
+        preview = (node.content[:120] if node and node.content else None) or None
+        items.append(dict(
+            id=str(it.id),
+            title=node.title if node else "(节点缺失)",
+            preview=preview,
+            created_at=(it.created_at.isoformat() if it.created_at else None),
+        ))
+    return dict(items=items, count=len(items))
+
+
+def classify_resolve_action(store: Storage, item_id: str, track: str) -> dict:
+    """人工定轨动作：track ∈ {static, dynamic}，非法即拒（resolve_classify 内校验）。"""
+    node = resolve_classify(UUID(item_id), track, store=store)
+    return dict(ok=True, node_id=str(node.id), track=track)
 
 
 def record_daily_observation(
@@ -327,6 +354,26 @@ REVIEW_HTML = """<!doctype html>
   form.close input { width: 5rem; padding: .3rem; margin-right: 1rem; }
   form.close button { padding: .4rem 1rem; font: inherit; cursor: pointer; }
   .flash { margin-top: .6rem; font-size: .85rem; }
+  .tasks { margin: 1.4rem 0 1.6rem; }
+  .tasks h2 { font-size: 1.1rem; margin: 0 0 .3rem; }
+  .tasks .hint { color: #666; font-size: .85rem; margin: 0 0 .8rem; }
+  .task-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: .7rem; }
+  .tcard { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: .8rem .9rem; box-shadow: 0 1px 2px rgba(0,0,0,.04); position: relative; }
+  .tcard .tag { display: inline-block; font-size: .7rem; padding: .12rem .55rem; border-radius: 999px; font-weight: 600; margin-bottom: .45rem; }
+  .tag.periodic { background: #eff6ff; color: #2563eb; }   /* 蓝 */
+  .tag.alert    { background: #fff7ed; color: #ea580c; }   /* 橙 */
+  .tag.once     { background: #f5f3ff; color: #7c3aed; }   /* 紫 */
+  .tcard .ttl { font-weight: 600; font-size: .95rem; line-height: 1.3; }
+  .tcard .det { color: #64748b; font-size: .8rem; margin: .35rem 0 .6rem; line-height: 1.4; }
+  .tcard .foot { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+  .tcard .status { font-size: .78rem; display: flex; align-items: center; gap: .35rem; color: #64748b; }
+  .dot { width: .55rem; height: .55rem; border-radius: 50%; display: inline-block; }
+  .dot.open { background: #2563eb; }       /* 待办=蓝点 */
+  .dot.done { background: #16a34a; }        /* 完成=绿点 */
+  .tcard button.done-btn { padding: .3rem .8rem; font: inherit; cursor: pointer; border: 1px solid #16a34a; color: #15803d; background: #f0fdf4; border-radius: 6px; }
+  .tcard.is-done { opacity: .62; }
+  .tcard.is-done .done-btn { display: none; }
+  .tasks .summary { font-size: .82rem; color: #888; margin-top: .6rem; }
 </style>
 </head>
 <body>
@@ -338,6 +385,19 @@ REVIEW_HTML = """<!doctype html>
   <div class="card"><b>标注率闸门</b><span id="gate">…</span></div>
   <div class="card"><b>预算估计</b><span id="budget">…</span></div>
   <div class="card"><b>今日观测</b><span id="obs">…</span></div>
+</div>
+
+<div class="tasks" id="taskPanel">
+  <h2>今日任务队列</h2>
+  <p class="hint">zj 待办以卡片呈现（原 TODO.md 过渡清单已迁移至此）。勾选完成即记录，不遗漏。</p>
+  <div class="task-cards" id="taskCards"><div class="empty">加载中…</div></div>
+  <div class="summary" id="taskSummary"></div>
+</div>
+
+<div id="classifyPanel">
+  <h2 style="font-size:1.1rem;margin-top:1.6rem;">人工定轨（捕获弃权队列）</h2>
+  <p class="hint">捕获时路由引擎弃权（LLM 判 vague/低置信、或离线不可判）的条目在此等待人工定轨。点静态/动态即落轨并闭环（P2.3）。</p>
+  <div id="classifyList"><div class="empty">加载中…</div></div>
 </div>
 
 <div id="list"><div class="empty">加载中…</div></div>
@@ -420,7 +480,58 @@ REVIEW_HTML = """<!doctype html>
     await load();
   });
   function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  function catLabel(c){return ({periodic:'周期', alert:'预警', once:'一次性'})[c] || c;}
+
+  async function loadTasks() {
+    const j = await (await fetch('/review/api/tasks')).json();
+    const cards = $('taskCards');
+    if (!j.items.length) { cards.innerHTML = '<div class="empty">今日无任务 ✓</div>'; }
+    else {
+      cards.innerHTML = j.items.map(it => `
+        <div class="tcard ${it.status==='done'?'is-done':''}" id="tk-${it.id}">
+          <span class="tag ${it.category}">${catLabel(it.category)}</span>
+          <div class="ttl">${escapeHtml(it.title)}</div>
+          <div class="det">${escapeHtml(it.detail || '')}</div>
+          <div class="foot">
+            <span class="status"><span class="dot ${it.status}"></span>${it.status==='done'?'已完成':'待办'}</span>
+            <button class="done-btn" onclick="completeTask('${it.id}')">完成</button>
+          </div>
+        </div>`).join('');
+    }
+    $('taskSummary').innerHTML = `开放 ${j.open_count} · 完成 ${j.done_count}`;
+  }
+  async function completeTask(id) {
+    await fetch('/review/api/tasks/complete', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'task_id=' + encodeURIComponent(id) });
+    await loadTasks();
+  }
   load();
+  loadTasks();
+
+  async function loadClassify() {
+    const j = await (await fetch('/review/api/classify')).json();
+    const list = $('classifyList');
+    if (!j.items.length) { list.innerHTML = '<div class="empty">无待定轨条目 ✓</div>'; return; }
+    list.innerHTML = j.items.map(it => `
+      <div class="item" id="cl-${it.id}">
+        <div class="title">${escapeHtml(it.title)}</div>
+        <div class="meta">${it.preview ? escapeHtml(it.preview.slice(0, 80)) : ''}</div>
+        <button class="valid"  onclick="resolveClassify('${it.id}','static')">静态轨</button>
+        <button class="changed" onclick="resolveClassify('${it.id}','dynamic')">动态轨</button>
+      </div>`).join('');
+  }
+  async function resolveClassify(id, track) {
+    const r = await fetch('/review/api/classify/resolve', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:'item_id=' + encodeURIComponent(id) + '&track=' + track });
+    const j = await r.json();
+    const el = $('cl-' + id);
+    if (el) { el.style.opacity = .5; el.querySelector('.title').insertAdjacentHTML('beforeend',
+      ` <span style="font-size:.75rem;color:#16a34a;">✓ 已定 ${j.track}</span>`); }
+    setTimeout(loadClassify, 800);
+  }
+  loadClassify();
 
   async function loadHd() {
     const j = await (await fetch('/review/api/higher-dim')).json();
@@ -516,6 +627,15 @@ def register_review_routes(app, store: Storage) -> None:
     @router.post("/review/api/observe")
     def observe_api(pushed: int = Form(0), queue_remaining: int = Form(0)) -> dict:
         return record_daily_observation(store, pushed, queue_remaining)
+
+    @router.get("/review/api/classify")
+    def classify_api() -> dict:
+        """人工定轨队列：捕获弃权条目（P2.3 消费端上 UI）。"""
+        return classify_queue_view(store)
+
+    @router.post("/review/api/classify/resolve")
+    def classify_resolve_api(item_id: str = Form(...), track: str = Form(...)) -> dict:
+        return classify_resolve_action(store, item_id, track)
 
     @router.post("/review/api/process-expired")
     def process_expired_api(attention_pressure: float = Form(0.0)) -> dict:
