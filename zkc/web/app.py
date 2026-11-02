@@ -14,7 +14,7 @@ import os
 from typing import Optional
 
 from fastapi import FastAPI, Form
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from zkc import routing, tuning
 from zkc.ingest import ingest_with_routing
@@ -28,6 +28,7 @@ from zkc.repository import get_storage
 from zkc.web.review import register_review_routes
 from zkc.web.metrics import register_metrics_routes
 from zkc.web.browse import register_browse_routes
+from zkc.web.taskqueue import register_taskqueue_routes
 
 CAPTURE_HTML = """<!doctype html>
 <html lang="zh">
@@ -168,6 +169,16 @@ def create_app(
 
     app = FastAPI(title="ZKC 快捕获")
 
+    # 异常守卫：pg 连接共享且「成功即 commit」，任一请求失败会把连接留成
+    # aborted transaction（后续请求 InFailedSqlTransaction 连坐）。
+    # 统一回滚兜底 + 返回 JSON（前端按 JSON 解析，纯文本 500 会报 SyntaxError）。
+    @app.exception_handler(Exception)
+    async def _rollback_guard(request, exc: Exception):
+        rb = getattr(store_, "rollback", None)
+        if callable(rb):
+            rb()
+        return JSONResponse(status_code=500, content={"detail": f"{type(exc).__name__}: {exc}"})
+
     @app.get("/", response_class=HTMLResponse)
     def capture_page() -> HTMLResponse:
         return HTMLResponse(CAPTURE_HTML)
@@ -201,5 +212,8 @@ def create_app(
 
     # P5.1 检索/复利产物浏览：挂载到同一 app（共享 store_）。
     register_browse_routes(app, store_)
+
+    # 1-9 任务队列 UI：挂载到同一 app（共享 store_），并入 /review 顶部。
+    register_taskqueue_routes(app, store_)
 
     return app

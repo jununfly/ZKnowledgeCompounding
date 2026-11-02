@@ -200,6 +200,41 @@ class LLMCallScore:
 
 
 @dataclass
+class TaskSpec:
+    """任务生成规格（1-9）：领域规则产出的「待入库任务」草样，无 id/status 等持久态字段。
+
+    upsert 幂等键 = (day, kind)，已存在则保留其 status（done 不被覆盖）。
+    """
+
+    day: datetime
+    category: str          # periodic | alert | once
+    kind: str              # daily_review | daily_close | weekly_snapshot | orphan_spike | labeled_judgment | commit_push
+    title: str
+    detail: str | None = None
+    due_date: datetime | None = None
+    source_rule: str | None = None
+    payload: dict | None = None
+
+
+@dataclass
+class TaskItem:
+    """任务队列项（对应 schema `task_queue`，1-9）。"""
+
+    id: UUID | None = None
+    day: datetime = field(default_factory=datetime.utcnow)
+    category: str = "periodic"
+    kind: str = ""
+    title: str = ""
+    detail: str | None = None
+    due_date: datetime | None = None
+    status: str = "open"           # open | done
+    source_rule: str | None = None
+    payload: dict | None = None
+    created_at: datetime | None = None
+    completed_at: datetime | None = None
+
+
+@dataclass
 class MetricInputs:
     """复利度量计算的普通数据快照（存储无关）。
 

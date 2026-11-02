@@ -27,6 +27,8 @@ from .models import (
     Node,
     ReviewItem,
     SchedulableNode,
+    TaskItem,
+    TaskSpec,
 )
 from .protocols import (
     ArtifactRepository,
@@ -38,6 +40,7 @@ from .protocols import (
     ReviewQueueRepository,
     ScoreRepository,
     Storage,
+    TaskQueueRepository,
 )
 
 
@@ -1015,6 +1018,85 @@ class PgScoreRepository(ScoreRepository):
         return out
 
 
+class PgTaskQueueRepository(TaskQueueRepository):
+    """task_queue（1-9）：规则自动生成的 zj 待办队列，按 (day, kind) 幂等 upsert。"""
+
+    def __init__(self, conn) -> None:
+        self._conn = conn
+
+    def ensure_today(self, specs: list[TaskSpec]) -> None:
+        if not specs:
+            return
+        cur = self._conn.cursor()
+        for s in specs:
+            d = s.day.date() if isinstance(s.day, datetime) else s.day
+            dd = s.due_date.date() if isinstance(s.due_date, datetime) else s.due_date
+            # ON CONFLICT(day,kind) DO NOTHING：保留已存在项的 status（done 不被覆盖）
+            cur.execute(
+                """
+                INSERT INTO public.task_queue
+                    (day, category, kind, title, detail, due_date, source_rule, payload)
+                VALUES (%s::date, %s, %s, %s, %s, %s::date, %s, %s)
+                ON CONFLICT (day, kind) DO NOTHING
+                """,
+                (d, s.category, s.kind, s.title, s.detail, dd,
+                 s.source_rule, Json(s.payload) if s.payload is not None else None),
+            )
+        self._conn.commit()
+
+    def list_open(self, day) -> list[TaskItem]:
+        return self._select(day, only_open=True)
+
+    def list_by_day(self, day) -> list[TaskItem]:
+        return self._select(day, only_open=False)
+
+    def _select(self, day, only_open: bool) -> list[TaskItem]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        sql = (
+            "SELECT id, day, category, kind, title, detail, due_date, status, "
+            "source_rule, payload, created_at, completed_at "
+            "FROM public.task_queue WHERE day=%(d)s::date"
+        )
+        if only_open:
+            sql += " AND status='open'"
+        sql += " ORDER BY created_at"
+        cur.execute(sql, dict(d=day.date() if isinstance(day, datetime) else day))
+        return [self._row_to_item(r) for r in cur.fetchall()]
+
+    def complete(self, task_id: UUID, at: datetime) -> TaskItem:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "UPDATE public.task_queue SET status='done', completed_at=%(at)s "
+            "WHERE id=%(id)s RETURNING id, day, category, kind, title, detail, "
+            "due_date, status, source_rule, payload, created_at, completed_at",
+            dict(id=str(task_id), at=at),
+        )
+        r = cur.fetchone()
+        if r is None:
+            raise KeyError(f"task_queue not found: {task_id}")
+        self._conn.commit()
+        return self._row_to_item(r)
+
+    def get(self, task_id: UUID) -> TaskItem | None:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT id, day, category, kind, title, detail, due_date, status, "
+            "source_rule, payload, created_at, completed_at "
+            "FROM public.task_queue WHERE id=%(id)s", dict(id=str(task_id))
+        )
+        r = cur.fetchone()
+        return self._row_to_item(r) if r else None
+
+    @staticmethod
+    def _row_to_item(r) -> TaskItem:
+        return TaskItem(
+            id=r["id"], day=r["day"], category=r["category"], kind=r["kind"],
+            title=r["title"], detail=r["detail"], due_date=r["due_date"],
+            status=r["status"], source_rule=r["source_rule"], payload=r["payload"],
+            created_at=r["created_at"], completed_at=r["completed_at"],
+        )
+
+
 class PgStorage(Storage):
     def __init__(self, conn=None) -> None:
         self._conn = conn or connect()
@@ -1026,6 +1108,7 @@ class PgStorage(Storage):
         self.review_queue = PgReviewQueueRepository(self._conn)
         self.attention = PgAttentionRepository(self._conn)
         self.scores = PgScoreRepository(self._conn)
+        self.tasks = PgTaskQueueRepository(self._conn)
 
     def record_transform(self, kind: str, params: dict) -> UUID:
         cur = self._conn.cursor(row_factory=dict_row)
@@ -1187,8 +1270,12 @@ class PgStorage(Storage):
         """测试用：清空所有领域表（保留 schema）。"""
         cur = self._conn.cursor(row_factory=dict_row)
         for t in ("llm_call_score", "attention_observation", "review_queue",
-                  "context_member", "context", "edge", "citation",
+                  "task_queue", "context_member", "context", "edge", "citation",
                   "modeling_artifact", "meta_claim", "node_history", "node",
                   "transform"):
             cur.execute(f"DELETE FROM public.{t}")
         self._conn.commit()
+
+    def rollback(self) -> None:
+        """丢弃当前 aborted transaction（见 protocols.Storage.rollback 背景）。"""
+        self._conn.rollback()

@@ -19,6 +19,8 @@ from .models import (
     Node,
     ReviewItem,
     SchedulableNode,
+    TaskItem,
+    TaskSpec,
 )
 from .. import tuning
 from .errors import ConcurrentModification
@@ -32,6 +34,7 @@ from .protocols import (
     ReviewQueueRepository,
     ScoreRepository,
     Storage,
+    TaskQueueRepository,
 )
 
 
@@ -485,8 +488,59 @@ class MemoryScoreRepository(ScoreRepository):
         return [self._rows[i] for i in reversed(self._seq)][:limit]
 
 
+class MemoryTaskQueueRepository(TaskQueueRepository):
+    """task_queue 内存实现（1-9）：进程内 dict，按 (day, kind) 幂等 upsert。"""
+
+    def __init__(self) -> None:
+        # (day, kind) -> TaskItem
+        self._rows: dict[tuple, TaskItem] = {}
+        self._by_id: dict[UUID, tuple] = {}
+        self._seq: list[tuple] = []
+
+    def ensure_today(self, specs: list[TaskSpec]) -> None:
+        for s in specs:
+            d = s.day.date() if isinstance(s.day, datetime) else s.day
+            key = (d, s.kind)
+            if key in self._rows:
+                return  # 保留已存在项的 status（done 不被覆盖）
+            item = TaskItem(
+                id=uuid4(), day=s.day, category=s.category, kind=s.kind,
+                title=s.title, detail=s.detail, due_date=s.due_date,
+                status="open", source_rule=s.source_rule, payload=s.payload,
+            )
+            self._rows[key] = item
+            self._by_id[item.id] = key
+            self._seq.append(key)
+
+    def list_open(self, day) -> list[TaskItem]:
+        return self._select(day, only_open=True)
+
+    def list_by_day(self, day) -> list[TaskItem]:
+        return self._select(day, only_open=False)
+
+    def _select(self, day, only_open: bool) -> list[TaskItem]:
+        d = day.date() if isinstance(day, datetime) else day
+        out = [replace(i) for k, i in self._rows.items()
+               if k[0] == d and (not only_open or i.status == "open")]
+        out.sort(key=lambda i: i.created_at or datetime.min)
+        return out
+
+    def complete(self, task_id: UUID, at: datetime) -> TaskItem:
+        key = self._by_id.get(task_id)
+        if key is None:
+            raise KeyError(f"task_queue not found: {task_id}")
+        item = self._rows[key]
+        item.status = "done"
+        item.completed_at = at
+        return replace(item)
+
+    def get(self, task_id: UUID) -> TaskItem | None:
+        key = self._by_id.get(task_id)
+        return replace(self._rows[key]) if key is not None else None
+
+
 class MemoryStorage(Storage):
-    """聚合 6 个内存仓库；provenance 用自增计数模拟 transform id。"""
+    """聚合内存仓库；provenance 用自增计数模拟 transform id。"""
 
     def __init__(self) -> None:
         self.nodes = MemoryNodeRepository()
@@ -497,6 +551,7 @@ class MemoryStorage(Storage):
         self.review_queue = MemoryReviewQueueRepository()
         self.attention = MemoryAttentionRepository()
         self.scores = MemoryScoreRepository()
+        self.tasks = MemoryTaskQueueRepository()
         self._transform_seq = 0
 
     def record_transform(self, kind: str, params: dict) -> UUID:

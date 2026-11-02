@@ -20,6 +20,8 @@ from .models import (
     Node,
     ReviewItem,
     SchedulableNode,
+    TaskItem,
+    TaskSpec,
 )
 
 
@@ -283,6 +285,28 @@ class AttentionRepository(ABC):
         供 propose_higher_dim_daily 当日跳过，确保 dismiss 真生效（否则每刷新都再提议）。"""
 
 
+class TaskQueueRepository(ABC):
+    @abstractmethod
+    def ensure_today(self, specs: list[TaskSpec]) -> None:
+        """幂等 upsert 当日任务：按 (day, kind) 去重，已存在则保留其 status（done 不被覆盖）。"""
+
+    @abstractmethod
+    def list_open(self, day) -> list[TaskItem]:
+        """某日全部未完成（status='open'）任务，按创建时间升序。"""
+
+    @abstractmethod
+    def list_by_day(self, day) -> list[TaskItem]:
+        """某日全部任务（含 done），按创建时间升序——供视图统计开放/完成数。"""
+
+    @abstractmethod
+    def complete(self, task_id: UUID, at: datetime) -> TaskItem:
+        """标记完成：status='done' + completed_at=at；返回更新后的项。"""
+
+    @abstractmethod
+    def get(self, task_id: UUID) -> TaskItem | None:
+        """按 id 取一项（供完成动作回填）。"""
+
+
 class ScoreRepository(ABC):
     """llm_call_score（1-5-6）：轻量 LLM 调用度量（Langfuse 替代），append-only。"""
 
@@ -300,7 +324,7 @@ class ScoreRepository(ABC):
 
 
 class Storage(ABC):
-    """门面：聚合 8 个仓库 + provenance 助手。应用只依赖此门面。"""
+    """门面：聚合 9 个仓库 + provenance 助手。应用只依赖此门面。"""
 
     nodes: NodeRepository
     claims: ClaimRepository
@@ -310,6 +334,7 @@ class Storage(ABC):
     review_queue: ReviewQueueRepository
     attention: AttentionRepository
     scores: ScoreRepository
+    tasks: TaskQueueRepository
 
     @abstractmethod
     def record_transform(self, kind: str, params: dict) -> UUID:
@@ -338,6 +363,15 @@ class Storage(ABC):
     def revert_assembly(self, transform_id: UUID) -> int:
         """撤消装配：删 transform -> FK CASCADE 撤 context + members（produced_by 级联）。
         返回撤掉的 context 数。"""
+
+    def rollback(self) -> None:
+        """丢弃当前未提交事务（pg 实现），memory 为 no-op。
+
+        背景：pg 连接共享且各 repo 方法「成功即 commit」，但失败路径无人回滚——
+        一次 CheckViolation 会让连接进入 aborted transaction，后续所有请求
+        InFailedSqlTransaction 连坐。web 层异常守卫统一调这里兜底。
+        默认 no-op：memory 后端无事务语义。
+        """
 
     @abstractmethod
     def discover_higher_dim(self, seed_node_id: UUID, k: int = 5) -> list:
