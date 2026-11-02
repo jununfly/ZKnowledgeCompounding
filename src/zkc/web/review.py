@@ -389,7 +389,7 @@ REVIEW_HTML = """<!doctype html>
 
 <div class="tasks" id="taskPanel">
   <h2>今日任务队列</h2>
-  <p class="hint">zj 待办以卡片呈现（原 TODO.md 过渡清单已迁移至此）。勾选完成即记录，不遗漏。</p>
+  <p class="hint">zj 待办以卡片呈现（过渡清单已迁移为规则自动生成的任务队列）。勾选完成即记录，不遗漏。</p>
   <div class="task-cards" id="taskCards"><div class="empty">加载中…</div></div>
   <div class="summary" id="taskSummary"></div>
 </div>

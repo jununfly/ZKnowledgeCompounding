@@ -4,7 +4,7 @@
 >
 > **本文件不再作为追踪基线，禁止再改状态列。** 它保留的价值只有一条：记录「当初为什么拆这 22 个 topic」（§0 闭环模型 + §2 逐条详述）。
 >
-> - **新的追踪基线** = `docs/plans/ZKC-implementation-plan.md`（§2 决策基线 / §4 任务 / §5 风险登记册）。
+> - **新的追踪基线** = `docs/archive/plans/ZKC-implementation-plan.md`（§2 决策基线 / §4 任务 / §5 风险登记册）。
 > - **已关闭 topic 的权威结论** = 各 spike 的 `README.md`（14 个，全 passed）+ `docs/architecture/ZKC-architecture-v1.2.md`。
 > - **仍然 open 的 topic** 已迁入实施计划：T0.2→P2.1、T6.1→P5.1、T2.1(编码器)→§5 **R16**；其余见 §1 表「处置」列与文末迁移表。
 > - 冻结原因：zj 拍板 2026-10-31（计划 §0.1 ⑥）。原状态列 22 项全「待调研」，与 14 个已完成的 spike 脱节（R9 文档债务）；**三处维护同一份状态必然漂移**，故单点冻结。
@@ -44,15 +44,15 @@ flowchart LR
 | T0.1 | 0 摄入 | 双轨分流判定（静态/动态） | P1 | ✅ 已关闭 | `spikes/spike-02-dual-track-routing`、`spike-03-vague-routing`（DecisionRouter + 双信号弃权） |
 | T0.2 | 0 摄入 | 低摩擦快捕获 UX + 离线可用 | P1 | ⬜ **open → 待做** | 无 spike 覆盖 → **计划 P2.1**（已计入工期） |
 | T0.3 | 0 摄入 | 多模态/富文本入口 | P2 | ⏸ 延后 | 无 spike；**P6 之后**（计划 §1.3） |
-| T1.1 | 1 存储 | 数据模型载体 | **P0** | ✅ 已关闭 | `spike-01` + `storage-lifecycle-2026-10-28-draft.md`（Postgres16+pgvector） |
+| T1.1 | 1 存储 | 数据模型载体 | **P0** | ✅ 已关闭 | `spike-01` + `docs/archive/research/storage-lifecycle-2026-10-28-draft.md`（Postgres16+pgvector） |
 | T1.2 | 1 存储 | 生命周期与衰减建模 | **P0** | ✅ 已关闭 | `spike-01`（decay 线性 / SURFACE 0.6 / ROT 0.9）+ `spike-08-expiry-routing` |
 | T1.3 | 1 存储 | 本地优先 vs 服务端 | **P0** | ✅ 已关闭 | `storage-lifecycle` 调研；**多端同步延后**（架构 §7） |
 | T2.1 | 2 表示 | 语义表示（embedding） | P1 | 🟡 **部分 open** | `spike-02` 实测编码器候选；**最终编码器未定 → 计划 §5 R16**（P1 迁移前必须定死，换编码器 = 重建索引） |
 | T2.2 | 2 表示 | topic 组织（LLM/预定义/混合） | P2 | ⏸ 延后 | 无 spike；**P6 之后**（计划 §1.3） |
 | T2.3 | 2 表示 | 元认知 claim 结构 | P1 | ✅ 已关闭 | `spike-01`（`meta_claim` + `evidence_refs` NOT NULL）+ `spike-13`（D9 faithfulness 字段） |
-| T3.1 | 3 变换 | 半自动蒸馏算子 + human-in-loop | **P0** | ✅ 已关闭 | `spike-04`/`spike-10`（模型与质量）+ `spike-13`/`13b`（HITL 闸门）+ `distill-llm-2026-10-29-draft.md` |
-| T3.2 | 3 变换 | 结合/建模算子 | P1 | ✅ 已关闭 | `spike-05-combine-operator` + `combine-classify-2026-10-29-draft.md` |
-| T3.3 | 3 变换 | LLM 编排与本地化 | **P0** | ✅ 已关闭 | `distill-llm-2026-10-29-draft.md`（Ollama + Instructor + LangGraph） |
+| T3.1 | 3 变换 | 半自动蒸馏算子 + human-in-loop | **P0** | ✅ 已关闭 | `spike-04`/`spike-10`（模型与质量）+ `spike-13`/`13b`（HITL 闸门）+ `docs/archive/research/distill-llm-2026-10-29-draft.md` |
+| T3.2 | 3 变换 | 结合/建模算子 | P1 | ✅ 已关闭 | `spike-05-combine-operator` + `docs/archive/research/combine-classify-2026-10-29-draft.md` |
+| T3.3 | 3 变换 | LLM 编排与本地化 | **P0** | ✅ 已关闭 | `docs/archive/research/distill-llm-2026-10-29-draft.md`（Ollama + Instructor + LangGraph） |
 | T4.1 | 4 拓扑 | 自闭环 vs 更高维 context 自动发现 | P2 | ✅ 已关闭 | `spike-06-context-assembly` |
 | T4.2 | 4 拓扑 | context membership 维护 | P2 | 🟡 关闭·带 open | `spike-06`（`context_member` junction）；**写放大未压测 → 计划 §5 R15**（降级 = 查询时动态视图） |
 | T5.1 | 5 调度 | 注意力信号模型 | P1 | ✅ 已关闭 | `spike-07`（度量）+ `spike-09-review-interval`（decay/注意力预算） |
@@ -62,7 +62,7 @@ flowchart LR
 | T7.1 | 7 度量 | 复利度量基础设施 | P1 | ✅ 已关闭 | `spike-07-compounding-metrics` |
 | X.1 | 横切 | 隐私与安全 | P1 | 🔀 并入不变量 | 无 spike；**并入第一性不变量 5（本地/离线优先），不再单列 topic**（计划 §1.3） |
 | X.2 | 横切 | 与 ZAgentic 复用边界 | P1 | ⛔ 非目标 | 无 spike；**MVP 不与 ZAgentic 共享代码/运行时**，仅保留 provider/storage seam（计划 §1.3） |
-| X.3 | 横切 | 既有工具可取点 | P2 | ✅ 已关闭 | `oss-coverage-2026-10-28-draft.md`（+ amendment）；只作 unit-capability 模式源 |
+| X.3 | 横切 | 既有工具可取点 | P2 | ✅ 已关闭 | `docs/archive/research/oss-coverage-2026-10-28-draft.md`（+ amendment）；只作 unit-capability 模式源 |
 
 **统计**：✅ 已关闭 14 · 🟡 关闭带 open 2 · ⬜ open 转待做 2 · ⏸ 延后 2 · 🔀/⛔ 转非目标 2。
 
@@ -175,7 +175,7 @@ flowchart LR
 
 ## 3. 建议调研顺序（先打最难回退的决策）
 
-> **本节已失效**（调研已全部完成，2026-10-31 冻结）。保留仅作历史记录；实际执行顺序见 `docs/plans/ZKC-implementation-plan.md` §3。
+> **本节已失效**（调研已全部完成，2026-10-31 冻结）。保留仅作历史记录；实际执行顺序见 `docs/archive/plans/ZKC-implementation-plan.md` §3。
 
 1. **T1.1 / T1.2 / T1.3**（存储与生命周期载体 + 本地优先）— gate 一切数据模型与架构。
 2. **T3.3 / T3.1**（LLM 编排与本地化 + 半自动蒸馏）— gate 变换引擎的成本、隐私与可行性。

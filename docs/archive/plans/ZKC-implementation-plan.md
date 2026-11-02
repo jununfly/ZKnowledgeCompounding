@@ -12,8 +12,8 @@
 >
 > 引用文档（均为当前最新版）：
 > - `docs/prds/ZKnowledgeCompounding-PRD.md`（v0.2）
-> - `docs/architecture/ZKC-architecture-v1.2.md`（v1.2，顶部「待 zj 复核」→ **已复核**；逐条审计留痕见 §11 + `docs/plans/ZKC-architecture-v1.2-review-checklist.md`）
-> - `docs/research/RESEARCH-TOPICS.md`（22 topic；**2026-10-31 已冻结为只读历史索引**，open 项已迁入本计划 §4/§5）
+> - `docs/architecture/ZKC-architecture-v1.2.md`（v1.2，顶部「待 zj 复核」→ **已复核**；逐条审计留痕见 §11 + `docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`）
+> - `docs/archive/research/RESEARCH-TOPICS.md`（22 topic；**2026-10-31 已冻结为只读历史索引**，open 项已迁入本计划 §4/§5）
 > - `spikes/spike-{01..13,13b,14}-*/README.md`（**15 个**，全 passed）
 > - **代码资产**：`zkc/`（应用包 + 阈值表 + 迁移器）、`migrations/`（0001 D1–D9）、`tests/`（28 tests）——见 §10
 
@@ -44,7 +44,7 @@
 | # | TODO | 拍板结论 | 落地动作 | 状态 |
 |---|---|---|---|---|
 | ① | `上线`定义 | **本地 web 应用**（FastAPI + 服务端渲染极简页，`localhost:8000`）。交付 = 本机可启动 + README 启动脚本；**不做**打包/签名/对外分发/桌面壳/TUI | §1.2 已填；ADR-0001 | ✅ |
-| ② | 架构「待 zj 复核」 | **AI 先做三角一致性审计**（架构 v1.2 vs 14 个 spike vs PRD v0.2），产出逐条清单；zj **只批 A/B 档异常项**，C 档整批认可 | 审计已交付：`docs/plans/ZKC-architecture-v1.2-review-checklist.md`——**A 档 12 项需修订 / B 档 3 项转 risk / C 档 62 项已验证**；**zj 已全批，A 档 12 项已回填架构（8 处）+ PRD（4 处）、B 档 3 项转 R13/R14/R15、C 档整批认可**，架构顶部已改「已复核」 | ✅ |
+| ② | 架构「待 zj 复核」 | **AI 先做三角一致性审计**（架构 v1.2 vs 14 个 spike vs PRD v0.2），产出逐条清单；zj **只批 A/B 档异常项**，C 档整批认可 | 审计已交付：`docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`——**A 档 12 项需修订 / B 档 3 项转 risk / C 档 62 项已验证**；**zj 已全批，A 档 12 项已回填架构（8 处）+ PRD（4 处）、B 档 3 项转 R13/R14/R15、C 档整批认可**，架构顶部已改「已复核」 | ✅ |
 | ③ | Phase 工期估算 | **已定档：4 h/周** → 合计 **94–126 h = 24–32 周（6–8 个月）** + 观察期 | §3 / §3.1 已填；**连带启用 R10 降级判定**（§3.2） | ✅ |
 | ④ | 占位阈值校准 | **冻结为 v1 常量表 + 来源标签 + 校准门禁**：建 `zkc/tuning.py`（`{value, source, calibrated_at}`）；budget 初值 **1.0/天**（原 1.2 无出处，弃）；AIMD **保留 1.5/0.7**；其余（α=0.3、±30%、×2、p25、oversubscribe×1.5、PRESSURE_DEFER 0.8）原样冻结；**顺带统一 5 处重复定义的 `ROT_THRESHOLD=0.9`** | §2 + P1.4 | ✅ |
 | ⑤ | 已捕获规则统一 | **单程票**：已捕获 → 拉长观察 28d → 到期即 ARCHIVE，**永不回 DISTILL**。边界 1 = `produced_by` 级联撤销后按未捕获基线重算且写 D7 留痕；边界 2 = **self_loop 压过已捕获**（修 spike 09 内 L1/L2 顺序矛盾） | 架构 §6.5 / §8 已改；ADR-0002；P4.5 具体化 | ✅ |
@@ -194,7 +194,7 @@
 > **⚠️ 执行顺序（S1 已生效）**：**P0 → P1 → P2 → P4 → P3 → P5 → P6**。下面清单的**书写顺序不等于执行顺序**（编号保留原义），按上方序列执行。
 
 **P0 文档收口**
-- [x] P0.1 架构文档「待 zj 复核」逐条清零或转 risk §5 ✅ **已完成 2026-10-31**：三角审计清单 `docs/plans/ZKC-architecture-v1.2-review-checklist.md`（A 档 12 / B 档 3 / C 档 62）；**zj 已全批 → A 档回填架构（8 处）+ PRD（4 处）、B 档转 R13/R14/R15、C 档整批认可**；架构顶部状态已改为「已复核」
+- [x] P0.1 架构文档「待 zj 复核」逐条清零或转 risk §5 ✅ **已完成 2026-10-31**：三角审计清单 `docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`（A 档 12 / B 档 3 / C 档 62）；**zj 已全批 → A 档回填架构（8 处）+ PRD（4 处）、B 档转 R13/R14/R15、C 档整批认可**；架构顶部状态已改为「已复核」
 - [x] P0.2 RESEARCH-TOPICS **冻结为历史索引** ✅ **已完成 2026-10-31**：顶部标「🔒 只读 · 已被取代」；§1 状态列改为「处置 + 证据」（已关闭 14 / 关闭带 open 2 / open 转待做 2 / 延后 2 / 转非目标 2）；新增 §1.1 迁移表（T0.2→P2.1、T6.1→P5.1、T2.1→R16、T4.2→R15、T0.3/T2.2 延后、X.1/X.2/X.3 转非目标）；§3 调研顺序标失效
 - [x] P0.3 本计划 §2 决策基线 + §5 风险登记册评审签字 —— **P0 唯一剩余项（2026-10-31 已签字闭环）**：zj 通读 §2（22 行）+ §5（19 条：14 活跃 + 5 已解决）后一次性签字即可闭环 P0（✅ 签字；F1–F4 同步修订）
 - [x] P0.4 建 `ZJ-CONTEXT.md` 术语表 + `docs/zj-adr/` ✅ **已完成 2026-10-31**：`ZJ-CONTEXT.md`（术语表：双轨/双时态/单程票/饱和日/删失观测/外生锚/活跃日）+ `docs/zj-adr/0001-mvp-delivery-form.md`（本地 web）+ `docs/zj-adr/0002-captured-single-way-ticket.md`（单程票）
@@ -415,7 +415,7 @@ python -c "from zkc import tuning; print(tuning.get('ROT_THRESHOLD'))"
 ## 11. 架构 v1.2 逐条复核清单（外移文档）
 
 > 按 §0 铁律 7（内容超一屏即外移），清单本体不在本文件，见：
-> **`docs/plans/ZKC-architecture-v1.2-review-checklist.md`**
+> **`docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`**
 >
 > 口径：三角对账（架构 v1.2 全文 / 14 个 spike README / PRD v0.2），逐条带行号证据。
 > **A 档 12 项 = 需修订**（已给可直接替换的新措辞）；**B 档 3 项 = 转 risk**；**C 档 62 项 = 已验证·建议整批认可**。

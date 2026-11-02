@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v1.2
 
-> 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §8「已定（spike 12/13/13b）」与 §10 项 1–5；§9 已补条目 ⑨）。**复核状态：三角审计已完成、zj 已批 A/B 档（2026-10-31）**——A 档 12 项已回填本文档、B 档 3 项转计划 §5 风险登记册，清单见 `docs/plans/ZKC-architecture-v1.2-review-checklist.md`
+> 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §8「已定（spike 12/13/13b）」与 §10 项 1–5；§9 已补条目 ⑨）。**复核状态：三角审计已完成、zj 已批 A/B 档（2026-10-31）**——A 档 12 项已回填本文档、B 档 3 项转计划 §5 风险登记册，清单见 `docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -8,11 +8,11 @@
 
 | 报告 | 文件 | reportHash |
 |---|---|---|
-| 开源候选覆盖调研 | `docs/research/oss-coverage-2026-10-28-draft.md` | `50924a7c…` |
-| 结论修订说明 | `docs/research/oss-coverage-amendment-2026-10-29.md` | — |
-| 存储 / 生命周期载体（T1.1/T1.2/T1.3） | `docs/research/storage-lifecycle-2026-10-28-draft.md` | `0e8de561…` |
-| 蒸馏 / LLM 编排（T3.1/T3.3） | `docs/research/distill-llm-2026-10-29-draft.md` | `0d044028…` |
-| 分流 / 结合算子（T0.1/T3.2） | `docs/research/combine-classify-2026-10-29-draft.md` | `3e35b70b…` |
+| 开源候选覆盖调研 | `docs/archive/research/oss-coverage-2026-10-28-draft.md` | `50924a7c…` |
+| 结论修订说明 | `docs/archive/research/oss-coverage-amendment-2026-10-29.md` | — |
+| 存储 / 生命周期载体（T1.1/T1.2/T1.3） | `docs/archive/research/storage-lifecycle-2026-10-28-draft.md` | `0e8de561…` |
+| 蒸馏 / LLM 编排（T3.1/T3.3） | `docs/archive/research/distill-llm-2026-10-29-draft.md` | `0d044028…` |
+| 分流 / 结合算子（T0.1/T3.2） | `docs/archive/research/combine-classify-2026-10-29-draft.md` | `3e35b70b…` |
 | Spike 01 双轨 schema + decay | `spikes/spike-01-dual-track-decay/README.md` | 18 tests passed |
 | Spike 02 双轨分流判定（含限定） | `spikes/spike-02-dual-track-routing/README.md` | 9 tests passed（结论带限定，见 §8）；**真编码器复核已完成（Ollama nomic/qwen3，HF 被墙改走本地栈）** |
 | Spike 03 模糊路由 vs DecisionRouter | `spikes/spike-03-vague-routing/README.md` | 9 tests（1 expectedFailure：nomic 3-way 不安全）；**推荐 DecisionRouter 作主方案** |
@@ -29,6 +29,8 @@
 | Spike 13b-probe 本地 7B-9B 实证 | `spikes/spike-13b-probe/README.md` | **9B（qwen3.5:9b-mlx 8.9GB 已拉取）本机实证否决**：~6min/条延迟 + JSON 不合规（吐 `Label/Evidence/Overall` 文本），判定能力正确（g6 矛盾识别对、引用来源 `[s1]` 对）→ 死亡因是**速度与格式**（硬件绑定），非能力缺陷；触发 Spike 13 降级链第 2 级（字面 rubric 预过滤 + 人工兜底） |
 | **Spike 14 embedding 编码器定维（R16 关闭）** | `spikes/spike-14-embedding-dim/README.md` | **2026-10-31 实测**：`nomic-embed-text` = **768d**（冷 0.65s / warm 12ms / 32 条 0.30s ≈ 9.5ms/条 / 274MB）、`qwen3-embedding` = **4096d**（3.54s / 189ms / 5.86s ≈ 183.2ms/条 / 4.7GB）；**两者输出均已 L2 归一化**（可直接 `vector_cosine_ops`）。**选型 = nomic 768d**，§5 `vector(768)` 由占位转为已定。**用途硬约束**：仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3、模糊误提交 1；该职责归 DecisionRouter）。**可逆路径**：加列 `embedding_strong vector(4096)` 属增量，不重建 768d 索引。限定：单次采样、未测中文召回质量（→ 计划 R18） |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
+
+> 注：上述 5 份 sealed 调研报告已于 2026-11-02 归档至 `docs/archive/research/`（reportHash 不变、内容未改、仅路径变更），证据链完整保留。
 
 ---
 

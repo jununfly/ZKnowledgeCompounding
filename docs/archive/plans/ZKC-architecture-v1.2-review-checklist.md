@@ -124,6 +124,6 @@ ALTER TABLE meta_claim ADD COLUMN faithfulness_status text, ADD COLUMN judge_raw
 
 - **已读全文**：架构 v1.2（404 行，含被截断的 374 行分段补全）、PRD v0.2（208 行）、`spikes/spike-01…13b` 全部 14 份 README.md。
 - **额外读（为核数）**：`spike-12/test_judge.py`（计得 14 个 `def test_`，坐实「14 tests passed」）、`spike-09/test_spike_interval.py`(22) 与 `test_budget_estimator.py`(22)，坐实 44 = 22+22 → 故 A1 的「16」判为错值、A2 的「22」判为遗漏。
-- **跳过**：各 spike 的 `.py` 实现与 `report_*.json` / `multisample*.json`（仅 grep 校验数值）；`docs/research/*` 5 份 sealed 报告（不在三角内）；`docs/plans/ZKC-implementation-plan.md`（未纳入）。
+- **跳过**：各 spike 的 `.py` 实现与 `report_*.json` / `multisample*.json`（仅 grep 校验数值）；`docs/research/*` 5 份 sealed 报告（不在三角内）；`docs/archive/plans/ZKC-implementation-plan.md`（未纳入）。
 - **读不到的**：无。
 - **遗留提示（非本档结论）**：`spike-12:3` 状态仍写「进行中」，与架构按「已完成 / 14 tests」引用口径不符，属 spike 侧文档待更新，建议一并回填。

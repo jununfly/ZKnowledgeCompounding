@@ -1,6 +1,6 @@
 """ZKC · 半自动蒸馏算子（P3.1，生产落地 distill-llm 调研）。
 
-设计要点（调研 docs/research/distill-llm-2026-10-29-draft.md）：
+设计要点（调研 docs/archive/research/distill-llm-2026-10-29-draft.md）：
 - MVP 组合 = Ollama(本地推理) + Instructor(结构化抽取与校验重试) + LangGraph(编排 + HITL)，
   provider 收敛到 Instructor 统一接口。但**本切片不引入这些重依赖**：
   1) 本仓沙箱/本机装不上（langgraph/instructor 重依赖），且

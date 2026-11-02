@@ -1,6 +1,6 @@
 # 结论修订说明（2026-10-29）
 
-> 修订对象：`docs/research/oss-coverage-2026-10-28-draft.md`
+> 修订对象：`docs/archive/research/oss-coverage-2026-10-28-draft.md`
 > （2026-10-28 开源候选覆盖调研，reportHash `50924a7c4f9306d1315575c75e626afc6396d76a6338227a607b2a25d6ce102c`）
 > 修订起因：双时态（bitemporal）与双轨（dual-track）的概念辨析
 > 状态：**本说明是权威增量**；原报告为 sealed artifact，不可手改，保留作对照。

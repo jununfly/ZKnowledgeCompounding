@@ -1,6 +1,6 @@
 {
   "title": "ZKC MVP 上线（P0→P6，4h/周）",
-  "description": "来源：docs/plans/ZKC-implementation-plan.md v0.6。执行顺序按 §3.2 S1：P0→P1→P2→P4→P3→P5→P6（编号=执行顺序，Phase 原编号保留在标签内供追溯）。节点完成口径以实施计划 §4 为准。",
+  "description": "来源：docs/archive/plans/ZKC-implementation-plan.md v0.6。执行顺序按 §3.2 S1：P0→P1→P2→P4→P3→P5→P6（编号=执行顺序，Phase 原编号保留在标签内供追溯）。节点完成口径以实施计划 §4 为准。",
   "version": 1,
   "nodes": {
     "1": {
@@ -31,6 +31,11 @@
           "q": "P6 上线判定为什么改成「累计 ≥20 个带标注复审动作」？",
           "answer": "因 zj 每周仅 4 h（≈每周 1 次触碰），与原判定「≥7 个活跃日每天打开」不可共存。R10 降级判定由「触发后启用」改为「默认启用」。",
           "note": "「≥7 活跃日」降为可选加强档；标注率 ≥70% 仍是硬门槛；第二人可安装不属 MVP。残余风险：连 20 个动作都攒不出 → 需再降级到「人工显式 verdict 驱动 L3」。"
+        },
+        {
+          "q": "roadmap 与代码/文档的内容耦合如何处理（解耦原则）？",
+          "answer": "内容解耦、不动目录。roadmap 节点 label/notes 只描述意图/能力/状态，禁止硬编码代码文件路径、迁移编号当真理、参数/测试/节点实时计数；互引只走稳定标识符（ADR id / 节点 id / 能力名）并指向运行态真相（如 /tuning）。code 注释可引节点 id/ADR 作溯源锚，但不得读或依赖 docs/roadmap 文件。完整规则见 docs/BOUNDARIES.md。",
+          "note": "2026-11-02 zj 拍板"
         }
       ],
       "notes": "",
@@ -277,7 +282,7 @@
     "1-2-3": {
       "id": "1-2-3",
       "uid": "01a18dff5b7f-a023c0edf3",
-      "label": "P1.4 阈值表 zkc/tuning.py（完成时点 29 参数；现 REGISTRY 49，实时数以 /tuning 为准）",
+      "label": "P1.4 阈值表（tuning 模块；参数数以 /tuning 实时为准，禁止硬编码快照）",
       "status": "completed",
       "mode": "explore",
       "parent": "1-2",
@@ -983,12 +988,12 @@
       "id": "1-7-4",
       "uid": "01a18dffd56d-e53ff053fc",
       "label": "P6.4 达成累计 ≥20 个带标注复审动作 + 标注率 ≥70%（R10 降级判定）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-7",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "2026-11-02 zj 裁定：本节点『不做跟踪』——机制已建（每日复审队列 UI 1-4-2 / 1-9 + task_queue.py LABEL_JUDGMENT_THRESHOLD=20 告警已落地），目标达成由真实使用数据被动驱动，不再作为活动 roadmap 节点跟踪。实际达成判定（累计 ≥20 带标注复审 + 滚动 7 天标注率 ≥70%，R10 降级判定）改由 PRD §9 TODO 跟踪；该 TODO 在目标达成后从 PRD 删除。roadmap 节点仅记录『机制已建/已上线』，不冒充目标已达成。",
       "layer": "plan",
       "rounds": 1
     },
@@ -1291,7 +1296,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-02 16:05:57",
+    "updated": "2026-11-02 21:43:17",
     "md_file": "ROADMAP.md"
   },
   "edges": [

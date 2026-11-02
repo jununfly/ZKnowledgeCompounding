@@ -197,6 +197,7 @@ flowchart LR
 - [ ] **每日复审队列 UI（MVP 必选 · 2026-10-29 zj 已同意纳入）**：`decay ≥ 0.6` 条目清单 + **复审结果标注**（`still_valid`/`changed`/`stale`）+ **每日收口埋点**（`pushed`/`completed`/`queue_remaining`）。它是 interval 反馈与 budget 估计两个闭环唯一的外生锚载体，验收门槛见 §6 流 C。
 - [ ] 选定最小垂直切片（MVP 垂直原型）入手顺序与验收门槛。
 - [ ] 进入「架构设计」或「最小垂直切片原型」。
+- [ ] **P6.4 校准观察期目标（已移出 roadmap 活动跟踪 · 2026-11-02）**：累计达成 ≥20 个带标注复审动作（still_valid/changed/stale）+ 滚动 7 天标注率 ≥70%（R10 降级判定）。该目标由真实使用数据被动驱动，不再作为 roadmap 节点跟踪；**本 TODO 在目标达成后从本 PRD 删除**。达成判定以 `src/zkc/task_queue.py` 的 `LABEL_JUDGMENT_THRESHOLD=20` 告警为准。
 
 ---
 
