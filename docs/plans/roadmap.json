@@ -1189,13 +1189,60 @@
       "id": "1-9",
       "uid": "01a19750ef7c-736a811929",
       "label": "任务队列 UI：zj 的待办任务以队列形式呈现到 web UI（/review 或独立页），避免遗忘（观察期临时靠 TODO.md 过渡）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Q1 形态：独立页还是并入 /review？",
+          "answer": "并入 /review 顶部，不建独立页（每日任务本就在 /review 处理，单一入口避免遗忘）",
+          "note": ""
+        },
+        {
+          "q": "Q2 数据模型：任务存哪、怎么来？",
+          "answer": "新建轻量 task_queue 表 + 规则自动生成（周期/预警/一次性，不人工录入）",
+          "note": ""
+        },
+        {
+          "q": "Q3 交互：只读还是可操作？",
+          "answer": "可勾选完成 + 完成联动现有闭环（收口写 pushed/queue_remaining、复审联动标注率统计）",
+          "note": ""
+        },
+        {
+          "q": "Q4 TODO.md 废弃边界",
+          "answer": "全部迁移，上线后删 TODO.md（周期进代码、预警进队列、一次性建条目）",
+          "note": ""
+        },
+        {
+          "q": "UI 形态与视觉方向",
+          "answer": "任务卡片形式呈现与交互；参照现代 SaaS 看板风（白底大圆角/蓝主色/pastel标签/状态圆点+计数胶囊/进度胶囊），图片 image#1",
+          "note": ""
+        },
+        {
+          "q": "实现与验证（2026-11-02）",
+          "answer": "已完成：0009 建表 + TaskItem/TaskQueueRepository 协议 + pg/memory 双实现 + Storage 接线；zkc/task_queue.py 生成规则(周期/预警/一次性)+视图+完成；zkc/web/taskqueue.py 路由 + /review 顶部任务卡片 UI(看板卡片风)；tests/test_task_queue.py 5 条全过；全量 403 OK；0009 迁移在套件内 apply/revert 验证通过（PG 有效）。TODO.md 删除待显式触发（Q4 上线后删，未擅自删）。",
+          "note": ""
+        },
+        {
+          "q": "Q4 收尾：TODO.md 废弃执行",
+          "answer": "2026-11-02 zj 显式触发删除 TODO.md，Q4 全部迁移闭环。git 状态为未提交删除（D），随下次 commit checkpoint 一并落库。",
+          "note": ""
+        },
+        {
+          "q": "快捕获 500 根因修复（2026-11-02，实跑发现，存量漂移非 1-9 引入）",
+          "answer": "根因①：0001 对 review_queue.action 的 CHECK 只含 distill/archive/abstain，P2.2 弃权路径入队 classify；memory 无校验单测全绿，PG 实库必现（观察期 lexical gate 恒弃权）。修复：迁移 0010 放宽约束含 classify（已应用 sha=e35595f0da4c）。根因②：pg repo 成功即 commit、失败无回滚，一次违例后共享连接 aborted 连坐后续请求。修复：Storage.rollback()（pg 实/memory no-op）+ create_app 异常守卫（回滚 + JSON 500，前端不再报 SyntaxError）。回归：tests/test_capture_error_guard.py 4 条（PG 约束落库/违例回滚复活/memory 500 JSON+可复用）；全量 407 OK。实库探针已清理；浏览器 FormData 走 multipart UTF-8 不受 curl latin-1 乱码影响。",
+          "note": ""
+        },
+        {
+          "q": "人工定轨队列上 UI（2026-11-02，zj 实跑发现 P2.3 消费端真空档）",
+          "answer": "classify 队列此前只有领域函数无 web 出口，/review 找不到待定轨笔记。补齐：classify_queue_view/classify_resolve_action 纯函数 + GET /review/api/classify + POST /review/api/classify/resolve + REVIEW_HTML「人工定轨」区（复用 .item 卡片，静态轨/动态轨两按钮）。preview 服务端截 120 字（首版全文下发 176KB 已修）。tests/test_web_classify.py 2 条（视图序列化 + 定轨闭环含非法 track 拒绝）；全量 409 OK；实库 2 条 AINMM 待定轨可见。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8-4-1": {
       "id": "1-8-4-1",
@@ -1224,7 +1271,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-02 01:09:31",
+    "updated": "2026-11-02 14:00:14",
     "md_file": "ROADMAP.md"
   },
   "edges": [
