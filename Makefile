@@ -7,7 +7,7 @@ PY ?= python
 
 help:
 	@echo "ZKC targets:"
-	@echo "  make setup          安装 Python 依赖（requirements.txt）"
+	@echo "  make setup          安装 Python 依赖（requirements.txt）+ 本包 editable 安装（src 布局）"
 	@echo "  make db             确保 Postgres 容器（zkc-spike-pg, :55433）在跑"
 	@echo "  make migrate        应用全部待执行 schema 迁移"
 	@echo "  make verify         校验已应用迁移 sha256 与磁盘一致"
@@ -23,6 +23,7 @@ test:
 
 setup:
 	$(PY) -m pip install -r requirements.txt
+	$(PY) -m pip install -e .
 
 db:
 	@docker inspect -f '{{.State.Running}}' zkc-spike-pg 2>/dev/null | grep -q true \

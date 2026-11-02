@@ -42,7 +42,8 @@ CONTAINER = os.environ.get("ZKC_PG_CONTAINER", "zkc-spike-pg")
 PG_USER = os.environ.get("ZKC_PG_USER", "postgres")
 DEFAULT_DB = os.environ.get("ZKC_PG_DB", "zkc_dev")
 
-MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "migrations"
+# src 布局：src/zkc/migrate.py → parents[2] = 仓库根（migrations/ 在根，不随包走）
+MIGRATIONS_DIR = Path(__file__).resolve().parents[2] / "migrations"
 
 _BOOTSTRAP = """
 CREATE TABLE IF NOT EXISTS schema_migration (

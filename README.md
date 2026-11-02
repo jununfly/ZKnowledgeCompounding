@@ -25,9 +25,9 @@ FastAPI + SSR，`localhost:8000`；存储 Postgres + pgvector；LLM 走本机 Ol
 ## 启动步骤
 
 ```bash
-make setup      # 安装 Python 依赖
+make setup      # 安装 Python 依赖 + 本包 editable 安装（src 布局，包名仍为 zkc）
 make db         # 确保 Postgres 容器在跑（首次需 docker run，见下方注释）
-make migrate    # 应用全部 schema 迁移（zkc/migrate.py，零依赖自研迁移器）
+make migrate    # 应用全部 schema 迁移（src/zkc/migrate.py，零依赖自研迁移器）
 make serve      # 启动 web：http://localhost:8000
 ```
 

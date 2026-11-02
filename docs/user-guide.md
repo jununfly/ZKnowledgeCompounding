@@ -10,7 +10,8 @@
 ## 1. 启动本地应用
 
 ```bash
-python -m zkc.web          # FastAPI + SSR，localhost:8000
+pip install -e .          # 首次一次性：editable 安装（src 布局，包名 zkc）
+python -m zkc.web         # FastAPI + SSR，localhost:8000
 ```
 
 页面与接口：

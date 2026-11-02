@@ -1,0 +1,15 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zkc"
+version = "0.1.0"
+description = "ZKC 个人知识复利工具：让有限的时间精力与注意力对知识产生复利"
+requires-python = ">=3.9"
+
+# 依赖统一由 requirements.txt 管理（R19「依赖最少」不变量的 SoT），
+# pyproject 只负责打包与 src 布局，不重复声明依赖。
+
+[tool.setuptools.packages.find]
+where = ["src"]

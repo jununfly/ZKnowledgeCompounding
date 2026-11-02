@@ -1253,6 +1253,11 @@
           "q": "人工定轨队列上 UI（2026-11-02，zj 实跑发现 P2.3 消费端真空档）",
           "answer": "classify 队列此前只有领域函数无 web 出口，/review 找不到待定轨笔记。补齐：classify_queue_view/classify_resolve_action 纯函数 + GET /review/api/classify + POST /review/api/classify/resolve + REVIEW_HTML「人工定轨」区（复用 .item 卡片，静态轨/动态轨两按钮）。preview 服务端截 120 字（首版全文下发 176KB 已修）。tests/test_web_classify.py 2 条（视图序列化 + 定轨闭环含非法 track 拒绝）；全量 409 OK；实库 2 条 AINMM 待定轨可见。",
           "note": ""
+        },
+        {
+          "q": "2026-11-02 仓库布局：zkc/ 平铺改为 src/zkc/ 标准 src 布局",
+          "answer": "zj 拍板（上一轮误改名 src/ 已回滚，本轮改做正确形态）。要点：① 包名保留 zkc，全部 import 一行不改；② git mv zkc src/zkc + 新增 pyproject.toml（setuptools src 布局，依赖 SoT 仍在 requirements.txt，不重复声明）；③ 可导入性靠 pip install -e .（已装 zkc-0.1.0），make setup 同步加该步；④ 唯一 broken 引用 = migrate.py MIGRATIONS_DIR 的 parent.parent 少跳一层，改 parents[2] 指仓库根；⑤ test_r19_guard.py ZKC 路径改 ROOT/src/zkc。验证：全量 409 tests OK，import zkc 指向 src/zkc/__init__.py。",
+          "note": ""
         }
       ],
       "notes": "",
@@ -1286,7 +1291,7 @@
   },
   "metadata": {
     "created": "2026-10-31 02:07:17",
-    "updated": "2026-11-02 15:48:31",
+    "updated": "2026-11-02 16:05:57",
     "md_file": "ROADMAP.md"
   },
   "edges": [

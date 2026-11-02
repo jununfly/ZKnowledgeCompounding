@@ -22,7 +22,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-ZKC = ROOT / "zkc"
+ZKC = ROOT / "src" / "zkc"
 REQ = ROOT / "requirements.txt"
 
 # R19 锁：禁止出现的顶层 / from 导入
