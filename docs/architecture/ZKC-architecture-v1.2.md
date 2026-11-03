@@ -1,6 +1,6 @@
 # ZKnowledgeCompounding · 架构设计 v1.2
 
-> 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §8「已定（spike 12/13/13b）」与 §10 项 1–5；§9 已补条目 ⑨）。**复核状态：三角审计已完成、zj 已批 A/B 档（2026-10-31）**——A 档 12 项已回填本文档、B 档 3 项转计划 §5 风险登记册，清单见 `docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`
+> 状态：**草案 v1.2**（v0.8 + 与 PRD v0.2 校准 round 1 + Spike 06/07/08 已回填 §5（D1–D5）+ **Spike 09 `review_interval` 自动设定已回填 §5（D6–D8）并新增 §6.5 / §6.5.1** + **Spike 10 强模型质量复测与质量口径已定（四臂对照 + 1.5B/4B 各 3 次多次采样，结论升高置信，见 §8）** + **Spike 11 跨源断言强制算子已实证「跨源综合是算子层问题、非模型规模」（4B×3 稳定 3/3，见 §9 ⑧）** + **Spike 12/13/13b 已回填：LLM-as-judge 分解式判定机制可行（14 tests passed），但本机 4B/9B 均不可用（4B ~110-130s/条不产 JSON；9B ~6min/条不产 JSON 但判定能力对）→ 自动 LLM 预过滤层本机否决，MVP 忠实度闸门定案 human-in-the-loop + 字面 rubric 预过滤（降级链第 2 级，见 §8）**，见 §8「已定（spike 12/13/13b）」与 §10 项 1–5；§9 已补条目 ⑨）。**复核状态：三角审计已完成、zj 已批 A/B 档（2026-10-31）**——A 档 12 项已回填本文档、B 档 3 项转计划 §5 风险登记册，清单见 `docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`。**（MVP 实装修订 2026-11-03）：Instructor / LangGraph 未进入 MVP 实装**——LLM 调用实为 Ollama 原生 `/api/chat` + `format:json` + 手写 JSON 校验重试（`src/zkc/llm.py`，零编排依赖），HITL 实为 `review_queue` + `/review` 复审队列 UI（`src/zkc/web/review.py`）；spike 期选型记录保留作决策历史，现役选型以 §6 选型表修订注为准
 > 上游：PRD v0.1（已认可）+ 四份 sealed 调研报告
 > 定位：把调研结论固化为**可执行的技术架构与选型决策**，作为进入 spike 的依据。
 
@@ -25,7 +25,7 @@
 | Spike 10 强模型质量复测 + 质量口径 | `spikes/spike-10-model-quality/README.md` | 四臂复跑（1.5B+旧重试 / 1.5B+新重试 / 9B / 4B）+ 8 tests（重试策略，stub 客户端）+ **多次采样（1.5B/4B 各 3 次）已收口**。**质量口径已定义**（复述率 / 拼接复述 overlap / 跨源率 / 引用命中 / 结构完整）；**换世代显著降低复述率（区间不重叠，高置信）**；**跨源综合仍未解决（高置信）**：4B 仅 2/3 通过，唯一失败 ncross=1 踩 ≥2 门槛，证明为随机失败；**修重试非瓶颈（高置信）**：1.5B+新重试仍 0/3；**结论原带强限定项已升级为高置信**（采样噪声翻转、少发 claim 刷比率、幻觉自动测不了三项已记账并部分收口）；16GB 上 9B 会 swap（常驻 10–12GB）→ 迭代默认改 4B；跨源综合剩余缺口定位为**算子/提示层**问题（强制 ≥2 跨源断言），非换更大模型 |
 | Spike 11 跨源断言强制算子 | `spikes/spike-11-cross-source-enforcement/README.md` | **9 tests passed（stub 注入）+ 4B×3 / 1.5B×3 真实采样（复用 spike-10 corpus+rubric，只换算子层）**。改造：提示层硬约束（≥2 条跨源综合断言）+ bounded 单次补全回路（不达标补一次、过 citation enforcement、全崩保留主产物）。**结论（高置信）**：4B 跨源 gate 2/3 → **稳定 3/3**，`n_cross_source` 1–2 → **2–3**，补全回路 0/3 触发（主生成即达标，成本零增加）；**1.5B 无溢出收益（0/3，补全 3/3 结构化验证失败被安全丢弃）** → **「跨源综合是算子/提示层问题、非模型规模」被实证，但能力下限由模型结构化能力决定**。schema 未动（ModelingArtifact 不变）。仍 open：幻觉判定（LLM judge）、阈值校准 |
 | Spike 12 LLM-as-judge 忠实度闸门（机制） | `spikes/spike-12-hallucination-judge/README.md` | 14 tests passed；**分解式忠实度判定机制已证明可行**（拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结）+ 13 例 golden + evaluate 出混淆矩阵与**危险漏检率**（truth 非 supported 却判 supported，唯一决定自动化的指标）；真实 4B 在本机 16GB 不可用（~110-130s/条且不产 JSON）→ 4B 不作自动 gate |
-| Spike 13 幻觉判定器 human-in-the-loop 接入设计 + judge 执行模型决策 | `spikes/spike-13-hallucination-gate-hil/README.md` | 设计已定：路由硬闸（空分解/矛盾 100% 强制人审）+ 注意力预算封顶（faithfulness 人审 ≤20%×budget）+ claim 表增量 + LangGraph interrupt/resume + 人判自举校准语料；**judge 执行模型决策：本地 7B-9B 推荐但被本机实测否决（见 Spike 13b-probe）** |
+| Spike 13 幻觉判定器 human-in-the-loop 接入设计 + judge 执行模型决策 | `spikes/spike-13-hallucination-gate-hil/README.md` | 设计已定：路由硬闸（空分解/矛盾 100% 强制人审）+ 注意力预算封顶（faithfulness 人审 ≤20%×budget）+ claim 表增量 + LangGraph interrupt/resume + 人判自举校准语料（注：HITL 载体在 MVP 实装中落为 review_queue/复审队列，未引入 LangGraph——2026-11-03）；**judge 执行模型决策：本地 7B-9B 推荐但被本机实测否决（见 Spike 13b-probe）** |
 | Spike 13b-probe 本地 7B-9B 实证 | `spikes/spike-13b-probe/README.md` | **9B（qwen3.5:9b-mlx 8.9GB 已拉取）本机实证否决**：~6min/条延迟 + JSON 不合规（吐 `Label/Evidence/Overall` 文本），判定能力正确（g6 矛盾识别对、引用来源 `[s1]` 对）→ 死亡因是**速度与格式**（硬件绑定），非能力缺陷；触发 Spike 13 降级链第 2 级（字面 rubric 预过滤 + 人工兜底） |
 | **Spike 14 embedding 编码器定维（R16 关闭）** | `spikes/spike-14-embedding-dim/README.md` | **2026-10-31 实测**：`nomic-embed-text` = **768d**（冷 0.65s / warm 12ms / 32 条 0.30s ≈ 9.5ms/条 / 274MB）、`qwen3-embedding` = **4096d**（3.54s / 189ms / 5.86s ≈ 183.2ms/条 / 4.7GB）；**两者输出均已 L2 归一化**（可直接 `vector_cosine_ops`）。**选型 = nomic 768d**，§5 `vector(768)` 由占位转为已定。**用途硬约束**：仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3、模糊误提交 1；该职责归 DecisionRouter）。**可逆路径**：加列 `embedding_strong vector(4096)` 属增量，不重建 768d 索引。限定：单次采样、未测中文召回质量（→ 计划 R18） |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
@@ -73,7 +73,7 @@ flowchart TD
         B6[向量列 + HNSW]
     end
     subgraph Transform[复利变换引擎]
-        C1[蒸馏算子\nInstructor 结构化抽取 + 校验重试]
+        C1[蒸馏算子\nJSON 结构化抽取 + 校验重试]
         C2[结合/建模算子\nRCS 漏斗 + 双层合并]
         C3[拓扑装配\n自闭环 ↔ 更高维]
     end
@@ -83,8 +83,8 @@ flowchart TD
     end
     subgraph LLM[LLM 运行时 · 本地优先]
         E1[Ollama 本地推理]
-        E2[Instructor 统一 provider 接口]
-        E3[LangGraph 编排 + HITL 中断/恢复]
+        E2[provider seam（LLM callable 注入）]
+        E3[复审队列 HITL（review_queue + /review UI）]
     end
     A2 & A3 --> Store
     Store --> Transform
@@ -265,23 +265,23 @@ CREATE TABLE attention_observation (
 | 双轨分流 | **DecisionRouter（本地 LLM 直接判定轨道）** + Semantic Router（校准路由 + 双信号弃权）作候选预过滤 | spike 03 验证：**DecisionRouter 主方案**——编码器无关、F1（模糊误提交=0）与 F2（长模糊对抗句 0 进 dynamic）均完美、覆盖 100%；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，弱编码器（nomic 768d）出现 1 处模糊误提交+2 处轨道互混 → 仅作强编码器下的互补/置信度信号源，不作独立决策器 | Semantic Router（校准路由）/ Outlines / DSPy |
 | 本地推理 | **Ollama（本机实测 0.33.3 全通过；Apple silicon 走 MLX）** | 唯一原生本地/离线运行时，OpenAI 兼容层（A5 修订：原写 0.40+ 无实证，spike-02:127 / spike-03:30 实测 0.33.3 通过） | 任意 OpenAI 兼容端点 |
 | 蒸馏/结合模型 | **`qwen3.5:4b-mlx`（迭代默认）；`qwen3.5:9b-mlx` 为可选上限** | spike 10 实测（含 1.5B/4B 各 3 次多次采样）：1.5B 复述率高、跨源综合 0/3 不可用；4B 复述率降至 0.10；9B 在 16GB 常驻 10–12GB 触发 swap（单次蒸馏 4.7 分钟）→ 9B 不作为默认。**跨源综合短板已由 Spike 11 跨源强制算子解决**（4B×3 稳定 3/3，`n_cross_source` 2–3，补全回路 0 触发）→ 算子层与模型选型解耦。详见 §8 / §9 ⑧ | 云端强模型（provider seam） |
-| 结构化抽取 | **Instructor**（Pydantic + 校验重试） | 唯一提供"文本→校验过的结构化对象"原语 | Outlines |
-| 编排 / 人审 | **LangGraph**（图 + PG checkpoint + interrupt/resume） | 选型复核背书（2026-10-29）：唯一同时满足「checkpoint 落 PG 同库同 schema + 领域状态编辑级 HITL + 纯本地 Python 栈」；已知 gap 为无 durable execution（崩溃自动恢复），对人工驱动的蒸馏属 nice-to-have，非 blocker。Pydantic AI / Cordis 评估见 §6.4 与 §7 | 自研最小状态机 |
+| 结构化抽取 | ~~Instructor~~ → **Ollama 原生 `/api/chat` + `format:json` + 手写 JSON 校验重试**（MVP 实装修订 2026-11-03） | spike 04 曾以 Instructor 跑通验证原语可行；MVP 实装发现 Instructor 走 Ollama `/v1` 兼容层 + `response_format` 对 qwen3.5-mlx **永久挂死**，改走原生 `/api/chat`（1-5 实证铁律），零依赖（`src/zkc/llm.py`） | Outlines |
+| 编排 / 人审 | ~~LangGraph~~ → **自研确定性程序 + `review_queue` HITL（`/review` 复审队列 UI）**（MVP 实装修订 2026-11-03） | spike 04 曾以 LangGraph 验证 checkpoint/HITL 可行；MVP 实装判定蒸馏为**确定性领域工作流**，无需图编排——人工确认走每日复审队列（`src/zkc/web/review.py`），0 编排依赖。原选型复核（2026-10-29）保留作决策历史，见 §6.4 | 自研最小状态机（**已采用**） |
 | 蒸馏语义 | **ZKC 自研** | 无候选提供"去繁→元认知+topic+反向连接" | — |
 | 结合/建模 | **ZKC 自研程序**（复用 RCS 漏斗 + 双层合并；spike 05 已验证：引用强制 + 级联撤销跑通，1.5B 综合质量不足走强模型） | 无候选产出建模/方法论产物 | DSPy 作为编程模型 |
 | 衰减 decay | **ZKC 自研 · 线性函数**（spike 01 已定） | 所有候选均无原生 TTL/腐化语义；spike 实测线性 rot=0%、行动窗口 6.3 天 | 指数（窗口更大但触发过晚） |
 | 注意力调度 | **ZKC 自研** | 所有候选均不覆盖 | — |
 
 ### 6.1 蒸馏算子（T3.1）
-`条目 → Instructor 结构化抽取（校验失败自动重试） → LangGraph 编排 → interrupt 暂停 → 人工确认/修改 → resume → 写入 meta_claim（带 evidence_refs）`
+`条目 → 结构化抽取（Ollama 原生 /api/chat + format:json，校验失败手写重试） → 确定性蒸馏程序 → 入 review_queue → /review UI 人工确认/修改 → 写入 meta_claim（带 evidence_refs）`（MVP 实装修订 2026-11-03：原写 Instructor 抽取 + LangGraph interrupt/resume，实装未引入，见 §6 选型表修订注）
 - 语义契约由 ZKC 定义：蒸馏结果必须是**元认知 claim + topic + 反向连接**，不是摘要。
 
 ### 6.2 结合/建模算子（T3.2）
-实现为**显式程序**（DSPy 或 LangGraph），复用三种已验证模式：
+实现为**显式 Python 程序**（`src/zkc/cross_source.py`，无编排框架——MVP 实装修订 2026-11-03；原写 DSPy 或 LangGraph），复用三种已验证模式：
 1. **RCS 漏斗**（源自 PaperQA2）：top-k 检索 → 每源一条 query 条件下的上下文摘要 → LLM 重排打分 → 来源数上限 → 单次生成；
 2. **双层合并**（源自 LightRAG）：local（实体级细节）+ global（关系链/更高维）；
 3. **层级汇总思路**（源自 GraphRAG，**仅借鉴模式，不引入依赖**——项目处于维护模式）。
-- 产出约束：**带来源引用的结构化建模产物**（Instructor 约束结构），非自由文本。
+- 产出约束：**带来源引用的结构化建模产物**（schema 级约束：`evidence_refs` NOT NULL + 手写 JSON 校验；原写 Instructor 约束结构，实装未引入——MVP 实装修订 2026-11-03），非自由文本。
 
 ### 6.3 资源感知调度（spike 01 已校准）
 - 输入：`decay_score`（腐化）+ `last_reviewed_at` + `attention_signal`。
@@ -295,13 +295,13 @@ CREATE TABLE attention_observation (
 - **每日复审队列是调度层的产品面（PRD §6 流 C，2026-10-29 zj 同意纳入 MVP）**：调度层输出的「该关注」清单必须落成一个每天可操作的队列，且在处理时同时产出两个外生锚——**复审结果标注**（供 §6.5 L3）与**每日收口埋点**（供 §6.5.1 budget 估计）。**缺此界面，本节与 §6.5 / §6.5.1 的两个闭环都不携带信息**，调度退化为一次性静态规则。
 
 ### 6.4 模式借鉴：Cordis / DeepSeek Harness（仅模式，不引入依赖）
-对编排层的选型复核（候选含 Pydantic AI、Agno、Temporal 等）结论：**LangGraph 维持为编排层**——ZKC 三硬约束（checkpoint 落 PG 同库同 schema、领域状态编辑级 HITL、纯本地 Python 栈）只有它同时满足；Pydantic AI 在 PG checkpoint（需自建 `BaseStatePersistence`）与 HITL 通用性上反而更弱。Cordis/dsh 经评估**不适合作为 ZKC 依赖**（见 §7），但作为**模式源**有三点可迁移：
+对编排层的选型复核（候选含 Pydantic AI、Agno、Temporal 等）当时结论：**LangGraph 维持为编排层**（**MVP 实装修订 2026-11-03：实装阶段未引入 LangGraph**——蒸馏为确定性领域工作流，走显式 Python 程序 + review_queue HITL，见 §6 选型表修订注；本段保留作决策历史）——ZKC 三硬约束（checkpoint 落 PG 同库同 schema、领域状态编辑级 HITL、纯本地 Python 栈）只有它同时满足；Pydantic AI 在 PG checkpoint（需自建 `BaseStatePersistence`）与 HITL 通用性上反而更弱。Cordis/dsh 经评估**不适合作为 ZKC 依赖**（见 §7），但作为**模式源**有三点可迁移：
 
 1. **append-only 事件流 = SSOT，context 从流投影** ↔ **ZKC 双时态同构**：Cordis 用工业级实现印证了 ZKC 双时态建模方向——`transaction_time` 对应事件流的追加记录，`valid_time` 对应从流投影出的当前视图。ZKC 已在 schema 自建双时态（§5），此同构是**背书而非新依赖**；实现上意味着双时态写入应保持 append-only（不改写历史行，只闭合 `valid_to`/`tx_to`），与事件流语义一致。
 2. **spatiotemporal composability（副作用可完全回滚）** → ZKC 的蒸馏 / 结合 / context 拓扑装配应借鉴：知识变换产物（claim、反向连接、context 边）须**可追溯、可撤销**——删除一个变换时其全部副作用随之撤走。落到数据模型：变换产物统一带 `produced_by`（变换实例 id），撤销按该 id 级联。
 3. **「一切皆插件」的可替换边界** → 印证 ZKC 既有 seam 设计（storage seam 可切 Kuzu/TerminusDB、encoder seam TF-IDF→Ollama、provider seam 本地→强模型）；蒸馏/结合算子按同样边界保持可替换，不让编排层渗透领域语义。
 
-**边界警示**：Cordis 的插件树 / patch 层级 / 事件流运行时对 ZKC 是**杀鸡用牛刀**——ZKC 蒸馏是确定的领域工作流（条目 → 结构化 claim → 人审 → 落 PG），需要的是被嵌入的领域工具（LangGraph），不是承载自己的通用 agent 平台。引入 dsh 会造成双栈分裂（Python 领域 + TS harness）且迫使 `decay_score`、`evidence_refs` 等一等公民语义塞进事件流抽象，丢失 schema 级校验。
+**边界警示**：Cordis 的插件树 / patch 层级 / 事件流运行时对 ZKC 是**杀鸡用牛刀**——ZKC 蒸馏是确定的领域工作流（条目 → 结构化 claim → 人审 → 落 PG），需要的是被嵌入的领域工具（实装为自研确定性蒸馏程序，未引入 LangGraph——MVP 实装修订 2026-11-03），不是承载自己的通用 agent 平台。引入 dsh 会造成双栈分裂（Python 领域 + TS harness）且迫使 `decay_score`、`evidence_refs` 等一等公民语义塞进事件流抽象，丢失 schema 级校验。
 
 ### 6.5 `review_interval` 自动设定（spike 09 已定）
 
@@ -359,7 +359,7 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 | Utopia / OpenWiki 作为待验证候选 | 重述为**模式源** | 存储报告已定 substrate，不再验证"适配度"，只迁移其双时态 schema 与 claim 结构 |
 | 图数据库（Kuzu / TerminusDB）作为主存储 | 延后 | MVP 图遍历浅，递归 CTE 足够；保持 seam |
 | LiteLLM | 延后 | proxy 需 PostgreSQL，MVP 无需多 provider 路由 |
-| Argilla | 延后 | 维护模式 + PG/Redis 重依赖；人审先用 LangGraph interrupt |
+| Argilla | 延后 | 维护模式 + PG/Redis 重依赖；人审走复审队列 review_queue（MVP 实装未引入 LangGraph——2026-11-03） |
 | Langfuse | 延后 | ClickHouse/Redis 重依赖；先用轻量 score 表 |
 | Electric / Automerge（多端同步） | 延后 | MVP 为单人单机 |
 | XTDB | 待带外验证 | 最强双时态候选，但 pinned 编译器无法解析其 submodule 树 |
@@ -384,7 +384,7 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
     4. **真编码器复核已完成（2026-10-29，经 Ollama，因 HF 被墙）**：量化结论已用**真实语义编码器**复核——HuggingFace / FastEmbed(BGE) 在本环境被 `SSL EOF` / 超时 / 502 阻断，改用 ZKC MVP 栈的 Ollama 本地嵌入（`nomic-embed-text` 768 维 + `qwen3-embedding` 4096 维，`run_spike_ollama.py`）。两模型结果与词法编码器**一致**：① 模糊/确定相似度仍 **OVERLAP**（nomic 模糊 max 0.894 > 明确 min 0.563；qwen3 模糊 max 0.765 > 明确 min 0.477）→ 「相似度不可分」**不是词法假象**，双信号弃权在真编码器下仍必要；② 长模糊句单向误判为 dynamic **3/3 复现**（TF-IDF / nomic / qwen3 三编码器一致）→ 单向偏差真实存在，信息量门不可靠；③ 「0% 错判不可外推」获佐证：nomic 下 routed 准确率降至 80%、错判 20%。
     - 结论升级：**双信号弃权 + 显式"模糊"路由（或 DecisionRouter）在真实编码器下更显必要**，而非继续调阈值；原「词法编码器上成立」限定**撤销**→ 改为「真实语义编码器下同样成立」。
 - **结合算子 LLM 成本高** → 来源上限 + 上下文摘要缓存 + 增量更新。
-- **LangGraph 正在收敛为 runtime**（agent 构建移到 Deep Agents）→ 只用 graph/checkpoint/interrupt 原语并锁版本。
+- ~~**LangGraph 正在收敛为 runtime**（agent 构建移到 Deep Agents）→ 只用 graph/checkpoint/interrupt 原语并锁版本~~（MVP 实装修订 2026-11-03：实装未引入 LangGraph，该上游风险消除；条目保留作历史）。
 - **Semantic Router 1.x 有破坏性变更** → 锁版本 + 路由回归测试。
 - **注意力预算不足** → 上线前按 `动态条目数 / (0.6 × interval)` 校验预算覆盖需求；不足时必须调大 interval 或减少动态条目，否则腐化无解（spike 实测 rot=100%）。
 - **已定（spike 01）**：decay 函数形态 = **线性**；阶梯衰减已否决，指数为备选。
@@ -394,7 +394,7 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 - **已定（spike 09 切片 B）**：`budget_per_day` 由 `attention_observation` 埋点**统计估计**（删失感知 + 单调护栏 + 阻尼 EMA + 校准期 oversubscribe），仿真验证可从 10 或 1 双向收敛到真值。见 §6.5.1。
 - **未决（通用）**：注意力信号的加权方式（现仅按 decay 排序）、复利度量的最终口径、切片 B 全部阈值（p25、α=0.3、±30%、×1.5）的校准。
 - **未决（spike 09 限定，不得外推）**：① **L3 必须接显式复审结果标注**——decay-only 反馈在「按 decay 阈值调度」下恒为 no-op，永不修正基线；② 收敛目标为 `H/0.6`（SURFACE=0.6 的定义所致），不是真值 H；③ 所有阈值（预算 1.2/天、优先级序、×2 延后、±20% 容忍带、AIMD 1.5/0.7）为**占位**，振荡带约 ±50%，需真实数据校准；④ **已定（2026-10-31 zj 拍板 · ADR-0002）**：已捕获条目两条规则已统一为**单程票**——spike 09 答「到期前多久看」= 28d 拉长观察；spike 08 答「已到期怎么办」= 直接 ARCHIVE，**永不回 DISTILL**。边界 1：`produced_by` 级联撤销导致「已捕获」消失 → 按未捕获基线重算并写 D7 留痕（禁止静默变）；边界 2：**`self_loop`(3d) 压过已捕获(28d)**（原 L1 表与 L2 优先级表顺序相反，已修，见 §6.5）。
-- **已定（spike 12/13/13b）**：**忠实度闸门决策**——① 分解式 LLM-as-judge 机制**可行**（spike-12：14 tests passed，oracle 满分；拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结；evaluate 出混淆矩阵 + 唯一决定自动化的指标「危险漏检率」= truth 非 supported 却判 supported）；② **本机小模型判定不可用**（硬件绑定，非能力缺陷）：4B（qwen3.5:4b-mlx）~110-130s/条且不产 JSON，9B（qwen3.5:9b-mlx 8.9GB）~6min/条且 JSON 不合规（吐 `Label/Evidence/Overall` 文本），两者判定能力均正确（识别矛盾 + 引用来源对）→ 死亡因是**速度与格式**；③ **MVP 忠实度闸门定案 = human-in-the-loop + 字面 rubric 预过滤**（Spike 10/11 的 verbatim/overlap/citation_hit，快且可自动化），即 Spike 13 降级链第 2 级；④ 自动 LLM 预过滤层**本机推迟**（更快硬件 / 离盒 / 云端 opt-in 时零改动启用 judge.py + run_spike12.py）；⑤ Spike 13 接入设计（路由硬闸 + 注意力预算封顶 + claim 表增量 + LangGraph HITL + 人判自举校准语料）已定，**实现待另开 spike（A9 修订：Spike 13b 已改为 judge 执行模型 probe，不承担实现）**；⑥ **仍 open**：真实危险漏检率 / 阈值校准 / golden 规模（现 13 例，需扩大以校准 auto-pass 比例）。
+- **已定（spike 12/13/13b）**：**忠实度闸门决策**——① 分解式 LLM-as-judge 机制**可行**（spike-12：14 tests passed，oracle 满分；拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结；evaluate 出混淆矩阵 + 唯一决定自动化的指标「危险漏检率」= truth 非 supported 却判 supported）；② **本机小模型判定不可用**（硬件绑定，非能力缺陷）：4B（qwen3.5:4b-mlx）~110-130s/条且不产 JSON，9B（qwen3.5:9b-mlx 8.9GB）~6min/条且 JSON 不合规（吐 `Label/Evidence/Overall` 文本），两者判定能力均正确（识别矛盾 + 引用来源对）→ 死亡因是**速度与格式**；③ **MVP 忠实度闸门定案 = human-in-the-loop + 字面 rubric 预过滤**（Spike 10/11 的 verbatim/overlap/citation_hit，快且可自动化），即 Spike 13 降级链第 2 级；④ 自动 LLM 预过滤层**本机推迟**（更快硬件 / 离盒 / 云端 opt-in 时零改动启用 judge.py + run_spike12.py）；⑤ Spike 13 接入设计（路由硬闸 + 注意力预算封顶 + claim 表增量 + LangGraph HITL + 人判自举校准语料）已定（注：HITL 载体在 MVP 实装中落为 review_queue，未引入 LangGraph——2026-11-03），**实现待另开 spike（A9 修订：Spike 13b 已改为 judge 执行模型 probe，不承担实现）**；⑥ **仍 open**：真实危险漏检率 / 阈值校准 / golden 规模（现 13 例，需扩大以校准 auto-pass 比例）。
 
 ## 9. 下一步（spike 清单）
 
