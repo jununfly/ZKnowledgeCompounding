@@ -31,6 +31,6 @@
 
 - **R4（注意力预算不足 → 腐化无解）**：已校验 infeasible 已显式化（2026-11-01，1-8-6）；终判挂观察期外生锚（真实 budget），届时三选一：真实预算确认 / 缩动态集 / 调 SURFACE_THRESHOLD（留痕）。
 - **R5（L3 必须接复审结果标注）**：每日复审队列 UI 是硬前提（PRD 目标 5）；未标注复审禁止写 interval 调整。
-- **R10（外生锚供给风险）**：降级判定已定为默认处置——上线判定 = 累计 ≥20 个带标注的复审动作（still_valid/changed/stale）+ 标注率 ≥70%；该观察期目标现由 **PRD §9 TODO** 跟踪（原 roadmap 节点 1-7-4 已于 2026-11-02 移出活动跟踪，标 completed + note）。达成判定以 `src/zkc/task_queue.py` 的 `LABEL_JUDGMENT_THRESHOLD=20` 告警为准。
+- **R10（外生锚供给风险）**：降级判定已定为默认处置——上线判定 = 累计 ≥20 个带标注的复审动作（still_valid/changed/stale）+ 标注率 ≥70%；该观察期目标现由 **PRD §9 TODO** 跟踪（原 roadmap 节点 1-7-4 已于 2026-11-02 移出活动跟踪，标 completed + note；roadmap 文件已于 2026-11-03 结束并删除）。达成判定以 `src/zkc/task_queue.py` 的 `LABEL_JUDGMENT_THRESHOLD=20` 告警为准。
 - **R14（补全回路延迟成本）**：埋点 + kill switch 已随 1-5-2 落地（commit 1097bc6）；触发率聚合与超预算判定并入同一观察期外生锚。
 - **R18（中文检索召回质量）**：P5 用真实语料验证；不合格走 R16 可逆路径（加列 `embedding_strong vector(4096)`）。

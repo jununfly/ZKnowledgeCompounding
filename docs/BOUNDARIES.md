@@ -1,7 +1,8 @@
 # 产物边界约定 · docs / code / roadmap 解耦
 
 > 生效：2026-11-02（zj 拍板「内容解耦，不动目录」）
-> 配套：roadmap 根节点 1 的 decide「解耦原则」；`docs/plans/roadmap.json` 仍按 ADR 0010 留在 `docs/plans/`。
+> 配套：roadmap 根节点 1 的 decide「解耦原则」。
+> **roadmap 驱动跟踪已于 2026-11-03 结束**：`docs/plans/roadmap.json` + `ROADMAP.md` 已删除（节点 1-7-4 为唯一未结项，其观察期目标已迁入 PRD §9 TODO 续跟）；ADR 0010 的「roadmap.json 留在 docs/plans/」条款随之失效。本文件保留为**通用解耦约定**，code 注释中的 roadmap 节点 id 溯源锚仍有效（见规则 2）。
 
 ## 为什么需要这份约定
 
@@ -22,7 +23,7 @@
 |---|---|---|---|
 | **code** | `src/` `tests/` `migrations/` `scripts/` | 实现；参数/路径/计数/迁移编号的**实时真相** | 进度状态、决策依据 |
 | **docs** | `docs/`（PRD / 架构 / 研究 / user-guide / ADR） | what / why；概念、架构决策、使用方式 | 实时参数、节点进度 |
-| **roadmap** | `docs/plans/roadmap.json` + `ROADMAP.md` | plan / status / intent；节点进度与决策留痕 | 代码内部细节的实时值 |
+| **roadmap** | （已结束 · 2026-11-03 文件已移除） | plan / status / intent；节点进度与决策留痕（现为历史快照） | 代码内部细节的实时值 |
 
 ## 解耦规则（强制）
 
@@ -39,12 +40,12 @@
 5. **单一真相源**：
    - 参数 → `tuning.REGISTRY` + `GET /tuning`
    - 代码路径 / 结构 → 代码树本身
-   - 进度状态 → roadmap
+   - 进度状态 → （roadmap 已结束）现以 PRD §9 TODO / 代码运行时为准
    - 决策依据 → ADR / decision
 
 ## 编辑工作流
 
-- **roadmap**：只走 `roadmap_cli.py`（`update` / `decide` / `render`），**禁止手改 JSON / md**。
+- **roadmap**：（已结束 · 2026-11-03 文件已移除）原只走 `roadmap_cli.py`（`update` / `decide` / `render`）；本项目的 roadmap 驱动跟踪已收尾，文件不再维护。code 注释中保留的 roadmap 节点 id 仍作溯源锚，不依赖文件存在。
 - **docs**：正常编辑；新架构决策先落 ADR，不在 roadmap 复述细节。
 - **code**：TDD；改路径 / 计数自动反映到运行时，**不回写** roadmap label 的计数或路径。
 
