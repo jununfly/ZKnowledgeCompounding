@@ -22,7 +22,18 @@
         "1-9",
         "1-10",
         "1-11",
-        "1-12"
+        "1-12",
+        "1-13",
+        "1-14",
+        "1-15",
+        "1-16",
+        "1-17",
+        "1-18",
+        "1-19",
+        "1-20",
+        "1-21",
+        "1-22",
+        "1-23"
       ],
       "decisions": [
         {
@@ -267,11 +278,329 @@
       "exit_criteria": [
         "E6/E7/E8 推进中出现共享 Work 双 context 复用时，已向 #236 产出 reference Placement 真实用例"
       ]
+    },
+    "1-13": {
+      "id": "1-13",
+      "uid": "01a1a77444aa-0db9718b33",
+      "label": "D1 L3 AIMD 下界触底：1.0d 节点反馈恒 no-op，拍板处置",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "D1 的范围与优先级？",
+          "answer": "诊断+决策节点，不改 E1 判据、不改 E1 目标；只查 L3 下界语义并三选一拍板。与 D2 独立可并行，D2 无需等本节点结论。",
+          "note": "发现来源 2026-11-05 E1 真实闭环首日，见 .workbuddy/memory/2026-11-05.md"
+        }
+      ],
+      "notes": "2026-11-05 真实 PG 首日实证：zkc decide 三条（2 stale + 1 changed）全部 applied=False、new_interval_days=1.0，reason 仍写 too_late x0.7。根因 scheduling.py:77 clamp_days 受 tuning.py:96 MIN_INTERVAL_DAYS=1.0 下界约束，1.0x0.7 被夹回 1.0；set_interval 写同值且不写 audit_interval（scheduling.py:570-578）。影响：1-7 导入的 27 条语料全为 1.0d 节奏，任何 verdict 都改不了节奏、永久每日到期，queue_remaining 恒 27、saturated_days 靠噪声累积、budget 估计 0.1 抬到 3.0，E1 判据③ 的真实预算测不准。设计缺陷级，优先于继续攒活跃日。",
+      "layer": "plan",
+      "exit_criteria": [
+        "明确 MIN_INTERVAL_DAYS=1.0 下界语义：硬不变量还是占位可调，结论落 ADR",
+        "三选一处置落盘：允许 <1d / 保持下界并承认 L3 对触底节点失效 / 触底节点改走其它反馈路径",
+        "若改代码：红绿测试覆盖 1.0d 触底路径，全量套件通过"
+      ]
+    },
+    "1-14": {
+      "id": "1-14",
+      "uid": "01a1a77445d0-6c755c7f83",
+      "label": "D2 导入语料隔离：corpus 标记 + zkc archive 归档切片，移出调度回路",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "D2 与 D1 的依赖关系？",
+          "answer": "独立可并行。D2 是工程切片，不依赖 D1 的下界决策；两者均以 informs 边关联 1-1，不建 blocks 边——1-1 已 in_progress 且有 1 天真实数据，加前置边会造成逻辑倒挂。",
+          "note": "证据：真实 PG 27 条 due 全为导入语料，L3 对 1.0d 触底节点恒 no-op"
+        }
+      ],
+      "notes": "1-7 导入 60 篇 spike 语料中 27 条按 orphan 1d 节奏逐日逾期，全 decay=1.0 / last=2026-11-01。它们不是 zj 真实消费的知识，对其 verdict 属伪标注（违反架构 6.5.1 外生锚 / ADR-0006）；且因 D1 下界触底，任何 verdict 都无法改变节奏。正确处置是移出调度回路，而非给 verdict。",
+      "layer": "plan",
+      "exit_criteria": [
+        "导入语料可识别（corpus 来源标记或等价字段），默认不进 due 复审队列",
+        "提供批量归档入口（zkc archive 或等价命令），写 archived_at 使其退出调度",
+        "批量清理显式留痕 bulk corpus cleanup，不计入 labeled，不污染校准标注率",
+        "现存 27 条迁移后 queue_remaining 降为真实条目数，saturated_days 不再由语料噪声支撑",
+        "红绿测试 + 全量套件通过"
+      ]
+    },
+    "1-15": {
+      "id": "1-15",
+      "uid": "01a1a77c214f-69234d6403",
+      "label": "D3 文档与实物对齐：R18 关停结论回填 + embedding_strong 旧名清理",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "D3 的边界：哪些文件改、哪些不碰？",
+          "answer": "建议活文档必改 risks.md（风险单一真相源）与架构 v1.2；归档只读件 docs/archive/plans/ZKC-implementation-plan.md 保留历史措辞不改（历史留痕），但须在 risks.md 注明归档件为旧版快照、以 risks.md 为准。不改代码、不新增架构决策。此边界待 zj 复核，可推翻。",
+          "note": "归档件此前做过引用同步，是否纳入本切片由 zj 拍板，避免静默扩大范围"
+        }
+      ],
+      "notes": "文档滞后于实物：R18 已在 1-8-4/1-8-4-1（2026-11-01）关停——nomic 768d 中文召回 Recall@10=0.562 不合格，加列路径实装为双列共存（zj 拍板 nomic 保留），新增 node.embedding_4096 vector(4096) + qwen3-embedding，/browse 生产召回走 4096 列，复测 Recall@10=1.000 / MRR=0.853 合格。但 docs/risks.md:25-26,36 仍写 R18 open、未测召回质量、加列 embedding_strong；R16 仍写 已定死 nomic 768。旧列名 embedding_strong 共残留 3 文件：risks.md（3 行）、docs/architecture/ZKC-architecture-v1.2.md（4 处：证据表/DDL 注释/选型表）、docs/archive/plans/ZKC-implementation-plan.md（2 处，归档只读）。实测数须以 scripts/r18_recall_eval.py 复跑或留痕 commit 核实，禁止凭记忆写入风险册。",
+      "layer": "plan",
+      "exit_criteria": [
+        "risks.md R18 状态由 open 改为已关停，正文回填 1-8-4/1-8-4-1 结论；实测数须经 r18_recall_eval.py 复跑或已有留痕 commit 核实后方可写入",
+        "R16 正文由 已定死 nomic 768 改为 768 保留 + 4096 生产召回双列共存，列名统一为 embedding_4096",
+        "架构 ZKC-architecture-v1.2.md 证据表/选型表/DDL 注释中的 embedding_strong 与 R18 未测措辞同步，或明确标注为历史留痕",
+        "明确归档只读件 docs/archive/plans/ZKC-implementation-plan.md 是否同步；不改则须注明 归档件保留历史措辞，以 risks.md 为单一真相源",
+        "纯文档切片，不改代码、不新增架构决策；交叉 grep 验证活文档无 embedding_strong 残留"
+      ]
+    },
+    "1-16": {
+      "id": "1-16",
+      "uid": "01a1a77c2289-69057a3fd3",
+      "label": "D4 反向连接候选召回切 4096 + 相似度阈值重校准",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "D4 和 D3 的边界与依赖？",
+          "answer": "D3 纯文档、D4 改代码，独立可并行，D4 不需等 D3。D4 不做无脑切列：须先复跑 4096 列评测并按新余弦分布重校准 sim 阈值，否则等于把 768 的 0.7 硬套到 4096。两节点均不建到 1-1 的边——与 E1 校准判据无因果关系，硬关联属虚假依赖。",
+          "note": "仅建 D3 到 D4 的 informs 边，表达列名与评测口径的信息关联，不阻塞调度"
+        }
+      ],
+      "notes": "事实链：src/zkc/repository/pg.py:1254 discover_higher_dim 的 SQL 硬用 n.embedding（nomic 768d）；而 src/zkc/web/browse.py:24 RETRIEVAL_COLUMN=embedding_4096 已切 qwen3 4096d。src/zkc/context.py:136/171 经 self.store.discover_higher_dim 取近邻，propose_higher_dim 用 tuning.py:185 CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7（source=PLACEHOLDER）过滤。即反向连接候选仍跑在被 R18 判为不合格的编码器上，且阈值从未按 4096 余弦分布校准。影响：反向连接发现率与误报均不可信。换模型必须重校准阈值，0.7 不可直接搬。",
+      "layer": "plan",
+      "exit_criteria": [
+        "discover_higher_dim 明确使用列（默认 embedding_4096 或提供 column 参数），pg 与 memory 双实现一致",
+        "用 scripts/r18_recall_eval.py 的 4096 列模式复跑，记录新相似度分布作为阈值重校准依据",
+        "CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7（PLACEHOLDER）按 4096 分布重校准，结论落 tuning 并标注 source，不得伪装 calibrated",
+        "R16 硬约束不变：embedding 仅作候选召回 + 人确认，严禁用于安全判定（该职责归 DecisionRouter）",
+        "红绿测试覆盖切列与阈值，全量套件通过"
+      ]
+    },
+    "1-17": {
+      "id": "1-17",
+      "uid": "01a1a7874f56-f7cf40ed6f",
+      "label": "PRD §9 P6.4 观察期收口：累计 ≥20 带标注复审 + 滚动 7 天标注率 ≥70%",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "P6.4 与 1-1 的关系？",
+          "answer": "共享同一批真实 decide 数据，但判据独立（累计 ≥20 vs 连续 ≥7 活跃日 + budget 收敛）。不建 blocks 边到 1-1（1-1 已 in_progress，会倒挂），仅 informs 表达数据源关联。达成后按 PRD 原约定删除该 TODO。",
+          "note": "当前 3/20，PG 实测"
+        }
+      ],
+      "notes": "PRD §9 第一个未完成 checkbox。当前 PG 实测（2026-11-04 一条 observation）：sum(completed)=3 / sum(labeled_completed)=3 / 观测天数=1，即 3/20。与 1-1 共享同一批真实 decide 动作，但判据不同：本节点是累计 ≥20（R10 降级判定，不要求日历连续），1-1 是连续 ≥7 活跃日 + budget 收敛。不建 blocks 到 1-1（会倒挂），仅 informs 表达数据源关联。判定以 src/zkc/task_queue.py:26 LABEL_JUDGMENT_THRESHOLD=20 告警为准。",
+      "layer": "plan",
+      "exit_criteria": [
+        "累计 labeled_completed ≥20（以 task_queue.LABEL_JUDGMENT_THRESHOLD=20 告警及 PG 实测 sum 为准）",
+        "滚动 7 天 labeled_completed/completed ≥70%，标注率闸门非 open",
+        "达成后从 PRD §9 删除该 TODO（原约定），并同步 risks.md R10 状态",
+        "全部数据来自真实 zkc decide 人环标注，禁止伪造或批量灌入"
+      ]
+    },
+    "1-18": {
+      "id": "1-18",
+      "uid": "01a1a7875095-f5dd610dea",
+      "label": "PRD §9 下版本决策收口：护城河锚 2 抽检 + 6 项 unknown 口径 + checkbox 勾销",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "为何不把 PRD §9 第二项拆成执行节点？",
+          "answer": "它是已拍板决策总纲，执行内容已由 E2–E9 承载，逐条拆会与现有节点重复。定为薄收口节点：只做锚 2 抽检记录、6 项 unknown 口径、checkbox 勾销；被 1-8 与 1-9 blocks。",
+          "note": "若 zj 要求逐条拆，可再拆"
+        }
+      ],
+      "notes": "PRD §9 第二个未完成 checkbox 是已拍板决策的总纲，不是待实现功能。其执行内容已被现有节点覆盖：P0 校准闭环→1-1；rec-avoid 机械闸 + MCP ADR→E2–E6；护城河锚 2 蒸馏抽检→E8(1-8)；6 项 unknown + caveat 叙事→E9(1-9)，去模型化对照→E7(1-7)。故本节点只做验收对齐与文档收口，不重复实现。E7/E8/E9 目前均无 exit_criteria，本节点被 1-8 与 1-9 blocks（等执行节点完成才勾销 checkbox），这是正向依赖、不倒挂。证据缺口原文见 docs/plans/mcp-integration-plan.md §1.4/§2.5：governance×4 + letta×2 + mem0 整体排除。",
+      "layer": "plan",
+      "exit_criteria": [
+        "护城河锚 2 落地：zj 人工抽检蒸馏产物，记录漏检率/误蒸馏率并给本机 4B/9B 上界估计",
+        "6 项 unknown 分层结论回填（governance×4 / letta×2 / mem0 整体排除），不阻塞排期的判定写明",
+        "caveat moat-unverified-vs-mem0 口径统一，任何唯一性表述均带限定",
+        "PRD §9 第二 checkbox 勾销或改写为已收口，注明由 E2–E9 承载",
+        "本节点只做验收对齐与文档收口，不重复实现 E2–E9 的执行内容"
+      ]
+    },
+    "1-19": {
+      "id": "1-19",
+      "uid": "01a1a787519c-ac3830ef68",
+      "label": "风险册观察期终判组：R4/R5/R6/R10/R14 终判与阈值 source 升级",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "为何 5 条风险聚成一个节点？",
+          "answer": "R4/R5/R6/R10/R14 共享同一外生锚（真实多日埋点），拆成 5 个节点会互相等待且判定重复。R18 已由 D3 覆盖、R1/R8/R17 不依赖观察期，均排除在外。",
+          "note": "与 1-22 分工：本节点判状态，1-22 做工程动作"
+        }
+      ],
+      "notes": "聚合理由：R4（预算不足终判）、R5（L3 依赖标注）、R6（校准值 open）、R10（外生锚样本）、R14（补全延迟触发率）共享同一个外生锚——真实多日埋点，故同一节点判定，避免 5 个节点互相等待。与 1-22 的分工：1-22 提供工程动作（建语料、跑 calibrate、落权重），本节点负责风险册状态判定与文档收口，共享 tuning.calibrate() 门禁但不重复实现。R18 已由 1-15(D3) 覆盖，R1/R8/R17 不依赖观察期、另立 1-20。",
+      "layer": "plan",
+      "exit_criteria": [
+        "R4 三选一终判落 ADR：真实预算确认 / 缩动态集 / 调 SURFACE_THRESHOLD（留痕）",
+        "R10 样本产出判定收口：≥20 带标注动作且标注率 ≥70%，与 P6.4 节点共用同一实测数据",
+        "R14 补全触发率聚合与超预算判定：触发率 >50% 且补全延迟中位 >主生成中位 50% 时关补全",
+        "R5/R6 的 tuning 阈值经 calibrate() 门禁（≥14 天埋点 + ≥3 饱和日）升 CALIBRATED；未达标保持 PLACEHOLDER 并显式留痕",
+        "risks.md 中上述 5 条状态同步；R18 不在本组（已由 D3 覆盖）"
+      ]
+    },
+    "1-20": {
+      "id": "1-20",
+      "uid": "01a1a78752a7-94392f6bf0",
+      "label": "风险册独立 open 项：R17 工期裁剪 / R1 judge opt-in / R8 版本回归",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "为何与观察期组分开？",
+          "answer": "三条均为独立拍板/工程项（工期裁剪 / judge opt-in / 锁版本回归），不依赖真实埋点，可立即并行；混进观察期组会被无谓阻塞。",
+          "note": "risks.md 状态：R17 open、R1 已缓解待拍板、R8 缓解中"
+        }
+      ],
+      "notes": "三条均为独立拍板/工程项，不依赖真实多日埋点，故与观察期终判组分开、可立即并行：R17=4h/周导致 24–32 周工期，S2/S3 裁剪方案尚未生效待拍；R1=judge 复测翻案后默认仍 HITL，auto_pass opt-in 需人判对照后 zj 显式拍板；R8=LangGraph/Semantic Router 破坏性变更，锁版本 + 路由回归测试「缓解中」未关停。",
+      "layer": "plan",
+      "exit_criteria": [
+        "R17 的 S2/S3 裁剪方案由 zj 拍板并回填 risks.md（4h/周 工期 24–32 周问题）",
+        "R1 judge 自动放行 opt-in：auto_pass 放行语义 + 真实漏检率校准，攒人判对照后由 zj 显式拍板",
+        "R8 锁版本清单 + 路由回归测试接入 CI，或明确已满足并关停",
+        "三条状态在 risks.md 收口，不与观察期组混写"
+      ]
+    },
+    "1-21": {
+      "id": "1-21",
+      "uid": "01a1a78753ad-e2bfa920de",
+      "label": "工程尾巴 A：每日驱动跨平台补齐 + harness 适配器纳管",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "工程尾巴 A 的边界？",
+          "answer": "只补运行形态（Windows 调度注册、skill 纳管、多 harness 适配器），不改 zkc CLI 的 daily/meter/decide 语义，不动 E1 判据。",
+          "note": "ADR-0007 的跨平台调度条款实际只落 macOS"
+        },
+        {
+          "q": "Scope gate 与开工边界？",
+          "answer": "Product execution：四条 exit_criteria 均要求补运行形态/改项目文件，不是 legacy/probe 验收。边界按节点既有 decision 锁死：不改 zkc CLI 的 daily/meter/decide 语义、不动 E1 三判据；只新增安装/纳管/适配器产物与 ADR-0007、user-guide.md 同步。",
+          "note": "Windows 实机调度注册无法在本机(macOS)验证，须如实标注为未实测、留待 Windows 侧复核"
+        },
+        {
+          "q": "Windows 注册脚本实现形态？",
+          "answer": "薄壳 .bat（解析 venv python 与项目根）+ 可单测的 Python 渲染模块 daily_driver_schedule.py：渲染 schtasks /create|/delete 命令、--dry-run 只预览不注册、/f 保证幂等、默认 23:50 对齐 macOS plist。任务动作指向现有 daily_e1_driver.bat 包装（避免 schtasks /tr 多参数引号嵌套）。",
+          "note": "选此形态是为了让注册表命令在 macOS 侧也能被真实单测覆盖（TDD 红→绿），而非只做静态文本断言"
+        },
+        {
+          "q": "zj-zkc-daily skill 纳管策略（zj 拍板）？",
+          "answer": "选『repo 完全纳管 + 安装脚本』：canonical 迁进仓库 skills/zj-zkc-daily/SKILL.md（git 跟踪、唯一真相源），用户级目录降级为运行副本，由 scripts/install_harness_skill.py 同步。zj 显式推翻跨项目既有『skills 与项目源码分离』约定，ADR-0007 已如实记录取舍并限定仅适用 ZKC 自有 skill。",
+          "note": "实测：--check drift=1 → --force action=updated（旧副本留 SKILL.md.bak）→ --check drift=0 → diff -q 逐字节一致"
+        },
+        {
+          "q": "Codex / DeepSeek 适配器（zj 拍板）？",
+          "answer": "明确不做，按 exit_criteria 备选写进 ADR-0007；改为落 provider 无关的适配器契约（daily → decide --list 呈现 → 人给 verdict → decide --id → meter，human-in-loop 为硬约束）。理由：本机无该侧运行环境，凭空产出属未验收产物；ZKC 不硬编码 provider。",
+          "note": "契约载体：skills/zj-zkc-daily/SKILL.md 的每日流程/硬约束 + ADR-0007 §3；WorkBuddy 版是首个实例"
+        },
+        {
+          "q": "1-21 收口证据与未实测偏差？",
+          "answer": "四条 exit_criteria 全达成：① Windows 注册脚本落地（install_daily_driver.bat + daily_driver_schedule.py，对齐 macOS 能力，daily_e1_driver.bat 删错误 REM 占位并补 ZKC_MODE=direct）；② skill 纳管/备份策略明确且实测同步；③ Codex/DeepSeek 明确不做并写进 ADR-0007；④ 三项已在 ADR-0007 与 docs/user-guide.md §5 同步，未改 zkc CLI 语义。",
+          "note": "验证：新增 27 条测试（14+13）红→绿，全量 446 tests OK / rc=0；macOS --dry-run 冒烟通过。未实测偏差：本机 macOS，Windows 真实 schtasks 注册未验证，ADR-0007 留 4 步复核清单，不冒充已验收。另：authority-check 报 6 处既有 mcp-integration-plan.md 引用（HEAD 版已存在，非本轮引入），不扩大本节点范围处理"
+        }
+      ],
+      "notes": "现状证据：scripts/ 只有 install_daily_driver.sh（macOS）+ daily_e1_driver.bat（驱动脚本），无任何 schtasks 注册脚本 → ADR-0007 写的「跨平台调度」实际只落了 macOS。~/.workbuddy/skills/zj-zkc-daily/SKILL.md 是用户级 skill、不在 git（无纳管/备份）；D 形态规划里 Codex / DeepSeek 各自包同名适配器，目前只有 WorkBuddy 一份。边界：只补运行形态，不改 zkc CLI 三个子命令的语义。",
+      "layer": "plan",
+      "exit_criteria": [
+        "Windows schtasks 注册脚本落地，对齐 macOS install_daily_driver.sh；ADR-0007 跨平台调度不再只有 macOS 实现",
+        "zj-zkc-daily skill 明确纳管/备份策略（当前在 ~/.workbuddy/skills，不在 git）",
+        "Codex / DeepSeek 侧同名 harness 适配器落地，或明确标记为不做并写进 ADR-0007",
+        "三项在 ADR-0007 或 docs/user-guide.md 同步；不改 zkc CLI 语义"
+      ],
+      "rounds": 1,
+      "budget": {
+        "max_children": 3,
+        "max_rounds": 2
+      }
+    },
+    "1-22": {
+      "id": "1-22",
+      "uid": "01a1a78754be-c2bcf51173",
+      "label": "工程尾巴 B：占位阈值与复利度量权重校准收口",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "lexical gate 的描述以什么为准？",
+          "answer": "以代码事实为准：0.5 恒弃权 bug 已由 auto_calibrate_gate 修复，旧描述（项目 MEMORY.md 遗留节及上一轮回复）过时，本节点按「缺真实语料 + seed 仍 PLACEHOLDER + 未走 calibrate 门禁」立项。corpus-derived 不得伪装成 CALIBRATED。",
+          "note": "事实核查 2026-11-05：routing.py:186-190 / app.py:95-99 / data/lexical_corpus.json 不存在"
+        }
+      ],
+      "notes": "重要事实更正：src/zkc/routing.py:186-190 已默认 auto_calibrate_gate=True，fit() 后按类内/类间质心余弦中点推导 gate（gate_source=corpus-derived），硬编码 0.5 恒弃权的 bug 早已修复；app.py:95-99 build_routers 会 fit 语料。真正缺口是 data/lexical_corpus.json 不存在 → 无标注语料 → 冷启动 predict 返回 (None,0.0) → 仍弃权；且 tuning.py:161 ROUTING_LEXICAL_CONF_GATE=0.5 仍是 PLACEHOLDER seed。治理铁律（routing.py:176-183）：corpus-derived 与 tuning.CALIBRATED 是两回事，绝不写回 REGISTRY，升 CALIBRATED 必须走 calibrate() 门禁。复利度量：tuning.py:178-181 四个 METRIC_W_* 均 0.25 PLACEHOLDER，metrics.py:101-113 的 weights/method_target 待校准。",
+      "layer": "plan",
+      "exit_criteria": [
+        "建立 data/lexical_corpus.json 真实标注语料，使 LexicalRouter.fit() 产出 corpus-derived gate（代码已支持自动校准）",
+        "ROUTING_LEXICAL_CONF_GATE seed、METRIC_W_* 四个 0.25、METRIC_METHOD_TARGET 走 calibrate() 门禁或显式标注 PLACEHOLDER 原因",
+        "治理铁律不破：corpus-derived 绝不写回 tuning 的 CALIBRATED，禁止混称",
+        "复利系数权重/目标结论落 tuning 或 ADR，全量套件通过"
+      ]
+    },
+    "1-23": {
+      "id": "1-23",
+      "uid": "01a1a7a0dc3d-d75a6df525",
+      "label": "G1 过程权威泄漏治理：7 处分类 + 真违规修复 + 门禁自包含接入 CI",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "「6 处」口径是否需要更正？",
+          "answer": "更正为 7 处。第 7 处 .workbuddy/memory/2026-11-05.md:59 是 1-21 收口日志写入时引入（把过程产物路径写进日志），非既有；上一轮汇报口径已过时，本节点按 7 处治理并在日志追加更正留痕。",
+          "note": "实测 authority-check 当前输出 7 行；日志 append-only，只能用追加更正、不能改行"
+        },
+        {
+          "q": "7 处根因如何分类？",
+          "answer": "真违规仅 1 处（PRD:168 长期文档引用过程 plan）；其余 6 处是检查器误扫——4 处过程日志（append-only）+ 2 处 roadmap 事实源自身（:3 description 无 CLI 命令、:418 notes 可 CLI 改）。根因是 authority_boundary.py 的 EXCLUDED_DIR_PARTS 只有 {node_modules, tmp}，把过程产物自身也当 durable code。",
+          "note": "CI 还从未跑过该门禁；且 runner 无用户级 skill 安装，治理产物必须自包含"
+        },
+        {
+          "q": "推荐方案（待 zj 复核可推翻）？",
+          "answer": "推荐自包含 wrapper：仓库内新增 scripts/zkc_authority_check.py，复刻判定逻辑（不 import 用户级 skill），对 6 处已知误扫按「路径+行+理由」显式白名单过滤并逐条打印豁免，任何新泄漏仍 fail；同时修 PRD 真违规、把 wrapper 接进 ci.yml。不改跨项目 skill、不改 append-only 日志、不手改 JSON 事实源。",
+          "note": "备选 A 改 skill EXCLUDED_DIR_PARTS（跨项目授权 + 删除重装，且 CI 仍需自包含）；备选 C 归档 plan 全清引用（被 description 无 CLI 命令 + 日志禁改阻塞，不作首选）。本轮只建模，执行待 zj「开始 1-23」"
+        },
+        {
+          "q": "治理期间如何避免记录行为本身复现泄漏？",
+          "answer": "自指陷阱：检查器按行做子串匹配，凡在 roadmap 事实源 / 过程日志 / 长期记忆里写出 process target 的完整相对路径，记录行为本身就会新增一条泄漏。本轮实证：写完 1-23 的 notes + 日志更正 + MEMORY 后泄漏由 7 涨到 10，随后把 3 处本轮自引入的完整路径改写为「仅文件名」（并复测回到 7）。治理期间一律只写文件名或占位表述；本轮自引入的新增泄漏必须清零，不得并入误扫白名单了事。",
+          "note": "与 zj 的 commit hash 自指循环同类：写入内容改变了被检查对象本身；解药是让记录不携带触发串"
+        }
+      ],
+      "notes": "现状（2026-11-05 实测 `python roadmap_cli.py authority-check .` 输出 7 行，非上一轮汇报的 6 行）：\n[真违规 1] docs/prds/knowledge-compounding-prd.md:168 —— PRD 是长期文档，却引用过程产物 mcp-integration-plan.md（docs/plans/ 下唯一一份）；按 skill 权威边界应改为引用 ADR-0004 / ADR-0005 / docs/rec-avoid-gate.md 等持久权威。\n[误扫 6] .workbuddy/memory/2026-11-04.md:6/27/33 + 2026-11-05.md:59（过程日志，记忆系统 append-only 硬约束禁改；其中 2026-11-05.md:59 是 1-21 收口日志写入时把过程产物路径写进日志所引入，属本会话新增、非既有）；docs/roadmap/roadmap.json:3（root description，CLI 仅 init 支持 --description、update 无该字段，Agent 禁手改事实源）、:418（节点 1-18 notes，可由 `update --notes` 合法改，但内容含 plan §1.4/§2.5 证据缺口原文，须先沉淀到持久权威）。\n[根因] authority_boundary.py：process_targets = docs/plans/**（当前仅 mcp-integration-plan.md）；扫描 root.rglob('*') 全部 DURABLE_SUFFIXES；EXCLUDED_DIR_PARTS 只有 {node_modules, tmp}，故把过程日志与 roadmap 事实源自身一并当作 durable code 判定；行内例外仅 roadmap-authority-allow: governance-example；cmd_authority_check 只收 project_root、无 exclude 参数。\n[既有性交叉验证] `git show HEAD:docs/prds/...` 第 168 行与 `HEAD:docs/roadmap/roadmap.json` 第 3 行均已含该引用 → 6 处非 1-21 引入；1-21 新增/修改文件 0 命中。第 7 处（2026-11-05.md:59）是 1-21 日志新增，如实计入治理范围。\n[CI 现状] `git ls-files .github/` 只有 .github/workflows/ci.yml；grep authority-check 0 命中 → 门禁从未进 CI。且 CI runner 无 ~/.workbuddy/skills 用户级安装，任何依赖 skill 路径的接法在 CI 都不可执行，治理产物必须自包含（不 import 用户级 skill）。\n[硬约束] ① 日志 append-only 不改已有行；② roadmap.json 只能经 CLI 读写（root description 无命令）；③ zj-roadmap-driven 位于 ~/.workbuddy/skills 属跨项目用户级资产（更新走删除重装），改它需单独授权；④ 治理不得静默忽略或削弱门禁，任何新出现的泄漏仍须非零退出。",
+      "layer": "plan",
+      "budget": {
+        "max_children": 3,
+        "max_rounds": 2
+      },
+      "exit_criteria": [
+        "7 处泄漏逐条分类落盘（真违规 / 误扫 / 本会话引入），每条带可复核证据文件:行与 HEAD 交叉验证结论",
+        "真违规修复：PRD:168 改引用 ADR-0004 / ADR-0005 / docs/rec-avoid-gate.md 等持久权威，决策摘要内容不丢失、不改 zkc CLI 语义",
+        "误扫处置方案经 zj 拍板并落地；候选：仓库内自包含显式白名单 wrapper / 改 skill EXCLUDED_DIR_PARTS（需跨项目授权）/ 归档 plan 后全量清引用（被 description 无 CLI 命令 + 日志禁改阻塞）",
+        "门禁自包含接入 .github/workflows/ci.yml（当前 0 命中）：不依赖用户级 skill 路径，新泄漏必须 fail，已知豁免逐条打印不静默",
+        "机械验证：门禁输出 clean 或显式列出被豁免项；本地复跑留痕；全量单测不受影响；治理结论同步 ADR 或 docs 长期文档"
+      ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-04 20:30:18",
+    "updated": "2026-11-05 01:36:34",
     "md_file": "ROADMAP.md"
   },
   "edges": [
@@ -322,7 +651,55 @@
       "from": "01a1a61764e2-6810f0d0d9",
       "to": "01a1a5ece860-8ab5331319",
       "type": "informs"
+    },
+    {
+      "id": "e9",
+      "from": "01a1a77444aa-0db9718b33",
+      "to": "01a1a5ece146-89f466a59c",
+      "type": "informs"
+    },
+    {
+      "id": "e10",
+      "from": "01a1a77445d0-6c755c7f83",
+      "to": "01a1a5ece146-89f466a59c",
+      "type": "informs"
+    },
+    {
+      "id": "e11",
+      "from": "01a1a77c214f-69234d6403",
+      "to": "01a1a77c2289-69057a3fd3",
+      "type": "informs"
+    },
+    {
+      "id": "e12",
+      "from": "01a1a7874f56-f7cf40ed6f",
+      "to": "01a1a5ece146-89f466a59c",
+      "type": "informs"
+    },
+    {
+      "id": "e13",
+      "from": "01a1a5ece860-8ab5331319",
+      "to": "01a1a7875095-f5dd610dea",
+      "type": "blocks"
+    },
+    {
+      "id": "e14",
+      "from": "01a1a5ece962-63e019f1f6",
+      "to": "01a1a7875095-f5dd610dea",
+      "type": "blocks"
+    },
+    {
+      "id": "e15",
+      "from": "01a1a787519c-ac3830ef68",
+      "to": "01a1a5ece146-89f466a59c",
+      "type": "informs"
+    },
+    {
+      "id": "e16",
+      "from": "01a1a78754be-c2bcf51173",
+      "to": "01a1a787519c-ac3830ef68",
+      "type": "informs"
     }
   ],
-  "edge_seq": 8
+  "edge_seq": 16
 }

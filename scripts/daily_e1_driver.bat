@@ -13,9 +13,14 @@ if exist "%SCRIPT_DIR%..\.venv\Scripts\python.exe" (
 )
 set ZKC_BASE=http://127.0.0.1:8000
 set ZKC_STORAGE=pg
+set ZKC_MODE=direct
 "%PY%" "%SCRIPT_DIR%daily_e1_driver.py"
 exit /b %ERRORLEVEL%
 
-REM ---- 注册为每日计划任务（管理员 CMD 执行一次）----
-REM schtasks /create /tn "ZKC Daily E1" /tr "\"%PY%\" \"%CD%\scripts\daily_e1_driver.py\"" /sc daily /st 23:50
+REM ---- 注册/卸载每日计划任务（在仓库根执行一次）----
+REM 注册脚本：scripts\install_daily_driver.bat（对齐 macOS install_daily_driver.sh）
+REM   scripts\install_daily_driver.bat --dry-run    预览命令，不注册
+REM   scripts\install_daily_driver.bat             注册每日 23:50
+REM   scripts\install_daily_driver.bat --uninstall 卸载
+REM 本包装由计划任务直接调用；真实 python/项目根由安装脚本按脚本位置解析，勿用调用方 cwd 拼路径。
 REM 日志：<仓库>\logs\e1_daily.log（JSONL）。

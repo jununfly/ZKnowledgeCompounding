@@ -124,3 +124,52 @@ python scripts/metrics_snapshot.py        # 打印当前度量快照（JSON）
 5. 记一条结论到周记（项目外任意笔记），下周五对照。
 
 > 复盘只产出「下一步动作」，不产出焦虑。系统是你的外脑，复盘是校准它、不是被它考核。
+
+---
+
+## 5. 每日驱动自动运行（可选，跨平台）
+
+界面手工操作之外，可以把**两件机械事**交给系统每天 23:50 自动跑：① 真值收口
+（写今日 `pushed` / `queue_remaining`，不手工乱填）② 跑 E1 进度仪表。
+**复审标注（`decide`）永远不在此自动化范围内**——那是需要你本人判断的外生锚。
+设计与边界见 ADR-0007；底层是 `zkc` CLI（`daily` / `meter` / `decide`）。
+
+### macOS（launchd）
+
+```bash
+scripts/install_daily_driver.sh --dry-run    # 预览渲染后的 plist，不安装
+scripts/install_daily_driver.sh              # 写入 ~/Library/LaunchAgents/ 并注册
+launchctl unload ~/Library/LaunchAgents/com.zkc.daily-e1.plist && rm ~/Library/LaunchAgents/com.zkc.daily-e1.plist
+```
+
+脚本自动解析 venv python 与仓库根，plist 模板在 `scripts/launchd/com.zkc.daily-e1.plist`。
+
+### Windows（计划任务）
+
+```bat
+scripts\install_daily_driver.bat --dry-run     :: 预览 schtasks 命令，不注册
+scripts\install_daily_driver.bat                :: 注册每日 23:50
+scripts\install_daily_driver.bat --uninstall    :: 卸载
+scripts\install_daily_driver.bat --time 07:15   :: 改触发时间
+```
+
+任务调用 `scripts\daily_e1_driver.bat` 包装（venv python 优先、`ZKC_MODE=direct`）；
+`--dry-run` 不写任何计划任务，重复安装用 `/f` 覆盖同名任务。
+> **未实机验证**：本仓库开发机是 macOS，Windows 注册流程只经过命令契约单测与 dry-run 冒烟，
+> 未在 Windows 上真实注册过。首次在 Windows 使用时按 ADR-0007 的复核清单逐条确认。
+
+两端日志都写 `<仓库>/logs/e1_daily.log`（JSONL，每次运行一行）。
+
+### WorkBuddy 侧的 zj-zkc-daily skill
+
+canonical（唯一真相源）在仓库 `skills/zj-zkc-daily/SKILL.md`；运行副本在
+`~/.workbuddy/skills/zj-zkc-daily/SKILL.md`，由脚本同步，**不要手改副本**：
+
+```bash
+python scripts/install_harness_skill.py --check     # 只查漂移（drift → 退出 1）
+python scripts/install_harness_skill.py --dry-run   # 预览
+python scripts/install_harness_skill.py --force     # canonical 更新后同步（旧副本留 .bak）
+```
+
+脚本不删除 home 下目录；副本被手工改过时默认拒绝覆盖。在 WorkBuddy 里说
+「跑 ZKC 每日循环」即按该 skill 走四步流程，其中 `decide` 会停下来等你给 verdict。

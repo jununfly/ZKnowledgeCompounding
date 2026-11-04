@@ -84,3 +84,58 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
 - **状态**：已解决（direct 模式 CLI 冒烟通过 exit 0；dry-run 渲染无占位符残留）。
 
 > 注：direct 模式仅去除「收口对 HTTP 服务的依赖」；复审标注（`decide`）仍须人工，不在自动化范围。
+
+## 运行形态补齐（2026-11-05，roadmap 1-21，zj 拍板）
+
+本节记录三项工程尾巴的处置。**边界不变**：不改 `zkc` CLI 的 `daily` / `meter` / `decide`
+语义，不动 E1 三判据，不碰 `scripts/daily_e1_driver.py` 的收口与仪表逻辑。
+
+### 1. Windows schtasks 注册（补齐 fork 3 的跨平台承诺）
+- 原状：`daily_e1_driver.bat:20` 只有一句 `REM schtasks /create` 占位示例，且用 `%CD%`
+  （调用方 cwd，不是仓库根）拼路径；ADR 正文写的「Windows schtasks(.bat 包装)」实际未落地。
+- 新增 `scripts/install_daily_driver.bat`（薄壳：venv python 优先、参数透传、退出码透传）
+  + `scripts/daily_driver_schedule.py`（渲染并执行 `schtasks /create|/delete`），对齐 macOS
+  `install_daily_driver.sh` 的四个能力：自动解析真实 python / `PROJECT_ROOT`、`--dry-run`
+  只预览、覆盖式安装 `/f` 幂等、默认 **23:50** 与 `scripts/launchd/com.zkc.daily-e1.plist` 一致。
+- 任务动作指向现有 `daily_e1_driver.bat` 包装（单一路径），规避 schtasks `/tr` 里
+  「python + 脚本」多参数引号嵌套；该包装补 `ZKC_MODE=direct`，与 plist 环境变量对齐。
+- 验证：`tests/test_daily_driver_schedule.py` 14 条（红→绿）+ macOS 侧 `--dry-run` 冒烟 +
+  非法时间 exit 2。**未实机验证声明**：本机为 macOS，未执行过真实 `schtasks` 注册；已验证的
+  是命令契约与 dry-run 安全性，不冒充 Windows 侧通过。
+- Windows 侧复核清单（有环境时按序执行，未完成前不算实机验收）：
+  1. `scripts\install_daily_driver.bat --dry-run` 看命令；
+  2. `scripts\install_daily_driver.bat` 注册，`schtasks /query /tn "ZKC Daily E1" /v` 确认；
+  3. 次日查 `logs\e1_daily.log` 是否新增一行真值收口；
+  4. `scripts\install_daily_driver.bat --uninstall` 可干净卸载。
+
+### 2. zj-zkc-daily skill 纳管（zj 显式推翻跨项目既有约定）
+- 原状：该 skill 只有 `~/.workbuddy/skills/zj-zkc-daily/SKILL.md` 一份，不在 git、无备份。
+- **决定**：canonical 迁到 ZKC 仓库 `skills/zj-zkc-daily/SKILL.md`（git 跟踪、唯一真相源）；
+  用户级目录降级为运行副本，由 `scripts/install_harness_skill.py` 同步生成。
+- **取舍如实记录**：zj 跨项目既有约定是「skills 与项目源码分离、更新走删除重装」，把 skill
+  放进单项目仓库会与之冲突。此项由 zj 2026-11-05 显式选择「repo 完全纳管 + 安装脚本」，
+  **仅适用于 ZKC 自有 skill**，不构成对其它 zj-* 技能装机约定的变更。
+- 脚本安全边界：绝不删除 home 下目录（不做自动删除重装），只覆盖单个 `SKILL.md`；副本有
+  分歧时默认拒绝覆盖，`--force` 才覆盖且先留 `SKILL.md.bak`；`--dry-run` / `--check` 只读。
+  `tests/test_install_harness_skill.py` 13 条（红→绿）守住这些边界。
+- 更新流程：改 canonical → `--check` 看漂移 → `--force` 同步 → WorkBuddy 侧按既有
+  「删除重装」约定人工重载。
+- 本次迁移实测：`--check` drift=1 → `--force` action=updated（旧副本 4049 B 备份为
+  `SKILL.md.bak`）→ `--check` drift=0 → `diff -q` 与 canonical 逐字节一致。
+
+### 3. 多 harness 适配器：明确不做 + 落 provider 无关契约
+- 原状：仓库内 Codex / DeepSeek / adapter 相关产物 0 命中，只有 WorkBuddy 版 D 形态。
+- **决定：不做** Codex / DeepSeek 适配器。理由：本机无该侧运行环境，凭空写两份 md 属
+  「未验收产物」，会把过程完成度冒充运行时正确性；ZKC 也不应硬编码 provider。
+- 取而代之，在仓库内落一份 **provider 无关的适配器契约**（canonical 载体 =
+  `skills/zj-zkc-daily/SKILL.md` 的「每日流程 / 硬约束」，本节给出接入要点）：
+  1. 机械收口：`zkc daily`（写真值 pushed / queue_remaining，绝不手工填）；
+  2. 呈现队列：`zkc decide --list --json`，把 due 条目逐条呈现给人；
+  3. 人环复审：**verdict 必须由人给出**（still_valid / changed / stale / browse），
+     逐条 `zkc decide --id <id> --verdict <v>`；适配器绝不自行编造或默认填值 ——
+     自动标注 = 伪造外生锚 A，废掉 L3 反馈闭环（架构 §6.5.1）；
+  4. 进度仪表：`zkc meter --json` 读 E1 三判据。
+  硬约束另有：预算语义 A 无状态（ADR-0006）不改、E1 判据只喂数据不改、
+  `daily` 只写 `attention_observation` 不碰业务表。
+- 未来任何 harness 照此契约实现自己的适配器即可复用同一 `zkc` CLI；**无需改 ZKC 内部**。
+  WorkBuddy 侧现有实现即该契约的第一个实例，其 canonical 已按第 2 条纳管。

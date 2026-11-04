@@ -7,13 +7,14 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-04 20:30:18
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-05 01:36:34
 
 [~][X+] 1. ZKC MCP 集成执行路线图
     ├── [~][X+] 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
-    ... 该层还有 11 个兄弟，0 个 in_progress ▸
-<details><summary>阻塞链：4 个节点被阻塞</summary>
+    ... 该层还有 22 个兄弟，0 个 in_progress ▸
+<details><summary>阻塞链：5 个节点被阻塞</summary>
 
+- 1-18. PRD §9 下版本决策收口：护城河锚 2 抽检 + 6 项 unknown 口径 + checkbox 勾销 ← e13: 1-8. E8 护城河实证化：复利度量口径回填与蒸馏抽检 [ ], e14: 1-9. E9 对外叙事对齐：caveat+4特征口径统一 [ ]
 - 1-2. E2 transport seam 与 MCP server 骨架（stdio 薄适配层） ← e1: 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70% [~]
 - 1-3. E3 暴露面五 tool 实现与攻击面枚举表 ← e2: 1-2. E2 transport seam 与 MCP server 骨架（stdio 薄适配层） [ ]
 - 1-4. E4 zkc_capture 完整规格：push+分流闸+注入防护 ← e3: 1-3. E3 暴露面五 tool 实现与攻击面枚举表 [ ]
