@@ -76,6 +76,24 @@ class MemorySearchTest(unittest.TestCase):
         hits2 = self.store.nodes.search(include_archived=True)
         self.assertIn(self.n3.id, {n.id for n in hits2})
 
+    def test_search_robust_to_mixed_naive_aware_created_at(self):
+        """回归：search 排序必须容忍 created_at 时区混合（naive 显式 + aware 默认）。
+
+        根因：n3 在 setUp 未传 created，save 落 datetime.now(timezone.utc)（aware）；
+        其余节点传 naive base。search 排序用 naive 哨兵 datetime.min，与 aware 比较抛
+        TypeError。内存后端须把 created_at 统一为 aware UTC（对齐 PG），排序哨兵也用 aware。
+        """
+        # 显式 naive + 一处缺省（触发 aware 默认），直接断言不抛且顺序正确
+        n_old = self.store.nodes.save(_node(title="naive-old",
+                                           created=datetime(2026, 1, 1, 0, 0, 0)))
+        n_default = self.store.nodes.save(_node(title="default-now"))  # created=None → aware
+        hits = self.store.nodes.search(order="created_asc")
+        ids = [n.id for n in hits]
+        self.assertIn(n_old.id, ids)
+        self.assertIn(n_default.id, ids)
+        # 不抛 TypeError 即过关；且 naive-old 应排在最前（created 最早）
+        self.assertEqual(ids[0], n_old.id)
+
     def test_search_decay_range(self):
         hits = self.store.nodes.search(decay_min=0.5, decay_max=1.0)
         ids = {n.id for n in hits}

@@ -38,6 +38,11 @@ from .protocols import (
 )
 
 
+# 排序哨兵：须为 aware UTC，与 save 归一后的 created_at 时区一致，
+# 否则 naive/aware 混比抛 TypeError（见 test_search_robust_to_mixed_naive_aware_created_at）。
+_MIN_DT = datetime.min.replace(tzinfo=timezone.utc)
+
+
 class MemoryNodeRepository(NodeRepository):
     def __init__(self) -> None:
         self._rows: dict[UUID, Node] = {}
@@ -49,7 +54,11 @@ class MemoryNodeRepository(NodeRepository):
             node.id = uuid4()
             # 对齐 PG：created_at 仅在 INSERT 时由默认 now() 生成，UPDATE 不重写。
             # 内存实现无列默认，故在插入分支补齐（已显式给定则保留，不覆盖）。
-            node.created_at = node.created_at or datetime.now(timezone.utc)
+            if node.created_at is None:
+                node.created_at = datetime.now(timezone.utc)
+            elif node.created_at.tzinfo is None:
+                # 对齐 PG（now() 恒为 aware UTC）：naive 输入视为 UTC 归一
+                node.created_at = node.created_at.replace(tzinfo=timezone.utc)
             node.tx_from = datetime.now()
             node.tx_to = None
             node.version_seq = 1
@@ -121,12 +130,12 @@ class MemoryNodeRepository(NodeRepository):
                     continue
             out.append(replace(n))
         if order == "created_asc":
-            out.sort(key=lambda n: (n.created_at or datetime.min))
+            out.sort(key=lambda n: (n.created_at or _MIN_DT))
         elif order == "decay_desc":
             out.sort(key=lambda n: n.decay_score or 0.0, reverse=True)
         else:  # created_desc
             out.sort(
-                key=lambda n: (n.created_at or datetime.min), reverse=True
+                key=lambda n: (n.created_at or _MIN_DT), reverse=True
             )
         return out[: max(1, int(limit))]
 
