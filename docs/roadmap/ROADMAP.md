@@ -7,7 +7,7 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-04 19:41:58
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-04 20:30:18
 
 [~][X+] 1. ZKC MCP 集成执行路线图
     ├── [~][X+] 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
@@ -26,10 +26,13 @@ promote-via: ADR|design|contract|runtime-evidence
 
 **决策：**
 - Q: 1-1 范围分类（scope gate）？ → Product execution（产品执行）：ZKC 自身路线图节点，操作/观测『已交付复审队列』校准闭环；目标代码保持只读除非发现 harness 缺口。本沙箱无 PG/Docker 无法跑实时回路，真实多日埋点须在 zj 本机（localhost:55433 + make serve）进行，严禁伪造数据。
-- Q: 如何定义『活跃日』（退出判据1 计数口径）？ → 活跃日 = 当日 real 复审发生（attention_observation.completed>=1 且当日 record_daily_observation 收口）。连续>=7 = 最近 7 个自然日每天都有 completed>=1 的真实观测；任一天断签则串重数不达标。由 scripts/e1_calibration_progress.py 的 _longest_consecutive_streak 量。
+- Q: 如何定义『活跃日』（退出判据1 计数口径）？ → SUPERSEDED 2026-11-04 (fork 3b / ADR-0007)：活跃日语义已改为『completed>=1 即活跃；空队列日(queue_remaining==0 且 completed==0)豁免；有 due 未复审(completed==0 且 queue_remaining>0)才断签』，且收口(queue_remaining) 只影响 E1-③ 不影响 E1-①。详见下方同问的新决策与 ADR-0007。 (superseded)
 - Q: E1 三项退出判据怎么持续测量？ → 新增只读脚本 scripts/e1_calibration_progress.py：统一读 calibration_readiness / labeling_rate_from(7d) / estimate_budget_from(多窗口 7/14/21/28d 轨迹)。不写数据、不伪造；zj 本机 PG 起后每日跑一次看进度。已内存后端自测通过。
 - Q: 『budget_per_day 收敛到稳定值』怎么判（退出判据3）？ → 临时定义：estimate 在 [7,14,21,28] 天窗口轨迹的变异系数 CV<=10% 且 28d confidence=observed。budget 不持久化、每次由 attention_observation 实时估计，故用多窗口聚拢作收敛信号。带宽(+-10%)待 zj 拍板可调。
 - Q: 预算收敛判据采用哪种含义（A 无状态 / B 有状态）？ → A：无状态（含义②即预算）。estimate_budget_from 每次从 attention_observation 重算，无『持久化初始值』。E1-③ 重述为『派生估计在 [7,14,21,28] 天窗口轨迹聚拢（CV≤10% 且 28d confidence=observed）』。含义③有状态路径(update_budget/fit_budget)本阶段明确不接线，保留定义+单测待用——见 ADR-0006。带宽 ±10% 一并确认。
+- Q: 如何定义『活跃日』（退出判据1 计数口径）？ →  (retracted:)
+- Q: 如何定义『活跃日』（退出判据1 计数口径）？ → 活跃日 = 当日真实复审发生（attention_observation.completed>=1，来自 /review 的 decide 标注）。收口(queue_remaining) 只影响 E1-③ 预算估计与 can_calibrate 门禁，不影响 E1-①（2026-11-04 fork 3b 重定，见 ADR-0007）。空队列日(queue_remaining==0 且 completed==0) 豁免——不破不断；仅『有 due 未复审』(completed==0 且 queue_remaining>0) 断签。由 scripts/e1_calibration_progress.py 的 _evaluate_active_streak 量。
+- Q: 每日运行机制（fork 1+2+3）？ → zj 拍板 fork 1+2+3 全选：(1) 新增服务端真值收口端点 POST /review/api/observe/auto（算 pushed=今日创建节点数、queue_remaining=当前到期数），由 scripts/daily_e1_driver.py 每日触发，修复『收口须真值不可手工乱填』的 harness gap；(2) 每日驱动仅自动化『真值收口 + 跑只读仪表』，复审标注(decide) 保持人工（不可自动化，否则伪造外生锚）；(3) 活跃日语义改『空队列日豁免、有 due 未复审才断签』(fork 3b)；(4) 跨平台调度：macOS launchd plist + Windows schtasks(.bat)。详见 ADR-0007。1-1 仍 product execution，新增端点属 harness gap 修复（非业务流改动）。
 
 ### 下一步可开工（ready 前 3）
 

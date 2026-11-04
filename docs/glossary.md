@@ -27,13 +27,15 @@ L2 归一在观测出现前恒 passive，且即使观测出现，② 也从不�
 **与 E1 的关系（2026-11-04 zj 拍板取 A，见 ADR-0006）：**
 - **已定：A 无状态（含义②即预算）**。"初始值"是伪概念，③ 已改写为"派生估计在 [7,14,21,28] 天窗口轨迹上聚拢（CV≤10% 且 28d confidence=observed）"。`scripts/e1_calibration_progress.py` 的 `c3_budget_convergence` 即按此量，合规。
 - **B 有状态（含义③）明确不接线**：`update_budget_from` / `fit_budget` 保留定义+单测待用，缺失的「每日收口 hook → update_budget → fit_budget」一段不在 1-1 范围；未来启用须先立 roadmap 节点（不得静默加装写入回路）。
+- **`queue_remaining` 是负载-bearing 字段（2026-11-04 grill 纠正）**：它是「饱和日」的唯一输入——`estimate_budget_from` 的 `saturated = queue_remaining > 0`、`calibration_readiness` 的 `saturated_days` 同义。无 ≥3 饱和日则 E1-③ 永远拿不到 `confidence=observed`、`can_calibrate` 永远不 ready。**故收口必须真值、不可手工乱填**（fork 2 已落地 `/review/api/observe/auto` 服务端算真值）。`pushed` 则当前未被任何 E1 判据消费（纯遥测）。
 
 ---
 
 ## 活跃日（E1 口径）
 
-`roadmap node 1-1` 退出判据①「连续 ≥7 活跃日」的计数单位（2026-11-04 落盘决策）：
-**活跃日 = 当日真实复审发生**（`attention_observation.completed ≥ 1`）**且当日 `record_daily_observation` 收口**
-（写入 `pushed` / `queue_remaining`）。
-**连续 ≥7** = 最近 7 个自然日每天都有 completed≥1 的真实观测；任一天断签则串重数，不达标。
-由 `scripts/e1_calibration_progress.py` 的 `_longest_consecutive_streak` 量。
+`roadmap node 1-1` 退出判据①「连续 ≥7 活跃日」的计数单位（2026-11-04 落盘决策，**fork 3b / ADR-0007 重定**）：
+**活跃日 = 当日真实复审发生**（`attention_observation.completed ≥ 1`，来自 `/review` 的 `decide` 标注）。
+**空队列日豁免**：当日 `completed==0` 且 `queue_remaining==0`（队列本就空）→ 不破不断。
+**仅「有 due 未复审」才断签**：当日 `completed==0` 且 `queue_remaining>0`（有到期项却没复审）→ 串归零。
+**收口（`queue_remaining`）只影响 E1-③ 预算估计与 `can_calibrate` 门禁，不影响 E1-①**（见下「预算」条）。
+由 `scripts/e1_calibration_progress.py` 的 `_evaluate_active_streak` 量（连续非断签窗口内活跃日 ≥7）。
