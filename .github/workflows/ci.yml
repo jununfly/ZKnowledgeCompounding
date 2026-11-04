@@ -57,7 +57,7 @@ jobs:
           python-version: '3.13'
           cache: pip
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: make setup
       - name: Run unit tests
         run: make test
 
@@ -84,7 +84,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: make setup
 
       # 用 pgvector 镜像而非裸 postgres：migrations 里有 CREATE EXTENSION vector
       # 与 embedding vector(768) / HNSW 索引，裸 postgres 会直接迁移失败。
