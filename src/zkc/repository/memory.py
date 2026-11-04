@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
 from .models import (
@@ -47,6 +47,9 @@ class MemoryNodeRepository(NodeRepository):
     def save(self, node: Node) -> Node:
         if node.id is None:
             node.id = uuid4()
+            # 对齐 PG：created_at 仅在 INSERT 时由默认 now() 生成，UPDATE 不重写。
+            # 内存实现无列默认，故在插入分支补齐（已显式给定则保留，不覆盖）。
+            node.created_at = node.created_at or datetime.now(timezone.utc)
             node.tx_from = datetime.now()
             node.tx_to = None
             node.version_seq = 1
@@ -182,6 +185,13 @@ class MemoryNodeRepository(NodeRepository):
             if n.decay_score >= surface and (n.last_reviewed_at + n.review_interval) <= as_of:
                 out.append(n)
         return out
+
+    def count_nodes_created_since(self, since: datetime) -> int:
+        # 只读：since 后创建（created_at 已设）的节点数；created_at 为 None 的不计
+        return sum(
+            1 for n in self._rows.values()
+            if n.created_at is not None and n.created_at >= since
+        )
 
     def update_decay(self, node_id: UUID, decay_score: float, version_seq: int | None = None) -> None:
         # 内存实现：与 Pg 轻量路径一致（c2 决议 A-1a，2026-10-31）—— decay_score 是

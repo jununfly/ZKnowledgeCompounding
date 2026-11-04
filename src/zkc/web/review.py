@@ -190,6 +190,22 @@ def record_daily_observation(
     return _obs_to_dict(store.attention.get(today))
 
 
+def record_daily_observation_auto(store: Storage, now: Optional[datetime] = None) -> dict:
+    """每日收口（锚 B）的真值自动版：服务端计算 pushed / queue_remaining，避免手工填表造假。
+
+    - pushed        = 今日（本地零点起）创建的节点数（ingest 吞吐真值源）
+    - queue_remaining = 当前仍未复审的到期条目数（list_due_for_review(now) 长度）
+    二者均为系统可观测真值；pushed 当前不被任何 E1 判据消费（纯遥测），queue_remaining
+    是「饱和日」定义的唯一输入（estimate_budget_from / calibration_readiness 都靠它）。
+    保留当日已累加的 completed/labeled，只覆盖 pushed/queue_remaining。
+    """
+    now = now or datetime.now(timezone.utc)
+    start_of_today = datetime(now.year, now.month, now.day, tzinfo=now.tzinfo)
+    pushed = store.nodes.count_nodes_created_since(start_of_today)
+    queue_remaining = len(store.nodes.list_due_for_review(now))
+    return record_daily_observation(store, pushed, queue_remaining, now=now)
+
+
 # ---------------------------------------------------------------- 到期分流流水线（残余 1 收口）
 
 def process_expired_view(store: Storage, attention_pressure: float = 0.0,
@@ -627,6 +643,11 @@ def register_review_routes(app, store: Storage) -> None:
     @router.post("/review/api/observe")
     def observe_api(pushed: int = Form(0), queue_remaining: int = Form(0)) -> dict:
         return record_daily_observation(store, pushed, queue_remaining)
+
+    @router.post("/review/api/observe/auto")
+    def observe_auto_api() -> dict:
+        """每日收口真值自动版（fork 2）：服务端算 pushed/queue_remaining，供 launchd/TaskScheduler 调用。"""
+        return record_daily_observation_auto(store)
 
     @router.get("/review/api/classify")
     def classify_api() -> dict:

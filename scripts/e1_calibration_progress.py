@@ -36,35 +36,65 @@ def _as_date(d):
     return d.date() if isinstance(d, datetime) else d
 
 
-def _distinct_active_days(observations, *, min_completed: int = 1) -> set:
-    """活跃日 = 当日 real 复审发生（completed >= min_completed）。"""
-    return {
-        _as_date(o.day)
-        for o in observations
-        if o.completed >= min_completed
-    }
+def _classify(o) -> str:
+    """单日观测分类（fork 3b 活跃日语义）：
+    - active  ：completed >= 1（当日真实复审）
+    - missed  ：completed == 0 且 queue_remaining > 0（有 due 未复审 → 断签）
+    - excused ：completed == 0 且 queue_remaining == 0（空队列日，不破不断）
+    """
+    if o.completed >= 1:
+        return "active"
+    if (o.queue_remaining or 0) > 0:
+        return "missed"
+    return "excused"
 
 
-def _longest_consecutive_streak(days: set[object]) -> tuple[int, bool]:
-    """返回 (最长连续活跃日串长度, 是否含最新一天)。"""
-    if not days:
-        return 0, False
-    sorted_days = sorted(days)
-    latest = sorted_days[-1]
-    best = run = 1
-    for prev, cur in zip(sorted_days, sorted_days[1:]):
-        if (cur - prev).days == 1:
-            run += 1
-            best = max(best, run)
+def _evaluate_active_streak(observations) -> dict:
+    """E1-① 活跃日语义：连续非断签窗口内活跃日 ≥ 7。
+
+    断签(missed) = 有 due 未复审；空队列日(excused) 不破不断；无观测日按断签处理
+    （daemon 应每日写行，缺失即视为漏跑）。返回当前窗口（截至最新观测日）活跃数、
+    是否含最新日、历史最长窗口活跃数。
+
+    注：收口(queue_remaining) 只影响 E1-③/can_calibrate，不影响本判据——活跃日
+    仅靠 decide 产生的 completed>=1 判定（见 ADR-0007）。
+    """
+    status: dict = {}
+    for o in observations:
+        status[_as_date(o.day)] = _classify(o)
+    if not status:
+        return dict(window_active=0, required=7, latest_ok=False, met=False,
+                    longest_window_active=0)
+    lo, hi = min(status), max(status)
+    # 全局最长连续非断签窗口 + 其中活跃数
+    best_run = best_active = cur_run = cur_active = 0
+    d = lo
+    while d <= hi:
+        s = status.get(d, "missed")
+        if s == "missed":
+            best_run = max(best_run, cur_run)
+            best_active = max(best_active, cur_active)
+            cur_run = cur_active = 0
         else:
-            run = 1
-    # 含最新一天？
-    contains_latest = True
+            cur_run += 1
+            if s == "active":
+                cur_active += 1
+        d += timedelta(days=1)
+    best_run = max(best_run, cur_run)
+    best_active = max(best_active, cur_active)
+    # 当前窗口：截至最新观测日向后连续的活跃数
+    latest = hi
+    run = active = 0
     d = latest
-    while (d in days) and run >= 1:
-        run -= 1
+    while d in status and status[d] != "missed":
+        run += 1
+        if status[d] == "active":
+            active += 1
         d -= timedelta(days=1)
-    return best, (latest in days)
+    latest_ok = status.get(latest) != "missed"
+    met = latest_ok and active >= 7
+    return dict(window_active=active, required=7, latest_ok=latest_ok, met=met,
+                longest_window_active=best_active)
 
 
 def _budget_trajectory(observations) -> dict:
@@ -86,20 +116,22 @@ def _budget_trajectory(observations) -> dict:
     return dict(windows=traj, spread=spread, cv=cv, converged=converged)
 
 
-def build_report(storage_kind: str = "pg") -> dict:
-    store = get_storage(storage_kind)
+def build_report(storage_kind: str = "pg", storage=None) -> dict:
+    """E1 退出判据读数。storage 可注入（direct 模式复用同一 store，内存后端一致）；
+    不传则按 storage_kind 新建。"""
+    store = storage or get_storage(storage_kind)
     now = datetime.now(timezone.utc)
     obs = store.attention.list_recent(60)  # 宽窗口算连续活跃日串
 
-    active_days = _distinct_active_days(obs)
-    streak, contains_latest = _longest_consecutive_streak(active_days)
+    streak_info = _evaluate_active_streak(obs)
+    active_days_count = sum(1 for o in obs if _classify(o) == "active")
 
     readiness = S.calibration_readiness(store, lookback_days=28)
     labeling = S.labeling_rate_from(store.attention.list_recent(7))
     budget = _budget_trajectory(obs)
 
     # 退出判据逐条判等
-    c1 = streak >= 7 and contains_latest
+    c1 = streak_info["met"]
     c2 = labeling.get("gate") == "open" and labeling.get("rate") is not None and labeling["rate"] >= labeling["threshold"]
     c3 = budget["converged"]
     all_met = c1 and c2 and c3
@@ -108,10 +140,11 @@ def build_report(storage_kind: str = "pg") -> dict:
         as_of=now.isoformat(),
         criteria=dict(
             c1_consecutive_active_days=dict(
-                longest_streak=streak,
-                includes_latest_day=contains_latest,
-                distinct_active_days_in_60d=len(active_days),
-                required=7,
+                window_active=streak_info["window_active"],
+                required=streak_info["required"],
+                latest_ok=streak_info["latest_ok"],
+                longest_window_active=streak_info["longest_window_active"],
+                active_days_in_60d=active_days_count,
                 met=c1,
             ),
             c2_labeling_rate_gate=dict(
@@ -143,9 +176,10 @@ def _print_human(r: dict) -> None:
     c1 = r["criteria"]["c1_consecutive_active_days"]
     c2 = r["criteria"]["c2_labeling_rate_gate"]
     c3 = r["criteria"]["c3_budget_convergence"]
-    print(f"\n[1] 连续 ≥7 活跃日：{'✓' if c1['met'] else '✗'} "
-          f"（最长连续串 {c1['longest_streak']} 日，含最新日={c1['includes_latest_day']}，"
-          f"60 日内活跃日 {c1['distinct_active_days_in_60d']}）")
+    print(f"\n[1] 连续 ≥7 活跃日（空队列日豁免）：{'✓' if c1['met'] else '✗'} "
+          f"（当前窗口活跃 {c1['window_active']}/{c1['required']} 日，"
+          f"含最新日={c1['latest_ok']}，历史最长窗口活跃 {c1['longest_window_active']}，"
+          f"60 日内活跃日 {c1['active_days_in_60d']}）")
     rate = c2["rate"]
     print(f"[2] 标注率闸门 ≥70%：{'✓' if c2['met'] else '✗'} "
           f"（7 日率 {rate if rate is not None else 'N/A'}，"

@@ -311,6 +311,15 @@ class PgNodeRepository(NodeRepository):
         )
         return [self._row_to_node(r) for r in cur.fetchall()]
 
+    def count_nodes_created_since(self, since: datetime) -> int:
+        # 只读：今日/某时刻后创建的节点数（ingest 吞吐真值源，供每日收口 pushed）
+        cur = self._conn.cursor()
+        cur.execute(
+            "SELECT count(*) FROM public.node WHERE created_at >= %(since)s",
+            dict(since=since),
+        )
+        return int(cur.fetchone()[0])
+
     def update_decay(
         self, node_id: UUID, decay_score: float, version_seq: int | None = None
     ) -> None:

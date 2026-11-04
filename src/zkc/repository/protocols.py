@@ -46,6 +46,10 @@ class NodeRepository(ABC):
         (last_reviewed_at + review_interval) ≤ as_of 的节点。"""
 
     @abstractmethod
+    def count_nodes_created_since(self, since: datetime) -> int:
+        """since 之后创建的节点数（ingest 吞吐真值源，供每日收口 pushed 字段；只读）。"""
+
+    @abstractmethod
     def update_decay(
         self, node_id: UUID, decay_score: float, version_seq: int | None = None
     ) -> None: ...
