@@ -19,7 +19,10 @@
         "1-6",
         "1-7",
         "1-8",
-        "1-9"
+        "1-9",
+        "1-10",
+        "1-11",
+        "1-12"
       ],
       "decisions": [
         {
@@ -172,11 +175,58 @@
       ],
       "notes": "",
       "layer": "plan"
+    },
+    "1-10": {
+      "id": "1-10",
+      "uid": "01a1a61762e1-f58821a5d9",
+      "label": "co-work(ZAgentic #234): E 链推进走 canonical reconcile+apply 路径，向 issue 回填真实一致性证据",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "本路线图推进 E1–E5 链时，所有节点状态变更走 reviewed reconcile→changeset apply 路径（非 direct promotion），天然产出 #234 要求的真实 canonical-state 一致性证据。E1 完成时即在 #234 评论回填证据摘要（canonical vs direct 对照）。",
+      "layer": "plan",
+      "exit_criteria": [
+        "E1 完成且已向 #234 评论回填 canonical reconcile+apply 真实证据",
+        "E 链全程无 direct promotion 写入"
+      ]
+    },
+    "1-11": {
+      "id": "1-11",
+      "uid": "01a1a61763fe-beeee464b1",
+      "label": "co-work(ZAgentic #235): 将本 roadmap.json 置为只读副本进 tmp/skills-outputs/ 供回放；另补 ZBrain/ZAgentic 两份样本",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "本 roadmap.json 即 #235 要求的『小型 JSON + Decisions + 依赖边』回放样本之一。若 #235 触发回放，须拷为只读副本进 tmp/skills-outputs/（源文件保持 byte-identical）。另两份样本拟从 ZBrain / ZAgentic 补，凑齐三份真实 roadmap。",
+      "layer": "plan",
+      "exit_criteria": [
+        "本 roadmap.json 已作为只读副本进入 tmp/skills-outputs/ 供 #235 回放",
+        "ZBrain、ZAgentic 各补一份真实 roadmap 样本（共三份）"
+      ]
+    },
+    "1-12": {
+      "id": "1-12",
+      "uid": "01a1a61764e2-6810f0d0d9",
+      "label": "co-work(ZAgentic #236): E6/E7/E8 复用共享 Work 入双 outline context 时，产出 reference Placement 真实用例供标记复核",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "推进 E6/E7/E8 时若复用同一共享 Work 入双 outline context（跨节点装配），会产出 #236 要求的真实 reference Placement 双 context 用例，供标记复核。出现即评论 #236 并标记 reference placement。",
+      "layer": "plan",
+      "exit_criteria": [
+        "E6/E7/E8 推进中出现共享 Work 双 context 复用时，已向 #236 产出 reference Placement 真实用例"
+      ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-04 17:40:16",
+    "updated": "2026-11-04 18:25:15",
     "md_file": "ROADMAP.md"
   },
   "edges": [
@@ -203,7 +253,31 @@
       "from": "01a1a5ece44d-7d3037419a",
       "to": "01a1a5ece551-fb98fc22e5",
       "type": "blocks"
+    },
+    {
+      "id": "e5",
+      "from": "01a1a61762e1-f58821a5d9",
+      "to": "01a1a5ece146-89f466a59c",
+      "type": "informs"
+    },
+    {
+      "id": "e6",
+      "from": "01a1a61764e2-6810f0d0d9",
+      "to": "01a1a5ece656-9e6e423f18",
+      "type": "informs"
+    },
+    {
+      "id": "e7",
+      "from": "01a1a61764e2-6810f0d0d9",
+      "to": "01a1a5ece760-d6b397be13",
+      "type": "informs"
+    },
+    {
+      "id": "e8",
+      "from": "01a1a61764e2-6810f0d0d9",
+      "to": "01a1a5ece860-8ab5331319",
+      "type": "informs"
     }
   ],
-  "edge_seq": 4
+  "edge_seq": 8
 }
