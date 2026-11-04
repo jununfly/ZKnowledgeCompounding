@@ -1,7 +1,7 @@
 # 架构 v1.2 逐条复核清单（三角对账 · 2026-10-31）
 
 > 目的：把架构文档顶部那句笼统的「待 zj 复核」，拆成**可逐条签字**的清单，替代「zj 通读 700 行」。
-> 对账三角：**A** = `docs/architecture/ZKC-architecture-v1.2.md`（404 行）· **B** = `spikes/spike-01…13b/` 14 份 README + 关键 test 文件计数 · **C** = `docs/prds/ZKnowledgeCompounding-PRD.md`（v0.2，208 行）。
+> 对账三角：**A** = `docs/architecture/ZKC-architecture-v1.2.md`（404 行）· **B** = `spikes/spike-01…13b/` 14 份 README + 关键 test 文件计数 · **C** = `docs/prds/knowledge-compounding-prd.md`（v0.2，181 行）。
 > 用法：**zj 只需批 A 档（12 项）+ B 档（3 项）**；C 档（62 项）默认整批认可。批完后回填架构文档并关闭计划 §5 R9。
 > 已由 zj 于 2026-10-31 拍板、**不在本清单内**的四项：交付形态（本地 web）／上线判定（单人 dogfood + ≥7 活跃日）／阈值治理（`zkc/tuning.py` + 来源标签）／已捕获单程票。
 

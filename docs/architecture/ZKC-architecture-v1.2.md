@@ -357,13 +357,15 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 |---|---|---|
 | 整体采纳某个开源知识应用 | 拒绝 | 无候选覆盖双轨/衰减/注意力；只做 unit-capability 复用 |
 | Utopia / OpenWiki 作为待验证候选 | 重述为**模式源** | 存储报告已定 substrate，不再验证"适配度"，只迁移其双时态 schema 与 claim 结构 |
-| 图数据库（Kuzu / TerminusDB）作为主存储 | 延后 | MVP 图遍历浅，递归 CTE 足够；保持 seam |
+| 图数据库（Kuzu / TerminusDB）作为主存储 | **EXCLUDED（显式拒绝）** | 递归 CTE 足够；保持 repository seam 可切 Kuzu **只读投影**（不得当主存储）。决定依据 ADR-0005（rec-avoid 机械闸，2026-11-03 zj 拍板）。 |
 | LiteLLM | 延后 | proxy 需 PostgreSQL，MVP 无需多 provider 路由 |
 | Argilla | 延后 | 维护模式 + PG/Redis 重依赖；人审走复审队列 review_queue（MVP 实装未引入 LangGraph——2026-11-03） |
 | Langfuse | 延后 | ClickHouse/Redis 重依赖；先用轻量 score 表 |
 | Electric / Automerge（多端同步） | 延后 | MVP 为单人单机 |
 | XTDB | 待带外验证 | 最强双时态候选，但 pinned 编译器无法解析其 submodule 树 |
 | Cordis / dsh（DeepSeek Harness）作为编排层依赖 | 拒绝，**重述为模式源**（见 §6.4） | 双栈分裂（Python 领域 + TS 运行时）；session 为自有 append-only 事件流，无法落 ZKC 的 PG 同库同 schema；HITL 仅轨迹级 resume/fork/replay，无领域状态编辑级中断；把 `decay_score`/`evidence_refs` 塞进事件流抽象会丢失 schema 级校验。可迁移的是模式：append-only 流↔双时态同构、副作用可回滚、插件化 seam |
+
+> **rec-avoid 机械闸（ADR-0005, 2026-11-03 zj 拍板）**：护城河（双轨+衰减+注意力预算为第一性）以三件套守门——① 去模型化测试（去掉 LLM 仍可被 SilverBullet/logseq 等价实现=稀释项默认拒）；② `check_invariant.py` CI 谓词（claim 落库受 `evidence_refs` NOT NULL、任何 feature 不得提供关闭 decay/attention 的全局开关）；③ 图数据库主存储显式 EXCLUDED（仅允许 Kuzu 只读投影，见上表）。任何新功能 PR 须附去模型化测试结论。详 `docs/rec-avoid-gate.md`。
 
 ## 8. 风险与未决
 
