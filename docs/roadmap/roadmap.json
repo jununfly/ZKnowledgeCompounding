@@ -1,0 +1,209 @@
+{
+  "title": "ZKC MCP 集成执行路线图",
+  "description": "编排自 docs/plans/mcp-integration-plan.md 的 E1–E9 执行计划（MCP 集成 + rec-avoid 机械闸 + 护城河实证）。同时作为 zj-roadmap-driven 在本仓库的真实项目验收样本，配合 ZAgentic #234/#235/#236。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a1a5ece014-f94076892c",
+      "label": "ZKC MCP 集成执行路线图",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7",
+        "1-8",
+        "1-9"
+      ],
+      "decisions": [
+        {
+          "q": "MCP 形态？",
+          "answer": "单边 server（stdio 默认），双向 client 推 phase 2；复用既有摄入层（DecisionRouter+双信号弃权+review_queue），禁新增旁路摄入通道",
+          "note": "ADR-0004"
+        },
+        {
+          "q": "护城河守门机制？",
+          "answer": "rec-avoid 机械闸：去模型化测试 + check_invariant.py + 图库主存储 EXCLUDED",
+          "note": "ADR-0005"
+        },
+        {
+          "q": "安全默认？",
+          "answer": "默认 stdio 零网络面、无需 token；跨机才 HTTP/SSE+加密隧道，否则不变式⑤（本地优先/隐私）自动否决",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a1a5ece146-89f466a59c",
+      "label": "E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "连续 ≥7 活跃日运行已交付复审队列",
+        "复审标注率闸门 ≥70%",
+        "budget_per_day 从初始值收敛到稳定值"
+      ]
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a1a5ece235-13b38c5931",
+      "label": "E2 transport seam 与 MCP server 骨架（stdio 薄适配层）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "transport seam 定位？",
+          "answer": "第四 seam 与 storage/provider/encoder 并列；handler 不直连 DDL；契约 zkc-mcp-contract v1 独立版本化（不承诺 12 个月冻结）",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a1a5ece344-bb7257a8e8",
+      "label": "E3 暴露面五 tool 实现与攻击面枚举表",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a1a5ece44d-7d3037419a",
+      "label": "E4 zkc_capture 完整规格：push+分流闸+注入防护",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a1a5ece551-fb98fc22e5",
+      "label": "E5 提示注入验收用例接入 CI",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6": {
+      "id": "1-6",
+      "uid": "01a1a5ece656-9e6e423f18",
+      "label": "E6 check_invariant.py CI 谓词门禁",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "图库主存储？",
+          "answer": "EXCLUDED（Kuzu/TerminusDB）；仅允许 Kuzu 只读投影",
+          "note": "架构 §7 EXCLUDED 行"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7": {
+      "id": "1-7",
+      "uid": "01a1a5ece760-d6b397be13",
+      "label": "E7 去模型化测试清单与竞品实测对照",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8": {
+      "id": "1-8",
+      "uid": "01a1a5ece860-8ab5331319",
+      "label": "E8 护城河实证化：复利度量口径回填与蒸馏抽检",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9": {
+      "id": "1-9",
+      "uid": "01a1a5ece962-63e019f1f6",
+      "label": "E9 对外叙事对齐：caveat+4特征口径统一",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "对外叙事口径？",
+          "answer": "统一 caveat: moat-unverified-vs-mem0 + 4 特征口径（双轨/衰减/双时态/注意力预算）；不得回退 3 项口径",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-11-04 17:38:46",
+    "updated": "2026-11-04 17:40:16",
+    "md_file": "ROADMAP.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a1a5ece146-89f466a59c",
+      "to": "01a1a5ece235-13b38c5931",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a1a5ece235-13b38c5931",
+      "to": "01a1a5ece344-bb7257a8e8",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a1a5ece344-bb7257a8e8",
+      "to": "01a1a5ece44d-7d3037419a",
+      "type": "blocks"
+    },
+    {
+      "id": "e4",
+      "from": "01a1a5ece44d-7d3037419a",
+      "to": "01a1a5ece551-fb98fc22e5",
+      "type": "blocks"
+    }
+  ],
+  "edge_seq": 4
+}
