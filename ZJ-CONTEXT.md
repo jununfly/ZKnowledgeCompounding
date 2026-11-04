@@ -119,3 +119,29 @@ _Avoid_: 发布、上线生产、GA
 **复利系数**:
 连接密度 / 复用率 / 方法论产出 / 衰减可控 四项归一加权后的总指标。
 _Avoid_: 知识增长、价值分数
+
+## 架构边界与守门（seam / MCP / rec-avoid）
+
+**seam**:
+系统中可替换的受控边界，是架构可演进性的基本单元。ZKC 现有四道：storage / provider / encoder / transport。替换一侧不波及另一侧。
+_Avoid_: 模块、分层、接口
+
+**transport seam**:
+第四 seam，协议/传输层（MCP 是其首个实例）。handler 只调 repository/command API、不直连 DDL；对外契约独立版本化（如 `zkc-mcp-contract v1`）。
+_Avoid_: 网络层、API 网关
+
+**暴露面**:
+MCP server 向外部 agent 开放的 tool/resource 集合，分白名单（允许）与黑名单（禁暴露）。是功能边界。
+_Avoid_: 攻击面、API 表面
+
+**攻击面**:
+安全视角下威胁可达的路径三元组 = 入口（server 暴露端点）/ 出口（数据流向外部）/ 信任边界（零信任裁决）。与暴露面不同：暴露面是功能边界，攻击面是威胁可达路径。MCP ADR 须含强制攻击面枚举表（三列固定），缺任一则该子问题 BLOCKED。
+_Avoid_: 暴露面
+
+**去模型化测试**:
+rec-avoid 守门手段。某候选功能去掉 LLM 后若仍可被 SilverBullet/logseq 等价实现，即稀释项，默认拒绝。
+_Avoid_: 单元测试、回归测试
+
+**自动否决权**:
+第一性不变式（如⑤本地优先/隐私、§6.5 未标注禁写 interval）优先于工程便利。任何变更触碰即自动否决，无需 Human 二次拍板。
+_Avoid_: 代码评审、人工审批

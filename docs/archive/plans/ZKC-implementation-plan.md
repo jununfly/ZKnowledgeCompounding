@@ -11,7 +11,7 @@
 > 本文件是**决策级 → 执行级**的桥接，不重复 PRD/架构内容，只引用与拆解。
 >
 > 引用文档（均为当前最新版）：
-> - `docs/prds/ZKnowledgeCompounding-PRD.md`（v0.2）
+> - `docs/prds/knowledge-compounding-prd.md`（v0.2）
 > - `docs/architecture/ZKC-architecture-v1.2.md`（v1.2，顶部「待 zj 复核」→ **已复核**；逐条审计留痕见 §11 + `docs/archive/plans/ZKC-architecture-v1.2-review-checklist.md`）
 > - `docs/archive/research/RESEARCH-TOPICS.md`（22 topic；**2026-10-31 已冻结为只读历史索引**，open 项已迁入本计划 §4/§5）
 > - `spikes/spike-{01..13,13b,14}-*/README.md`（**15 个**，全 passed）
