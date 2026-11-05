@@ -464,6 +464,11 @@
           "q": "1-14 的「归档退出调度回路」是否真的完整（2026-11-05 23:25 复核）？",
           "answer": "**不完整，上一轮措辞偏窄，本条为准**。zj 再点该 bug 后全仓复核，发现三类残留：① `decay.refresh_decay` 走 `list_by_track('dynamic')`，该方法在 pg/memory 双实现都不过滤 archived_at，导致每次 /review、zkc decide --list、每日真值收口都把归档节点重算 decay 并 update_decay 写回（写放大 + version_seq 空转）；本轮在 refresh_decay 内跳过归档节点，并把「归档退出整个调度回路」写进 protocols.NodeRepository.list_due_for_review 硬契约。② 上一轮 PG 侧只有静态源码断言（assertIn SQL 字符串），不能证明 SQL 真跑通；本轮新增 PgArchiveExitTest 真实 PG 集成测试（独立迁移库 → 造到期节点 → 归档 → 断言 due 只含活跃节点且 update_decay 只落在活跃节点）。③ 无防回归机械闸：scripts/check_invariant.py 新增 P3 谓词，扫 repository/*.py 的每个 list_due_for_review 实现 + decay.refresh_decay，缺过滤即 E_INVARIANT_ARCHIVE_EXIT 非零退出，由 CI 的 invariant (rec-avoid) job 守门；真实仓库检查 4 个实现 0 violations。",
           "note": "验证：TDD 新增 7 条用例缺陷态 6 红 → 修复后 17 条（含既有 10 条）全绿；全量 make test 557 tests OK（38.1s）；make mcp-gate 6 OK、make invariant 0 violations、两套过程权威门禁 clean、actionlint rc=0、git diff --check rc=0。证据文档 docs/evidence/d2-corpus-cleanup-2026-11-05.md 已补「完整性补强」节；rec-avoid-gate.md §2 补 P3 说明。1-14 保持 completed，本条按 append-only 追加复核结论，不重开节点、不改历史条目；改动未 commit/push"
+        },
+        {
+          "q": "1-14 复核 decision 里的「改动未 commit/push / 真实 Actions 未实测」是否已过时？",
+          "answer": "是，属 23:25 时点快照；按 append-only 不改旧条目、追加本条更正。zj 23:32 显式触发 commit+push：单提交 e86a8b6（31 文件 / +1496 −69，按 constraints §8.4 铁律保全树）推 main ce66261..e86a8b6，push_rc=0；远端返回 `2 of 2 required status checks are expected`，是 enforce_admins=false 下 admin 直推允许绕过、非失败，且与已设两项 required check 一致。真实 Actions run 42056302581（push e86a8b6）`gh run watch --exit-status` rc=0，**6/6 job success**：lint / authority / mcp (injection gate) / unit (PG disabled) / **invariant (rec-avoid)** / full (PG + migrations + anchors e2e)；新 invariant job 首次在真实 CI 跑绿，P3 谓词在 runner 上同样 0 violations。提交前机械验证：make test 557 OK、make invariant 0 violations、make mcp-gate 6 OK、两套过程权威门禁 clean、actionlint 1.7.12 rc=0、git diff --check rc=0。终态：ls-tree 282 == ls-files 282 无塌树、本地/远端同为 e86a8b6、工作树干净。",
+          "note": "commit message 未写 hash 占位、无自指循环；本条走独立 doc-only follow-up，不 amend 实现提交。仍 open：invariant (rec-avoid) 未设为 required check（仓库设置，需另行显式授权）"
         }
       ],
       "notes": "1-7 导入 60 篇 spike 语料中 27 条按 orphan 1d 节奏逐日逾期，全 decay=1.0 / last=2026-11-01。它们不是 zj 真实消费的知识，对其 verdict 属伪标注（违反架构 6.5.1 外生锚 / ADR-0006）；且因 D1 下界触底，任何 verdict 都无法改变节奏。正确处置是移出调度回路，而非给 verdict。",
@@ -878,7 +883,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 23:28:15",
+    "updated": "2026-11-05 23:35:41",
     "md_file": "ROADMAP.md"
   },
   "edges": [
