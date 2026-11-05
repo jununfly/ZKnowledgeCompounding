@@ -558,7 +558,7 @@
       "id": "1-17",
       "uid": "01a1a7874f56-f7cf40ed6f",
       "label": "PRD §9 P6.4 观察期收口：累计 ≥20 带标注复审 + 滚动 7 天标注率 ≥70%",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -567,16 +567,32 @@
           "q": "P6.4 与 1-1 的关系？",
           "answer": "共享同一批真实 decide 数据，但判据独立（累计 ≥20 vs 连续 ≥7 活跃日 + budget 收敛）。不建 blocks 边到 1-1（1-1 已 in_progress，会倒挂），仅 informs 表达数据源关联。达成后按 PRD 原约定删除该 TODO。",
           "note": "当前 3/20，PG 实测"
+        },
+        {
+          "q": "开始 1-17 的 scope gate 分类与开工真值基线？",
+          "answer": "Product execution（PRD §9 观察期收口，产品侧；长期文档可改，但外生锚标注不可由 Agent 代劳）。真值（2026-11-05 只读 PG 实测）：累计 labeled_completed=3/20（差 17）；滚动7天 rate=None（completed=3 < min_samples，样本不足不判定）、gate=open；观测仅 1 行 2026-11-04（completed=3 / labeled=3 / queue_remaining=27）；当前 zkc decide 列 due 复审队列 0 条；E1 meter 三条判据全 false。",
+          "note": "三项待 zj 裁决的障碍：① 权威冲突——PRD §9:167 与 risks.md R10 明文写「P6.4 被动由真实使用数据驱动、不再作 roadmap 节点」，与本轮 1-17 主动跟踪相矛盾；② 判据② 措辞缺陷——exit_criteria 写「标注率闸门非 open」，但 scheduling.labeling_rate_from 里 gate=open 既表示合格(rate≥0.7)也表示样本不足不判定，closed 反而表示 <70% 停机，字面「非 open」与「≥70%」自相矛盾，判据不可执行；③ 数据源枯竭——D2 归档退出调度回路后 due=0，无新复审条目则累计无法从 3 增长到 20，需 zj 真实摄入 + 逐日 HITL 标注。硬约束：不得由 Agent 伪造/批量灌入标注（exit_criteria ④）；判据未达成前不得删 PRD §9 TODO、不得改 risks.md R10 状态。"
+        },
+        {
+          "q": "1-17 方向裁决（PRD 冲突 / 判据② 缺陷 / due=0）怎么定？",
+          "answer": "zj 选 A：PRD 为准，1-17 只作只读观测看板。① 修正 exit_criteria ② 为代码真实语义（7d completed≥min_samples 且 rate 非 None 且 rate≥0.7；gate=open 既表合格也表样本不足放行、closed 反而是不合格，故不以 gate 字符串判定）；② 新增只读 P6.4 达成读数（累计 labeled/20 + 7d rate + 是否达成），TDD 红→绿；③ 不改 PRD §9 / risks.md R10、不碰埋点、不解决 due=0；达成仍靠 zj 真实摄入 + 逐日 HITL 标注。B（推翻 PRD 正式纳管）/ C（撤销开工回 pending）未采纳。",
+          "note": "A 不产生产品完成度：1-17 保持 in_progress，直到外生锚真实达成。判据② 原措辞「滚动 7 天 labeled_completed/completed ≥70%，标注率闸门非 open」为不可执行措辞，本次按 scheduling.labeling_rate_from 真实语义修正并在此留痕，不静默改写。"
+        },
+        {
+          "q": "A 方案实施结论与验证基线？",
+          "answer": "只读读数 zkc p64 已落地（calibration.build_p64_report / format_p64_human + CLI 子命令 p64）；exit_criteria ② 已修正为代码真实语义；PRD §9:167 与 risks.md R10 未改，due=0 未处理。真实 PG 读数：累计 3/20（差 17）、7d rate=N/A（样本 3<10）、gate=open 但 met=false、all=false。全量 563 tests OK、mcp-gate 6 OK、invariant 0 violations、两套权威门禁 clean、validate Valid、E1 埋点未污染。1-17 保持 in_progress，直到外生锚真实达成。",
+          "note": "新增 tests/test_p64_progress.py 6 条（含 gate=open warm-up 不算达标 的语义回归）；阈值复用 task_queue.LABEL_JUDGMENT_THRESHOLD，不另起常量。"
         }
       ],
       "notes": "PRD §9 第一个未完成 checkbox。当前 PG 实测（2026-11-04 一条 observation）：sum(completed)=3 / sum(labeled_completed)=3 / 观测天数=1，即 3/20。与 1-1 共享同一批真实 decide 动作，但判据不同：本节点是累计 ≥20（R10 降级判定，不要求日历连续），1-1 是连续 ≥7 活跃日 + budget 收敛。不建 blocks 到 1-1（会倒挂），仅 informs 表达数据源关联。判定以 src/zkc/task_queue.py:26 LABEL_JUDGMENT_THRESHOLD=20 告警为准。",
       "layer": "plan",
       "exit_criteria": [
-        "累计 labeled_completed ≥20（以 task_queue.LABEL_JUDGMENT_THRESHOLD=20 告警及 PG 实测 sum 为准）",
-        "滚动 7 天 labeled_completed/completed ≥70%，标注率闸门非 open",
+        "累计 labeled_completed ≥20（以 task_queue.LABEL_JUDGMENT_THRESHOLD=20 告警及 PG 实测 sum 为准；只读读数出口 = zkc p64）",
+        "滚动 7 天 completed ≥ LABEL_MIN_SAMPLES(10) 且 rate 非 None 且 rate ≥0.7（以 scheduling.labeling_rate_from 为准；gate=open 亦可能是样本不足 warm-up 放行、closed 反而是 <70% 停机，不得以 gate 字符串判定）",
         "达成后从 PRD §9 删除该 TODO（原约定），并同步 risks.md R10 状态",
         "全部数据来自真实 zkc decide 人环标注，禁止伪造或批量灌入"
-      ]
+      ],
+      "rounds": 1
     },
     "1-18": {
       "id": "1-18",
@@ -888,7 +904,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 23:40:05",
+    "updated": "2026-11-06 00:14:10",
     "md_file": "ROADMAP.md"
   },
   "edges": [
