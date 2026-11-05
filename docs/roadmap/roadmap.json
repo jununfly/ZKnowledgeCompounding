@@ -238,6 +238,11 @@
           "q": "1-5 四条 exit_criteria 逐条验收结论？",
           "answer": "① 新增 tests/test_mcp_injection_gate.py 六条用例：gate_1 三类危险写全部 isError 且留 tool_denied；gate_2 私密串不出现在 query 响应与整段会话输出、claims 表为空；gate_3 注入归因回写队列被拒且留 review_queue_overreach_audited，队列只保留分流闸产生的 classify 项。另断言三条 gate id 与 exposure.py 的 attack_surface_table 注入闸门表逐项一致。② _gate_frames() 构造 8 帧完整链路经 serve_stdio 跑真实帧流：initialize → tools/list → capture 注入文档 → 三个危险写 → query → 越权 resolve；断言 8 帧单行、每帧合法 JSON、全局 stdout 无私密串。③ Makefile 新增 mcp-gate target（python -m unittest tests.test_mcp_injection_gate -v）；ci.yml 新增独立 job mcp-injection-gate（ZKC_RUN_PG_TESTS=0、make setup、make mcp-gate）；用例内 test_gate_is_wired_into_ci_and_make 读两文件守着接线，TDD 阶段该条先红、补接线后转绿。④ 机械验证：make mcp-gate 6 tests OK；全量 make test 523 tests OK（25.8s）；仓库 wrapper 0 unresolved / 上游 CLI clean 均 exit 0；git diff --check rc=0；PyYAML 解析确认 5 个 job 且 gate run=make mcp-gate；本地真实下载 actionlint 1.7.12 跑 workflow rc=0。ADR-0004 Implementation anchor 与 user-guide §6 已同步 E5 结论。",
           "note": "未实测：改动未 commit/push，真实 GitHub Actions run 尚未跑；本地 actionlint + PyYAML 通过不等于远端 run 全绿，也不等于该 job 已设为 required check（属仓库设置）。1-5 从 pending 直接执行到 completed，本轮补记 in_progress 轨迹"
+        },
+        {
+          "q": "1-5 收口 decision 里的「真实 Actions run 未实测 / 未 commit/push」是否已过时？",
+          "answer": "是，属 21:0x 时点快照；按 append-only 不改旧条目、追加本条更正。zj 21:49 显式触发 commit+push：实现 commit 8dae7fe（24 文件 / +2283 −26，按 constraints §8.4 铁律单提交保全树）推 main（5c2e9b1..8dae7fe，push_rc=0）；远端返回 Bypassed rule violations … Required status check 'authority (process boundary)' is expected，是 enforce_admins=false 下 admin 直推允许绕过，非失败。真实 Actions run 42040603724（push 8dae7fe）5/5 job success：lint (actionlint) / authority (process boundary) / mcp (injection gate) / unit (PG disabled) / full (PG + migrations + anchors e2e)，耗时 1m6s。本地与远端同为 8dae7fe、工作树干净、ls-tree 与 ls-files 均 271 无塌树。故「真实 Actions run 尚未跑」「改动未 commit/push」两项已闭合，后续引用以本条为准。",
+          "note": "仍未闭合：mcp (injection gate) 尚未设为 main 的 required check（属仓库设置，不在本次 commit+push 授权范围内），当前它只是可见 job、不是合并硬闸门。commit message 未写 hash 占位、无自指循环；本条走独立 doc-only follow-up，不 amend 实现 commit"
         }
       ],
       "notes": "",
@@ -789,7 +794,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 21:26:16",
+    "updated": "2026-11-05 22:04:15",
     "md_file": "ROADMAP.md"
   },
   "edges": [
