@@ -120,5 +120,17 @@ zj 澄清了本 ADR 中「跨项目资产」这一表述：真正的边界不是
 - zj 以「a」采纳 issue #3 的 A 方案。1-23-1 执行：删 `ALLOWANCES` 6 条及 `STALE` 逻辑、
   wrapper 对齐上游三类结构判据、重写测试（3 条白名单用例改为结构判据用例，补防 carrier
   签名逃逸与防半截信封逃逸）、更新本 ADR 与 `ci.yml` 注释；CI job 命令未变。
-- 仍未实测：真实 GitHub Actions 运行、branch protection 把该 job 设为 required check；
-  改动未 commit/push，等 zj 显式触发。
+- **真实环境实测（2026-11-05，zj 授权提交并推 main）**：实现 commit `75db9a0` 推 main 后
+  触发 run [42007556572](https://github.com/jununfly/ZKnowledgeCompounding/actions/runs/42007556572)
+  （event=push，runner Python 3.13.17），4/4 job success：`lint (actionlint)` 6s、
+  `unit (PG disabled)` 14s、`full (PG + migrations + anchors e2e)` 57s、
+  `authority (process boundary)` 7s。authority job 的日志与本地复跑逐字一致：
+  `scope: 1 process target(s); ... scanned 214 durable source(s); skipped 2 process-state file(s)`、
+  `skipped:` 清单、`summary: 0 unresolved leaks`，exit 0。此前「CI 从未接入该门禁」的
+  空白已闭合，且 CI 侧只依赖仓库内脚本、不依赖用户级 skill 得到实证。
+- **required check 已设置**：从该 run 的 check-run 名确认 `authority (process boundary)`
+  绑定到 GitHub Actions（app_id 15368），经 API 设为 main 的 required status check；
+  `enforce_admins=false`（不约束 admin 直推）、`strict=false`（不要求 PR 与 base 同步），
+  required_pull_request_reviews / restrictions 均未启用；GET 复核与 PUT 一致。
+  该规则只约束 PR 合并，admin 直接 push main 不受影响 —— 与 ZKC 现有工作流一致。
+  若未来要连直推也强制，需把 `enforce_admins` 改为 true 并同步改工作流为分支 + PR。

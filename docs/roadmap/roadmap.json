@@ -643,6 +643,11 @@
           "q": "1-23-1 四条 exit_criteria 逐条验收结论？",
           "answer": "① 缺陷态红：注入一条长期文档引用后 wrapper 与上游 CLI 均 exit 1 且同定位 docs/guide.md:1，放宽排除未削弱判定（12 条测试含直接引用 / markdown link / 完成声明 / 防 carrier 签名逃逸 / 防半截信封逃逸）；② 修复态绿：删掉 6 条白名单后 wrapper 0 unresolved / exit 0（214 durable 源、跳过 2 个过程态文件），上游 clean / exit 0，同一 tree 结论一致；③ CI checkout 模拟 254 文件、无过程日志目录，干净态两边 exit 0、注入态两边 fail、移除后恢复绿；全量 make test 458 tests OK；④ ADR-0008 Decision / Consequences / Follow-up 与 ci.yml 注释已同步，:89 判据改为可验证条件，PyYAML 结构校验通过，4 个改动文件自引入触发串 0。",
           "note": "未实测：真实 GitHub Actions 运行、branch protection 把 authority job 设为 required check（属仓库设置）；改动未 commit/push，等 zj 显式触发"
+        },
+        {
+          "q": "真实 Actions 与 required check 的实测结论？",
+          "answer": "实现 commit 75db9a0 推 main 触发 run 42007556572（push / Python 3.13.17），4/4 job success，authority (process boundary) 7s 且日志与本地逐字一致（214 durable 源、跳过 2、0 unresolved）。从该 run 的 check-run 名把 authority (process boundary) 设为 main 的 required status check（app_id 15368、strict=false、enforce_admins=false、无 PR review / restrictions），PUT + GET 复核一致；只约束 PR 合并，admin 直推 main 不受影响。ADR-0008 的『未实测』条目已改为实测结论。",
+          "note": "zj 授权 commit+push 到 main 并设置分支保护；实测结论走独立 doc-only follow-up commit 回写，不 amend 实现 commit"
         }
       ],
       "notes": "",
@@ -662,7 +667,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 17:46:44",
+    "updated": "2026-11-05 18:06:49",
     "md_file": "ROADMAP.md"
   },
   "edges": [
