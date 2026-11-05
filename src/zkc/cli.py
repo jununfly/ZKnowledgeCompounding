@@ -8,6 +8,7 @@ harness gap 修复）。
 子命令：
   zkc daily           每日真值收口（替代 /review/api/observe/auto，无需 web 服务）
   zkc meter [--json]  E1 校准进度仪表（roadmap 1-1 退出判据读数）
+  zkc p64 [--json]    PRD §9 P6.4 观察期达成读数（只读，不写埋点）
   zkc decide          人环复审：
                       默认（无 --id）= 列出当前 due 复审条目（供 harness 呈现给人）
                       --id <id> --verdict <v> = 写一条复审标注
@@ -28,7 +29,12 @@ import sys
 from datetime import datetime, timezone
 
 from zkc import scheduling as S
-from zkc.calibration import build_report, format_human
+from zkc.calibration import (
+    build_p64_report,
+    build_report,
+    format_human,
+    format_p64_human,
+)
 from zkc.repository import get_storage
 from zkc.web.review import (
     decide_review,
@@ -52,6 +58,11 @@ def _make_parser() -> argparse.ArgumentParser:
     p_meter = sub.add_parser("meter", help="E1 校准进度仪表（roadmap 1-1 退出判据读数）")
     p_meter.add_argument("--storage", default="pg", help="pg（默认）或 memory")
     p_meter.add_argument("--json", action="store_true", help="输出 JSON 供管道消费")
+
+    p_p64 = sub.add_parser(
+        "p64", help="PRD §9 P6.4 观察期达成读数（只读，不写埋点）")
+    p_p64.add_argument("--storage", default="pg", help="pg（默认）或 memory")
+    p_p64.add_argument("--json", action="store_true", help="输出 JSON 供管道消费")
 
     p_decide = sub.add_parser(
         "decide", help="人环复审：默认列 due 条目；--id+--verdict 写标注")
@@ -95,6 +106,14 @@ def dispatch(args: argparse.Namespace, store=None) -> int:
             print(json.dumps(r, ensure_ascii=False, indent=2, default=str))
         else:
             format_human(r)
+        return 0
+
+    if args.command == "p64":
+        r = build_p64_report(args.storage, storage=store)
+        if args.json:
+            print(json.dumps(r, ensure_ascii=False, indent=2, default=str))
+        else:
+            format_p64_human(r)
         return 0
 
     if args.command == "decide":

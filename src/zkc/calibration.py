@@ -20,6 +20,7 @@ from datetime import datetime, timedelta, timezone
 
 from zkc import scheduling as S
 from zkc.repository import get_storage
+from zkc.task_queue import LABEL_JUDGMENT_THRESHOLD
 
 
 def _as_date(d):
@@ -180,3 +181,72 @@ def format_human(r: dict) -> None:
           f"/{rd['calib_min_days']}，saturated_days={rd['saturated_days']}/{rd['calib_min_saturated_days']}，"
           f"ready={rd['ready']}")
     print(f"\n>>> E1 退出判据全满足：{'YES ✅' if r['all_exit_criteria_met'] else 'NO ⏳'}")
+
+
+# --- PRD §9 P6.4 观察期达成读数（只读；与 E1 校准闭环判据独立）-------------
+
+def build_p64_report(storage_kind: str = "pg", storage=None) -> dict:
+    """P6.4 观察期两条判据的实时读数；纯读，不写任何埋点。
+
+    判据与 E1 校准闭环独立：
+      ① 累计 labeled_completed ≥ LABEL_JUDGMENT_THRESHOLD（不要求日历连续）；
+      ② 滚动 7 天样本达标且标注率 ≥ 阈值。
+
+    `S.labeling_rate_from` 的 gate 字段**不可**直接当判据：样本不足时返回
+    rate=None / gate="open"（warm-up 放行），rate≥阈值时同样是 gate="open"，
+    而 gate="closed" 反而是 rate<阈值停机。故只认 rate 是否非 None 且达标。
+    阈值复用 task_queue.LABEL_JUDGMENT_THRESHOLD，禁止另起常量。
+    """
+    store = storage or get_storage(storage_kind)
+    now = datetime.now(timezone.utc)
+    obs = store.attention.list_recent(366)
+    total_completed = sum((o.completed or 0) for o in obs)
+    total_labeled = sum((o.labeled_completed or 0) for o in obs)
+    threshold = LABEL_JUDGMENT_THRESHOLD
+    c1 = total_labeled >= threshold
+
+    labeling = S.labeling_rate_from(store.attention.list_recent(7))
+    rate = labeling.get("rate")
+    c2 = rate is not None and rate >= labeling["threshold"]
+
+    return dict(
+        as_of=now.isoformat(),
+        criteria=dict(
+            c1_cumulative_labeled=dict(
+                total_labeled=total_labeled,
+                threshold=threshold,
+                remaining=max(0, threshold - total_labeled),
+                total_completed=total_completed,
+                days_with_observation=len(obs),
+                met=c1,
+            ),
+            c2_rolling_labeling_rate=dict(
+                rate=rate,
+                threshold=labeling.get("threshold"),
+                completed=labeling.get("completed"),
+                labeled=labeling.get("labeled"),
+                gate=labeling.get("gate"),
+                reason=labeling.get("reason"),
+                met=c2,
+            ),
+        ),
+        all_exit_criteria_met=c1 and c2,
+    )
+
+
+def format_p64_human(r: dict) -> None:
+    """P6.4 读数人类可读输出（供 `zkc p64` 与脚本共用）。"""
+    c1 = r["criteria"]["c1_cumulative_labeled"]
+    c2 = r["criteria"]["c2_rolling_labeling_rate"]
+    print("=== ZKC · PRD §9 P6.4 观察期达成读数（只读）===")
+    print(f"  as_of: {r['as_of']}")
+    print(f"\n[1] 累计带标注复审 ≥{c1['threshold']}：{'✓' if c1['met'] else '✗'} "
+          f"（{c1['total_labeled']}/{c1['threshold']}，还差 {c1['remaining']}；"
+          f"累计 completed={c1['total_completed']}，观测天数={c1['days_with_observation']}）")
+    rate = c2["rate"]
+    print(f"[2] 滚动 7 天标注率 ≥{c2['threshold']:.0%}：{'✓' if c2['met'] else '✗'} "
+          f"（rate={rate if rate is not None else 'N/A'}，"
+          f"completed={c2['completed']} labeled={c2['labeled']}，gate={c2['gate']}）")
+    print(f"    {c2['reason']}")
+    print(f"\n>>> P6.4 判据全满足：{'YES ✅' if r['all_exit_criteria_met'] else 'NO ⏳'}")
+    print("    本读数只读、不写埋点；达成后 PRD §9 TODO 与风险册状态由 zj 决定，勿自动勾销。")
