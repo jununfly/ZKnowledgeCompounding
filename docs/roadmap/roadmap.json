@@ -33,7 +33,8 @@
         "1-20",
         "1-21",
         "1-22",
-        "1-23"
+        "1-23",
+        "1-24"
       ],
       "decisions": [
         {
@@ -50,6 +51,11 @@
           "q": "安全默认？",
           "answer": "默认 stdio 零网络面、无需 token；跨机才 HTTP/SSE+加密隧道，否则不变式⑤（本地优先/隐私）自动否决",
           "note": ""
+        },
+        {
+          "q": "完成度统计口径：新旧编号复用与 co-work 节点如何计算？",
+          "answer": "① 旧 roadmap（2026-11-03 结束）与本轮 MCP 集成执行路线图编号复用但语义不同：旧 1-9 是任务队列 UI（已完成），本轮 1-9 是 E9 对外叙事对齐（pending）。任何完成度统计、记忆引用、跨会话汇报必须以本轮 carrier 的 display-id + label 双重核对，禁止只看编号。② 1-10~1-12 是 ZAgentic #234/#235/#236 的技能验收场景，scope gate 属 Acceptance/evaluation：产物是回放样本与一致性证据，不计入 ZKC 产品交付完成度，汇报完成率时单列。③ stats 的 blocked=0 是「blocked 永不落盘」口径，真实阻塞看 blocks 边派生的 [!] 标记与 section 的阻塞链。",
+          "note": "2026-11-05 20:25 只读核查发现；同步写入 .workbuddy/memory/MEMORY.md 作为跨会话护栏"
         }
       ],
       "notes": "",
@@ -513,6 +519,11 @@
           "q": "1-21 收口证据与未实测偏差？",
           "answer": "四条 exit_criteria 全达成：① Windows 注册脚本落地（install_daily_driver.bat + daily_driver_schedule.py，对齐 macOS 能力，daily_e1_driver.bat 删错误 REM 占位并补 ZKC_MODE=direct）；② skill 纳管/备份策略明确且实测同步；③ Codex/DeepSeek 明确不做并写进 ADR-0007；④ 三项已在 ADR-0007 与 docs/user-guide.md §5 同步，未改 zkc CLI 语义。",
           "note": "验证：新增 27 条测试（14+13）红→绿，全量 446 tests OK / rc=0；macOS --dry-run 冒烟通过。未实测偏差：本机 macOS，Windows 真实 schtasks 注册未验证，ADR-0007 留 4 步复核清单，不冒充已验收。另：authority-check 报 6 处既有 mcp-integration-plan.md 引用（HEAD 版已存在，非本轮引入），不扩大本节点范围处理"
+        },
+        {
+          "q": "1-21 的 completed 与 Windows 实机未验收如何共存（偏差隔离）？",
+          "answer": "不重开 1-21、不改其 completed：该状态只表示「本仓产物已落地且通过 macOS 侧可验证部分」这一过程事实，不表示 Windows 实机已验收。按 zj 2026-11-05 20:28「修正几处值得反驳的点」授权，新增独立一级 pending 追踪节点，承载 ADR-0007 §5.1 的四步 Windows 复核清单，直到有 Windows 环境实测并回填证据才关停。同时如实承认：1-21 原 exit_criteria 第①条措辞过宽（「跨平台调度不再只有 macOS 实现」把「脚本落地」与「实机可用」混写），不重写历史条目，改为按「脚本落地」口径视为达成，实机可用性结论整体剥离到新节点，两者不互相冒充。",
+          "note": "依据 skill 权威边界：节点状态是过程态，不是产品正确性证明；ADR-0007 明写「未完成前不算实机验收」"
         }
       ],
       "notes": "现状证据：scripts/ 只有 install_daily_driver.sh（macOS）+ daily_e1_driver.bat（驱动脚本），无任何 schtasks 注册脚本 → ADR-0007 写的「跨平台调度」实际只落了 macOS。~/.workbuddy/skills/zj-zkc-daily/SKILL.md 是用户级 skill、不在 git（无纳管/备份）；D 形态规划里 Codex / DeepSeek 各自包同名适配器，目前只有 WorkBuddy 一份。边界：只补运行形态，不改 zkc CLI 三个子命令的语义。",
@@ -532,7 +543,7 @@
     "1-22": {
       "id": "1-22",
       "uid": "01a1a78754be-c2bcf51173",
-      "label": "工程尾巴 B：占位阈值与复利度量权重校准收口",
+      "label": "工程尾巴 B：lexical 语料冷启动 + 占位阈值/复利度量权重校准收口",
       "status": "pending",
       "mode": "explore",
       "parent": "1",
@@ -542,6 +553,11 @@
           "q": "lexical gate 的描述以什么为准？",
           "answer": "以代码事实为准：0.5 恒弃权 bug 已由 auto_calibrate_gate 修复，旧描述（项目 MEMORY.md 遗留节及上一轮回复）过时，本节点按「缺真实语料 + seed 仍 PLACEHOLDER + 未走 calibrate 门禁」立项。corpus-derived 不得伪装成 CALIBRATED。",
           "note": "事实核查 2026-11-05：routing.py:186-190 / app.py:95-99 / data/lexical_corpus.json 不存在"
+        },
+        {
+          "q": "1-22 label 为何改名？",
+          "answer": "原 label「工程尾巴 B：占位阈值与复利度量权重校准收口」只覆盖 4 条 exit_criteria 的后两条，掩盖了第一硬缺口：data/lexical_corpus.json 不存在 → LexicalRouter 冷启动 predict 返回 (None,0.0) 恒弃权。改名为「工程尾巴 B：lexical 语料冷启动 + 占位阈值/复利度量权重校准收口」，使 label 与 exit_criteria / notes 同口径。治理铁律不变：corpus-derived 不等于 tuning 的 CALIBRATED，绝不写回 REGISTRY。",
+          "note": "2026-11-05 20:25 核查发现；仅改 label，不动 status / exit_criteria / notes"
         }
       ],
       "notes": "重要事实更正：src/zkc/routing.py:186-190 已默认 auto_calibrate_gate=True，fit() 后按类内/类间质心余弦中点推导 gate（gate_source=corpus-derived），硬编码 0.5 恒弃权的 bug 早已修复；app.py:95-99 build_routers 会 fit 语料。真正缺口是 data/lexical_corpus.json 不存在 → 无标注语料 → 冷启动 predict 返回 (None,0.0) → 仍弃权；且 tuning.py:161 ROUTING_LEXICAL_CONF_GATE=0.5 仍是 PLACEHOLDER seed。治理铁律（routing.py:176-183）：corpus-derived 与 tuning.CALIBRATED 是两回事，绝不写回 REGISTRY，升 CALIBRATED 必须走 calibrate() 门禁。复利度量：tuning.py:178-181 四个 METRIC_W_* 均 0.25 PLACEHOLDER，metrics.py:101-113 的 weights/method_target 待校准。",
@@ -598,6 +614,11 @@
           "q": "1-23 exit_criteria 逐条验收结论？",
           "answer": "① 7 处分类已落盘（建模 4 条 decision + 本轮 2 条），HEAD 交叉验证结论在 notes；② PRD:168 改引 ADR-0004 / ADR-0005 / rec-avoid-gate.md，6 项 unknown 分层结论沉淀进 PRD 正文，决策摘要未丢；③ 误扫按 zj 拍板走自包含 wrapper，6 条显式白名单逐条打印、未匹配仍 fail；④ ci.yml 新增 authority job，CI checkout 模拟 2 ALLOW + 4 STALE + 0 unresolved；⑤ 机械验证：仓库内门禁 exit 0、上游用户级门禁 7→6、全量 454 tests OK、本轮自引入触发串 0、ADR-0008 已沉淀。",
           "note": "未实测：真实 GitHub Actions 运行、branch protection 把 authority job 设为 required check（属仓库设置）；改动未 commit/push，等 zj 显式触发"
+        },
+        {
+          "q": "1-23 的「未实测 / 未 commit/push」decision 是否已过时？",
+          "answer": "是，且属历史快照而非当前状态。逐条验收结论 note 里的「未实测：真实 GitHub Actions 运行、branch protection required check」在 2026-11-05 17:xx 时点成立；20:05 后已由实现 commit 75db9a0 + doc-only follow-up b840daa 推 main：真实 run 42007556572 / 42024989429 全绿、required check 已设、ADR-0008 已改为实测结论、ZKC issue #3 已 CLOSED。当前状态以 1-23-1 第 5 条 decision + ADR-0008 + 当日日志 20:10 段为准。按 append-only 约定不改旧条目，追加本条更正。",
+          "note": "机械复核：上游 authority-check clean、仓库 wrapper 0 unresolved（214 durable 源 / 跳过 2）均 exit 0；carrier 与 md 视图同在 b840daa"
         }
       ],
       "notes": "现状（2026-11-05 实测 `python roadmap_cli.py authority-check .` 输出 7 行，非上一轮汇报的 6 行）：\n[真违规 1] docs/prds/knowledge-compounding-prd.md:168 —— PRD 是长期文档，却引用过程产物 mcp-integration-plan.md（docs/plans/ 下唯一一份）；按 skill 权威边界应改为引用 ADR-0004 / ADR-0005 / docs/rec-avoid-gate.md 等持久权威。\n[误扫 6] .workbuddy/memory/2026-11-04.md:6/27/33 + 2026-11-05.md:59（过程日志，记忆系统 append-only 硬约束禁改；其中 2026-11-05.md:59 是 1-21 收口日志写入时把过程产物路径写进日志所引入，属本会话新增、非既有）；docs/roadmap/roadmap.json:3（root description，CLI 仅 init 支持 --description、update 无该字段，Agent 禁手改事实源）、:418（节点 1-18 notes，可由 `update --notes` 合法改，但内容含 plan §1.4/§2.5 证据缺口原文，须先沉淀到持久权威）。\n[根因] authority_boundary.py：process_targets = docs/plans/**（当前仅 mcp-integration-plan.md）；扫描 root.rglob('*') 全部 DURABLE_SUFFIXES；EXCLUDED_DIR_PARTS 只有 {node_modules, tmp}，故把过程日志与 roadmap 事实源自身一并当作 durable code 判定；行内例外仅 roadmap-authority-allow: governance-example；cmd_authority_check 只收 project_root、无 exclude 参数。\n[既有性交叉验证] `git show HEAD:docs/prds/...` 第 168 行与 `HEAD:docs/roadmap/roadmap.json` 第 3 行均已含该引用 → 6 处非 1-21 引入；1-21 新增/修改文件 0 命中。第 7 处（2026-11-05.md:59）是 1-21 日志新增，如实计入治理范围。\n[CI 现状] `git ls-files .github/` 只有 .github/workflows/ci.yml；grep authority-check 0 命中 → 门禁从未进 CI。且 CI runner 无 ~/.workbuddy/skills 用户级安装，任何依赖 skill 路径的接法在 CI 都不可执行，治理产物必须自包含（不 import 用户级 skill）。\n[硬约束] ① 日志 append-only 不改已有行；② roadmap.json 只能经 CLI 读写（root description 无命令）；③ zj-roadmap-driven 位于 ~/.workbuddy/skills 属跨项目用户级资产（更新走删除重装），改它需单独授权；④ 治理不得静默忽略或削弱门禁，任何新出现的泄漏仍须非零退出。",
@@ -648,6 +669,11 @@
           "q": "真实 Actions 与 required check 的实测结论？",
           "answer": "实现 commit 75db9a0 推 main 触发 run 42007556572（push / Python 3.13.17），4/4 job success，authority (process boundary) 7s 且日志与本地逐字一致（214 durable 源、跳过 2、0 unresolved）。从该 run 的 check-run 名把 authority (process boundary) 设为 main 的 required status check（app_id 15368、strict=false、enforce_admins=false、无 PR review / restrictions），PUT + GET 复核一致；只约束 PR 合并，admin 直推 main 不受影响。ADR-0008 的『未实测』条目已改为实测结论。",
           "note": "zj 授权 commit+push 到 main 并设置分支保护；实测结论走独立 doc-only follow-up commit 回写，不 amend 实现 commit"
+        },
+        {
+          "q": "1-23-1 逐条验收结论里的「未实测 / 未 commit」如何更正？",
+          "answer": "该 note 是 17:40 时点快照；第 5 条 decision「真实 Actions 与 required check 的实测结论」才是当前事实，ADR-0008 的「未实测」条目已改为实测结论并随 b840daa 推送。后续引用一律以第 5 条 + ADR-0008 为准，不因旧快照把节点误判为未闭合；旧条目保留作过程留痕。",
+          "note": "2026-11-05 20:25 只读核查发现；本轮只追加更正 decision，不改状态、不 retracted 旧条目"
         }
       ],
       "notes": "",
@@ -663,11 +689,35 @@
         "CI checkout 模拟（无过程日志目录）不产生新假阳性、不静默吞掉真泄漏；全量 make test 通过",
         "ADR-0008 Decision / Consequences / Follow-up 与 ci.yml 注释同步，:89 判据改为可验证条件；本轮自引入触发串 0"
       ]
+    },
+    "1-24": {
+      "id": "1-24",
+      "uid": "01a1abb1906e-12649be8ce",
+      "label": "工程尾巴 A 实机复核：Windows schtasks 4 步验证（关停 1-21 未实测偏差）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-24 的 scope gate 与验收边界？",
+          "answer": "Acceptance/evaluation 式实机验收：只读验证 ADR-0007 §5.1 的四步清单，不改 zkc CLI 语义、不动 E1 三判据、不改 1-21 的 completed 状态。本机 macOS 无法执行真实 schtasks，节点保持 pending 直到 zj 在 Windows 环境实测并回填证据；未完成前 ADR-0007 的「未实机验证声明」不得删除，也不得以 macOS dry-run 冒烟冒充实机通过。",
+          "note": "四步：dry-run 看命令 / 注册 + schtasks query 确认 / 次日查日志新增真值收口 / uninstall 干净卸载"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "在 Windows 环境跑 install_daily_driver.bat --dry-run，确认渲染出的 schtasks 命令与 ADR-0007 §5.1 契约一致",
+        "执行注册后用 schtasks /query /tn \"ZKC Daily E1\" /v 确认任务存在，动作指向单一 .bat 路径",
+        "次日检查 logs\\e1_daily.log 新增一行真值收口（真实 PG 数据，不伪造、不以 memory 后端代替）",
+        "执行 --uninstall 干净卸载；四步证据回填本节点 notes 后，ADR-0007 的未实机验证声明才可更新"
+      ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 18:06:49",
+    "updated": "2026-11-05 20:32:08",
     "md_file": "ROADMAP.md"
   },
   "edges": [
