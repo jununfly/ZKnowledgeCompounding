@@ -61,6 +61,27 @@ jobs:
         run: python scripts/zkc_authority_check.py .
 
   # ---------------------------------------------------------------------------
+  # ADR-0004 §3.5 提示注入验收闸门：E5 的三条 gate 断言独立成 job，
+  # 避免在 make test 的全量输出里被淹没成一条普通测试。用例走 memory backend
+  # + stdio 帧，不需要 PG / Ollama；用例内含一条接线断言，守着本 job 与
+  # make mcp-gate 不脱钩（job 被删 / target 改名都会红）。
+  mcp-injection-gate:
+    name: mcp (injection gate)
+    runs-on: ubuntu-latest
+    env:
+      ZKC_RUN_PG_TESTS: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+      - name: Install dependencies
+        run: make setup
+      - name: Run ADR-0004 injection gate
+        run: make mcp-gate
+
+  # ---------------------------------------------------------------------------
   # 最低保障：没有 docker / PG 的环境（如只拉代码跑单测的贡献者）必须优雅跳过
   # PG 集成测试，而不是硬失败。ZKC_RUN_PG_TESTS=0 是各 PG 测试文件的 skipUnless 开关。
   unit-no-pg:

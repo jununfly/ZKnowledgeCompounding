@@ -173,3 +173,42 @@ python scripts/install_harness_skill.py --force     # canonical 更新后同步�
 
 脚本不删除 home 下目录；副本被手工改过时默认拒绝覆盖。在 WorkBuddy 里说
 「跑 ZKC 每日循环」即按该 skill 走四步流程，其中 `decide` 会停下来等你给 verdict。
+
+---
+
+## 6. MCP stdio server（E2 骨架）
+
+ZKC 以**单边 MCP server** 形态接入 Codex / WorkBuddy（两者均为纯 MCP client）。
+默认 stdio：**零网络监听面、无需 token**，client 以子进程方式启动：
+
+```bash
+python -m zkc.transport
+```
+
+MCP client 的 `command` / `args` 配置：
+
+```json
+{"command": "python", "args": ["-m", "zkc.transport"]}
+```
+
+协议基线 `2024-11-05`；对外契约 `zkc-mcp-contract/v1` 的机器可读快照在
+`src/zkc/transport/contract_v1.json`（独立于 §5 DDL 版本化，DDL 演进由 seam 吸收）。
+白名单五 tool、黑名单四类危险写、capabilities 与信任边界都以该快照为唯一事实源。
+
+**stdout 纪律**：stdout 只写 JSON-RPC 帧，诊断信息一律走 stderr；单帧一行、
+通知（无 id）不回帧。**transport 层不 import repository / 驱动，也不直连 DDL**——
+所有 tool / resource 的 handler 由上层在构造 `McpServer` 时注入（第四 seam）。
+
+> 五个白名单 tool 与 `zkc://scheduler/due` resource 已接线：`zkc_capture` 走 push +
+> 分流闸（弃权入人审），`zkc_query` 默认脱敏并带 `evidence_refs` 溯源，
+> `zkc_review_queue_resolve` 只标 resolved + 记 HITL 归因，
+> `zkc_scheduler_due` 返回带衰减/复审节奏的「该关注清单」。
+> 黑名单四类危险写（`distill/trigger` / `interval_adjustment` / `meta_claim` /
+> 历史行 delete/update）不注册为 tool，越权调用被拒并留审计事件。
+> `zkc_capture` 已按 capture profile 落地：默认开启、只加源节点、单次 ≤1000 条
+> 并走 decay 初始化；不可信内容只作纯文本存储，命中注入标记仅留痕、不解析执行，
+> 注入指令冒充 HITL 归因回写队列会被拒绝并留痕。
+> 提示注入 gate 用例已接 CI 独立 job（`make mcp-gate`），只依赖 memory backend，
+> 不需要 PG / Ollama，本地可随时复跑。
+
+设计与安全边界见 `docs/zj-adr/0004-mcp-interface-contract.md`。

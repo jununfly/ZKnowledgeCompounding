@@ -14,5 +14,10 @@ requires-python = ">=3.9"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# 对外契约快照是非 .py 资源，必须显式声明才会进 wheel；
+# editable 安装（make setup）读源码目录，非 editable 安装靠这段。
+[tool.setuptools.package-data]
+zkc = ["transport/contract_v1.json"]
+
 [project.scripts]
 zkc = "zkc.cli:main"

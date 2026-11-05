@@ -33,6 +33,40 @@ ZKC 要经 MCP 融入 Codex/WorkBuddy 日常 Agent 流。事实锚点：Codex �
 
 - **提示注入验收用例（gate 用例）**：构造注入（不可信内容 → agent 被注入 → 调 MCP 写 tool），断言 ① 未授权写被拒（distill/trigger/interval_adjustment 返回权限拒绝）② 私人 claim 不出现在 query 响应体 ③ 越权企图回写 `review_queue` 留痕。该用例纳入 ADR 验收闸门。
 
+## Implementation anchor (E3, 2026-11-05)
+
+上表是 Human 视图；机读事实源在 `src/zkc/transport/contract_v1.json`
+（`zkc-mcp-contract v1`），攻击面枚举表的可执行版本在
+`src/zkc/mcp/exposure.py` 的 `attack_surface_table()`——入口五 tool 与契约
+白名单逐项一致、出口恒为空，由单测守着不漂移。
+
+五个 handler 落在 `src/zkc/mcp/handlers.py`，由 `src/zkc/mcp/wiring.py`
+注入纯协议层 `src/zkc/transport/mcp_server.py`；handler 只调既有
+repository/command API，transport 层零 repository / 驱动 import。
+`zkc_query` 默认不返回 `node.content` 与 `meta_claim.statement`，
+`scope=private_claims` 未获显式授权即拒绝；`zkc_review_queue_resolve`
+只写 `review_queue.resolved` 并记录 HITL 归因。
+
+v1 尚未对外发布：E3 接线时发现 `zkc_review_queue_list` 的
+`include_resolved` 参数无 repository 协议支撑，按诚实原则删除该参数、
+改为 `action` 过滤，不留一个看似可用实则做不到的能力在契约里。
+
+E4（2026-11-05）补齐 `zkc_capture` 完整规格：`src/zkc/mcp/capture.py` 的
+`CaptureProfile` 默认开启，允许写集合仅 `{node}`，禁止四类危险写；
+单次 ≤1000 文档（与契约 `maxItems` 同源），超出显式拒绝并要求分批；
+落库后按 `zkc.decay.compute_decay_score` 做 decay 初始化。
+`src/zkc/mcp/injection.py` 只做标记检测：不可信内容原样作纯文本存储，
+命中注入标记只写 `injection_attempt_detected` 审计，不解析不执行；
+若注入指令试图冒充 HITL 归因回写 `review_queue`，该写操作被拒并留
+`review_queue_overreach_audited`——外生锚不可由文档注入伪造。
+
+E5（2026-11-05）把上面的 gate 用例固化为 CI 闸门：
+`tests/test_mcp_injection_gate.py` 经 `make mcp-gate` 在
+`.github/workflows/ci.yml` 的独立 job `mcp-injection-gate` 运行，端到端构造
+「不可信文档 → agent 被注入 → 调写 tool」的 stdio 帧流，断言三条 gate
+结论并全局扫描响应体不含私密串；用例内含一条接线断言，防止 job 或
+Makefile target 被删后闸门静默失联。用例只依赖 memory backend，无需 PG / Ollama。
+
 ## Considered Options
 - 双向 client 一并做：拒绝（phase 2）——旁路双轨分流闸门（破坏不变量①）+ 新增出口攻击面 + D 量化 node 写入与注意力预算瞬时 +1~2 数量级（§6.3 rot=100%）。
 - HTTP 默认暴露：拒绝——打破不变式⑤，便利压倒隐私。
