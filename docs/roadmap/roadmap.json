@@ -243,6 +243,11 @@
           "q": "1-5 收口 decision 里的「真实 Actions run 未实测 / 未 commit/push」是否已过时？",
           "answer": "是，属 21:0x 时点快照；按 append-only 不改旧条目、追加本条更正。zj 21:49 显式触发 commit+push：实现 commit 8dae7fe（24 文件 / +2283 −26，按 constraints §8.4 铁律单提交保全树）推 main（5c2e9b1..8dae7fe，push_rc=0）；远端返回 Bypassed rule violations … Required status check 'authority (process boundary)' is expected，是 enforce_admins=false 下 admin 直推允许绕过，非失败。真实 Actions run 42040603724（push 8dae7fe）5/5 job success：lint (actionlint) / authority (process boundary) / mcp (injection gate) / unit (PG disabled) / full (PG + migrations + anchors e2e)，耗时 1m6s。本地与远端同为 8dae7fe、工作树干净、ls-tree 与 ls-files 均 271 无塌树。故「真实 Actions run 尚未跑」「改动未 commit/push」两项已闭合，后续引用以本条为准。",
           "note": "仍未闭合：mcp (injection gate) 尚未设为 main 的 required check（属仓库设置，不在本次 commit+push 授权范围内），当前它只是可见 job、不是合并硬闸门。commit message 未写 hash 占位、无自指循环；本条走独立 doc-only follow-up，不 amend 实现 commit"
+        },
+        {
+          "q": "1-5 的「mcp (injection gate) 未设 required check」是否已过时？",
+          "answer": "是，22:10 zj 显式授权后已闭合。执行前先 GET 现有保护（contexts 仅 authority (process boundary)、strict=false、enforce_admins=false、无 PR review / restrictions、其余开关全 false），确认 gate check-run 名为 'mcp (injection gate)' 且 app_id=15368（GitHub Actions，与现有 check 同源）。用专门的 PATCH /branches/main/protection/required_status_checks 端点把 contexts 改为两项做**追加**，不走整体 PUT，避免误改其它分支保护字段；PATCH rc=0 返回 checks 两项，GET 完整保护复核一致。口径不变：strict=false + enforce_admins=false → 只约束 PR 合并，admin 直推 main 仍允许绕过（远端 'Bypassed rule violations' 属设计内、不是失败）。至此 gate 既是可见 job、也是合并硬闸门。",
+          "note": "上一条 1-5 更正 decision 的 note 里「仍未闭合」属 21:49 时点快照，按 append-only 不改旧条目；分支保护属仓库设置不在 git 内，本条只作事实源留痕，不改代码 / CI 配置"
         }
       ],
       "notes": "",
@@ -794,7 +799,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 22:04:15",
+    "updated": "2026-11-05 22:13:01",
     "md_file": "ROADMAP.md"
   },
   "edges": [
