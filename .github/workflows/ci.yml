@@ -43,6 +43,24 @@ jobs:
         run: actionlint
 
   # ---------------------------------------------------------------------------
+  # 过程权威边界：拒绝代码 / 长期文档引用过程编排稿，也拒绝把 roadmap 节点完成
+  # 状态直接写成 proof/evidence。检查器在仓库内且只用标准库，不依赖用户级
+  # ~/.workbuddy/skills（CI runner 上没有该安装）。
+  # 扫描范围按结构判据收窄：过程态目录整类剪枝（含 .workbuddy/ 过程日志，
+  # CI 下本就 gitignore）、roadmap carrier 按结构签名、带权威信封的视图按信封；
+  # 跳过清单逐条打印而不静默吞掉，判定语义不放宽，任何新泄漏仍非零退出。
+  authority:
+    name: authority (process boundary)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check process authority boundary
+        run: python scripts/zkc_authority_check.py .
+
+  # ---------------------------------------------------------------------------
   # 最低保障：没有 docker / PG 的环境（如只拉代码跑单测的贡献者）必须优雅跳过
   # PG 集成测试，而不是硬失败。ZKC_RUN_PG_TESTS=0 是各 PG 测试文件的 skipUnless 开关。
   unit-no-pg:

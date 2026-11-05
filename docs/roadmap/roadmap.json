@@ -557,10 +557,12 @@
       "id": "1-23",
       "uid": "01a1a7a0dc3d-d75a6df525",
       "label": "G1 过程权威泄漏治理：7 处分类 + 真违规修复 + 门禁自包含接入 CI",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
-      "children": [],
+      "children": [
+        "1-23-1"
+      ],
       "decisions": [
         {
           "q": "「6 处」口径是否需要更正？",
@@ -581,6 +583,21 @@
           "q": "治理期间如何避免记录行为本身复现泄漏？",
           "answer": "自指陷阱：检查器按行做子串匹配，凡在 roadmap 事实源 / 过程日志 / 长期记忆里写出 process target 的完整相对路径，记录行为本身就会新增一条泄漏。本轮实证：写完 1-23 的 notes + 日志更正 + MEMORY 后泄漏由 7 涨到 10，随后把 3 处本轮自引入的完整路径改写为「仅文件名」（并复测回到 7）。治理期间一律只写文件名或占位表述；本轮自引入的新增泄漏必须清零，不得并入误扫白名单了事。",
           "note": "与 zj 的 commit hash 自指循环同类：写入内容改变了被检查对象本身；解药是让记录不携带触发串"
+        },
+        {
+          "q": "1-23 的 scope gate 分类与执行方案拍板？",
+          "answer": "Product execution：改本仓库 PRD / CI 并新增自包含检查器。按节点推荐方案执行：① 新增仓库内 scripts/zkc_authority_check.py 复刻判定逻辑（不 import 用户级 skill）；② 修 PRD:168 改引 ADR-0004 / ADR-0005 / rec-avoid-gate.md；③ 接 ci.yml 独立 job；④ 治理结论沉淀 ADR-0008。不改跨项目 skill、不改 append-only 日志、不手改 roadmap.json 事实源。开工前复测门禁输出 7 行，与节点落盘一致。",
+          "note": "所有新增文本一律只写过程编排稿的文件名或占位表述，不写完整相对路径，避免治理记录行为本身自引入新泄漏"
+        },
+        {
+          "q": "6 处误扫的白名单键如何设计才不会因写入漂移而失效？",
+          "answer": "不用行号做主键（decide / render 会让事实源行号漂移，日志 append 也会让行号与内容脱钩）。改为 (相对路径 + 行内容锚点 + 命中目标) 三元组显式条目：路径精确相等、行文本必须含该条专有锚点、目标必须是过程产物目录下的文件，三者齐备才豁免并逐条打印理由；任何不匹配的新行仍 fail。悬空条目打印 STALE 警告，不静默吞掉。",
+          "note": "比按目录整类排除更强：目录排除会掩盖未来新增泄漏；锚点过期即暴露，需人工复核白名单"
+        },
+        {
+          "q": "1-23 exit_criteria 逐条验收结论？",
+          "answer": "① 7 处分类已落盘（建模 4 条 decision + 本轮 2 条），HEAD 交叉验证结论在 notes；② PRD:168 改引 ADR-0004 / ADR-0005 / rec-avoid-gate.md，6 项 unknown 分层结论沉淀进 PRD 正文，决策摘要未丢；③ 误扫按 zj 拍板走自包含 wrapper，6 条显式白名单逐条打印、未匹配仍 fail；④ ci.yml 新增 authority job，CI checkout 模拟 2 ALLOW + 4 STALE + 0 unresolved；⑤ 机械验证：仓库内门禁 exit 0、上游用户级门禁 7→6、全量 454 tests OK、本轮自引入触发串 0、ADR-0008 已沉淀。",
+          "note": "未实测：真实 GitHub Actions 运行、branch protection 把 authority job 设为 required check（属仓库设置）；改动未 commit/push，等 zj 显式触发"
         }
       ],
       "notes": "现状（2026-11-05 实测 `python roadmap_cli.py authority-check .` 输出 7 行，非上一轮汇报的 6 行）：\n[真违规 1] docs/prds/knowledge-compounding-prd.md:168 —— PRD 是长期文档，却引用过程产物 mcp-integration-plan.md（docs/plans/ 下唯一一份）；按 skill 权威边界应改为引用 ADR-0004 / ADR-0005 / docs/rec-avoid-gate.md 等持久权威。\n[误扫 6] .workbuddy/memory/2026-11-04.md:6/27/33 + 2026-11-05.md:59（过程日志，记忆系统 append-only 硬约束禁改；其中 2026-11-05.md:59 是 1-21 收口日志写入时把过程产物路径写进日志所引入，属本会话新增、非既有）；docs/roadmap/roadmap.json:3（root description，CLI 仅 init 支持 --description、update 无该字段，Agent 禁手改事实源）、:418（节点 1-18 notes，可由 `update --notes` 合法改，但内容含 plan §1.4/§2.5 证据缺口原文，须先沉淀到持久权威）。\n[根因] authority_boundary.py：process_targets = docs/plans/**（当前仅 mcp-integration-plan.md）；扫描 root.rglob('*') 全部 DURABLE_SUFFIXES；EXCLUDED_DIR_PARTS 只有 {node_modules, tmp}，故把过程日志与 roadmap 事实源自身一并当作 durable code 判定；行内例外仅 roadmap-authority-allow: governance-example；cmd_authority_check 只收 project_root、无 exclude 参数。\n[既有性交叉验证] `git show HEAD:docs/prds/...` 第 168 行与 `HEAD:docs/roadmap/roadmap.json` 第 3 行均已含该引用 → 6 处非 1-21 引入；1-21 新增/修改文件 0 命中。第 7 处（2026-11-05.md:59）是 1-21 日志新增，如实计入治理范围。\n[CI 现状] `git ls-files .github/` 只有 .github/workflows/ci.yml；grep authority-check 0 命中 → 门禁从未进 CI。且 CI runner 无 ~/.workbuddy/skills 用户级安装，任何依赖 skill 路径的接法在 CI 都不可执行，治理产物必须自包含（不 import 用户级 skill）。\n[硬约束] ① 日志 append-only 不改已有行；② roadmap.json 只能经 CLI 读写（root description 无命令）；③ zj-roadmap-driven 位于 ~/.workbuddy/skills 属跨项目用户级资产（更新走删除重装），改它需单独授权；④ 治理不得静默忽略或削弱门禁，任何新出现的泄漏仍须非零退出。",
@@ -595,12 +612,57 @@
         "误扫处置方案经 zj 拍板并落地；候选：仓库内自包含显式白名单 wrapper / 改 skill EXCLUDED_DIR_PARTS（需跨项目授权）/ 归档 plan 后全量清引用（被 description 无 CLI 命令 + 日志禁改阻塞）",
         "门禁自包含接入 .github/workflows/ci.yml（当前 0 命中）：不依赖用户级 skill 路径，新泄漏必须 fail，已知豁免逐条打印不静默",
         "机械验证：门禁输出 clean 或显式列出被豁免项；本地复跑留痕；全量单测不受影响；治理结论同步 ADR 或 docs 长期文档"
+      ],
+      "rounds": 1
+    },
+    "1-23-1": {
+      "id": "1-23-1",
+      "uid": "01a1ab147c62-b14ad5ea29",
+      "label": "G1 follow-up：对齐上游结构性判据，收敛 6 条白名单",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-23",
+      "children": [],
+      "decisions": [
+        {
+          "q": "issue #3 的 A / B 两案如何裁决？",
+          "answer": "采纳 A：同步上游结构性扫描判据并收敛 6 条白名单。理由：白名单是枚举式兜底，每新增一天日志、一条 notes、一次 carrier 改写都要人工加条目或处理 STALE；上游 #240 已给出目录剪枝 + carrier 结构签名 + 权威信封三类结构性判据，且已在本仓同一 tree 上验证 clean，对齐不是推演而是现成可复刻。B 长期维护两套判定口径更贵。修正两点：① 可重复 --exclude 属扩展能力而非判定语义，当前 tree 无新增过程态目录需求，先不加（YAGNI）；② 测试不是简单更新 8 条，其中 3 条围绕白名单建立，须重写为结构性判据用例并补一条防 carrier 签名逃逸用例。",
+          "note": "zj 本轮以 a 拍板；依据 ADR-0008 :70 裁决权与 :88-90 待办主体都在 ZKC，ZAgentic 只提供语义基准"
+        },
+        {
+          "q": "删掉 6 条白名单后，ALLOW / STALE 输出与可审计性如何承接？",
+          "answer": "枚举式兜底删除后 ALLOW / STALE 概念一并消失，不再假装存在白名单。改为结构性可审计输出：显式打印 process target 数、被剪枝目录、被识别为过程态而跳过 durable 扫描的文件清单、扫描的 durable 源数、unresolved 数；未匹配新泄漏仍逐行 E_PROCESS_AUTHORITY_LEAK 且非零退出。跳过清单按相对路径逐条打印，替代原 STALE 的『静默吞掉』防线。",
+          "note": "剪枝只改扫描范围、判定语义不放宽；上游 SKILL.md 明确『排除只改扫描范围，判定语义不放宽』，输出口径也应同源"
+        },
+        {
+          "q": "ADR-0008 :89 的错误判据如何修正？",
+          "answer": "改为可验证条件：『本仓 wrapper 自身不再产生这 6 处命中』（以本地复跑 + CI checkout 模拟 + 缺陷态红 / 修复态绿为准），而不是『上游不再误报即可删除』。上游误报消失不等于独立实现自动同步，上一轮反事实清空 ALLOWANCES 得到 6 unresolved 即为反例。同时记录与上游语义对齐后未引入 --exclude 的取舍，避免后人误判为分叉。",
+          "note": "issue #3『一处需要顺带修正的判据』已指出该条件不成立"
+        },
+        {
+          "q": "1-23-1 四条 exit_criteria 逐条验收结论？",
+          "answer": "① 缺陷态红：注入一条长期文档引用后 wrapper 与上游 CLI 均 exit 1 且同定位 docs/guide.md:1，放宽排除未削弱判定（12 条测试含直接引用 / markdown link / 完成声明 / 防 carrier 签名逃逸 / 防半截信封逃逸）；② 修复态绿：删掉 6 条白名单后 wrapper 0 unresolved / exit 0（214 durable 源、跳过 2 个过程态文件），上游 clean / exit 0，同一 tree 结论一致；③ CI checkout 模拟 254 文件、无过程日志目录，干净态两边 exit 0、注入态两边 fail、移除后恢复绿；全量 make test 458 tests OK；④ ADR-0008 Decision / Consequences / Follow-up 与 ci.yml 注释已同步，:89 判据改为可验证条件，PyYAML 结构校验通过，4 个改动文件自引入触发串 0。",
+          "note": "未实测：真实 GitHub Actions 运行、branch protection 把 authority job 设为 required check（属仓库设置）；改动未 commit/push，等 zj 显式触发"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "budget": {
+        "max_children": 3,
+        "max_rounds": 2
+      },
+      "rounds": 1,
+      "exit_criteria": [
+        "缺陷态红：长期文档写过程产物引用仍 E_PROCESS_AUTHORITY_LEAK 且非零退出，放宽排除不削弱判定",
+        "修复态绿：删掉 6 条白名单后本仓 wrapper 0 unresolved / exit 0，且同一 tree 上与上游 CLI 判定结论一致",
+        "CI checkout 模拟（无过程日志目录）不产生新假阳性、不静默吞掉真泄漏；全量 make test 通过",
+        "ADR-0008 Decision / Consequences / Follow-up 与 ci.yml 注释同步，:89 判据改为可验证条件；本轮自引入触发串 0"
       ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 01:36:34",
+    "updated": "2026-11-05 17:46:44",
     "md_file": "ROADMAP.md"
   },
   "edges": [
