@@ -170,6 +170,7 @@ flowchart LR
   - **护城河实证化列 P0 验收**：把「复利可观测+蒸馏质量」从设计论点转经验证据，绑两外生锚——锚1 标注率闸门持续 ≥70%；锚2 **zj 人工抽检**蒸馏产物记录漏检/误蒸馏率、给本机 4B/9B 上界估计。任何新功能不得降低衰减+预算可观测性（rec-avoid「经验证伪闸」）。
   - **rec-avoid 机械闸**：去模型化测试 + `check_invariant.py` + 图库主存储 EXCLUDED（ADR-0005 / `docs/rec-avoid-gate.md`）。
   - **MCP 进版本绑「接口契约边界 ADR 存在」**（ADR-0004）：单边 server + transport seam + stdio 默认 + 暴露面白黑名单；`zkc_capture` 须过 DecisionRouter 分流闸（agent 输入文档场景固化于此）。
+  - **对外叙事口径统一（E9）**：`caveat: moat-unverified-vs-mem0` + **4 项特征**（双轨 / 衰减 / 双时态 / 注意力预算），任何唯一性表述须带限定，不得回退 3 项口径；活文档（架构 §3、constraints §8.1、rec-avoid-gate）已同步。
   - **证据缺口（6 项 unknown，非证伪）**：governance×4（ZKC / khoj / logseq / SilverBullet 的 LICENSE 未采）+ letta×2（`architecture_storage` / `compounding`，main 为落地页仅 archive 有实现）+ mem0 对照整体排除（编译器 submodule 限制，残余风险「中」）。分层决策：(a) 现在可定——双轨+衰减+注意力为第一性、rec-avoid 守门；(b) 等补 governance 后声明跨项目许可兼容；(c) 永久 unknown——letta 现役实现、mem0 对照。只延迟对外定位叙事、不阻塞任何工程排期；任何「唯一性」表述带 `caveat: moat-unverified-vs-mem0`。
 
 ---

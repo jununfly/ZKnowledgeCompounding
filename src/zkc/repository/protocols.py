@@ -43,7 +43,12 @@ class NodeRepository(ABC):
     @abstractmethod
     def list_due_for_review(self, as_of: datetime) -> list[Node]:
         """decay_score ≥ tuning.SURFACE_THRESHOLD（见 zkc.tuning）且
-        (last_reviewed_at + review_interval) ≤ as_of 的节点。"""
+        (last_reviewed_at + review_interval) ≤ as_of 的节点。
+
+        **硬契约（D2）**：必须排除 ``archived_at`` 非空的节点——归档节点退出
+        整个调度回路（due 队列、queue_remaining 真值收口、衰减维护扫描）。
+        任何新后端实现都要满足，由 ``make invariant`` 的 P3 谓词机械守门。
+        """
 
     @abstractmethod
     def count_nodes_created_since(self, since: datetime) -> int:
@@ -378,8 +383,10 @@ class Storage(ABC):
         """
 
     @abstractmethod
-    def discover_higher_dim(self, seed_node_id: UUID, k: int = 5) -> list:
-        """T4.1：种子节点的 k 近邻（pgvector 余弦）。内存 fake 不做向量运算，返回空。"""
+    def discover_higher_dim(self, seed_node_id: UUID, k: int = 5,
+                            column: str = "embedding_4096") -> list:
+        """T4.1：种子节点的 k 近邻。默认用 qwen3 4096d 生产召回列（R18 / D4）；
+        pg 走 pgvector 余弦、memory 走等价 Python 余弦，双实现语义一致。"""
 
     @abstractmethod
     def citation_counts(self) -> dict[UUID, int]:

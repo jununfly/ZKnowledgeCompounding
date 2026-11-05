@@ -1,0 +1,123 @@
+{
+  "as_of": "2026-11-05T14:25:38.343141+00:00",
+  "column": "embedding_4096",
+  "model": "qwen3-embedding:latest",
+  "corpus_size": 60,
+  "n_queries": 32,
+  "node_node": {
+    "n": 1770,
+    "min": 0.2911,
+    "p05": 0.4331,
+    "p25": 0.5217,
+    "p50": 0.5788,
+    "p75": 0.6433,
+    "p90": 0.7016,
+    "p95": 0.7436,
+    "p99": 0.7955,
+    "max": 0.9918,
+    "mean": 0.5831
+  },
+  "query_node": {
+    "n": 1920,
+    "min": 0.2105,
+    "p05": 0.3352,
+    "p25": 0.4172,
+    "p50": 0.4711,
+    "p75": 0.5224,
+    "p90": 0.5623,
+    "p95": 0.5891,
+    "p99": 0.6481,
+    "max": 0.7668,
+    "mean": 0.4691
+  },
+  "query_positive": {
+    "n": 32,
+    "min": 0.531,
+    "p05": 0.5705,
+    "p25": 0.5909,
+    "p50": 0.6408,
+    "p75": 0.6857,
+    "p90": 0.7218,
+    "p95": 0.7221,
+    "p99": 0.7668,
+    "max": 0.7668,
+    "mean": 0.6415
+  },
+  "query_negative": {
+    "n": 1888,
+    "min": 0.2105,
+    "p05": 0.3345,
+    "p25": 0.4158,
+    "p50": 0.4697,
+    "p75": 0.5194,
+    "p90": 0.5564,
+    "p95": 0.5816,
+    "p99": 0.6247,
+    "max": 0.6885,
+    "mean": 0.4662
+  },
+  "threshold_candidates": [
+    {
+      "threshold": 0.5,
+      "node_node_pairs_at_or_above": 1448,
+      "node_node_pair_ratio": 0.8181,
+      "query_positives_at_or_above": 32,
+      "query_negatives_at_or_above": 656,
+      "query_precision": 0.0465,
+      "query_recall": 1.0,
+      "threshold_percentile_in_node_node": 18.19
+    },
+    {
+      "threshold": 0.6,
+      "node_node_pairs_at_or_above": 734,
+      "node_node_pair_ratio": 0.4147,
+      "query_positives_at_or_above": 21,
+      "query_negatives_at_or_above": 55,
+      "query_precision": 0.2763,
+      "query_recall": 0.6562,
+      "threshold_percentile_in_node_node": 58.53
+    },
+    {
+      "threshold": 0.65,
+      "node_node_pairs_at_or_above": 408,
+      "node_node_pair_ratio": 0.2305,
+      "query_positives_at_or_above": 14,
+      "query_negatives_at_or_above": 5,
+      "query_precision": 0.7368,
+      "query_recall": 0.4375,
+      "threshold_percentile_in_node_node": 76.95
+    },
+    {
+      "threshold": 0.7,
+      "node_node_pairs_at_or_above": 184,
+      "node_node_pair_ratio": 0.104,
+      "query_positives_at_or_above": 6,
+      "query_negatives_at_or_above": 0,
+      "query_precision": 1.0,
+      "query_recall": 0.1875,
+      "threshold_percentile_in_node_node": 89.6
+    },
+    {
+      "threshold": 0.75,
+      "node_node_pairs_at_or_above": 74,
+      "node_node_pair_ratio": 0.0418,
+      "query_positives_at_or_above": 1,
+      "query_negatives_at_or_above": 0,
+      "query_precision": 1.0,
+      "query_recall": 0.0312,
+      "threshold_percentile_in_node_node": 95.82
+    },
+    {
+      "threshold": 0.8,
+      "node_node_pairs_at_or_above": 17,
+      "node_node_pair_ratio": 0.0096,
+      "query_positives_at_or_above": 0,
+      "query_negatives_at_or_above": 0,
+      "query_precision": null,
+      "query_recall": 0.0,
+      "threshold_percentile_in_node_node": 99.04
+    }
+  ],
+  "current_placeholder_threshold": 0.7,
+  "note": "node↔node 分布对应 discover_higher_dim 的近邻尺度；query↔node 仅为召回交叉参照。本脚本只读，不写 tuning.REGISTRY，不把任何 source 标成 CALIBRATED。"
+}

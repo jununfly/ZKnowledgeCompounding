@@ -264,7 +264,7 @@
       "id": "1-6",
       "uid": "01a1a5ece656-9e6e423f18",
       "label": "E6 check_invariant.py CI 谓词门禁",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -273,10 +273,27 @@
           "q": "图库主存储？",
           "answer": "EXCLUDED（Kuzu/TerminusDB）；仅允许 Kuzu 只读投影",
           "note": "架构 §7 EXCLUDED 行"
+        },
+        {
+          "q": "1-6 的 scope gate 与谓词形态？",
+          "answer": "Product execution（ZKC 自身 CI 谓词落地）。形态选仓库内自包含 scripts/check_invariant.py（纯标准库、只读、不依赖 pip install / PG / Ollama），与 scripts/zkc_authority_check.py 同族；两条断言按 ADR-0005 原文：P1 meta_claim.evidence_refs uuid[] NOT NULL（扫 migrations 建表块），P2 无关闭 decay/attention 的全局开关（扫 src 源码、去注释、精确命名，不误伤 DECAY_FUNCTION / SURFACE_THRESHOLD 等正常参数）。独立 CI job + make invariant 同源命令，避免只在 make test 里当普通测试。",
+          "note": "原节点无 exit_criteria，本轮补齐为验收留痕"
+        },
+        {
+          "q": "1-6 四条 exit_criteria 逐条验收结论？",
+          "answer": "① scripts/check_invariant.py 的 _check_provenance 扫 migrations/*.up.sql，真实仓库定位 0001_baseline_d1_d9.up.sql:74，缺陷态（删 NOT NULL / 删建表）均判违规。② _check_kill_switches 扫 45 个 src 源码文件、按行去注释后精确匹配 8 类关停命名；注入 DECAY_ENABLED / os.environ.get('ZKC_DISABLE_ATTENTION') 均红，注释提及与 DECAY_FUNCTION/SURFACE_THRESHOLD/ATTENTION_BUDGET_* 均绿。③ ci.yml 新增独立 job invariant (rec-avoid)，Makefile 新增 make invariant；tests/test_check_invariant.py 的接线断言先红、补接线后绿。④ 10 条用例全绿；真实仓库 make invariant 0 violations rc=0；actionlint 1.7.12 rc=0；仓库 wrapper 0 unresolved clean。",
+          "note": "全量 make test 与真实 Actions 在整批节点收口时统一跑；本节点未单独触发 push"
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1,
+      "exit_criteria": [
+        "P1 谓词：migrations 的 meta_claim 建表块含 evidence_refs uuid[] NOT NULL，缺失即非零退出",
+        "P2 谓词：src 源码无 DECAY_ENABLED / DISABLE_ATTENTION / *_OFF 等全局关停开关，注释提及不算实现、正常参数不误报",
+        "CI 独立 job invariant (rec-avoid) + make invariant 同源命令；用例含接线守门断言",
+        "TDD 红→绿（缺陷态/修复态/真实仓库 clean）+ 全量套件通过 + actionlint rc=0 + 两套过程权威门禁 clean"
+      ]
     },
     "1-7": {
       "id": "1-7",
@@ -286,7 +303,13 @@
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "E7 本轮为何未开工、缺口是什么？",
+          "answer": "本轮完成现状核查但未执行，节点保持 pending。ADR-0005 要求「去掉 LLM 后 SilverBullet/logseq 能否等价实现」的**实测对照**，docs/rec-avoid-gate.md 现只有 2 条稀释项 + 3 条通过示例，仓库无 vendor 副本、无实测记录；现有 OSS 覆盖调研（commit-pinned 采样表）是定位横比，不是逐功能去模型化实测。**外生锚**：需要真实可跑的 SilverBullet / logseq 对照环境与逐功能判定记录，不能由文档推演冒充。下一步：zj 授权竞品实测环境（或提供实测记录）后，按可证伪清单逐条补进 rec-avoid-gate.md。",
+          "note": "不伪造实测；本轮 E6 已把「不变式谓词」这一半机械闸落地，去模型化测试这一半仍 open"
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -298,7 +321,13 @@
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "E8 本轮为何未开工、缺口是什么？",
+          "answer": "本轮完成现状核查但未执行，节点保持 pending。架构 §8「复利度量的最终口径」仍未回填（§9 只记已完成口径），tuning.py 的 METRIC_W_* 四权重与 METRIC_METHOD_TARGET 全为 PLACEHOLDER，仓库不存在「zj 人工抽检蒸馏产物」的漏检率 / 误蒸馏率 / 4B·9B 上界记录。**外生锚**：锚 2 的抽检必须由 zj 本人完成，系统自算的复利系数不能自我证伪；本轮不代写抽检数字。下一步：zj 抽检后给结果，再由本节点回填架构 §9 最终口径与经验证伪闸。",
+          "note": "连带变化：D2 已把 24 条导入语料移出调度回路，队列由 24 降为 0；这改变了「复利可观测性」的样本基础，回填口径时须以清理后的真实使用数据为准，不得沿用旧队列数字"
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -306,7 +335,7 @@
       "id": "1-9",
       "uid": "01a1a5ece962-63e019f1f6",
       "label": "E9 对外叙事对齐：caveat+4特征口径统一",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -315,10 +344,22 @@
           "q": "对外叙事口径？",
           "answer": "统一 caveat: moat-unverified-vs-mem0 + 4 特征口径（双轨/衰减/双时态/注意力预算）；不得回退 3 项口径",
           "note": ""
+        },
+        {
+          "q": "E9 对外叙事对齐的逐条验收结论？",
+          "answer": "① 架构 §3:54、constraints §8.1:9 由「三项核心语义」改为四项（补双时态），并绑定 caveat；rec-avoid-gate.md:3 由 3 项第一性改为 4 项 + caveat。② PRD §9 补「对外叙事口径统一」条目，README 新增「对外定位（叙事口径，E9）」小节——**这是必要的实体补位**：原 E9 备注说「报告+PRD 已完成，README 无定位表述无需改」，但调研核实报告实体已在 2026-11-03 归档删除，PRD 只有 caveat 无 4 项清单，故在 README 建立真实可核载体，不靠已删文档转述。③ 交叉 grep：'三项核心语义' 活文档 0 命中，caveat 活文档 13 处命中含上述 5 处。④ 未改代码、未提前勾销 PRD §9 第二 checkbox（归 1-18，仍被 1-8 blocks）。",
+          "note": "原节点无 exit_criteria，本轮补齐为验收留痕；4 项口径与 caveat 为 ADR-0004 / PRD §9 既有决策，非本节点新增架构决策"
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1,
+      "exit_criteria": [
+        "活文档统一 4 项特征口径（双轨 / 衰减 / 双时态 / 注意力预算），不得回退 3 项",
+        "任何唯一性 / 领先表述绑定 caveat moat-unverified-vs-mem0",
+        "README / PRD §9 / 架构 §3 / constraints §8.1 / rec-avoid-gate 五处对齐，交叉 grep 验证无 3 项口径残留",
+        "纯文档切片；PRD §9 第二 checkbox 的勾销归 1-18，不在本节点提前改写"
+      ]
     },
     "1-10": {
       "id": "1-10",
@@ -380,6 +421,11 @@
           "q": "D1 的范围与优先级？",
           "answer": "诊断+决策节点，不改 E1 判据、不改 E1 目标；只查 L3 下界语义并三选一拍板。与 D2 独立可并行，D2 无需等本节点结论。",
           "note": "发现来源 2026-11-05 E1 真实闭环首日，见 .workbuddy/memory/2026-11-05.md"
+        },
+        {
+          "q": "D1 本轮为何未拍板、三选一选项与前提变化？",
+          "answer": "D1 是诊断+决策节点，EX2 明确要求 zj 三选一拍板，本轮不代拍，保持 pending。三选项：(a) 允许 interval <1d（改 MIN_INTERVAL_DAYS 下界 + 红绿测试）；(b) 保持 1.0d 下界并如实承认 L3 对触底节点失效；(c) 触底节点改走其它反馈路径（不靠 interval 收敛）。**前提已变化**：节点 notes 的实证来自 27 条导入语料的 1.0d 节奏「任何 verdict 都改不了节奏、永久每日到期」，而 D2 本轮已把这批语料（真实 24 条）归档移出调度回路，due 由 24 降为 0 —— 该现象不再是当前系统的活跃症状。建议 zj 重新裁定优先级：先观察清理后是否还有真实条目触底，再决定是否需要改下界；若判定为纯架构语义澄清，可直接选 (b) 并落 ADR，不动代码。",
+          "note": "不静默沿用旧数字：27 条为历史快照，真实 PG 实测 24 条，见 D2 证据文档"
         }
       ],
       "notes": "2026-11-05 真实 PG 首日实证：zkc decide 三条（2 stale + 1 changed）全部 applied=False、new_interval_days=1.0，reason 仍写 too_late x0.7。根因 scheduling.py:77 clamp_days 受 tuning.py:96 MIN_INTERVAL_DAYS=1.0 下界约束，1.0x0.7 被夹回 1.0；set_interval 写同值且不写 audit_interval（scheduling.py:570-578）。影响：1-7 导入的 27 条语料全为 1.0d 节奏，任何 verdict 都改不了节奏、永久每日到期，queue_remaining 恒 27、saturated_days 靠噪声累积、budget 估计 0.1 抬到 3.0，E1 判据③ 的真实预算测不准。设计缺陷级，优先于继续攒活跃日。",
@@ -394,7 +440,7 @@
       "id": "1-14",
       "uid": "01a1a77445d0-6c755c7f83",
       "label": "D2 导入语料隔离：corpus 标记 + zkc archive 归档切片，移出调度回路",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -403,6 +449,21 @@
           "q": "D2 与 D1 的依赖关系？",
           "answer": "独立可并行。D2 是工程切片，不依赖 D1 的下界决策；两者均以 informs 边关联 1-1，不建 blocks 边——1-1 已 in_progress 且有 1 天真实数据，加前置边会造成逻辑倒挂。",
           "note": "证据：真实 PG 27 条 due 全为导入语料，L3 对 1.0d 触底节点恒 no-op"
+        },
+        {
+          "q": "D2 的 scope gate 与真实数据操作边界？",
+          "answer": "Product execution（ZKC 自身工程切片，含真实 PG 批量归档）。边界：只写 node.archived_at，不写 attention_observation、不写 labeled、不 resolve 任何 review_queue 条目、不删任何行；执行前必须先 --dry-run 并与独立 SQL 交叉核对条数；归档可逆（archived_at 置回 NULL）。",
+          "note": "节点既有 decision 已授权「移出调度回路而非给 verdict」，本轮按此执行"
+        },
+        {
+          "q": "D2 五条 exit_criteria 逐条验收结论？",
+          "answer": "① **先修真实缺陷**：list_due_for_review 在 pg / memory 双实现原本都不含 archived_at 过滤，只调 nodes.archive() 根本移不出复审队列；本轮补 `AND archived_at IS NULL` 与 memory 等价分支，红→绿覆盖。识别用等价字段（动态轨 + decay=1.0 + 1d 节奏 + last_reviewed_at=2026-11-01 + 未归档），未新增 schema 列。② zkc archive --corpus [--dry-run] [--json] 批量归档入口落地（src/zkc/corpus.py + cli.py 子命令）。③ 真实 PG 执行：dry-run matched=24 / archived=0，实跑 matched=24 / archived=24；labeled_touched=0、attention_observation_touched=0、review_queue_resolved=0，留痕见 docs/evidence/d2-corpus-cleanup-2026-11-05.md。④ 清理前 due(排除归档)=24 → 清理后 **0**；observations 1→1、review_queue_open 0→0；active archived_nodes 0→24。**数字偏差如实记录**：节点 notes 写 27 条，真实 PG 实测 24 条，不套用旧值。⑤ 9 条新单测 + 全量 550 tests OK。",
+          "note": "边界诚实声明：识别按历史批次派生特征，未来新导入语料若形态不同需另补结构化 corpus_tag 列；归档后 queue_remaining 由 24 降为 0，进入 ADR-0007「空队列日豁免」口径，但本轮未新增任何埋点，不得把清理动作当作 E1 达成证据。E8/D1 的实证前提因这批语料退出调度回路而变化，已在各自节点留痕"
+        },
+        {
+          "q": "1-14 的「归档退出调度回路」是否真的完整（2026-11-05 23:25 复核）？",
+          "answer": "**不完整，上一轮措辞偏窄，本条为准**。zj 再点该 bug 后全仓复核，发现三类残留：① `decay.refresh_decay` 走 `list_by_track('dynamic')`，该方法在 pg/memory 双实现都不过滤 archived_at，导致每次 /review、zkc decide --list、每日真值收口都把归档节点重算 decay 并 update_decay 写回（写放大 + version_seq 空转）；本轮在 refresh_decay 内跳过归档节点，并把「归档退出整个调度回路」写进 protocols.NodeRepository.list_due_for_review 硬契约。② 上一轮 PG 侧只有静态源码断言（assertIn SQL 字符串），不能证明 SQL 真跑通；本轮新增 PgArchiveExitTest 真实 PG 集成测试（独立迁移库 → 造到期节点 → 归档 → 断言 due 只含活跃节点且 update_decay 只落在活跃节点）。③ 无防回归机械闸：scripts/check_invariant.py 新增 P3 谓词，扫 repository/*.py 的每个 list_due_for_review 实现 + decay.refresh_decay，缺过滤即 E_INVARIANT_ARCHIVE_EXIT 非零退出，由 CI 的 invariant (rec-avoid) job 守门；真实仓库检查 4 个实现 0 violations。",
+          "note": "验证：TDD 新增 7 条用例缺陷态 6 红 → 修复后 17 条（含既有 10 条）全绿；全量 make test 557 tests OK（38.1s）；make mcp-gate 6 OK、make invariant 0 violations、两套过程权威门禁 clean、actionlint rc=0、git diff --check rc=0。证据文档 docs/evidence/d2-corpus-cleanup-2026-11-05.md 已补「完整性补强」节；rec-avoid-gate.md §2 补 P3 说明。1-14 保持 completed，本条按 append-only 追加复核结论，不重开节点、不改历史条目；改动未 commit/push"
         }
       ],
       "notes": "1-7 导入 60 篇 spike 语料中 27 条按 orphan 1d 节奏逐日逾期，全 decay=1.0 / last=2026-11-01。它们不是 zj 真实消费的知识，对其 verdict 属伪标注（违反架构 6.5.1 外生锚 / ADR-0006）；且因 D1 下界触底，任何 verdict 都无法改变节奏。正确处置是移出调度回路，而非给 verdict。",
@@ -413,13 +474,14 @@
         "批量清理显式留痕 bulk corpus cleanup，不计入 labeled，不污染校准标注率",
         "现存 27 条迁移后 queue_remaining 降为真实条目数，saturated_days 不再由语料噪声支撑",
         "红绿测试 + 全量套件通过"
-      ]
+      ],
+      "rounds": 1
     },
     "1-15": {
       "id": "1-15",
       "uid": "01a1a77c214f-69234d6403",
       "label": "D3 文档与实物对齐：R18 关停结论回填 + embedding_strong 旧名清理",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -428,6 +490,11 @@
           "q": "D3 的边界：哪些文件改、哪些不碰？",
           "answer": "建议活文档必改 risks.md（风险单一真相源）与架构 v1.2；归档只读件 docs/archive/plans/ZKC-implementation-plan.md 保留历史措辞不改（历史留痕），但须在 risks.md 注明归档件为旧版快照、以 risks.md 为准。不改代码、不新增架构决策。此边界待 zj 复核，可推翻。",
           "note": "归档件此前做过引用同步，是否纳入本切片由 zj 拍板，避免静默扩大范围"
+        },
+        {
+          "q": "D3 五条 exit_criteria 逐条验收结论？",
+          "answer": "① risks.md R18 由 open 改为已关停，数字**经真实复跑核实**：scripts/r18_recall_eval.py --column embedding_4096 --models qwen3-embedding:latest 得 Recall@10=1.000 / MRR=0.853 / @1=0.781 / @5=0.938（60 语料 / 32 query，判定合格），stdout 落 docs/evidence/r18-4096-recall-2026-11-05.md。同时澄清数字冲突：tuning.py:149 / 0008 迁移注释的 @10=0.938/MRR=0.824 属初测或 @5/@10 口径混写，以复跑为准，历史代码注释不改。② R16 由「已定死 nomic 768」改为双列共存（embedding 保留 + embedding_4096 生产召回），列名统一，硬约束（禁安全判定）不变。③ 架构 v1.2 证据表 / 选型表 / DDL 注释三处同步：删「未测中文召回质量→计划 R18」、旧计划列名改实装名、回填复跑结论。④ docs/archive/plans 下归档只读件按节点既有 decision **不改**，risks.md R16 行明确注明「归档件与 spike 记录中的旧计划列名属历史留痕，本文件是风险状态单一真相源」；spikes/spike-14-embedding-dim/README.md 的旧计划列名更正为实装名并注明更正（该 spike 属活记录，纳入清理）。⑤ 交叉 grep：'embedding_strong' 活文档 0 残留（仅 4 处在 roadmap 事实源的清理任务描述里，属过程态），'三项核心语义' 0 命中。仓库 wrapper 0 unresolved / make invariant 0 violations / git diff --check rc=0。",
+          "note": "边界如实说明：本轮同批新增的 scripts/r18_sim_distribution.py 与 docs/evidence 两份证据产物，归「R18 复跑前置 + D4 阈值依据」，D3 节点自身只改文档、未动代码、未新增架构决策。实测数字不凭记忆写入，先复跑后落盘"
         }
       ],
       "notes": "文档滞后于实物：R18 已在 1-8-4/1-8-4-1（2026-11-01）关停——nomic 768d 中文召回 Recall@10=0.562 不合格，加列路径实装为双列共存（zj 拍板 nomic 保留），新增 node.embedding_4096 vector(4096) + qwen3-embedding，/browse 生产召回走 4096 列，复测 Recall@10=1.000 / MRR=0.853 合格。但 docs/risks.md:25-26,36 仍写 R18 open、未测召回质量、加列 embedding_strong；R16 仍写 已定死 nomic 768。旧列名 embedding_strong 共残留 3 文件：risks.md（3 行）、docs/architecture/ZKC-architecture-v1.2.md（4 处：证据表/DDL 注释/选型表）、docs/archive/plans/ZKC-implementation-plan.md（2 处，归档只读）。实测数须以 scripts/r18_recall_eval.py 复跑或留痕 commit 核实，禁止凭记忆写入风险册。",
@@ -438,13 +505,14 @@
         "架构 ZKC-architecture-v1.2.md 证据表/选型表/DDL 注释中的 embedding_strong 与 R18 未测措辞同步，或明确标注为历史留痕",
         "明确归档只读件 docs/archive/plans/ZKC-implementation-plan.md 是否同步；不改则须注明 归档件保留历史措辞，以 risks.md 为单一真相源",
         "纯文档切片，不改代码、不新增架构决策；交叉 grep 验证活文档无 embedding_strong 残留"
-      ]
+      ],
+      "rounds": 1
     },
     "1-16": {
       "id": "1-16",
       "uid": "01a1a77c2289-69057a3fd3",
       "label": "D4 反向连接候选召回切 4096 + 相似度阈值重校准",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -453,6 +521,16 @@
           "q": "D4 和 D3 的边界与依赖？",
           "answer": "D3 纯文档、D4 改代码，独立可并行，D4 不需等 D3。D4 不做无脑切列：须先复跑 4096 列评测并按新余弦分布重校准 sim 阈值，否则等于把 768 的 0.7 硬套到 4096。两节点均不建到 1-1 的边——与 E1 校准判据无因果关系，硬关联属虚假依赖。",
           "note": "仅建 D3 到 D4 的 informs 边，表达列名与评测口径的信息关联，不阻塞调度"
+        },
+        {
+          "q": "4096 列相似度阈值重校准的方向性决策（可被 zj 推翻）？",
+          "answer": "由 0.7(PLACEHOLDER) 改为 **0.65(SIMULATION)**。依据 scripts/r18_sim_distribution.py 的真实分布：node↔node 1770 对 p50=0.579 / p90=0.702 / p95=0.744，旧值 0.7 落在 p89.6，query 正例召回仅 0.1875；0.65 落在 p≈77%，query precision=0.737 / recall=0.438。**绝不标 CALIBRATED**：校准门禁需 ≥14 天埋点 + ≥3 饱和日（现 1/1），context.py 的人审闸门与未校准提示保持不变。取舍是「宁可少召回也要高 precision」→ 选 0.65 而非 0.60（0.60 的 precision 仅 0.276）；若 zj 更看重发现率可推翻改 0.60。",
+          "note": "证据落 docs/evidence/r18-4096-sim-distribution.{json,md}；该分布是离线受控评测，不是真实多日行为埋点"
+        },
+        {
+          "q": "D4 五条 exit_criteria 逐条验收结论？",
+          "answer": "① pg.py discover_higher_dim 默认列改 embedding_4096（列名白名单 + 参数 column 可显式选 768），memory.py 由「恒返回空」改为等价 Python 余弦，双实现一致；context.py 的 discover / propose_higher_dim / propose_higher_dim_daily 均支持 column 透传。② 复跑 4096 余弦分布并落盘两份证据。③ 阈值 0.65 落 tuning，source=SIMULATION（非 CALIBRATED），note 写明分布依据与人审闸门。④ R16 硬约束不变：embedding 仅候选召回 + 人确认，安全判定仍归 DecisionRouter；静态守门用例验证校准门禁未拆。⑤ 8 条新单测 + 全量 550 tests OK。",
+          "note": "兼容性修复（不绕过）：既有 PG context 测试只回填 768 列，改为显式 column='embedding'；test_context.py / test_tuning.py 的 teardown 曾硬编码把全局阈值 source 还原成 PLACEHOLDER，污染新 SIMULATION 声明，改为「保存原值→还原快照」（value/source/calibrated_at/history 全量）；fake_propose 补 column 形参。这是被全量回归 6 红抓出来的真实缺陷，非静默改绿"
         }
       ],
       "notes": "事实链：src/zkc/repository/pg.py:1254 discover_higher_dim 的 SQL 硬用 n.embedding（nomic 768d）；而 src/zkc/web/browse.py:24 RETRIEVAL_COLUMN=embedding_4096 已切 qwen3 4096d。src/zkc/context.py:136/171 经 self.store.discover_higher_dim 取近邻，propose_higher_dim 用 tuning.py:185 CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7（source=PLACEHOLDER）过滤。即反向连接候选仍跑在被 R18 判为不合格的编码器上，且阈值从未按 4096 余弦分布校准。影响：反向连接发现率与误报均不可信。换模型必须重校准阈值，0.7 不可直接搬。",
@@ -463,7 +541,8 @@
         "CONTEXT_HIGHER_DIM_SIM_THRESHOLD=0.7（PLACEHOLDER）按 4096 分布重校准，结论落 tuning 并标注 source，不得伪装 calibrated",
         "R16 硬约束不变：embedding 仅作候选召回 + 人确认，严禁用于安全判定（该职责归 DecisionRouter）",
         "红绿测试覆盖切列与阈值，全量套件通过"
-      ]
+      ],
+      "rounds": 1
     },
     "1-17": {
       "id": "1-17",
@@ -799,7 +878,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-05 22:13:01",
+    "updated": "2026-11-05 23:28:15",
     "md_file": "ROADMAP.md"
   },
   "edges": [

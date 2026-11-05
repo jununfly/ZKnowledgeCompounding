@@ -1,6 +1,6 @@
 # rec-avoid 机械闸（决策记录）
 
-护城河（双轨+衰减+注意力预算为第一性）此前只是文档口号，无机械约束力，稀释项会被默认接受。本文件将其落成可机械判定的版本门，配合 ADR-0005。任何新增功能 PR 须过此闸，否则 review 阶段即被拒。
+护城河（**4 项第一性特征：双轨 / 衰减 / 双时态 / 注意力预算**；对外主张一律带 `caveat: moat-unverified-vs-mem0`）此前只是文档口号，无机械约束力，稀释项会被默认接受。本文件将其落成可机械判定的版本门，配合 ADR-0005。任何新增功能 PR 须过此闸，否则 review 阶段即被拒。
 
 ## 1. 去模型化测试（model-stripping test）
 **判据**：某候选功能去掉 LLM 后，若仍可被 SilverBullet / logseq 等价实现，即**稀释项**，默认拒绝。
@@ -12,6 +12,17 @@
 仓库新增 `check_invariant.py`（或并入 check_subdoc 同族），PR 门禁，至少两条断言：
 - claim 落库仍受 `meta_claim.evidence_refs uuid[] NOT NULL` 约束（溯源权威不可破）。
 - 任何 feature 不得提供关闭 `decay` / `attention` 的全局开关（不变式不可被便利绕过）。
+
+**实装锚点（E6，2026-11-05）**：`scripts/check_invariant.py` 落地，纯标准库、只读、不依赖 pip / PG / Ollama。
+P1 扫 `migrations/*.up.sql` 的 `meta_claim` 建表块；P2 扫 `src/**/*.py`（逐行去注释）拦截
+`DECAY_ENABLED` / `DISABLE_ATTENTION` / `*_OFF` / `ZKC_DISABLE_*` 等关停开关命名，
+不误伤 `DECAY_FUNCTION` / `SURFACE_THRESHOLD` / `ATTENTION_BUDGET_*` 等正常参数。
+`make invariant` 与 CI 独立 job `invariant (rec-avoid)` 同源；`tests/test_check_invariant.py`
+10 条用例覆盖缺陷态红 / 修复态绿 / 真实仓库 clean，并含接线守门（job 或 target 被删即红）。
+任一断言失败逐条打印 `E_INVARIANT_* path:line` 且非零退出。
+**P3 补强（D2 复核）**：`make invariant` 另扫 `repository/*.py` 的每个
+`list_due_for_review` 实现与 `decay.refresh_decay`，要求归档节点退出整个调度回路；
+缺过滤即 `E_INVARIANT_ARCHIVE_EXIT`，防止新后端或重构把过滤删掉。
 
 ## 3. 图数据库主存储 EXCLUDED
 **决定**：图数据库（Kuzu / TerminusDB）作**主存储**显式拒绝（EXCLUDED）；仅允许 Kuzu **只读投影**。

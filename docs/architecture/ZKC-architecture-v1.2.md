@@ -27,7 +27,7 @@
 | Spike 12 LLM-as-judge 忠实度闸门（机制） | `spikes/spike-12-hallucination-judge/README.md` | 14 tests passed；**分解式忠实度判定机制已证明可行**（拆原子事实→逐条 supported/unsupported/contradicted→确定性推导 overall，不信任模型自总结）+ 13 例 golden + evaluate 出混淆矩阵与**危险漏检率**（truth 非 supported 却判 supported，唯一决定自动化的指标）；真实 4B 在本机 16GB 不可用（~110-130s/条且不产 JSON）→ 4B 不作自动 gate |
 | Spike 13 幻觉判定器 human-in-the-loop 接入设计 + judge 执行模型决策 | `spikes/spike-13-hallucination-gate-hil/README.md` | 设计已定：路由硬闸（空分解/矛盾 100% 强制人审）+ 注意力预算封顶（faithfulness 人审 ≤20%×budget）+ claim 表增量 + LangGraph interrupt/resume + 人判自举校准语料（注：HITL 载体在 MVP 实装中落为 review_queue/复审队列，未引入 LangGraph——2026-11-03）；**judge 执行模型决策：本地 7B-9B 推荐但被本机实测否决（见 Spike 13b-probe）** |
 | Spike 13b-probe 本地 7B-9B 实证 | `spikes/spike-13b-probe/README.md` | **9B（qwen3.5:9b-mlx 8.9GB 已拉取）本机实证否决**：~6min/条延迟 + JSON 不合规（吐 `Label/Evidence/Overall` 文本），判定能力正确（g6 矛盾识别对、引用来源 `[s1]` 对）→ 死亡因是**速度与格式**（硬件绑定），非能力缺陷；触发 Spike 13 降级链第 2 级（字面 rubric 预过滤 + 人工兜底） |
-| **Spike 14 embedding 编码器定维（R16 关闭）** | `spikes/spike-14-embedding-dim/README.md` | **2026-10-31 实测**：`nomic-embed-text` = **768d**（冷 0.65s / warm 12ms / 32 条 0.30s ≈ 9.5ms/条 / 274MB）、`qwen3-embedding` = **4096d**（3.54s / 189ms / 5.86s ≈ 183.2ms/条 / 4.7GB）；**两者输出均已 L2 归一化**（可直接 `vector_cosine_ops`）。**选型 = nomic 768d**，§5 `vector(768)` 由占位转为已定。**用途硬约束**：仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3、模糊误提交 1；该职责归 DecisionRouter）。**可逆路径**：加列 `embedding_strong vector(4096)` 属增量，不重建 768d 索引。限定：单次采样、未测中文召回质量（→ 计划 R18） |
+| **Spike 14 embedding 编码器定维（R16 关闭）** | `spikes/spike-14-embedding-dim/README.md` | **2026-10-31 实测**：`nomic-embed-text` = **768d**（冷 0.65s / warm 12ms / 32 条 0.30s ≈ 9.5ms/条 / 274MB）、`qwen3-embedding` = **4096d**（3.54s / 189ms / 5.86s ≈ 183.2ms/条 / 4.7GB）；**两者输出均已 L2 归一化**（可直接 `vector_cosine_ops`）。**选型 = nomic 768d**，§5 `vector(768)` 由占位转为已定。**用途硬约束**：仅限检索召回/反向连接候选，**严禁用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3、模糊误提交 1；该职责归 DecisionRouter）。**可逆路径已实装**：加列 `embedding_4096 vector(4096)` 属增量、不重建 768d 索引（R18 双列共存）。R18 于 2026-11-05 复跑合格：Recall@10=1.000 / MRR=0.853，证据见 `docs/evidence/r18-4096-recall-2026-11-05.md` |
 | Cordis（@deepseek-ai/cordis）研究 | ZHarness 项目内 Cordis 文档化研究（**非 sealed 报告，跨项目复用**） | — |
 
 > 注：上述 5 份 sealed 调研报告已于 2026-11-02 归档至 `docs/archive/research/`（reportHash 不变、内容未改、仅路径变更），证据链完整保留。
@@ -51,7 +51,7 @@
 ## 3. 第一性不变量
 
 1. **两类信息原生双轨建模**，生命周期与操作语义分离，不在同一张"笔记表"里混同。
-2. **ZKC 拥有三项核心语义**（任何候选都不提供，必须自建）：双轨标签定义、decay 衰减模型、稀缺注意力调度。
+2. **ZKC 拥有四项核心语义**（自建，非现成组件提供）：双轨标签定义、decay 衰减模型、双时态（valid + transaction time）溯源、稀缺注意力调度。对外主张一律带 `caveat: moat-unverified-vs-mem0`（mem0 因编译限制未纳入对照，唯一性未经其复核），不得回退到 3 项口径。
 3. **存储是可替换的基础设施 seam**，不是架构中心；变换语义与调度策略属于 ZKC 自己。
 4. **所有变换产物必须可溯源**（能回溯到来源条目），否则无法复用，也就无法形成复利。
 5. **默认本地/离线优先**（个人数据 + 隐私），云端能力只作为可切换的 provider。
@@ -130,7 +130,7 @@ CREATE TABLE node (
                                      --   **严禁用于任何安全判定**（双轨分流/弃权阈值）——spike 03 实测 nomic
                                      --   在相似度阈值判定下 dangerous=3、模糊误提交 1（不安全），该职责归
                                      --   DecisionRouter。**换编码器 = 重建索引**；若检索质量不足，加第二列
-                                     --   `embedding_strong vector(4096)` 属增量，不破坏本列。
+                                     --   `embedding_4096 vector(4096)` 属增量，不破坏本列（R18 已实装双列共存）。
 );
 
 -- 元认知 claim（蒸馏产物，必须带来源）
@@ -261,7 +261,7 @@ CREATE TABLE attention_observation (
 |---|---|---|---|
 | 存储 | **Postgres + pgvector**（本地/自托管） | 依赖最少、可离线、事务/PITR 成熟；与 Utopia 已验证形态一致 | Kuzu（图变核心）/ TerminusDB（需原生版本控制） |
 | 向量 | pgvector HNSW | 与元数据同库、可 JOIN | — |
-| **embedding 编码器** | **`nomic-embed-text` → `vector(768)`**（已定 2026-10-31） | **spike 14 实测**：768d / 9.5ms/条 / 274MB，vs qwen3-embedding 4096d / 183.2ms/条 / 4.7GB（维度 5.3×、延迟 19.3×、体积 17×）；两者输出均已 L2 归一化。**用途硬约束**：仅限检索召回与反向连接候选，**不得用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3，该职责归 DecisionRouter） | **加列** `embedding_strong vector(4096)`（增量，不重建 768d 索引）；编码器本身经 encoder seam 替换 |
+| **embedding 编码器** | **`nomic-embed-text` → `vector(768)`**（已定 2026-10-31） | **spike 14 实测**：768d / 9.5ms/条 / 274MB，vs qwen3-embedding 4096d / 183.2ms/条 / 4.7GB（维度 5.3×、延迟 19.3×、体积 17×）；两者输出均已 L2 归一化。**用途硬约束**：仅限检索召回与反向连接候选，**不得用于安全判定**（spike 03 实测 nomic 在相似度阈值判定下 dangerous=3，该职责归 DecisionRouter） | **已实装双列共存**：`embedding`(768) 保留 + `embedding_4096`(qwen3 4096d) 为生产召回列；R18 复跑 Recall@10=1.000 / MRR=0.853；编码器本身经 encoder seam 替换 |
 | 双轨分流 | **DecisionRouter（本地 LLM 直接判定轨道）** + Semantic Router（校准路由 + 双信号弃权）作候选预过滤 | spike 03 验证：**DecisionRouter 主方案**——编码器无关、F1（模糊误提交=0）与 F2（长模糊对抗句 0 进 dynamic）均完美、覆盖 100%；3-way 路由仅在 qwen3 级（≥4096d）强编码器下安全，弱编码器（nomic 768d）出现 1 处模糊误提交+2 处轨道互混 → 仅作强编码器下的互补/置信度信号源，不作独立决策器 | Semantic Router（校准路由）/ Outlines / DSPy |
 | 本地推理 | **Ollama（本机实测 0.33.3 全通过；Apple silicon 走 MLX）** | 唯一原生本地/离线运行时，OpenAI 兼容层（A5 修订：原写 0.40+ 无实证，spike-02:127 / spike-03:30 实测 0.33.3 通过） | 任意 OpenAI 兼容端点 |
 | 蒸馏/结合模型 | **`qwen3.5:4b-mlx`（迭代默认）；`qwen3.5:9b-mlx` 为可选上限** | spike 10 实测（含 1.5B/4B 各 3 次多次采样）：1.5B 复述率高、跨源综合 0/3 不可用；4B 复述率降至 0.10；9B 在 16GB 常驻 10–12GB 触发 swap（单次蒸馏 4.7 分钟）→ 9B 不作为默认。**跨源综合短板已由 Spike 11 跨源强制算子解决**（4B×3 稳定 3/3，`n_cross_source` 2–3，补全回路 0 触发）→ 算子层与模型选型解耦。详见 §8 / §9 ⑧ | 云端强模型（provider seam） |

@@ -3,7 +3,7 @@
 
 PY ?= python
 
-.PHONY: help setup db migrate verify test mcp-gate serve dogfood dogfood-seed dogfood-drive
+.PHONY: help setup db migrate verify test mcp-gate invariant serve dogfood dogfood-seed dogfood-drive
 
 help:
 	@echo "ZKC targets:"
@@ -13,6 +13,7 @@ help:
 	@echo "  make verify         校验已应用迁移 sha256 与磁盘一致"
 	@echo "  make test           运行全量单测套件"
 	@echo "  make mcp-gate       ADR-0004 §3.5 提示注入验收闸门（CI 独立 job 同源命令）"
+	@echo "  make invariant      ADR-0005 rec-avoid 不变式谓词（CI 独立 job 同源命令）"
 	@echo "  make serve          启动 web 服务（127.0.0.1:8000，PG 后端）"
 	@echo "  make dogfood        冷启动验证：播种 + 驱动复审/收口，独立 PG 直查两锚落库"
 	@echo "                      需先另开终端 make serve（drive 打 localhost:8000）"
@@ -26,6 +27,11 @@ test:
 # CI 的 mcp-injection-gate job 调同一命令，避免本地与 CI 走两套口径。
 mcp-gate:
 	$(PY) -m unittest tests.test_mcp_injection_gate -v
+
+# ADR-0005 rec-avoid 不变式谓词：两条机械断言，纯标准库只读。
+# CI 的 invariant job 调同一命令，避免本地与 CI 走两套口径。
+invariant:
+	$(PY) scripts/check_invariant.py .
 
 setup:
 	$(PY) -m pip install -r requirements.txt

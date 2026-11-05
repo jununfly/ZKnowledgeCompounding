@@ -148,18 +148,20 @@ class TestIsCalibrated(unittest.TestCase):
         self.assertTrue(tuning.is_calibrated("EMBEDDING_DIM"))
 
     def test_calibrate_gate_blocks_context_placeholders(self):
-        # T4.1 的 0.7/2 占位阈值：无真实埋点不得被提升为 calibrated（真实行为须过门禁）
-        with self.assertRaises(PermissionError):
-            tuning.calibrate("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, date(2026, 11, 1),
-                             "凭直觉调", days_with_observation=2, saturated_days=0)
-        self.assertFalse(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
-        # 过门禁后才可提升
-        tuning.calibrate("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, date(2026, 12, 1),
-                         "14d+3sat", days_with_observation=14, saturated_days=3)
-        self.assertTrue(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
-        # 还原，避免污染
+        # 无真实埋点不得被提升为 calibrated（真实行为须过门禁）
         p = tuning.param("CONTEXT_HIGHER_DIM_SIM_THRESHOLD")
-        p.source, p.calibrated_at, p.history = PLACEHOLDER, None, []
+        snapshot = (p.value, p.source, p.calibrated_at, list(p.history))
+        try:
+            with self.assertRaises(PermissionError):
+                tuning.calibrate("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, date(2026, 11, 1),
+                                 "凭直觉调", days_with_observation=2, saturated_days=0)
+            self.assertFalse(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
+            # 过门禁后才可提升
+            tuning.calibrate("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, date(2026, 12, 1),
+                             "14d+3sat", days_with_observation=14, saturated_days=3)
+            self.assertTrue(tuning.is_calibrated("CONTEXT_HIGHER_DIM_SIM_THRESHOLD"))
+        finally:
+            p.value, p.source, p.calibrated_at, p.history = snapshot
 
 
 if __name__ == "__main__":

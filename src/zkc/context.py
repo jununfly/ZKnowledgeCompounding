@@ -131,9 +131,10 @@ class ContextAssembler:
         """撤消装配：删 transform -> 级联撤 context + members。返回撤掉的 context 数。"""
         return self.store.revert_assembly(transform_id)
 
-    def discover(self, seed_node_id: UUID, k: int = 5) -> list:
-        """T4.1：种子节点的 k 近邻（PG 走 pgvector；内存 fake 返回空）。"""
-        return self.store.discover_higher_dim(seed_node_id, k)
+    def discover(self, seed_node_id: UUID, k: int = 5,
+                 column: str = "embedding_4096") -> list:
+        """T4.1：种子节点的 k 近邻（默认 4096d 生产召回列；pg / memory 同语义）。"""
+        return self.store.discover_higher_dim(seed_node_id, k, column=column)
 
     def add_human_member(
         self, context_id: UUID, node_id: UUID, weight: float = 1.0
@@ -153,6 +154,7 @@ class ContextAssembler:
         *,
         sim_threshold: float | None = None,
         min_members: int | None = None,
+        column: str = "embedding_4096",
     ) -> HigherDimProposal:
         """T4.1 触发策略（人审闸门版）：只提议、不自动创建。
 
@@ -168,7 +170,7 @@ class ContextAssembler:
             int(tuning.get("CONTEXT_HIGHER_DIM_MIN_MEMBERS")) if min_members is None
             else int(min_members)
         )
-        neighbors = self.store.discover_higher_dim(seed_node_id, k)
+        neighbors = self.store.discover_higher_dim(seed_node_id, k, column=column)
         kept = [n for n in neighbors if n.get("sim", 0.0) >= sim_threshold]
         neighbor_ids = [n["id"] for n in kept]
         sims = [float(n["sim"]) for n in kept]
@@ -235,6 +237,7 @@ class ContextAssembler:
         llm: Optional[LLM] = None,
         max_per_day: Optional[int] = None,
         excluded: Optional["set[UUID]"] = None,
+        column: str = "embedding_4096",
     ) -> tuple[list[HigherDimProposal], dict]:
         """每日提议 sweep（调度层·注意力预算）：在「同种子去重」之上加「全库每日上限」。
 
@@ -271,7 +274,7 @@ class ContextAssembler:
                     existing_context_id=None,
                 ))
                 continue
-            prop = self.propose_higher_dim(sid, k=k, llm=llm)
+            prop = self.propose_higher_dim(sid, k=k, llm=llm, column=column)
             if prop.would_create:
                 self.store.attention.record_proposal(day, "higher_dim", sid)
                 used += 1

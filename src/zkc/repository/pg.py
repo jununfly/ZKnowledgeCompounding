@@ -306,6 +306,7 @@ class PgNodeRepository(NodeRepository):
               AND review_interval IS NOT NULL
               AND last_reviewed_at IS NOT NULL
               AND (last_reviewed_at + review_interval) <= %(as_of)s
+              AND archived_at IS NULL
             """,
             dict(surface=surface, as_of=as_of),
         )
@@ -1251,15 +1252,25 @@ class PgStorage(Storage):
         self._conn.commit()
         return n
 
-    def discover_higher_dim(self, seed_node_id, k: int = 5) -> list:
+    def discover_higher_dim(self, seed_node_id, k: int = 5,
+                            column: str = "embedding_4096") -> list:
+        """T4.1 k 近邻；默认走 qwen3 4096d 生产召回列（R18 / D4）。
+
+        列名只允许白名单两列，避免把 768d 的旧阈值/尺度硬套到 4096d；
+        q.{col} IS NOT NULL 保证种子无向量时返回空而非整表乱序。
+        """
+        if column not in ("embedding", "embedding_4096"):
+            raise ValueError(f"invalid embedding column: {column!r}")
+        col = column
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute(
-            """
-            SELECT n.id, n.title, 1 - (n.embedding <=> q.embedding) AS sim
+            f"""
+            SELECT n.id, n.title, 1 - (n.{col} <=> q.{col}) AS sim
             FROM public.node n,
-                 (SELECT embedding FROM public.node WHERE id=%(sid)s::uuid) q
-            WHERE n.id <> %(sid)s::uuid AND n.embedding IS NOT NULL
-            ORDER BY n.embedding <=> q.embedding
+                 (SELECT {col} FROM public.node WHERE id=%(sid)s::uuid) q
+            WHERE n.id <> %(sid)s::uuid AND n.{col} IS NOT NULL
+              AND q.{col} IS NOT NULL
+            ORDER BY n.{col} <=> q.{col}
             LIMIT %(k)s
             """,
             dict(sid=str(seed_node_id), k=k),

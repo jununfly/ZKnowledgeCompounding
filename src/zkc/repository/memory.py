@@ -188,6 +188,9 @@ class MemoryNodeRepository(NodeRepository):
         surface = tuning.get("SURFACE_THRESHOLD")
         out: list[Node] = []
         for n in self._rows.values():
+            if n.archived_at is not None:
+                # D2：已归档节点退出调度回路（导入语料清理后不得再出现在 due 队列）
+                continue
             if n.review_interval is None or n.last_reviewed_at is None:
                 # 未设定复审节奏 → 不在「到期」判定内（交由 L1 基线补齐）
                 continue
@@ -663,9 +666,32 @@ class MemoryStorage(Storage):
             self.contexts._members.pop(cid, None)
         return len(removed)
 
-    def discover_higher_dim(self, seed_node_id, k: int = 5) -> list:
-        # 内存 fake 不做向量相似度，返回空（discovery 是 pgvector 运算，由 PG 实现）
-        return []
+    def discover_higher_dim(self, seed_node_id, k: int = 5,
+                            column: str = "embedding_4096") -> list:
+        """与 PG 同语义的 Python 余弦近邻（D4：双实现一致，不再恒返回空）。"""
+        if column not in ("embedding", "embedding_4096"):
+            raise ValueError(f"invalid embedding column: {column!r}")
+        seed = self.nodes._rows.get(seed_node_id)
+        if seed is None:
+            return []
+        seed_vec = getattr(seed, column, None)
+        if not seed_vec:
+            return []
+        na = sum(x * x for x in seed_vec) ** 0.5
+        if na == 0:
+            return []
+        out = []
+        for node in self.nodes._rows.values():
+            if node.id == seed_node_id:
+                continue
+            vec = getattr(node, column, None)
+            if not vec or len(vec) != len(seed_vec):
+                continue
+            nb = sum(x * x for x in vec) ** 0.5
+            sim = (sum(a * b for a, b in zip(seed_vec, vec)) / (na * nb)) if nb else 0.0
+            out.append({"id": node.id, "title": node.title, "sim": sim})
+        out.sort(key=lambda row: -row["sim"])
+        return out[:k]
 
     def citation_counts(self) -> dict:
         # 内存 fake 无 citation 行（与 load_metric_inputs 的 citations=[] 同口径）

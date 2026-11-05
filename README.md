@@ -11,6 +11,13 @@
 **本机单用户 web 应用，不做打包、不做分发、不做第二人安装支持。**
 FastAPI + SSR，`localhost:8000`；存储 Postgres + pgvector；LLM 走本机 Ollama。
 
+## 对外定位（叙事口径，E9）
+
+ZKC 把 **4 项特征**建模为第一性对象：双轨（静态/动态）、衰减（decay）、
+双时态（valid + transaction time）、注意力预算。任何「唯一 / 领先」表述均须带限定
+`caveat: moat-unverified-vs-mem0` —— mem0 因编译器 submodule 限制未纳入对照，
+该唯一性主张未经其复核；不得回退到 3 项口径。完整决策见 ADR-0004 / ADR-0005 与 PRD §9。
+
 ## 前置依赖
 
 | 依赖 | 要求 | 说明 |

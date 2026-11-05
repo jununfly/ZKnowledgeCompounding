@@ -12,6 +12,8 @@ harness gap 修复）。
                       默认（无 --id）= 列出当前 due 复审条目（供 harness 呈现给人）
                       --id <id> --verdict <v> = 写一条复审标注
                       （v ∈ still_valid | changed | stale | browse）
+  zkc archive --corpus [--dry-run] [--json]
+                       导入语料批量归档（D2）：只写 archived_at，不动标注埋点
 
 存储：默认 pg（ZKC_PG_DSN 或默认 localhost:55433/zkc_dev）；--storage memory 走内存后端。
 
@@ -60,6 +62,14 @@ def _make_parser() -> argparse.ArgumentParser:
     p_decide.add_argument("--list", action="store_true",
                           help="列出当前 due 复审条目（默认行为，可省略）")
     p_decide.add_argument("--json", action="store_true", help="输出 JSON")
+
+    p_archive = sub.add_parser(
+        "archive", help="导入语料批量归档（D2：移出调度回路，不写标注埋点）")
+    p_archive.add_argument("--storage", default="pg", help="pg（默认）或 memory")
+    p_archive.add_argument("--corpus", action="store_true",
+                           help="按导入语料派生特征批量归档")
+    p_archive.add_argument("--dry-run", action="store_true", help="只预览命中，不写库")
+    p_archive.add_argument("--json", action="store_true", help="输出 JSON")
     return ap
 
 
@@ -117,6 +127,24 @@ def dispatch(args: argparse.Namespace, store=None) -> int:
             to = res.get("today_observation") or {}
             print(f"  今日观测: completed={to.get('completed')} "
                   f"labeled={to.get('labeled_completed')}")
+        return 0
+
+    if args.command == "archive":
+        if not args.corpus:
+            print("archive 目前只支持 --corpus（按导入语料派生特征批量归档）",
+                  file=sys.stderr)
+            return 2
+        from zkc.corpus import archive_corpus
+
+        result = archive_corpus(store, dry_run=args.dry_run)
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            print(f"=== ZKC archive · {result['action']} ===")
+            print(f"  matched={result['matched']} archived={result['archived']} "
+                  f"dry_run={result['dry_run']}")
+            print(f"  labeled_touched={result['labeled_touched']} "
+                  f"review_queue_resolved={result['review_queue_resolved']}")
         return 0
 
     return 2  # 兜底（argparse required 已拦截未知命令）

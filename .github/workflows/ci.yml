@@ -82,6 +82,22 @@ jobs:
         run: make mcp-gate
 
   # ---------------------------------------------------------------------------
+  # ADR-0005 rec-avoid 机械闸的第二条腿：不变式谓词独立成 job，让「不变式
+  # 被破坏」在 CI 上有单独、可设为 required check 的信号，而不是淹没在
+  # make test 的全量输出里。纯标准库只读，无需 pip install / PG / Ollama。
+  # 用例内含接线断言，守着本 job 与 make invariant 不脱钩。
+  invariant:
+    name: invariant (rec-avoid)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Check ADR-0005 invariants
+        run: make invariant
+
+  # ---------------------------------------------------------------------------
   # 最低保障：没有 docker / PG 的环境（如只拉代码跑单测的贡献者）必须优雅跳过
   # PG 集成测试，而不是硬失败。ZKC_RUN_PG_TESTS=0 是各 PG 测试文件的 skipUnless 开关。
   unit-no-pg:

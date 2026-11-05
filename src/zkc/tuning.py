@@ -182,9 +182,12 @@ REGISTRY: dict[str, Parameter] = {
         _p("METRIC_METHOD_TARGET", 10.0, PLACEHOLDER,
            "方法论产出归一化目标：达到该产出数即记满分 1.0（待真实数据校准）"),
         # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 · 1-5-4 收尾切片）
-        _p("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.7, PLACEHOLDER,
+        _p("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.65, SIMULATION,
            "discover k-NN 近邻被纳入更高维聚合的最低余弦相似度（sim=1-余弦距离，1=完全相同）。"
-           "仅作触发初筛，最终创建仍过人审闸门（稀缺注意力：系统提议、人确认）"),
+           "D4 按 2026-11-05 的 4096d 真实余弦分布重校准：node↔node 1770 对 p50=0.579 / p90=0.702，"
+           "旧值 0.7 落在 p89.6（query 正例召回仅 0.1875）；0.65 落在 p≈77%，query precision=0.737 / recall=0.438。"
+           "证据见 docs/evidence/r18-4096-sim-distribution.md。source=SIMULATION（受控离线分布），"
+           "**非 CALIBRATED**：校准门禁需 ≥14 天埋点 + ≥3 饱和日，最终创建仍过人审闸门"),
         _p("CONTEXT_HIGHER_DIM_MIN_MEMBERS", 2, PLACEHOLDER,
            "触发提议所需的最小近邻数（不含种子自身）；低于此数不构成「聚合」价值"),
         # ---- 跨源强制算子（P3.2 · Spike 11 移植；阈值待真实语料校准）

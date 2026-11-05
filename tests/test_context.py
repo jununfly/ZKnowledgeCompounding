@@ -113,18 +113,22 @@ class MemoryContextTest(unittest.TestCase):
         store = get_storage("memory")
         asm = ContextAssembler(store)
         n1 = store.nodes.save(Node(track="dynamic", title="seed"))
+        names = ("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", "CONTEXT_HIGHER_DIM_MIN_MEMBERS")
+        snapshot = {
+            name: (tuning.param(name).value, tuning.param(name).source,
+                   tuning.param(name).calibrated_at, list(tuning.param(name).history))
+            for name in names
+        }
         try:
-            for name in ("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", "CONTEXT_HIGHER_DIM_MIN_MEMBERS"):
+            for name in names:
                 tuning.calibrate(name, tuning.get(name), date(2026, 12, 1),
                                  "14d+3sat", days_with_observation=14, saturated_days=3)
             prop = asm.propose_higher_dim(n1.id, llm=_fake_llm)
             self.assertTrue(prop.calibrated)
         finally:
-            for name in ("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", "CONTEXT_HIGHER_DIM_MIN_MEMBERS"):
+            for name, (value, source, at, history) in snapshot.items():
                 p = tuning.param(name)
-                p.source = PLACEHOLDER
-                p.calibrated_at = None
-                p.history = []
+                p.value, p.source, p.calibrated_at, p.history = value, source, at, history
 
     def test_propose_higher_dim_daily_caps_global(self):
         # P1：每日 sweep 跨种子限流（去重只防同种子，本函数防全库每日过量）
@@ -132,7 +136,8 @@ class MemoryContextTest(unittest.TestCase):
         asm = ContextAssembler(store)
         seeds = [uuid4() for _ in range(3)]
 
-        def fake_propose(sid, k=5, llm=None, *, sim_threshold=None, min_members=None):
+        def fake_propose(sid, k=5, llm=None, *, sim_threshold=None, min_members=None,
+                         column="embedding_4096"):
             return HigherDimProposal(seed_node_id=sid, neighbor_ids=[uuid4()],
                                     similarities=[0.9], suggested_title="x",
                                     would_create=True, reason="ok",
@@ -219,7 +224,7 @@ class PgContextTest(unittest.TestCase):
         other = self.store.nodes.save(
             Node(track="dynamic", title="other", embedding=_vec(768, 1))
         )
-        results = self.asm.discover(seed.id, k=5)
+        results = self.asm.discover(seed.id, k=5, column="embedding")
         ids = {r["id"] for r in results}
         assert other.id in ids, ids
         assert seed.id not in ids, ids
@@ -234,7 +239,7 @@ class PgContextTest(unittest.TestCase):
         self.store.nodes.save(
             Node(track="dynamic", title="不相关", embedding=_vec_close(768, 1)))
 
-        prop = self.asm.propose_higher_dim(seed.id, k=5, llm=_fake_llm)
+        prop = self.asm.propose_higher_dim(seed.id, k=5, llm=_fake_llm, column="embedding")
         assert prop.would_create is True, prop.reason
         assert set(prop.neighbor_ids) == {na.id, nb.id}, prop.neighbor_ids
         assert prop.suggested_title == "聚合主题X"
@@ -257,11 +262,11 @@ class PgContextTest(unittest.TestCase):
         self.store.nodes.save(
             Node(track="dynamic", title="近邻B", embedding=_vec_close(768, 0, 2, 0.02)))
 
-        prop = self.asm.propose_higher_dim(seed.id, llm=_fake_llm)
+        prop = self.asm.propose_higher_dim(seed.id, llm=_fake_llm, column="embedding")
         assert prop.would_create is True
         cid, _ = self.asm.create_higher_dim(prop)
 
-        prop2 = self.asm.propose_higher_dim(seed.id, llm=_fake_llm)
+        prop2 = self.asm.propose_higher_dim(seed.id, llm=_fake_llm, column="embedding")
         assert prop2.would_create is False
         assert prop2.existing_context_id == cid
         assert "已存在" in prop2.reason
@@ -274,7 +279,7 @@ class PgContextTest(unittest.TestCase):
         self.store.nodes.save(
             Node(track="dynamic", title="近邻B", embedding=_vec_close(768, 0, 2, 0.02)))
 
-        prop = self.asm.propose_higher_dim(seed.id, llm=None)
+        prop = self.asm.propose_higher_dim(seed.id, llm=None, column="embedding")
         assert prop.would_create is True
         assert prop.suggested_title and "条）" in prop.suggested_title
 
@@ -295,7 +300,8 @@ class PgContextTest(unittest.TestCase):
 
         day = date(2026, 11, 2)
         props, status = self.asm.propose_higher_dim_daily(
-            [seed.id, other_seed.id], day, k=5, llm=_fake_llm, max_per_day=1)
+            [seed.id, other_seed.id], day, k=5, llm=_fake_llm, max_per_day=1,
+            column="embedding")
         created = [p for p in props if p.would_create]
         self.assertEqual(len(created), 1, "cap=1 -> 仅首条种子可创建")
         self.assertEqual(status["used"], 1)

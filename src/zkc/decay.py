@@ -144,13 +144,18 @@ def review_reset(node: Any, now: datetime) -> dict:
 
 
 def refresh_decay(repo: Any, now: datetime) -> int:
-    """衰减维护扫描（应用层「触发器」）：重算并写回所有动态轨节点的 decay_score。
+    """衰减维护扫描（应用层「触发器」）：重算并写回活跃动态轨节点的 decay_score。
 
     对任意实现了 ``list_by_track`` + ``update_decay`` 的仓库生效（内存 fake 与 PG 同构）。
     返回刷新的节点数。静态轨节点被跳过（衰减恒 0，无需写）。
+    **D2 硬契约**：``archived_at`` 非空的节点已退出调度回路，必须一起跳过——
+    ``list_by_track`` 不过滤归档，若在此处不跳过会造成无谓写放大与 version_seq 空转。
     """
     n = 0
     for node in repo.list_by_track("dynamic"):
+        if _get(node, "archived_at") is not None:
+            # D2：归档节点退出调度回路，不再参与衰减维护扫描
+            continue
         score = compute_decay_score(node, now)
         repo.update_decay(node.id, score)
         n += 1
