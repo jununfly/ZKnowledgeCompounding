@@ -1,0 +1,323 @@
+{
+  "schema_version": "zkc-e8-anchor2-samples/v1",
+  "generated_at": "2026-11-06T01:30:44+08:00",
+  "ollama_url": "http://localhost:11434",
+  "per_call_timeout_s": 180.0,
+  "purpose": "rec-avoid 经验证伪闸锚 2 的人工抽检输入；verdict 与比率不由本脚本产生",
+  "authority": [
+    "docs/rec-avoid-gate.md §4（经验证伪闸 / 锚 2 / DoD）",
+    "docs/prds/knowledge-compounding-prd.md §9（护城河实证化 P0 验收）"
+  ],
+  "hard_boundaries": [
+    "只调 distill_node，未调 apply_distill；未写 node/claim/score/attention_observation/review_queue",
+    "未生成 gold set、verdict、漏检率、误蒸馏率或 4B/9B 上界结论",
+    "模型失败或超时如实记 error，不补造 claim"
+  ],
+  "corpus": {
+    "A": [
+      {
+        "index": 0,
+        "source_id": "cd3339a2-0ee2-5789-af48-1f54b62a07cd",
+        "title": "鉴权返工",
+        "text": "把鉴权逻辑放在客户端做，被安全评审整体打回，服务端全部重做，返工两周。"
+      },
+      {
+        "index": 1,
+        "source_id": "595cb858-6b09-54e1-8942-36dd8580c02d",
+        "title": "临时绕过",
+        "text": "评审提出的临时绕过方案最后都变成长期负担，没有任何人主动回头拆。"
+      },
+      {
+        "index": 2,
+        "source_id": "9764ae96-0a7c-5b8d-a29b-95ec7b9651e4",
+        "title": "压测前置",
+        "text": "把连接池压测前置到设计阶段后，上线前的瓶颈改动成本接近于零。"
+      }
+    ],
+    "B": [
+      {
+        "index": 0,
+        "source_id": "a34d0a16-289e-53fb-8056-0e1e463b2716",
+        "title": "缓存击穿",
+        "text": "促销开始瞬间缓存集体失效，请求直接压到数据库，限流来不及生效，最后靠提前预热兜住。"
+      },
+      {
+        "index": 1,
+        "source_id": "3624abfe-13cf-5d92-89ff-361c71fdba1c",
+        "title": "灰度回滚",
+        "text": "灰度批次发现转化率异常，因发布没有一键回滚，只能重跑全量流水线，多花了四十分钟。"
+      },
+      {
+        "index": 2,
+        "source_id": "10466fe4-70be-55a1-aa9a-a195b63c798e",
+        "title": "告警疲劳",
+        "text": "告警阈值照抄默认值，一周三百条里几乎全是噪声，真正那次磁盘写满被淹在里面没人看见。"
+      }
+    ],
+    "C": [
+      {
+        "index": 0,
+        "source_id": "6bc6a5a7-43b8-5058-8616-b388a5ef7a2b",
+        "title": "模型选型",
+        "text": "先用小模型跑通链路再换大模型，接口契约没变，替换成本只有一次回归。"
+      },
+      {
+        "index": 1,
+        "source_id": "ee7d354c-6e0a-5624-a25a-38da0caf5511",
+        "title": "迁移分批",
+        "text": "一次性迁移全量表导致锁表两小时；改按租户分批后，每批可回滚，峰值锁等待降到秒级。"
+      },
+      {
+        "index": 2,
+        "source_id": "1049ec81-99bf-5644-ae85-ac391ff62253",
+        "title": "文档腐化",
+        "text": "架构决策只写在会议纪要里，三个月后没人能对上代码，补文档时只能靠翻提交记录反推。"
+      }
+    ]
+  },
+  "runs": [
+    {
+      "group": "A",
+      "model": "qwen3.5:4b-mlx",
+      "wall_s": 6.58,
+      "attempts": 1,
+      "claims": [
+        {
+          "id": "A-qwen3.5-4b-mlx-1",
+          "topic": "安全架构设计",
+          "text": "将核心安全逻辑下沉至服务端并严格执行评审标准，避免客户端鉴权导致的返工与长期架构债务。",
+          "citations": [
+            "cd3339a2-0ee2-5789-af48-1f54b62a07cd",
+            "595cb858-6b09-54e1-8942-36dd8580c02d"
+          ],
+          "reverse_links": [
+            "cd3339a2-0ee2-5789-af48-1f54b62a07cd",
+            "595cb858-6b09-54e1-8942-36dd8580c02d"
+          ]
+        },
+        {
+          "id": "A-qwen3.5-4b-mlx-2",
+          "topic": "性能优化策略",
+          "text": "将压测环节前置至设计阶段，可消除上线前因瓶颈导致的重构成本。",
+          "citations": [
+            "9764ae96-0a7c-5b8d-a29b-95ec7b9651e4"
+          ],
+          "reverse_links": [
+            "9764ae96-0a7c-5b8d-a29b-95ec7b9651e4"
+          ]
+        }
+      ],
+      "error": null
+    },
+    {
+      "group": "A",
+      "model": "qwen3.5:9b-mlx",
+      "wall_s": 23.34,
+      "attempts": 1,
+      "claims": [
+        {
+          "id": "A-qwen3.5-9b-mlx-1",
+          "topic": "技术债务预防",
+          "text": "架构决策必须在设计阶段完成压测验证，以避免上线后高昂的返工成本。",
+          "citations": [
+            "9764ae96-0a7c-5b8d-a29b-95ec7b9651e4"
+          ],
+          "reverse_links": [
+            "9764ae96-0a7c-5b8d-a29b-95ec7b9651e4"
+          ]
+        },
+        {
+          "id": "A-qwen3.5-9b-mlx-2",
+          "topic": "系统安全性",
+          "text": "安全与合规逻辑必须部署在服务端，严禁在客户端实现关键鉴权。",
+          "citations": [
+            "cd3339a2-0ee2-5789-af48-1f54b62a07cd"
+          ],
+          "reverse_links": [
+            "cd3339a2-0ee2-5789-af48-1f54b62a07cd"
+          ]
+        },
+        {
+          "id": "A-qwen3.5-9b-mlx-3",
+          "topic": "技术债务管理",
+          "text": "评审提出的临时绕过方案若未规划长期重构路径，将演变为难以清理的技术债务。",
+          "citations": [
+            "595cb858-6b09-54e1-8942-36dd8580c02d"
+          ],
+          "reverse_links": [
+            "595cb858-6b09-54e1-8942-36dd8580c02d"
+          ]
+        }
+      ],
+      "error": null
+    },
+    {
+      "group": "B",
+      "model": "qwen3.5:4b-mlx",
+      "wall_s": 11.84,
+      "attempts": 1,
+      "claims": [
+        {
+          "id": "B-qwen3.5-4b-mlx-1",
+          "topic": "高并发系统稳定性",
+          "text": "在高并发场景下，必须预先设计缓存预热或限流兜底机制，以应对促销等突发流量导致的缓存击穿问题。",
+          "citations": [
+            "a34d0a16-289e-53fb-8056-0e1e463b2716"
+          ],
+          "reverse_links": [
+            "a34d0a16-289e-53fb-8056-0e1e463b2716"
+          ]
+        },
+        {
+          "id": "B-qwen3.5-4b-mlx-2",
+          "topic": "DevOps 流程优化",
+          "text": "发布流程需具备原子化的回滚能力，避免因缺乏一键回滚功能而被迫重跑流水线，从而延长故障恢复时间。",
+          "citations": [
+            "3624abfe-13cf-5d92-89ff-361c71fdba1c"
+          ],
+          "reverse_links": [
+            "3624abfe-13cf-5d92-89ff-361c71fdba1c"
+          ]
+        },
+        {
+          "id": "B-qwen3.5-4b-mlx-3",
+          "topic": "可观测性建设",
+          "text": "告警系统的阈值配置需基于业务实际动态调整，避免默认值导致的噪声淹没真实故障。",
+          "citations": [
+            "10466fe4-70be-55a1-aa9a-a195b63c798e"
+          ],
+          "reverse_links": [
+            "10466fe4-70be-55a1-aa9a-a195b63c798e"
+          ]
+        }
+      ],
+      "error": null
+    },
+    {
+      "group": "B",
+      "model": "qwen3.5:9b-mlx",
+      "wall_s": 21.57,
+      "attempts": 1,
+      "claims": [
+        {
+          "id": "B-qwen3.5-9b-mlx-1",
+          "topic": "容错设计",
+          "text": "系统稳定性依赖于对极端场景的提前防御与兜底策略，而非仅依赖事后的限流或修复机制。",
+          "citations": [
+            "a34d0a16-289e-53fb-8056-0e1e463b2716"
+          ],
+          "reverse_links": [
+            "a34d0a16-289e-53fb-8056-0e1e463b2716"
+          ]
+        },
+        {
+          "id": "B-qwen3.5-9b-mlx-2",
+          "topic": "变更管理",
+          "text": "发布流程必须具备快速回滚能力，否则故障排查与恢复将因重跑流水线而付出高昂的时间代价。",
+          "citations": [
+            "3624abfe-13cf-5d92-89ff-361c71fdba1c"
+          ],
+          "reverse_links": [
+            "3624abfe-13cf-5d92-89ff-361c71fdba1c"
+          ]
+        },
+        {
+          "id": "B-qwen3.5-9b-mlx-3",
+          "topic": "监控运维",
+          "text": "告警系统的核心价值在于精准度，盲目照搬默认阈值会导致噪声淹没关键故障信号。",
+          "citations": [
+            "10466fe4-70be-55a1-aa9a-a195b63c798e"
+          ],
+          "reverse_links": [
+            "10466fe4-70be-55a1-aa9a-a195b63c798e"
+          ]
+        }
+      ],
+      "error": null
+    },
+    {
+      "group": "C",
+      "model": "qwen3.5:4b-mlx",
+      "wall_s": 13.93,
+      "attempts": 1,
+      "claims": [
+        {
+          "id": "C-qwen3.5-4b-mlx-1",
+          "topic": "技术选型与迁移策略",
+          "text": "在系统重构中应优先采用小模型验证链路并维持接口契约不变，以降低切换成本并确保回归测试的准确性。",
+          "citations": [
+            "6bc6a5a7-43b8-5058-8616-b388a5ef7a2b"
+          ],
+          "reverse_links": [
+            "6bc6a5a7-43b8-5058-8616-b388a5ef7a2b"
+          ]
+        },
+        {
+          "id": "C-qwen3.5-4b-mlx-2",
+          "topic": "高并发下的数据迁移策略",
+          "text": "面对大规模数据迁移风险时，需实施分批处理机制以替代全量操作，从而将锁表等待时间从小时级降至秒级并保障回滚能力。",
+          "citations": [
+            "ee7d354c-6e0a-5624-a25a-38da0caf5511"
+          ],
+          "reverse_links": [
+            "ee7d354c-6e0a-5624-a25a-38da0caf5511"
+          ]
+        },
+        {
+          "id": "C-qwen3.5-4b-mlx-3",
+          "topic": "技术债务与知识管理",
+          "text": "架构决策必须转化为可执行的代码规范而非仅停留在会议纪要中，否则将导致后期维护依赖提交记录反推，引发严重的文档腐化。",
+          "citations": [
+            "1049ec81-99bf-5644-ae85-ac391ff62253"
+          ],
+          "reverse_links": [
+            "1049ec81-99bf-5644-ae85-ac391ff62253"
+          ]
+        }
+      ],
+      "error": null
+    },
+    {
+      "group": "C",
+      "model": "qwen3.5:9b-mlx",
+      "wall_s": 24.53,
+      "attempts": 1,
+      "claims": [
+        {
+          "id": "C-qwen3.5-9b-mlx-1",
+          "topic": "技术选型与成本控制",
+          "text": "在模型迭代或架构升级时，应优先验证小模型/低成本方案的可行性，确保接口契约不变，从而将替换成本控制在单次回归范围内。",
+          "citations": [
+            "6bc6a5a7-43b8-5058-8616-b388a5ef7a2b"
+          ],
+          "reverse_links": [
+            "6bc6a5a7-43b8-5058-8616-b388a5ef7a2b"
+          ]
+        },
+        {
+          "id": "C-qwen3.5-9b-mlx-2",
+          "topic": "系统迁移与风险控制",
+          "text": "大规模数据迁移必须采用分批策略，避免一次性全量操作导致的资源锁表，确保每批任务具备独立回滚能力。",
+          "citations": [
+            "ee7d354c-6e0a-5624-a25a-38da0caf5511"
+          ],
+          "reverse_links": [
+            "ee7d354c-6e0a-5624-a25a-38da0caf5511"
+          ]
+        },
+        {
+          "id": "C-qwen3.5-9b-mlx-3",
+          "topic": "知识管理与技术债务",
+          "text": "架构决策必须同步更新至正式文档，严禁仅依赖会议纪要，否则会导致后续维护时无法通过提交记录反推真实逻辑。",
+          "citations": [
+            "1049ec81-99bf-5644-ae85-ac391ff62253"
+          ],
+          "reverse_links": [
+            "1049ec81-99bf-5644-ae85-ac391ff62253"
+          ]
+        }
+      ],
+      "error": null
+    }
+  ]
+}
