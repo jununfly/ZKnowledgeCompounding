@@ -93,7 +93,11 @@ REGISTRY: dict[str, Parameter] = {
            "L1 顺序中 self_loop 压过已捕获：项目躬身入局的条目即便被提炼过，原件仍在变"),
         _p("BASELINE_CONNECTED_DAYS", 14, PLACEHOLDER, "有 edge 或 higher_dim"),
         _p("BASELINE_ORPHAN_DAYS", 7, PLACEHOLDER, "孤儿条目"),
-        _p("MIN_INTERVAL_DAYS", 1.0, SIMULATION, "interval 钳制下界"),
+        _p("MIN_INTERVAL_DAYS", 0.25, SIMULATION,
+           "interval 钳制下界（ADR-0009，2026-11-06 zj 拍板 0.25d）：原 spike09 为 1.0d，"
+           "致 1.0d 触底节点的 L3 too_late 反馈恒 no-op；取 0.25d 使 AIMD_DOWN=0.7 "
+           "从 1.0d 可走 4 步收缩到新下界。**SIMULATION 占位、非 CALIBRATED**；"
+           "ADR-0007 每日驱动仍每天一次，<1d 只是数值语义、不构成日内复审能力"),
         _p("MAX_INTERVAL_DAYS", 180.0, SIMULATION, "interval 钳制上界"),
         # ---- L2 预算归一化（spike 09 切片 B）
         _p("BUDGET_PER_DAY_DEFAULT", 1.0, PLACEHOLDER,

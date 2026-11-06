@@ -160,6 +160,46 @@ class SchedulingPureTest(unittest.TestCase):
         self.assertFalse(r["applied"])
         self.assertEqual(r["new_days"], 10.0)
 
+    # ------------------------------------------------------------ L3 下界 (ADR-0009)
+    def test_sub_day_lower_bound_lets_l3_shrink_1d(self):
+        """ADR-0009：下界降到 <1d 后，1.0d 触底节点的 too_late 反馈不再是 no-op。"""
+        lo = S._t("MIN_INTERVAL_DAYS")
+        self.assertLess(lo, 1.0)
+        self.assertAlmostEqual(S.clamp_days(0.7), 0.7)
+        r = S.adapt_interval_math(1.0, "too_late")
+        self.assertTrue(r["applied"])
+        self.assertAlmostEqual(r["new_days"], 0.7)
+
+    def test_sub_day_lower_bound_flags_floor_hit(self):
+        """真正消除触底（ADR-0009 修订）：降到下界仍 too_late 时 math 标记 floor_hit，
+        交由 adapt_interval 归档终局，不再是静默 no-op。"""
+        lo = S._t("MIN_INTERVAL_DAYS")
+        days = 1.0
+        for _ in range(10):
+            days = S.adapt_interval_math(days, "too_late")["new_days"]
+        self.assertAlmostEqual(days, lo)
+        bottom = S.adapt_interval_math(lo, "too_late")
+        self.assertFalse(bottom["applied"])      # 数值上仍是 no-op（无法再缩短）
+        self.assertTrue(bottom["floor_hit"])     # 但显式标记触底，交给归档终局
+        self.assertAlmostEqual(bottom["new_days"], lo)
+
+    def test_adapt_math_floor_hit_only_on_too_late_at_floor(self):
+        """floor_hit 只在 too_late 且已处于下界时触发；on_time / human / 未到下界均不触发。"""
+        lo = S._t("MIN_INTERVAL_DAYS")
+        self.assertTrue(S.adapt_interval_math(lo, "too_late")["floor_hit"])
+        self.assertFalse(S.adapt_interval_math(lo, "on_time")["floor_hit"])
+        self.assertFalse(S.adapt_interval_math(lo * 2, "too_late")["floor_hit"])
+        self.assertFalse(S.adapt_interval_math(lo, "too_late", human=True)["floor_hit"])
+
+    def test_l2_l3_directions_oppose_within_sub_day_band(self):
+        """L2 拉长 / L3 缩短在同一 clamp 区间内方向相反（预算污染风险回归）。"""
+        lo = S._t("MIN_INTERVAL_DAYS")
+        r2 = S.fit_budget_rows([_row(id=1, interval_days=lo)], budget_per_day=0.0001)
+        self.assertTrue(r2["applied"])
+        self.assertGreater(r2["degraded"][0]["new_days"], lo)
+        r3 = S.adapt_interval_math(lo * 2, "too_late")
+        self.assertLess(r3["new_days"], lo * 2)
+
     # ------------------------------------------------------------ 标注率闸门 (P4.4)
     def test_label_rate_insufficient_samples_open(self):
         obs = [_obs(1, 0), _obs(1, 0), _obs(1, 0)]
@@ -335,6 +375,57 @@ class CaptureLossTest(unittest.TestCase):
         res = S.recompute_baseline_on_capture_loss(self.store, self.n.id)
         self.assertFalse(res["applied"])
         self.assertEqual(res["reason"], "still captured: no recalc needed")
+
+
+# ---------------------------------------------------------------- ADR-0009：<1d 下界（内存 fake，无 docker）
+
+class SubDayLowerBoundIntegrationTest(unittest.TestCase):
+    """1.0d 触底节点走真实 adapt_interval 编排层：反馈必须落库并留 D7 审计。"""
+
+    def setUp(self):
+        self.store = get_storage("memory")
+        self.node = self.store.nodes.save(
+            Node(title="1d-probe", content="b", track="dynamic"))
+        self.store.nodes.set_interval(
+            self.node.id, timedelta(days=1.0), "auto", "test seed: 1.0d bottom")
+
+    def _days(self):
+        return self.store.nodes.get(self.node.id).review_interval.total_seconds() / 86400.0
+
+    def test_1d_too_late_writes_sub_day_and_audit(self):
+        r = S.adapt_interval(self.store, self.node.id, decay_at_review=0.95,
+                             outcome="too_late")
+        self.assertTrue(r["applied"])
+        self.assertAlmostEqual(r["old_days"], 1.0)
+        self.assertAlmostEqual(r["new_days"], 0.7)
+        self.assertAlmostEqual(self._days(), 0.7)
+        audits = [a for a in self.store.nodes._audit_log
+                  if a["node_id"] == self.node.id and a["kind"] == "feedback"]
+        self.assertEqual(len(audits), 1, "触底反馈必须写 interval_adjustment 审计")
+        self.assertAlmostEqual(audits[0]["old_days"], 1.0)
+        self.assertAlmostEqual(audits[0]["new_days"], 0.7)
+
+    def test_1d_feedback_converges_then_floor_hit_archives(self):
+        """1.0 → 0.7 → 0.49 → 0.343 → 0.25（下界）后，再 too_late 触发 floor_hit → 归档退出回路。"""
+        lo = S._t("MIN_INTERVAL_DAYS")
+        applied = []
+        for _ in range(4):
+            applied.append(S.adapt_interval(
+                self.store, self.node.id, decay_at_review=0.95,
+                outcome="too_late")["applied"])
+        self.assertAlmostEqual(self._days(), lo)
+        self.assertTrue(all(applied), "前 4 步都应 applied（逐步缩短到下界）")
+        # 第 5 次：到下限仍 too_late → 归档，不再静默 no-op
+        r = S.adapt_interval(self.store, self.node.id, decay_at_review=0.95,
+                             outcome="too_late")
+        self.assertTrue(r["floor_hit"])
+        self.assertEqual(r["resolution"], "archived")
+        self.assertTrue(r["applied"])
+        n = self.store.nodes.get(self.node.id)
+        self.assertIsNotNone(n.archived_at, "floored node must exit scheduling loop via archive")
+        audits = [a for a in self.store.nodes._audit_log
+                  if a["node_id"] == self.node.id and a["kind"] == "floor_hit_archive"]
+        self.assertEqual(len(audits), 1, "floor-hit 必须写 audit_interval 审计")
 
 
 if __name__ == "__main__":

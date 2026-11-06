@@ -225,12 +225,18 @@ def adapt_interval_math(old_days: float, verdict: str, *, human: bool = False) -
     """纯 AIMD 计算（不落库）。human=True 时豁免（返回 unchanged）。"""
     if human:
         return dict(old_days=old_days, new_days=old_days, verdict=verdict,
-                    applied=False, reason="human override preserved")
+                    applied=False, reason="human override preserved", floor_hit=False)
     factor = _aimd_factor(verdict)
     new = clamp_days(old_days * factor)
+    applied = abs(new - old_days) > 1e-9
+    # 触底：too_late 仍被钳制到下界（new==old），L3 已无缩短空间。
+    # 标记 floor_hit 交由 adapt_interval 走归档/蒸馏/HITL 终局，不再静默 no-op
+    # （ADR-0009 修订：zj 裁决真正消除触底）。
+    floor_hit = verdict == "too_late" and (not applied) and old_days <= _t("MIN_INTERVAL_DAYS") + 1e-9
     return dict(old_days=old_days, new_days=new, verdict=verdict,
-                applied=abs(new - old_days) > 1e-9,
-                reason=f"{verdict}: x{factor} correction")
+                applied=applied,
+                reason=f"{verdict}: x{factor} correction",
+                floor_hit=floor_hit)
 
 
 # ---------------------------------------------------------------- 标注率闸门（纯，P4.4）
@@ -568,6 +574,20 @@ def adapt_interval(
                     applied=False, reason="human override preserved")
 
     math = adapt_interval_math(old, verdict, human=False)
+    if math["floor_hit"]:
+        # 触底真正消除（ADR-0009 修订）：到下限仍 too_late，说明即便按每日驱动最小
+        # 粒度也无法跟上腐化 → 退出调度回路（复用 D2 归档范式），并写审计留痕，
+        # 不再静默 no-op。蒸馏/HITL 可作为替代终局，当前默认归档。
+        at = datetime.now(timezone.utc)
+        store.nodes.archive(node_id, at)
+        store.nodes.audit_interval(
+            node_id, "floor_hit_archive", math["old_days"], math["old_days"],
+            f"too_late at MIN_INTERVAL={_t('MIN_INTERVAL_DAYS')} -> archived (bottoming eliminated)",
+            None)
+        return dict(id=_hid(node_id), old_days=math["old_days"], new_days=math["old_days"],
+                    verdict=verdict, applied=True, floor_hit=True,
+                    resolution="archived",
+                    reason="floor-hit: too_late at lower bound -> archived, not no-op")
     store.nodes.set_interval(
         node_id, days_to_interval(math["new_days"]), "auto", math["reason"])
     # 无操作（如 on_time 的 AIMD 因子 1.0 → new==old）不写 audit_interval，
