@@ -7,11 +7,11 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-06 15:37:06
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-06 16:24:04
 
 [~][X+] 1. ZKC MCP 集成执行路线图
     ├── [~][X+] 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
-    ... 该层还有 24 个兄弟，1 个 in_progress ▸
+    ... 该层还有 25 个兄弟，1 个 in_progress ▸
 
 ### 当前施工：1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
 

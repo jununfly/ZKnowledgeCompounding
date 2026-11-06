@@ -1,0 +1,213 @@
+{
+  "as_of": "2026-11-06T08:17:09.321808+00:00",
+  "purpose": "spike07 复利度量 METRIC_W_* / METRIC_METHOD_TARGET 的 SIMULATION 依据",
+  "storage": "pg",
+  "real_snapshot": {
+    "connection_density": 0.0,
+    "reuse_rate": 0.0,
+    "citations_per_claim": 0.0,
+    "methodology_output": 0,
+    "decay_controllability": 1.0,
+    "compounding_factor": 0.25
+  },
+  "pg_composition": {
+    "dynamic_nodes": 61,
+    "dynamic_archived": 24,
+    "expired_dynamic": 24,
+    "expired_and_archived": 24,
+    "expired_active": 0,
+    "table_counts": {
+      "meta_claim": 0,
+      "citation": 0,
+      "modeling_artifact": 0,
+      "edge": 0
+    },
+    "expired_referenced_by_claims_or_artifacts": 0,
+    "conclusion": "到期动态节点全部来自已归档分支，且全库无任何 claim/citation/artifact/edge；decay_controllability=1.0 不含蒸馏或结合引用，CF=0.25 不代表复利健康度。"
+  },
+  "weight_simulation": {
+    "samples": 20000,
+    "seed": 20261106,
+    "scene_distribution": "x_i ~ Uniform[0,1] iid，四维独立；合成场景，非真实埋点",
+    "true_weight_prior": "Dirichlet(1,1,1,1) = 单纯形均匀先验（表示无任何外生偏好信息）",
+    "analytic_optimum": [
+      0.25,
+      0.25,
+      0.25,
+      0.25
+    ],
+    "analytic_argument": "E[(w_true·x - c·x)^2] = Var(w_true·x) + ((E[w_true]-c)·x)^2；E[w_true]=(0.25,0.25,0.25,0.25)，故 c=等权 唯一最小化期望平方误差",
+    "candidates": {
+      "equal": [
+        0.25,
+        0.25,
+        0.25,
+        0.25
+      ],
+      "skew": [
+        0.4,
+        0.3,
+        0.2,
+        0.1
+      ],
+      "heavy_density": [
+        0.7,
+        0.1,
+        0.1,
+        0.1
+      ],
+      "heavy_reuse": [
+        0.1,
+        0.7,
+        0.1,
+        0.1
+      ],
+      "heavy_method": [
+        0.1,
+        0.1,
+        0.7,
+        0.1
+      ],
+      "heavy_decay": [
+        0.1,
+        0.1,
+        0.1,
+        0.7
+      ],
+      "random_1": [
+        0.2663968497864029,
+        0.1533103361187091,
+        0.5282679753177071,
+        0.05202483877718095
+      ],
+      "random_2": [
+        0.6099623333731262,
+        0.18204082250538914,
+        0.15977680066642286,
+        0.04822004345506186
+      ]
+    },
+    "mse": {
+      "equal": 0.012601,
+      "skew": 0.016719,
+      "heavy_density": 0.035335,
+      "heavy_reuse": 0.034423,
+      "heavy_method": 0.035131,
+      "heavy_decay": 0.035234,
+      "random_1": 0.023063,
+      "random_2": 0.027931
+    },
+    "excess_risk_vs_equal": {
+      "skew": 0.3268,
+      "heavy_density": 1.8041,
+      "heavy_reuse": 1.7318,
+      "heavy_method": 1.788,
+      "heavy_decay": 1.7961,
+      "random_1": 0.8303,
+      "random_2": 1.2166
+    },
+    "best": "equal",
+    "equal_is_best": true,
+    "spearman_equal_vs_true": 0.777
+  },
+  "real_snapshot_identifiability": {
+    "x_real_normalized": [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ],
+    "sensitivity_dCF_dw": {
+      "METRIC_W_DENSITY": 0.0,
+      "METRIC_W_REUSE": 0.0,
+      "METRIC_W_METHOD": 0.0,
+      "METRIC_W_DECAY": 1.0
+    },
+    "identifiable_weights": [
+      "METRIC_W_DECAY"
+    ],
+    "unidentifiable_weights": [
+      "METRIC_W_DENSITY",
+      "METRIC_W_REUSE",
+      "METRIC_W_METHOD"
+    ],
+    "nonzero_component_count": 1,
+    "conclusion": "CF(w) = Σ w_i·x_i；真实快照中只有 1 个非零分量，仅 METRIC_W_DECAY 可辨识，任意重分配其余三个权重都不改变 CF。真实数据对「权重校准」零信息量，因此不得据真实快照改权重值，更不得把任何权重标为 calibrated。"
+  },
+  "method_target_analysis": {
+    "mo_grid": "0..20 的整数产出（合成网格，非真实埋点）",
+    "window_days": 14,
+    "budget_per_day": 1.0,
+    "reachable_output_ceiling": 14.0,
+    "ceiling_rationale": "观察窗口 = CALIB_MIN_DAYS；默认注意力预算 = BUDGET_PER_DAY_DEFAULT；每次处理最多凝结 1 条方法论产物 → 可达产出上界 = 窗口 × 预算。这是设计量级推导，不是真实产出分布",
+    "current_target": 10.0,
+    "current_vs_ceiling": 0.7143,
+    "candidates": [
+      {
+        "target": 5.0,
+        "mean_norm": 0.8571,
+        "std_norm": 0.2904,
+        "saturated_ratio_on_grid": 0.7619,
+        "distinct_levels": 6,
+        "unsaturated_ratio_in_reachable_window": 0.3333
+      },
+      {
+        "target": 8.0,
+        "mean_norm": 0.7857,
+        "std_norm": 0.3254,
+        "saturated_ratio_on_grid": 0.619,
+        "distinct_levels": 9,
+        "unsaturated_ratio_in_reachable_window": 0.5333
+      },
+      {
+        "target": 10.0,
+        "mean_norm": 0.7381,
+        "std_norm": 0.3387,
+        "saturated_ratio_on_grid": 0.5238,
+        "distinct_levels": 11,
+        "unsaturated_ratio_in_reachable_window": 0.6667
+      },
+      {
+        "target": 14.0,
+        "mean_norm": 0.6429,
+        "std_norm": 0.345,
+        "saturated_ratio_on_grid": 0.3333,
+        "distinct_levels": 15,
+        "unsaturated_ratio_in_reachable_window": 0.9333
+      },
+      {
+        "target": 20.0,
+        "mean_norm": 0.5,
+        "std_norm": 0.3028,
+        "saturated_ratio_on_grid": 0.0476,
+        "distinct_levels": 21,
+        "unsaturated_ratio_in_reachable_window": 1.0
+      },
+      {
+        "target": 50.0,
+        "mean_norm": 0.2,
+        "std_norm": 0.1211,
+        "saturated_ratio_on_grid": 0.0,
+        "distinct_levels": 21,
+        "unsaturated_ratio_in_reachable_window": 1.0
+      }
+    ],
+    "real_mo_norm_by_target": {
+      "5.0": 0.0,
+      "8.0": 0.0,
+      "10.0": 0.0,
+      "14.0": 0.0,
+      "20.0": 0.0,
+      "50.0": 0.0
+    },
+    "all_targets_equivalent_on_real": true,
+    "conclusion": "target=10.0 约为窗口可达上界 14 的 71%，在可达区间内保留不饱和梯度；但真实 methodology_output=0 使所有候选 target 的 mo_norm 完全相同，故 target 在真实数据上不可辨识，保留原值、仅升 SIMULATION。"
+  },
+  "scope_limits": [
+    "合成场景（Uniform 分量 + Dirichlet 真权重）是受控仿真，不是真实用户行为或埋点；因此结论只能支撑 source=SIMULATION。",
+    "本脚本只读：不写业务库、不写 tuning.REGISTRY、不调用 calibrate()。",
+    "source=CALIBRATED 另需 ≥14 天埋点 + ≥3 饱和日门禁，以及 zj 对四分量价值的显式外生排序与真实复用/连接密度/方法论产出分布；本脚本一律不代填。",
+    "E8 锚2 的蒸馏质量度量（漏检率/误蒸馏率）是系统外抽检信号，与 spike07 系统自算的复利系数是两套度量，不得互相冒充证据。",
+    "真实快照中 cd/rr/mo 三项恒 0、CF 由归档型 decay_controllability 单独撑起；此时合成值 CF 不代表复利健康度，复盘必须同时看四个分量。"
+  ]
+}
