@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# docker shim for ZKC migrate on WSL-native PostgreSQL.
+# Translates `docker exec -i <container> psql <args...>` into a local
+# `psql -h 127.0.0.1 -p 55433 <args...>` against the WSL2 PostgreSQL,
+# so `python -m zkc.migrate` works without a docker container.
+# Only the `exec -i <container> psql` form used by src/zkc/migrate.py is supported.
+set -euo pipefail
+
+if [ "$#" -ge 4 ] && [ "$1" = "exec" ] && [ "$2" = "-i" ] && [ "$4" = "psql" ]; then
+  # drop: docker exec -i <container> psql  -> remaining $@ are psql args
+  shift 4
+  export PGPASSWORD="${ZKC_PG_PASSWORD:-zkc}"
+  exec /usr/lib/postgresql/16/bin/psql -h 127.0.0.1 -p 55433 "$@"
+fi
+
+echo "docker-shim: unsupported invocation: $*" >&2
+exit 1

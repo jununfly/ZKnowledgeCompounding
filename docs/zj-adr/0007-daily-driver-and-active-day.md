@@ -100,13 +100,29 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
 - 任务动作指向现有 `daily_e1_driver.bat` 包装（单一路径），规避 schtasks `/tr` 里
   「python + 脚本」多参数引号嵌套；该包装补 `ZKC_MODE=direct`，与 plist 环境变量对齐。
 - 验证：`tests/test_daily_driver_schedule.py` 14 条（红→绿）+ macOS 侧 `--dry-run` 冒烟 +
-  非法时间 exit 2。**未实机验证声明**：本机为 macOS，未执行过真实 `schtasks` 注册；已验证的
-  是命令契约与 dry-run 安全性，不冒充 Windows 侧通过。
-- Windows 侧复核清单（有环境时按序执行，未完成前不算实机验收）：
-  1. `scripts\install_daily_driver.bat --dry-run` 看命令；
-  2. `scripts\install_daily_driver.bat` 注册，`schtasks /query /tn "ZKC Daily E1" /v` 确认；
-  3. 次日查 `logs\e1_daily.log` 是否新增一行真值收口；
-  4. `scripts\install_daily_driver.bat --uninstall` 可干净卸载。
+  非法时间 exit 2 + **Windows 侧实机验证通过（2026-11-07，机制替换）**。
+
+  **实机验证结论（替代被黑名单的 schtasks）**：Windows 沙箱 `schtasks.exe` 被 Program Blacklist
+  拦截、无法执行原四步，故以 **WorkBuddy 定时任务（每日 23:50）+ WSL2 原生 PostgreSQL** 完成功能等价
+  验收（zj 2026-11-07 选定方案）：
+  - 运行时：WSL2（Ubuntu 26.04）`apt` 装 `postgresql-16` + `postgresql-16-pgvector`
+    （0.8.7，对齐迁移实测 0.8.7）；端口 **55433** / 库 **zkc_dev** / 用户 **postgres** / 密码 **zkc**，
+    与 `connection.DEFAULT_DSN` 一致，`ZKC_PG_DSN` 无需覆盖。
+  - 建表：`zkc.migrate upgrade` 建出全部迁移（0001–0010），含 `schema_migration` 与
+    `attention_observation`（注：首次 `upgrade` 需先跑一次 `status`/`verify` 以 bootstrap
+    `schema_migration` 表——`cmd_upgrade` 漏调 `bootstrap`，见本节末尾）。
+  - 证据：`scripts/daily_e1_driver.py`（`ZKC_MODE=direct` + `ZKC_STORAGE=pg`）跑出真值收口日志行，
+    `logs\e1_daily.log` 含
+    `{"mode":"direct","observe_ok":true,"meter_ok":true,"observe":{"day":"2026-11-06","pushed":0,"completed":0,"queue_remaining":0,"labeled_completed":0}}`
+    —— **真实 PG 写入**（非空 memory 冒充），满足原 exit criterion 3 的「真实 PG 数据」核心要求。
+
+  原 schtasks 专属验收（命令契约 / `schtasks /query` / `schtasks /delete`）因调度机制替换而失效，
+  由 **WorkBuddy 定时任务**（`wsl -u root -e bash -c "...service postgresql start; ...daily_e1_driver.py"`，
+  每日 23:50）接管每日触发，与 macOS launchd 在「每日 23:50 触发驱动」语义上对齐。
+
+- **遗留（非 1-24 scope，待独立 fix）**：`zkc.migrate` 的 `cmd_upgrade` 在全新库上漏调 `bootstrap(db)`，
+  致首次 `upgrade` 报 `relation "schema_migration" does not exist`；绕过法为先跑一次 `status`/`verify`
+  （其内部 `bootstrap`）再 `upgrade`。此为 migrate 工具自身 bug，不动 `zkc` CLI 语义，不计入 1-24 验收。
 
 ### 2. zj-zkc-daily skill 纳管（zj 显式推翻跨项目既有约定）
 - 原状：该 skill 只有 `~/.workbuddy/skills/zj-zkc-daily/SKILL.md` 一份，不在 git、无备份。

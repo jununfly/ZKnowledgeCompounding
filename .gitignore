@@ -24,3 +24,6 @@ build/
 
 # WorkBuddy project-local data (not a temp cache; keep out of VCS)
 .workbuddy/
+
+# Runtime driver logs (evidence output; grows over time, keep out of VCS)
+logs/
