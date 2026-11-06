@@ -7,17 +7,11 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-06 00:14:10
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-06 14:57:17
 
 [~][X+] 1. ZKC MCP 集成执行路线图
     ├── [~][X+] 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
     ... 该层还有 23 个兄弟，1 个 in_progress ▸
-<details><summary>阻塞链：1 个节点被阻塞</summary>
-
-- 1-18. PRD §9 下版本决策收口：护城河锚 2 抽检 + 6 项 unknown 口径 + checkbox 勾销 ← e13: 1-8. E8 护城河实证化：复利度量口径回填与蒸馏抽检 [ ]
-
-</details>
-
 
 ### 当前施工：1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
 

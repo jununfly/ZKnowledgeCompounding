@@ -165,9 +165,9 @@ flowchart LR
 - [x] **PRD↔架构校准 round 1（2026-10-29）**：回填范围/度量/术语/MVP 栈，锚定「双轨≠双时态」护栏，数据模型对齐架构 §5，升 v0.2 与架构 v1.2 对齐。
 - [x] **每日复审队列 UI（MVP 必选，已交付 2026-11-02）**：`decay ≥ 0.6` 清单 + 结果标注（`still_valid`/`changed`/`stale`）+ 每日收口埋点（`pushed`/`completed`/`queue_remaining`）。实现：`src/zkc/web/review.py` + `src/zkc/task_queue.py` + `web/taskqueue.py` + 迁移 0009/0010（tests/test_task_queue.py 5 条）。
 - [ ] **P6.4 校准观察期目标（2026-11-02 移出 roadmap 跟踪；roadmap 文件 2026-11-03 结束删除）**：累计 ≥20 带标注复审动作 + 滚动 7 天标注率 ≥70%（R10 降级判定）。被动由真实使用数据驱动，不再作 roadmap 节点；**本 TODO 达成后从 PRD 删除**。判定以 `src/zkc/task_queue.py` 的 `LABEL_JUDGMENT_THRESHOLD=20` 告警为准。
-- [ ] **下版本优先级与 MCP 集成决策（zj-grill-with-docs 收敛，2026-11-03 zj 拍板）**：决策与证据口径以 `docs/zj-adr/0004-mcp-interface-contract.md`（MCP 接口契约边界）、`docs/zj-adr/0005-rec-avoid-mechanical-gate.md`（rec-avoid 机械闸）与 `docs/rec-avoid-gate.md` 为准；过程编排稿不作为长期引用来源（权威边界见 ADR-0008）。核心：
+- [x] **下版本优先级与 MCP 集成决策（zj-grill-with-docs 收敛，2026-11-03 zj 拍板）**：决策与证据口径以 `docs/zj-adr/0004-mcp-interface-contract.md`（MCP 接口契约边界）、`docs/zj-adr/0005-rec-avoid-mechanical-gate.md`（rec-avoid 机械闸）与 `docs/rec-avoid-gate.md` 为准；过程编排稿不作为长期引用来源（权威边界见 ADR-0008）。核心：
   - **P0 = 跑通已交付复审队列背后的校准闭环**（budget/L3 阈值），DoD = 连续 ≥7 活跃日 + 滚动标注率闸门 ≥70% + budget 估计收敛稳定；此乃捕获摩擦降低/复利面板/MCP 三者共同隐藏前置。
-  - **护城河实证化列 P0 验收**：把「复利可观测+蒸馏质量」从设计论点转经验证据，绑两外生锚——锚1 标注率闸门持续 ≥70%；锚2 **zj 人工抽检**蒸馏产物记录漏检/误蒸馏率、给本机 4B/9B 上界估计。任何新功能不得降低衰减+预算可观测性（rec-avoid「经验证伪闸」）。
+  - **护城河实证化列 P0 验收**：把「复利可观测+蒸馏质量」从设计论点转经验证据，绑两外生锚——锚1 标注率闸门持续 ≥70%（仍由 1-17 跟踪，未达成）；锚2 **zj 人工抽检**蒸馏产物记录漏检/误蒸馏率、给本机 4B/9B 上界估计（**已于 2026-11-06 完成**：合成短语料 9 gold / 17 claim 样本两率 0%，zj 结论暂不需更强模型、蒸馏环节暂不全量 HITL；证据弱、待真实文档复测，不替代 spike 12/13 忠实度闸门 HITL 定案）。任何新功能不得降低衰减+预算可观测性（rec-avoid「经验证伪闸」）。
   - **rec-avoid 机械闸**：去模型化测试 + `check_invariant.py` + 图库主存储 EXCLUDED（ADR-0005 / `docs/rec-avoid-gate.md`）。
   - **MCP 进版本绑「接口契约边界 ADR 存在」**（ADR-0004）：单边 server + transport seam + stdio 默认 + 暴露面白黑名单；`zkc_capture` 须过 DecisionRouter 分流闸（agent 输入文档场景固化于此）。
   - **对外叙事口径统一（E9）**：`caveat: moat-unverified-vs-mem0` + **4 项特征**（双轨 / 衰减 / 双时态 / 注意力预算），任何唯一性表述须带限定，不得回退 3 项口径；活文档（架构 §3、constraints §8.1、rec-avoid-gate）已同步。

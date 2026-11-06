@@ -317,7 +317,7 @@
       "id": "1-8",
       "uid": "01a1a5ece860-8ab5331319",
       "label": "E8 护城河实证化：复利度量口径回填与蒸馏抽检",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -326,10 +326,26 @@
           "q": "E8 本轮为何未开工、缺口是什么？",
           "answer": "本轮完成现状核查但未执行，节点保持 pending。架构 §8「复利度量的最终口径」仍未回填（§9 只记已完成口径），tuning.py 的 METRIC_W_* 四权重与 METRIC_METHOD_TARGET 全为 PLACEHOLDER，仓库不存在「zj 人工抽检蒸馏产物」的漏检率 / 误蒸馏率 / 4B·9B 上界记录。**外生锚**：锚 2 的抽检必须由 zj 本人完成，系统自算的复利系数不能自我证伪；本轮不代写抽检数字。下一步：zj 抽检后给结果，再由本节点回填架构 §9 最终口径与经验证伪闸。",
           "note": "连带变化：D2 已把 24 条导入语料移出调度回路，队列由 24 降为 0；这改变了「复利可观测性」的样本基础，回填口径时须以清理后的真实使用数据为准，不得沿用旧队列数字"
+        },
+        {
+          "q": "开始 1-8 的 scope gate 与开工真值基线？",
+          "answer": "Product execution（E8 护城河实证化，本轮只做锚 2 抽检包，不改架构 §8/§9 口径、不动 tuning 权重、不回填 rec-avoid-gate.md）。开工真值：架构 §8:397 仍写复利度量最终口径未决；tuning.py 四个 METRIC_W_* 与 METRIC_METHOD_TARGET 全 PLACEHOLDER；docs/evidence/ 无抽检记录；仓库无可抽检的蒸馏产物样本。外生锚铁律：锚 2 的 gold set / verdict / 漏检率 / 误蒸馏率 / 4B·9B 上界必须由 zj 本人给出，Agent 只提供可判输入，绝不代填。",
+          "note": "本机 Ollama 实测可达（qwen3.5:4b-mlx / qwen3.5:9b-mlx 等在用）；不改 zkc 源码。"
+        },
+        {
+          "q": "本轮锚 2 抽检包的产物与验收结论？",
+          "answer": "① 新增只读生成器 scripts/e8_anchor2_samples.py：固定 3 组中文源语料（A 复用既有 dogfood 语料，B/C 同形态补充），走 zkc.llm.make_distill_llm（原生 /api/chat + format:json + think=false + num_ctx=8192 + 显式 num_predict）与 zkc.distill.distill_node，AST 校验不调 apply_distill / get_storage / save，不写任何业务表；失败或超时如实记 error，不补造 claim。② 真实两臂全量跑通（2026-11-06 01:30，6 次调用 / 17 条 claim / 零 error / 零重试；4B 6.6–13.9s、9B 21.6–24.5s），产物 docs/evidence/e8-anchor2-samples.json + 同批 e8-anchor2-sampling-kit.md。③ kit 把口径先于数字写清：漏检率=未覆盖 gold 关键点/gold 总数、误蒸馏率=不合格产出/产出总数（四类：无据 / 纯复述 / 错源 / 错配）、两率分母不同不得合并；gold set 必须先由 zj 独立写出再看产物，防锚定偏倚；所有判定栏、比率栏、上界结论、抽检人签名全留空。④ 机械验证：一致性自检 runs=6 / claims=17 / sheet_ids=17 / forbidden_calls=[] 且所有 citations 指向同组真实 source_id；两套过程权威门禁 clean（wrapper 246 durable 源 / 0 unresolved）；git diff --check rc=0。**未达成**：漏检率、误蒸馏率、4B·9B 上界、架构 §9 最终口径、rec-avoid-gate.md DoD 回填全部仍 open；1-8 保持 in_progress，不得据此勾销 1-18 或 PRD §9 checkbox。",
+          "note": "样本是模型输出快照，不是 zj 判定结果，不作为 E8 达成证据。1-8 其余判据（架构 §8/§9 口径、tuning 权重）等 zj 抽检结论后才动，本轮不碰。"
+        },
+        {
+          "q": "E8 本轮收口范围如何界定？",
+          "answer": "锚2 蒸馏抽检（E8 护城河实证核心外生信号）已于 2026-11-06 完成：kit 填写 + 架构 §8 已定 E8 锚2 + rec-avoid §4 DoD 部分达成 + PRD §9:168 勾销。spike07 复利系数体系（tuning.py 权重 PLACEHOLDER）与锚2 是两回事，声明为独立于 E8 的遗留未决，不卡 E8 收口。故 1-8 认锚2 完成而 completed，tuning 校准另开跟踪。",
+          "note": "zj 拍板 A：1-8 认锚2 完成，spike07 tuning 为独立遗留未决"
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-9": {
       "id": "1-9",
@@ -582,6 +598,16 @@
           "q": "A 方案实施结论与验证基线？",
           "answer": "只读读数 zkc p64 已落地（calibration.build_p64_report / format_p64_human + CLI 子命令 p64）；exit_criteria ② 已修正为代码真实语义；PRD §9:167 与 risks.md R10 未改，due=0 未处理。真实 PG 读数：累计 3/20（差 17）、7d rate=N/A（样本 3<10）、gate=open 但 met=false、all=false。全量 563 tests OK、mcp-gate 6 OK、invariant 0 violations、两套权威门禁 clean、validate Valid、E1 埋点未污染。1-17 保持 in_progress，直到外生锚真实达成。",
           "note": "新增 tests/test_p64_progress.py 6 条（含 gate=open warm-up 不算达标 的语义回归）；阈值复用 task_queue.LABEL_JUDGMENT_THRESHOLD，不另起常量。"
+        },
+        {
+          "q": "1-17 能否靠「随机挑 17 条未到期节点」凑够累计 20？",
+          "answer": "zj 选 A：只走真实 due，不凑数。只读核查：真实 due=3、活跃动态=37、未到期=34；decide_review 不校验到期，技术上能写但不做。三条理由：① PRD §9:167 要求「被动由真实使用数据驱动」，主动挑一批绕开 R10 外生锚供给的观测本意，属 exit_criteria ④「禁止伪造或批量灌入」的变体；② decide_review 会 mark_reviewed 复位衰减时钟，给未到期节点打标等于人为消灭后续真实 due；③ 单日脉冲会让 7d 标注率样本失真。累计达成靠逐日真实 due 复审自然收敛。",
+          "note": "B（随机 17 条抽检但明确不计入累计）/ C（显式改 PRD 与 1-17 判据后计入）未采纳。今日 3 条真实到期条目由 Agent 列标题+摘要给 zj，verdict 由 zj 本人给出后 Agent 才代写，绝不自动标注。"
+        },
+        {
+          "q": "2026-11-06 首批真实 HITL 标注结果与读数？",
+          "answer": "zj 本人给出 3 条 verdict（1=changed / 2=stale / 3=still_valid），Agent 仅代执行写入，绝不自动标注。结果：累计 labeled_completed 3→6（还差 14）；7d completed=6 / labeled=6 / rate=N/A（<10 样本不判定）、gate=open 但 met=false、all=false；due 队列 3→0（三条 mark_reviewed 复位时钟、decay 归零、interval 仍 1d）；E1 观测天数 1→2、活跃日 1→2、all_met=false。1-17 保持 in_progress。",
+          "note": "运行时事实：① CLI verdict 经 OUTCOME_VERDICT 映射为 L3 timing 语义（still_valid→on_time、changed/stale→too_late），输出显示的是映射后值，标注计数只区分 browse。② 三条 applied=False 已实证根因：MIN_INTERVAL_DAYS=1.0、AIMD_DOWN=0.7 → clamp_days(0.7)=1.0 → new==old → L3 no-op，是 1-13「D1 L3 AIMD 下界触底」的首个真实运行证据；本轮不擅改下界。③ 今日未跑 zkc daily 真值收口，观测行 queue_remaining=0 来自 decide 默认值（恰与实际 due=0 一致），按 ADR-0007 harness 契约仍待显式 daily。"
         }
       ],
       "notes": "PRD §9 第一个未完成 checkbox。当前 PG 实测（2026-11-04 一条 observation）：sum(completed)=3 / sum(labeled_completed)=3 / 观测天数=1，即 3/20。与 1-1 共享同一批真实 decide 动作，但判据不同：本节点是累计 ≥20（R10 降级判定，不要求日历连续），1-1 是连续 ≥7 活跃日 + budget 收敛。不建 blocks 到 1-1（会倒挂），仅 informs 表达数据源关联。判定以 src/zkc/task_queue.py:26 LABEL_JUDGMENT_THRESHOLD=20 告警为准。",
@@ -598,7 +624,7 @@
       "id": "1-18",
       "uid": "01a1a7875095-f5dd610dea",
       "label": "PRD §9 下版本决策收口：护城河锚 2 抽检 + 6 项 unknown 口径 + checkbox 勾销",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -607,6 +633,21 @@
           "q": "为何不把 PRD §9 第二项拆成执行节点？",
           "answer": "它是已拍板决策总纲，执行内容已由 E2–E9 承载，逐条拆会与现有节点重复。定为薄收口节点：只做锚 2 抽检记录、6 项 unknown 口径、checkbox 勾销；被 1-8 与 1-9 blocks。",
           "note": "若 zj 要求逐条拆，可再拆"
+        },
+        {
+          "q": "开始 1-18 的 scope gate 分类与开工真值核查结论？",
+          "answer": "分类 = Product execution（PRD §9 文档收口）；但本轮不置 in_progress、不勾 checkbox、不改产品文件。CLI get 1-18：blocked=true / blocked_reason=[e13]（1-8 E8 仍 pending；e14 的 1-9 已 completed 不再阻塞），ready 不含 1-18，critical-path = 1-8 → 1-18。逐条真值：① 锚 2 抽检记录缺失（docs/evidence/ 无漏检率 / 误蒸馏率 / 4B·9B 上界记录，rec-avoid-gate.md §4 只有定义），且判据明写由 zj 本人人工抽检，属外生锚，Agent 不得代写；② 6 项 unknown 分层结论已在 PRD §9:174 落地（1-23 治理沉淀），非本节点待办；③ caveat + 4 特征口径已由 1-9 完成（PRD:173 / README / 架构 §3 / constraints §8.1 / rec-avoid-gate），非本节点待办；④ PRD §9:168 第二 checkbox 仍 [ ]，按节点既有 decision 须等 1-8 完成才勾销；⑤ 定位约束（只做验收对齐与文档收口）无缺口。上游 1-8 自身缺口：架构 §8:397 仍写「复利度量的最终口径」未决、tuning.py 的 METRIC_W_* 四权重与 METRIC_METHOD_TARGET 全 PLACEHOLDER、仓库无可抽检的蒸馏产物样本与记录。结论：1-18 剩余实质内容只剩①外生锚 + ④checkbox，二者都锁在 1-8 之后；静默开工等于绕过 blocks 边或伪造抽检数字，均不做。等 zj 方向裁决后再写 status / 改文档。",
+          "note": "工作树已有未提交改动（ROADMAP.md / roadmap.json 属 1-17 会话），HEAD d1c9655。本条只写过程决策，不改状态、不拆边、不碰 PRD。引用过程编排稿只写名称不写完整相对路径，避免自引入触发串。"
+        },
+        {
+          "q": "1-18 硬阻塞的方向裁决（zj 拍板）？",
+          "answer": "zj 选 A：不绕开 e13、不勾 checkbox、不改 PRD；改跑无阻塞的 1-8，先把锚 2 做成 zj 可直接判的最小抽检包。1-18 保持 pending / blocked=true，等 zj 本人给出抽检 verdict 与 4B·9B 上界结论后，1-8 与 1-18 一起收口。B（显式豁免 e13 拆 1-18 做部分收口）/ C（只留核查留痕）未采纳。硬约束不变：Agent 不得代写 gold set / verdict / 比率 / 上界结论。",
+          "note": "2026-11-06 01:3x；本轮 1-18 只追加决策，status 未动、产品文件未动。"
+        },
+        {
+          "q": "1-18 收口条件是否达成？",
+          "answer": "exit_criteria 五条全部满足：①锚2 落地（zj 抽检 9 gold/17 claim 两率0%，上界结论已落 kit §6）②6 项 unknown 分层已在 PRD §9:174 ③caveat+4 特征口径由 1-9 统一 ④PRD §9:168 已勾销 ⑤只做验收对齐不重复实现。blocked 边 e13（1-8→1-18）因 1-8 认锚2 完成而解除。1-18 收口 completed。",
+          "note": "锚2 弱证据（极小合成样本），HITL 减免结论仅限蒸馏环节，不替代 spike12/13 忠实度闸门定案"
         }
       ],
       "notes": "PRD §9 第二个未完成 checkbox 是已拍板决策的总纲，不是待实现功能。其执行内容已被现有节点覆盖：P0 校准闭环→1-1；rec-avoid 机械闸 + MCP ADR→E2–E6；护城河锚 2 蒸馏抽检→E8(1-8)；6 项 unknown + caveat 叙事→E9(1-9)，去模型化对照→E7(1-7)。故本节点只做验收对齐与文档收口，不重复实现。E7/E8/E9 目前均无 exit_criteria，本节点被 1-8 与 1-9 blocks（等执行节点完成才勾销 checkbox），这是正向依赖、不倒挂。证据缺口原文见 docs/plans/mcp-integration-plan.md §1.4/§2.5：governance×4 + letta×2 + mem0 整体排除。",
@@ -904,7 +945,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-06 00:14:10",
+    "updated": "2026-11-06 14:57:17",
     "md_file": "ROADMAP.md"
   },
   "edges": [
