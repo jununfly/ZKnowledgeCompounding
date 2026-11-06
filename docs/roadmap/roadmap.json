@@ -34,7 +34,8 @@
         "1-21",
         "1-22",
         "1-23",
-        "1-24"
+        "1-24",
+        "1-25"
       ],
       "decisions": [
         {
@@ -771,7 +772,7 @@
     "1-22": {
       "id": "1-22",
       "uid": "01a1a78754be-c2bcf51173",
-      "label": "工程尾巴 B：lexical 语料冷启动 + 占位阈值/复利度量权重校准收口",
+      "label": "工程尾巴 B：lexical 语料冷启动 + 占位阈值（routing gate）校准收口",
       "status": "pending",
       "mode": "explore",
       "parent": "1",
@@ -786,15 +787,20 @@
           "q": "1-22 label 为何改名？",
           "answer": "原 label「工程尾巴 B：占位阈值与复利度量权重校准收口」只覆盖 4 条 exit_criteria 的后两条，掩盖了第一硬缺口：data/lexical_corpus.json 不存在 → LexicalRouter 冷启动 predict 返回 (None,0.0) 恒弃权。改名为「工程尾巴 B：lexical 语料冷启动 + 占位阈值/复利度量权重校准收口」，使 label 与 exit_criteria / notes 同口径。治理铁律不变：corpus-derived 不等于 tuning 的 CALIBRATED，绝不写回 REGISTRY。",
           "note": "2026-11-05 20:25 核查发现；仅改 label，不动 status / exit_criteria / notes"
+        },
+        {
+          "q": "复利度量权重校准为何拆出 1-25？",
+          "answer": "原 label/exit_criteria/notes 把 METRIC_W_*(四 0.25) 与 METRIC_METHOD_TARGET 算在 1-22 scope，与新建的 1-25（spike07 复利度量权重校准）重复计数。本节点 scope 收窄为 lexical 语料冷启动 + routing gate 占位阈值校准；复利度量权重部分移交 1-25，避免完成度双重计数（display-id+label 双核对纪律）。",
+          "note": "2026-11-06 拆分；1-25 为独立 sibling 节点"
         }
       ],
       "notes": "重要事实更正：src/zkc/routing.py:186-190 已默认 auto_calibrate_gate=True，fit() 后按类内/类间质心余弦中点推导 gate（gate_source=corpus-derived），硬编码 0.5 恒弃权的 bug 早已修复；app.py:95-99 build_routers 会 fit 语料。真正缺口是 data/lexical_corpus.json 不存在 → 无标注语料 → 冷启动 predict 返回 (None,0.0) → 仍弃权；且 tuning.py:161 ROUTING_LEXICAL_CONF_GATE=0.5 仍是 PLACEHOLDER seed。治理铁律（routing.py:176-183）：corpus-derived 与 tuning.CALIBRATED 是两回事，绝不写回 REGISTRY，升 CALIBRATED 必须走 calibrate() 门禁。复利度量：tuning.py:178-181 四个 METRIC_W_* 均 0.25 PLACEHOLDER，metrics.py:101-113 的 weights/method_target 待校准。",
       "layer": "plan",
       "exit_criteria": [
         "建立 data/lexical_corpus.json 真实标注语料，使 LexicalRouter.fit() 产出 corpus-derived gate（代码已支持自动校准）",
-        "ROUTING_LEXICAL_CONF_GATE seed、METRIC_W_* 四个 0.25、METRIC_METHOD_TARGET 走 calibrate() 门禁或显式标注 PLACEHOLDER 原因",
-        "治理铁律不破：corpus-derived 绝不写回 tuning 的 CALIBRATED，禁止混称",
-        "复利系数权重/目标结论落 tuning 或 ADR，全量套件通过"
+        "ROUTING_LEXICAL_CONF_GATE seed（tuning.py:161）走 calibrate() 门禁或显式标注 PLACEHOLDER 原因；复利度量权重 METRIC_W_*/METRIC_METHOD_TARGET 已拆至子节点 1-25，本节点不管",
+        "治理铁律不变：corpus-derived 绝不写回 tuning 的 CALIBRATED，禁止混称",
+        "routing gate 校准结论落 tuning 或 ADR，全量套件通过"
       ]
     },
     "1-23": {
@@ -941,11 +947,29 @@
         "次日检查 logs\\e1_daily.log 新增一行真值收口（真实 PG 数据，不伪造、不以 memory 后端代替）",
         "执行 --uninstall 干净卸载；四步证据回填本节点 notes 后，ADR-0007 的未实机验证声明才可更新"
       ]
+    },
+    "1-25": {
+      "id": "1-25",
+      "uid": "01a1afc9a5e3-46e65cefb3",
+      "label": "spike07 复利度量权重校准：METRIC_W_* 四权重 + METRIC_METHOD_TARGET 由 PLACEHOLDER 升 CALIBRATED（从 1-22 拆出）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "tuning.py:178-182 的 METRIC_W_DENSITY/METRIC_W_REUSE/METRIC_W_METHOD/METRIC_W_DECAY（各 0.25）与 METRIC_METHOD_TARGET 由 PLACEHOLDER 升为 SIMULATION 或 CALIBRATED，并写明校准依据（真实复用/连接密度数据或仿真）",
+        "架构 §8:397 的 spike07 复利度量最终口径由未决改为已定，注明口径来源；不依赖 E8 锚2 蒸馏抽检结论（两度量严格区分，见 §398）",
+        "src/zkc/metrics.py:101-113 的 weights/method_target 与 tuning 保持一致，单测与全量套件通过",
+        "治理铁律不变：校准结论落 ADR 或 tuning，禁止把 corpus-derived 等伪证据冒充 CALIBRATED，禁止伪造标注"
+      ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-06 14:57:17",
+    "updated": "2026-11-06 15:37:06",
     "md_file": "ROADMAP.md"
   },
   "edges": [
