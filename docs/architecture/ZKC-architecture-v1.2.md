@@ -309,9 +309,9 @@ CREATE TABLE attention_observation (
 
 | 层 | 作用 | 规则 |
 |---|---|---|
-| **L1 基线**（个体） | 条目自身暗示的腐化速率 | 静态/已归档 → `NULL`；显式时间锚（"下周三""3 天内"…）→ clamp(horizon,1,180)（多锚取最早）；**`self_loop` → 3d**；已捕获（claim/artifact evidence）→ 28d；有 edge 或 `higher_dim` → 14d；孤儿 → 7d。**顺序即优先级：`self_loop` 压过「已捕获」**（2026-10-31 zj 拍板，修原 L1 表与 L2 优先级表顺序相反的问题，见下） |
+| **L1 基线**（个体） | 条目自身暗示的腐化速率 | 静态/已归档 → `NULL`；显式时间锚（"下周三""3 天内"…）→ clamp(horizon,0.25,180)（多锚取最早；下界 2026-11-06 修订，见本节末尾「下界修订」与 ADR-0009）；**`self_loop` → 3d**；已捕获（claim/artifact evidence）→ 28d；有 edge 或 `higher_dim` → 14d；孤儿 → 7d。**顺序即优先级：`self_loop` 压过「已捕获」**（2026-10-31 zj 拍板，修原 L1 表与 L2 优先级表顺序相反的问题，见下） |
 | **L2 预算归一化**（全局） | 压进注意力预算 | 需求 ≤ 预算则一条不动；否则按优先级升序延后（时间锚 3 > self_loop 2 > 有连接/共享 context 1 > 孤儿/已捕获 0），同优先级内**短 interval 先延后**，每步 ×2；`interval_source='human'` 永不自动改写；到 `MAX=180d` 仍超 → `infeasible=True` + `max_dynamic_items = budget×0.6×180` |
-| **L3 反馈**（闭环） | 先验不可靠，用真实结果修正 | AIMD：复审时仍新鲜（decay<0.3）→ ×1.5；正好（0.3–0.9）→ 不变；已腐化（≥0.9）→ ×0.7；钳制 `[1d,180d]`。受**标注率闸门**约束（见下） |
+| **L3 反馈**（闭环） | 先验不可靠，用真实结果修正 | AIMD：复审时仍新鲜（decay<0.3）→ ×1.5；正好（0.3–0.9）→ 不变；已腐化（≥0.9）→ ×0.7；钳制 `[0.25d,180d]`（下界 2026-11-06 修订，见本节末尾「下界修订」与 ADR-0009；原 spike09 为 `[1d,180d]`）。受**标注率闸门**约束（见下） |
 
 **L3 标注率闸门（zj 定 ≥70%，2026-10-29）**：L3 只认显式结果标注（`still_valid`/`changed`/`stale`），不认 decay 数值。埋点新增 `labeled_completed`（D8），口径 = 滚动 7 天窗口内 `labeled_completed / completed`；窗口内完成复审 **< 10 次不判定**（样本不足，闸门放行，避免 warm-up 期冻结闭环）。**低于 70% → L3 停机**，interval 停在基线——宁可不动，也不能用无声的划过改写节奏；人工显式给定 verdict 时不受此限。
 
@@ -328,6 +328,15 @@ CREATE TABLE attention_observation (
 **⚠️ 两条 spike 实测发现（必须记账）**：
 1. **decay-only 反馈是永久 no-op**：调度器按 `decay ≥ 0.6` 触发复审时，复审瞬间 decay 恒为 0.6 → 判定永远 `on_time` → interval 永不修正（仿真：真值 10d、初值 7d，40 轮后仍是 7.0d）。闭环**看似在跑、实则不携带信息**。修正只在复审由别的东西触发时发生（人主动打开、项目里程碑、预算饥饿导致延迟复审）或**复审时显式标注结果**（`still_valid`/`changed`/`stale`）→ **MVP 必须把复审做成带结果标注的动作**，否则 L3 是装饰。加显式标注后：2 步收敛并稳定（15.75d vs 目标 16.67d）。
 2. **收敛目标是 `H/0.6` 而非真值 H**：复审发生在 `elapsed = 0.6×I`，要让复审落在真值 H 上需 `I* = H/0.6 ≈ 1.67H`。这是 `SURFACE_THRESHOLD=0.6` 的定义所致，不是 bug；想让复审更早发生应调 `SURFACE_THRESHOLD`，不是改 AIMD 因子。
+
+**下界修订（2026-11-06，ADR-0009，zj 拍板）**：spike 09 原始定案为 `[1d,180d]`。真实运行中发现 `review_interval=1d` 的节点触发 `too_late` 时 `1.0×0.7` 被下界夹回 `1.0`，`adapt_interval` 判定 `applied=False` 且不写 `interval_adjustment` —— 该节点的复审标注永远改不了节奏，L3 对其恒为 no-op。处置：**把 `MIN_INTERVAL_DAYS` 改为 `0.25d`（SIMULATION 占位，非 CALIBRATED）**，使 1.0d 可走 `1.0→0.7→0.49→0.343→0.25` 四步收缩；每日驱动粒度**不改动**（ADR-0007 仍每天一次）。
+
+必须同时记住四条边界，否则会把「改了一个数」误读成「闭环已跑通」：
+
+1. **`<1d` 只是数值语义，不是日内复审能力**：`list_due_for_review` 与每日驱动仍按天扫描，`0.7d` 的节点实际在下一次日扫描时到期；L1 时间锚解析器也没有小时级规则，当前 `<1d` 只能由 L3 AIMD 收缩产生。
+2. **触底没有消失，只是下移**：收敛到 `0.25d` 后 `too_late` 仍是 `applied=False` 的无操作，审计表依旧不留痕。
+3. **L2 与 L3 方向对冲**：L3 缩短 `I` 使需求 `Σ1/(0.6×Iᵢ)` 放大，L2 预算归一化会反向拉长 `I`；在 calibrating / 观测不足时可能互相抵消并污染 `budget_per_day` 估计。真实取值须走 ≥14d 埋点 + ≥3 饱和日的校准门禁，不得把 0.25d 写成 CALIBRATED。
+4. **spike 09 的历史结论未被覆盖**：`spikes/spike-09-review-interval/` 的代码与 README 保留 `[1d,180d]` 作为研究时点结论，仅追加修订说明；生产口径以本架构与 ADR-0009 为准。
 
 Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`interval_adjustment` 审计表，带 `produced_by` 可整体回滚）已回填 §5；**D8**（`attention_observation.labeled_completed`，L3 标注率闸门埋点）见 §6.5.1。见 `spikes/spike-09-review-interval/`。
 
