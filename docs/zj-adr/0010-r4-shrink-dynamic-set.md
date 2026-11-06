@@ -45,8 +45,10 @@ R4 = **注意力预算不足 → 腐化无解（rot=100%）**。Spike 01/09 + 1-
 3. **不冒充 CALIBRATED**：本终判基于已发生的 D2 归档事实，不是新校准；R4 闭环不写入
    `tuning.REGISTRY`，不写回任何 CALIBRATED 口径（沿用 EC④ 度量双轨护栏）。
 4. **与 1-19 节点关系**：本 ADR 满足 `exit_criteria[0]`（R4 三选一终判落 ADR）；
-   R4 判据完成，但 1-19 整体保持 in_progress（挂 1-26），因 R5/R6 的 CALIBRATED 升档
+   R4 判据完成，但 1-19 整体保持 in_progress（挂 1-26），因 R6 的 CALIBRATED 升档
    与 R14 触发率聚合仍需真实多日埋点（can_calibrate 门禁 3/14、1/3 未过）。
+   注：R5 已于 2026-11-06 风险册清理中作为「已交付」归档（不在 CALIBRATED 升档路径），
+   故此处仅保留 R6。
 
 ## 验证证据
 
