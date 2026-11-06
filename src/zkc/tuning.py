@@ -174,13 +174,30 @@ REGISTRY: dict[str, Parameter] = {
         _p("ROUTING_REQUIRE_DUAL_SIGNAL", True, PLACEHOLDER,
            "True=必须 LLM 与词法双信号一致才自动提交真实轨道；否则(含词法无法判定)→vague→人工。"
            "冷启动词法无训练数据时一切走人工(安全欠覆盖，非危险)，随人工定轨积累逐渐自动化"),
-        # ---- P5.2 复利度量面板（spike-07 口径，权重/目标待校准）
-        _p("METRIC_W_DENSITY", 0.25, PLACEHOLDER, "复利系数·连接密度权重（默认等权 0.25）"),
-        _p("METRIC_W_REUSE", 0.25, PLACEHOLDER, "复利系数·复用率权重（默认等权 0.25）"),
-        _p("METRIC_W_METHOD", 0.25, PLACEHOLDER, "复利系数·方法论产出权重（默认等权 0.25）"),
-        _p("METRIC_W_DECAY", 0.25, PLACEHOLDER, "复利系数·衰减可控权重（默认等权 0.25）"),
-        _p("METRIC_METHOD_TARGET", 10.0, PLACEHOLDER,
-           "方法论产出归一化目标：达到该产出数即记满分 1.0（待真实数据校准）"),
+        # ---- P5.2 复利度量面板（spike-07 口径；2026-11-06 由 PLACEHOLDER 升 SIMULATION）
+        # 校准依据（可复跑）：scripts/metric_weights_sim.py →
+        # docs/evidence/metric-weights-simulation.{json,md}。
+        # ① 真实 PG 快照 cd/rr/mo=0、dc=1.0（CF=0.25 全由归档分量撑起）→
+        #    三个权重在真实数据上完全不可辨识，**数值一律不改、只补依据**；
+        # ② 无外生偏好时真权重 ~ Dirichlet(1,1,1,1)，最小化期望平方误差的
+        #    预测权重 = 先验均值 = 等权 0.25×4；20000 样本受控仿真等权 MSE 最小；
+        # ③ target=10 由「14d 观察窗口 × 1.0/天默认预算 = 可达上界 14」的
+        #    71% 量级 + 饱和/区分度网格支撑；真实 mo=0 时所有 target 等价。
+        # 口径限制：这是「设计口径受控仿真」，不等于按真实行为校准。
+        # 升 CALIBRATED 仍须 can_calibrate 门禁（≥14d 埋点 + ≥3 饱和日）+
+        # zj 对四分量价值的显式外生排序 + 真实复用/连接密度/方法论产出分布；
+        # E8 锚2 蒸馏质量抽检是另一套度量，不得冒充本体系的校准证据。
+        _p("METRIC_W_DENSITY", 0.25, SIMULATION,
+           "复利系数·连接密度权重；SIMULATION 依据见 metric-weights-simulation.md（均匀先验 Bayes 最优等权）"),
+        _p("METRIC_W_REUSE", 0.25, SIMULATION,
+           "复利系数·复用率权重；SIMULATION 依据同上，真实快照该分量恒 0、不可辨识"),
+        _p("METRIC_W_METHOD", 0.25, SIMULATION,
+           "复利系数·方法论产出权重；SIMULATION 依据同上，真实快照该分量恒 0、不可辨识"),
+        _p("METRIC_W_DECAY", 0.25, SIMULATION,
+           "复利系数·衰减可控权重；SIMULATION 依据同上。当前该分量由归档构成，非复利产物"),
+        _p("METRIC_METHOD_TARGET", 10.0, SIMULATION,
+           "方法论产出归一化目标：达到该产出数即记满分 1.0。SIMULATION 依据：14d×1.0/d 可达上界 14 的 71% 量级 + "
+           "target 饱和/区分度网格；真实 mo=0 时所有 target 等价、不可辨识，见 metric-weights-simulation.md"),
         # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 · 1-5-4 收尾切片）
         _p("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.65, SIMULATION,
            "discover k-NN 近邻被纳入更高维聚合的最低余弦相似度（sim=1-余弦距离，1=完全相同）。"

@@ -107,6 +107,12 @@ def compounding_factor(
             tuning.get("METRIC_W_DENSITY"), tuning.get("METRIC_W_REUSE"),
             tuning.get("METRIC_W_METHOD"), tuning.get("METRIC_W_DECAY"),
         )
+        # 复利系数是「归一加权合成」：tuning 四个权重之和必须恒为 1。
+        # 这是默认路径的机械不变量，防止改阈值时把合成值悄悄变成放大/缩小器。
+        if abs(sum(weights) - 1.0) > 1e-9:
+            raise ValueError(
+                f"METRIC_W_* 必须归一（和为 1），当前 {weights}；zkc.tuning 是唯一来源"
+            )
     if method_target is None:
         method_target = tuning.get("METRIC_METHOD_TARGET")
     mo_norm = min(1.0, mo / method_target) if method_target else 0.0

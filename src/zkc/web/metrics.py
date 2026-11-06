@@ -80,7 +80,8 @@ def register_metrics_routes(app, store: Storage) -> None:
         report = M.metrics_report(store)
         # 附带口径说明与依赖状态，便于消费方核对（而非只看一个数）
         report["notes"] = {
-            "compounding_factor": "connection_density·w + reuse_rate·w + method_norm·w + decay_controllability·w（权重/目标见 zkc.tuning，默认等权）",
+            "compounding_factor": "connection_density·w + reuse_rate·w + method_norm·w + decay_controllability·w（等权 0.25×4 + method_target=10 饱和归一；权重/目标 source=SIMULATION，见 zkc.tuning）",
+            "compounding_factor_caveat": "权重/目标仅为受控仿真口径、非真实行为校准；cd/rr/mo 结构性为 0 时合成值不代表复利健康度，复盘须看四个分量",
             "decay_controllability_precondition": "需满足注意力预算 n/(0.6×interval)，否则预期偏低",
             "attention_budget_demand": _budget_demand(store),
         }
