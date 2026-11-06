@@ -130,9 +130,14 @@
           "q": "E2–E5 完成后 1-1 的判据复核结果（2026-11-05 收口）？",
           "answer": "1-1 保持 in_progress，三条退出判据不变、不因 E 链落地而勾销。真实 PG 仪表复核（2026-11-05 13:25 UTC）：① 连续活跃日 1/7（60d 内 1 天，latest_ok=true）；② 标注率 gate=open（completed=3 < min_samples 10，rate=null）；③ budget 28d=3.0 provisional、cv=0.0 但 converged=false（can_calibrate=false：需 ≥14 天埋点 / ≥3 饱和日，现有 1/1）。all_exit_criteria_met=false，与开工前一致，未被本轮 523 条测试污染（days_with_observation 仍为 1）。**E2–E5 是 MCP 工程实现，不产生也不得回填 attention_observation；其完成不构成 E1 达成证据。**拓扑变化：e1 由 blocks 改 informs 后，critical-path 从 1-1→1-2→1-3→1-4→1-5 变为 1-8→1-18，E1 不再是 E 链的调度瓶颈，但仍是产品验收上的未闭合项，只能靠 zj 本机每日真值收口 + 人工 decide 标注自然收敛。",
           "note": "下一步由 zj 决定：继续每日跑每日驱动累计活跃日，或先推进 E6–E9 / D 组独立节点；均不改写本节点状态"
+        },
+        {
+          "q": "11-04/11-05 共 6 条标注被判有效后，E1 三判据的当前读数如何认定？",
+          "answer": "zj 2026-11-06 裁决 6 条标注有效（见 1-13 裁决），按此 E1 读数：连续活跃日=2（11-04、11-05 各交付复审队列 completed=3）；标注率闸门=100%（labeled/completed=6/6 ≥70%）；budget 收敛(CV≤10% 且 28d confidence=observed)尚未达成（仅 2 天观测）。结论：标注率与活跃日读数有效，但 E1 仍 pending（未达连续≥7活跃日、budget 未收敛）。节点保持 in_progress，不勾 completed。该读数 override 了 1-7 默认伪标注假设。",
+          "note": "仅 informs，不建 blocks 到 1-17（避免倒挂）；与 1-17 共享同一批真实 decide 数据。"
         }
       ],
-      "notes": "",
+      "notes": "当前真实读数（2026-11-06 19:45 GMT+8，zkc meter）：\n① 连续 ≥7 活跃日（空队列日豁免）：2/7 —— 窗口活跃 2、含最新日=True、历史最长 2、60d 内活跃 2 → 连续串仍活但仅 2 天。\n② 标注率闸门 ≥70%：N/A（7d completed=6<10，gate=open，warm-up 放行，非达标）。\n③ budget 收敛：✗（28d 估计 3.0、confidence=provisional、饱和样本 [3]、cv=0.0）。\n活跃日语义（calibration.py:_classify / _evaluate_active_streak）：active=completed≥1；missed=completed=0 且 queue_remaining>0（断签、重置连续窗口）；excused=completed=0 且 queue_remaining=0（空队列日，不破不断）；无观测日按断签处理。\n⚠️ 紧迫：11-06 当日尚无 observation 行。若今日不真实 decide（completed≥1）并跑 zkc daily 收口，11-06 成 gap → 11-04/11-05 的 2 日连续串于次日断签重置。\n每日动作（zj 真人）：review UI 或 zkc decide 做 ≥1 条真实复审 → zkc daily 收口当天快照（写 observation 行）。校准门禁另需 ≥3 个「饱和日」= 当天 queue_remaining>0（别把队列清空）。",
       "layer": "plan",
       "exit_criteria": [
         "连续 ≥7 活跃日运行已交付复审队列",
@@ -382,34 +387,102 @@
     "1-10": {
       "id": "1-10",
       "uid": "01a1a61762e1-f58821a5d9",
-      "label": "co-work(ZAgentic #234): E 链推进走 canonical reconcile+apply 路径，向 issue 回填真实一致性证据",
-      "status": "pending",
+      "label": "co-work(ZAgentic #234): 隔离 fixture 验收 canonical reconcile+apply 与 direct bypass 收口，产出可复核一致性证据（不依赖 E1、不计入产品完成度）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": "本路线图推进 E1–E5 链时，所有节点状态变更走 reviewed reconcile→changeset apply 路径（非 direct promotion），天然产出 #234 要求的真实 canonical-state 一致性证据。E1 完成时即在 #234 评论回填证据摘要（canonical vs direct 对照）。",
+      "decisions": [
+        {
+          "q": "开工 1-10 的 scope gate 分类与被验收 artifact 是什么？",
+          "answer": "Acceptance/evaluation（zj 2026-11-06 选定 1-10~1-12 技能验收路线）：ZKC 项目代码/依赖/产品文档全程只读；被验收 artifact = zj-roadmap-driven 的 canonical reconcile→changeset apply 路径、promote --accept 兼容入口与 direct bypass 拒绝，对照 ZAgentic #234 的 5 条验收标准。本轮只开工 1-10，1-11/1-12 保持 pending。",
+          "note": "E1(1-1) 仍 in_progress；1-10 两条 exit_criteria 目前均不满足，本轮只做隔离 fixture probe 与可复核证据留存，不勾 completed、不向 #234 评论、不改 ZKC 代码；probe 通过不等于 ZKC 产品完成度。"
+        },
+        {
+          "q": "#234 验收标准在隔离 fixture 上的实测结论是什么？",
+          "answer": "标准 1/2/3 与 Markdown 发布失败 fault injection 均通过：无 approved digest 的 direct accept 被 E_USAGE 拒绝、错误 digest 被 E_APPROVAL_MISMATCH 拒绝；reconcile+apply 与 promote --accept 兼容入口产生相同 revision 与 changes；single/sqlite 两 carrier 的 receipt、11 项派生查询及规范化后 md 逐字节一致；after-commit-before-view 只产生 stale view、canonical 已提交且同 key 幂等重跑可修复视图。证据与命令留在 tmp/skills-outputs/roadmap-driven/1-10/evidence.md。标准 4/5 属 ZAgentic 上游全仓测试与计划 Review，本轮未验收。",
+          "note": "ZKC 侧 mcp-gate 6 OK / invariant 0 violations / 两套 authority 门禁 clean / git diff --check rc=0；验收未改 ZKC 代码、依赖、产品文档。"
+        },
+        {
+          "q": "真实 E 链历史与 1-10 label/notes 不符，如何处置？",
+          "answer": "如实隔离、不静默归为已接受偏差：真实 docs/roadmap/roadmap.json 的 trace list 为空，E1–E5 链历史状态变更走普通 update，既非 canonical reconcile+apply 也非 direct promotion。1-10 notes 的「E 链推进走 canonical 路径」是立项设想，不是历史事实；fixture probe 不得冒充真实 E 链一致性证据向 #234 回填。本轮不勾 completed，节点保持 in_progress，等 zj 裁决。",
+          "note": "1-10 EC① E1 未完成且未获 #234 评论授权；EC②「无 direct promotion 写入」字面成立，但成立原因是根本没有 promotion 写入，与 notes 设想不同。"
+        },
+        {
+          "q": "1-10 本轮为什么保持 in_progress，下一步是什么？",
+          "answer": "两条 exit_criteria 均未满足，验收路线的完成标准是隔离 fixture 证据而非产品交付；本轮只完成 probe 与可复核证据留存。下一步三选一由 zj 拍板：A 等 E1 完成后，以明确标注「fixture 非真实 E 链」的证据向 #234 评论回填并勾节点；B 修正 1-10 label/notes/判据，把验收对象正式改为 fixture probe、去掉对 E1 的依赖；C 保持挂起，转 1-11 只读回放样本或 1-12 reference Placement 验收。1-11/1-12 本轮保持 pending。",
+          "note": "不自动向外部 issue 写入、不自动 commit/push。"
+        },
+        {
+          "q": "zj 选 B 后，1-10 的验收对象与完成口径如何修订？",
+          "answer": "把验收对象从「真实 E 链 canonical 证据 + E1 完成后回填 #234」正式改为「隔离 fixture probe + 可复核一致性证据」，去掉对 E1 的依赖；同步重写 label / notes / exit_criteria。completed 只表 fixture probe 收口，不表 #234 已回填或已验收收口，也不构成 ZKC 产品行为/正确性证据；1-10~1-12 仍不计入 ZKC 产品完成度。前一条决策的三选一收敛为 B。",
+          "note": "依据 2026-11-06 只读核查：真实 roadmap trace list 为空，E1–E5 链历史走普通 update，原 label/notes 的 canonical 路径是立项设想而非事实；#234 标准 4/5 属 ZAgentic 上游，不在本节点验收范围。"
+        }
+      ],
+      "notes": "2026-11-06 按 zj 选 B 修订：验收对象正式改为隔离 fixture probe，去掉对 E1 的依赖。历史事实更正：真实 docs/roadmap/roadmap.json 的 trace list 为空，E1–E5 链状态变更走普通 update，既非 canonical reconcile+apply 也非 direct promotion；原 label/notes 的「E 链走 canonical 路径、E1 完成时回填 #234」是立项设想，不是历史事实。实测：#234 标准 1/2/3 与 Markdown 发布失败 fault injection 在 fixture 上通过（标准 4/5 属 ZAgentic 上游未验收），证据见 tmp/skills-outputs/roadmap-driven/1-10/evidence.md。边界：fixture probe 不得冒充真实 E 链一致性证据；向 #234 评论回填属外部写操作、须 zj 显式授权且标注 fixture 口径，本节点完成状态不代表 #234 已回填或已收口；1-10~1-12 不计入 ZKC 产品完成度。e5(1-10→1-1 informs) 保留作历史来源追溯，不表达调度依赖。ZKC 项目代码/依赖/产品文档保持只读。",
       "layer": "plan",
       "exit_criteria": [
-        "E1 完成且已向 #234 评论回填 canonical reconcile+apply 真实证据",
-        "E 链全程无 direct promotion 写入"
-      ]
+        "隔离 fixture 上 #234 标准 1/2/3 与 Markdown 发布失败 fault injection 通过，命令/输出/结论落在 tmp/skills-outputs/roadmap-driven/1-10/evidence.md 可复核",
+        "验收结论与 ZKC 产品完成度分开报告；如实记录真实 E 链历史走普通 update、trace list 为空，fixture 不冒充真实 E 链一致性证据",
+        "向 #234 回填须 zj 显式授权且评论标注「fixture probe 非真实 E 链」；本节点完成状态不代表 #234 已回填或已验收收口",
+        "ZKC 项目代码/依赖/产品文档保持只读；mcp-gate / invariant / 两套 authority 门禁 clean"
+      ],
+      "rounds": 1
     },
     "1-11": {
       "id": "1-11",
       "uid": "01a1a61763fe-beeee464b1",
-      "label": "co-work(ZAgentic #235): 将本 roadmap.json 置为只读副本进 tmp/skills-outputs/ 供回放；另补 ZBrain/ZAgentic 两份样本",
-      "status": "pending",
+      "label": "co-work(ZAgentic #235): ZKC 内交付 roadmap 只读副本 + 本仓库脱敏内容供回放（不跨项目取样、不计入产品完成度）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": "本 roadmap.json 即 #235 要求的『小型 JSON + Decisions + 依赖边』回放样本之一。若 #235 触发回放，须拷为只读副本进 tmp/skills-outputs/（源文件保持 byte-identical）。另两份样本拟从 ZBrain / ZAgentic 补，凑齐三份真实 roadmap。",
+      "decisions": [
+        {
+          "q": "开工 1-11 的 scope gate 与项目边界是什么？",
+          "answer": "Acceptance/evaluation（co-work 技能验收）：ZKC 项目代码/依赖/产品文档只读。zj 2026-11-06 17:27 新边界：只在 ZKC 本项目内处理，不得直接修改非本项目（ZBrain / ZAgentic）；需要外部项目做任何变更时先问 Human 怎么处理。据此：EC①（本 roadmap.json 只读副本进 tmp/skills-outputs/）在 ZKC 内完成；EC②（ZBrain/ZAgentic 各补一份真实 roadmap 样本）涉及跨项目，本轮不擅自取样或改写，转为 Human 决策项。反馈给 ZAgentic 的两个体验改进点先在 ZKC 内成文待转交，送达方式由 Human 决定。",
+          "note": "被验收 artifact = 三份真实 roadmap 只读副本与 #235 回放前置准备；#235 全量回放验收（migrate-types / Placement / reconcile / parity 报告）属 ZAgentic 上游 S4，不在 ZKC 本节点范围。1-11 保持 in_progress 直到 EC② 由 Human 给出处置。"
+        },
+        {
+          "q": "EC① 在本项目内的完成证据是什么？",
+          "answer": "2026-11-06 17:28 在 ZKC 内把 docs/roadmap/roadmap.json 拷成 tmp/skills-outputs/roadmap-driven/1-11/zkc-roadmap.source.json（chmod 444 只读）；源与副本 sha256 同为 86061b9916a677aff14936b689c1757bfad314b0471f959420e7a94b42400d5e，复制前后源 byte-identical（116319 字节）。CLI 只读复核 28 nodes / 95 decisions / 含 blocks 与 informs 边，符合 #235 第 1 档「小型 JSON + Decisions + 依赖边」。产物说明见同目录 README.md。",
+          "note": "全过程未触碰 ZBrain / ZAgentic 任何文件；#235 全量回放属上游 S4，不在本节点范围。"
+        },
+        {
+          "q": "EC② 为什么阻塞，如何处置？",
+          "answer": "EC② 要 ZBrain / ZAgentic 各一份真实 roadmap 样本，按 zj 17:27 边界「只在 ZKC 本项目内处理、需要外部项目变更先问 Human」，本轮不跨项目取样、不改写、不发 issue。转为 Human 决策项：A 授权只读复制两份真实样本（只进 ZKC tmp/skills-outputs/，不动源文件）；B 由对方项目 Human 提供副本；C 修正 1-11 判据使 ZKC 内自足。1-11 保持 in_progress，不勾 completed。",
+          "note": "#235 三档输入中 ZKC 已覆盖第 1 档；第 2/3 档需外部项目。禁止用伪造或构造样本凑数（外生锚通则）。"
+        },
+        {
+          "q": "给 ZAgentic 的两个体验改进点如何反馈？",
+          "answer": "按 zj 口述整理成 ZKC 内文件 tmp/skills-outputs/roadmap-driven/1-11/feedback-to-ZAgentic.md（含可直接粘贴正文、本会话实证、边界声明），本轮未直接写入 ZAgentic 仓库或 issue。送达方式由 Human 决定：手动转交 / 授权在 ZAgentic 发 issue 评论或新建 issue / 其他通道。任何 ZAgentic 侧变更均不在 ZKC 执行。",
+          "note": "反馈内容：① 动态编排触发器过于隐晦，依赖 Human 主观意识到并显式触发，Human 与其他 Agents 容易忽略；② 初始 roadmap 就绪后需要编排时缺少合理方便的路径，现状是先询问 Agent 这个 skill 的具体操作方式、再由 Human 处理。"
+        },
+        {
+          "q": "反馈送达方式的 Human 裁决与执行结果是什么？",
+          "answer": "zj 选 C：授权在 ZAgentic 新建 issue。已创建 jununfly/ZAgentic#242（标题「zj-roadmap-driven 使用反馈：初始 roadmap 就绪后动态编排触发器隐晦、编排入口不便」，状态 OPEN），正文用 ZKC 内 feedback-to-ZAgentic.md 的可粘贴稿 + 本会话实证 + 边界声明。除该 issue 外未对 ZAgentic 做任何写入（不改文件、代码、仓库）。",
+          "note": "外部写动作经 Human 明确授权；ZKC 侧未改 zj-roadmap-driven 本体，也未在 ZKC 长期文档中引用该过程产物。"
+        },
+        {
+          "q": "EC② 的 Human 裁决与产出是什么？",
+          "answer": "zj 裁决「提供与本仓库脱敏后的内容」：不跨项目取样，改由 ZKC 本仓库 roadmap 脱敏后的内容提供。已在 ZKC 内产出 zkc-roadmap.redacted.json（确定性脱敏：替换绝对路径 / 仓库 URL / issue 引用 / hash / 项目名 / 人名，保留结构、UID、status、edges、decisions 计数，CLI validate 通过）+ redaction-notes.md（规则、命中数、hash、边界）。",
+          "note": "如实隔离：脱敏内容是 ZKC 一份真实 roadmap 的脱敏投影，不等价于原判据要求的「ZBrain / ZAgentic 各一份真实 roadmap 样本」，#235 三档输入覆盖仍不完整；EC② 原判据未字面达成，1-11 保持 in_progress，不勾 completed。若 zj 明确改判据，再按 1-10 B 同构收口。禁止构造样本冒充真实外生锚。"
+        },
+        {
+          "q": "zj 选 C 后，1-11 的验收判据与完成口径如何修订？",
+          "answer": "按 1-10 B 同构处理：验收对象从「ZKC 只读副本 + ZBrain/ZAgentic 各一份真实样本」改为「ZKC 内自足：真实 roadmap 只读副本 + 本仓库脱敏内容」，去掉跨项目取样要求；重写 label / notes / exit_criteria 并勾 completed。completed 只表 ZKC 内交付收口，不表 #235 全量回放验收完成、不表三份真实样本齐备，也不构成 ZKC 产品行为或正确性证据；1-10~1-12 仍不计入产品完成度。",
+          "note": "依据 zj 2026-11-06 17:40 选 C；Human 17:27 边界「只在 ZKC 内处理」+ 17:30 裁决「提供与本仓库脱敏后的内容」。如实隔离：脱敏投影不等于 ZBrain/ZAgentic 真实样本，#235 三档只覆盖第 1 档。"
+        }
+      ],
+      "notes": "2026-11-06 按 zj 选 C 修订（与 1-10 B 同构）：验收对象改为 ZKC 内自足——真实 roadmap 只读副本 + 本仓库脱敏内容，去掉原判据「ZBrain / ZAgentic 各补一份真实 roadmap 样本」。Human 依据：17:27 边界「只在 ZKC 本项目内处理，不直接修改其他项目；需要外部项目变更先问 Human」；17:30 裁决「提供与本仓库脱敏后的内容」。最终产物在 tmp/skills-outputs/roadmap-driven/1-11/：zkc-roadmap.source.json（源 byte-identical、0444）、zkc-roadmap.redacted.json（确定性脱敏、0444）、redaction-notes.md（规则/命中/残留/边界）、README.md（清单与 hash）、feedback-to-ZAgentic.md（两条体验改进点）。外部动作仅经授权新建的 ZAgentic #242。如实隔离：脱敏内容是 ZKC 一份真实 roadmap 的脱敏投影，不等价于 ZBrain/ZAgentic 真实样本，#235 三档输入只覆盖第 1 档；#235 全量回放验收属上游 S4。completed 只表 ZKC 内交付收口，不表 #235 已验收收口、不计入 ZKC 产品完成度（ADR-0008）。",
       "layer": "plan",
       "exit_criteria": [
-        "本 roadmap.json 已作为只读副本进入 tmp/skills-outputs/ 供 #235 回放",
-        "ZBrain、ZAgentic 各补一份真实 roadmap 样本（共三份）"
-      ]
+        "ZKC docs/roadmap/roadmap.json 只读副本进入 tmp/skills-outputs/roadmap-driven/1-11/，源 byte-identical、副本 0444，最终快照 hash 记于 README 并可复核",
+        "本仓库脱敏内容产出：确定性规则 + 命中/残留扫描 + 脱敏后 CLI validate/stats 与源结构一致；不跨项目取样、不构造样本冒充真实外生锚",
+        "验收结论与 ZKC 产品完成度分开报告；明确 #235 三档只覆盖第 1 档、全量回放属 ZAgentic 上游 S4，本节点完成状态不表 #235 已验收收口",
+        "ZKC 项目代码/依赖/产品文档保持只读；跨项目动作（issue #242）经 Human 明确授权；mcp-gate / invariant / 两套 authority 门禁 clean"
+      ],
+      "rounds": 1
     },
     "1-12": {
       "id": "1-12",
@@ -430,7 +503,7 @@
       "id": "1-13",
       "uid": "01a1a77444aa-0db9718b33",
       "label": "D1 L3 AIMD 下界触底：1.0d 节点反馈恒 no-op，拍板处置",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -444,6 +517,129 @@
           "q": "D1 本轮为何未拍板、三选一选项与前提变化？",
           "answer": "D1 是诊断+决策节点，EX2 明确要求 zj 三选一拍板，本轮不代拍，保持 pending。三选项：(a) 允许 interval <1d（改 MIN_INTERVAL_DAYS 下界 + 红绿测试）；(b) 保持 1.0d 下界并如实承认 L3 对触底节点失效；(c) 触底节点改走其它反馈路径（不靠 interval 收敛）。**前提已变化**：节点 notes 的实证来自 27 条导入语料的 1.0d 节奏「任何 verdict 都改不了节奏、永久每日到期」，而 D2 本轮已把这批语料（真实 24 条）归档移出调度回路，due 由 24 降为 0 —— 该现象不再是当前系统的活跃症状。建议 zj 重新裁定优先级：先观察清理后是否还有真实条目触底，再决定是否需要改下界；若判定为纯架构语义澄清，可直接选 (b) 并落 ADR，不动代码。",
           "note": "不静默沿用旧数字：27 条为历史快照，真实 PG 实测 24 条，见 D2 证据文档"
+        },
+        {
+          "q": "开工 1-13 的 scope gate 分类与本轮边界？",
+          "answer": "Product execution（ZKC 自身产品路线节点，诊断+决策，不改 E1 三判据、不改 E1 目标）。本轮只做只读诊断 + 过程决策落盘：不改代码、不改 tuning REGISTRY、不写 ADR、不动 PG 数据、不代 zj 拍板三选一。理由：EX2 明确要求 zj 本人拍板；EC①（下界语义结论落 ADR）与 EC②（三选一处置落盘）都必须以 zj 的真实裁决为外生锚，Agent 先落 ADR 或先改代码等于把未拍板结论冒充定案。本轮节点保持 in_progress 等裁决；已有未提交变更（1-10 B / 1-11 C 收口）与 1-13 改动叠加，不自动 commit/push。",
+          "note": "2026-11-06 17:5x 开工；工作树 HEAD 7b3c102，docs/roadmap/roadmap.json + ROADMAP.md 已有未提交改动（属上轮 1-10/1-11 会话），tmp/ 未跟踪。"
+        },
+        {
+          "q": "EC① 下界语义与真实运行证据（只读诊断）结论是什么？",
+          "answer": "① 语义：MIN_INTERVAL_DAYS=1.0 位于 tuning.py:96，source=SIMULATION，属 spike09 仿真定下的可调阈值，不是硬不变量；架构 §6.5 与 spike09 README 均把钳制写作 [1d,180d]，但仓库内无任何 ADR 专门声明 1d 为不可变约束。反向约束来自 ADR-0007：每日驱动每天只做一次真值收口 + 人工 decide，故 1d 实际是调度最小粒度，<1d 在当前运行形态下没有调度载体。② 代码路径：scheduling.py:78 clamp_days 把 1.0×0.7=0.7 夹回 1.0；:230 adapt_interval_math 因此 applied=False；:570-579 adapt_interval 在 applied=False 时不写 audit_interval，故触底反馈连审计痕迹都不留。③ 真实 PG 只读实测（2026-11-06 17:5x GMT+8）：活跃 40 / 活跃动态 37 / 1d 3 条 / <1d 0 条 / interval NULL 0 条 / 归档 24 条；活跃动态 interval 分布 = 3×1d、27×7d、1×21d、1×30d、1×90d、1×120d、1×150d、2×180d；due_now=0；attention_observation 2 行（11-04 completed=3/labeled=3/q=27，11-05 completed=3/labeled=3/q=0）；interval_adjustment 61 行全为 kind=baseline，feedback=0 且 old==new 行=0 —— 真实库里 L3 反馈从未产生过任何一次有效 interval 变更。",
+          "note": "证据口径：以上均为 SELECT 只读查询，未跑 refresh_decay、未写 decay_score、未写标注或埋点；原始 notes 的 27 条为历史快照，决策② 已标注不静默沿用。"
+        },
+        {
+          "q": "决策② 的「D2 归档后现象不再活跃」前提是否成立？有何偏差需隔离？",
+          "answer": "不成立，且发现 D2 口径缺口，如实隔离不静默接受。① 真实 PG 复核：1d 且动态轨的节点共 27 条，created_at 全部为 2026-11-01 13:28:11 UTC、title 均为「日期-文章名」导入语料格式；其中 24 条已归档（decay=1.0、last_reviewed_at=2026-11-01 13:28:20 UTC），另 3 条仍活跃且 archived_at IS NULL，id = 34d25877-5ca6-4e2b-a637-cc41dbcc862b / 24cc8c52-5edc-4287-b7f3-3e23f465ec51 / f6c29b2d-2d40-40e8-a5bd-9ea1f9354cda，特征为 interval_source=auto、baseline_interval=review_interval=1d、last_reviewed_at=2026-11-05 17:09:37 UTC（=11-06 01:09 GMT+8，正是 11-06 三条 zj verdict 的写入时刻）。② 因此 27=24+3 的「数字偏差」应解释为 D2 识别口径（动态 + decay=1.0 + interval=1d + last_reviewed_at 为 11-01）只圈到 24 条，而非历史 notes 记错；D2 证据文档「本轮真实 PG 复核为 24 条」的表述应限定为「符合口径的 24 条」。③ 这 3 条仍按 1d 每日到期（当前 due_now=0 只因 mark_reviewed 复位后未满 1 天），任何 verdict 依旧 applied=False，故 1-13 描述的缺陷仍是当前系统的活跃症状，不是历史遗留。④ 连带偏差：1-17 决策称 11-06 为「今日 3 条真实到期条目」，但这 3 条是导入语料残留；按 1-7 notes 既有口径「导入语料不是 zj 真实消费的知识，对其 verdict 属伪标注」，这 3 条与 11-04 那批 3 条是否仍算有效外生锚、是否影响 E1 活跃日 1→2 与累计 labeled 3→6，必须由 zj 裁决。本轮不改任何埋点、不改 1-1 / 1-17 状态、不擅自归档这 3 条（归档属 PG 写操作且会改变 E1 数据来源），也不把这批标注冒充真实消费证据；残留语料处置需另开切片，不在 1-13 内顺手做。",
+          "note": "证据：SELECT group by archived_at 对比 1d 节点批次 + created_at / title / interval_source / last_reviewed_at 逐条核对；全程只读，未跑 refresh_decay。"
+        },
+        {
+          "q": "三选一各选项的代价与 Agent 建议（不代拍板）？",
+          "answer": "(a) 允许 interval <1d：要改 tuning.py:96 下界、clamp_days 语义、架构 §6.5 与 spike09 README 的 [1d,180d] 表述、红绿测试与全量套件；但 ADR-0007 每日驱动每天只扫一次，<1d 无调度载体，0.7d 只会把同一条并进次日扫描或一天内多次到期，AIMD 会一路缩到新下界后再次触底，需求公式 n/(0.6×I) 还会放大需求、污染 budget 估计；且没有任何真实外生锚证明需要 <1d。代价最高、收益最低。(b) 保持 1.0d 下界并如实承认 L3 对触底节点失效：不动代码（EC③ 不触发），落 ADR 明确「1d = 每日驱动最小调度粒度」「L3 在触底节点无信号」「触底节点应退出调度回路，沿用 D2 归档范式」，把 no-op 从缺陷改记为已知限制；E1 三判据不动。代价：须接受对 1d 节点标注不产生收敛，且必须靠真实语料清理防预算噪声。(c) 触底节点改走其它反馈路径：不靠 interval 收敛，改为触底后转归档/蒸馏/HITL 一次性裁决，或把 verdict 映射到 baseline/priority；语义最干净但范围最大，需新契约 + 新测试，且会触及架构 §6.5 的 L3 定义，须 zj 先划边界。Agent 建议 = (b)：每日驱动粒度使 <1d 不可执行；真实库 interval_adjustment 的 feedback 行数为 0，说明 L3 尚未在真实数据上跑通，此时改代码等于在无外生锚的情况下调参；b 只需落 ADR + 澄清文档，风险最低。但残留 3 条导入语料与 6 条标注的有效性，是比下界更紧迫的真问题，建议优先裁决。最终三选一仍由 zj 本人拍板，Agent 不代选、不预写 ADR、不预改代码。",
+          "note": "本轮完成标准只到过程态：诊断与三选项代价落盘、节点置 in_progress、render 更新 md。EC① 的 ADR 结论、EC② 的三选一处置、EC③ 的红绿测试均未达成，1-13 不勾 completed。"
+        },
+        {
+          "q": "zj 对三选一的裁决是什么？Agent 建议被推翻后如何记账？",
+          "answer": "zj 2026-11-06 拍板选 **(a) 允许 interval <1d**，推翻 Agent 的 (b) 建议；EC②「三选一处置落盘」由此达成（结论 = a）。如实记账、不静默把风险归为已接受：a 的四条结构性约束必须在实施切片里显性解决 —— ① ADR-0007 每日驱动每天只扫一次，<1d 无日内扫描载体，0.7d 实际仍被并进次日到期；② AIMD_DOWN=0.7 会连续把 1.0d 缩到新下界后再次触底，a 只是把触底点下移，并未消除 no-op；③ 需求公式 n/(0.6×I) 随 I 变小而放大，L2 预算归一化会反向拉长 interval，与 L3 缩短方向对冲，且 budget 估计会被污染；④ 架构 §6.5 与 spike09 README 的「钳制 [1d,180d]」是已定案表述，改写必须标注为后续修订、不得静默覆盖历史结论。另：MIN_INTERVAL_DAYS 是 SIMULATION 参数，改值只是口径变更，绝不写成 CALIBRATED，校准仍走 ≥14d 埋点 + ≥3 饱和日门禁。EC①（下界语义结论落 ADR）与 EC③（红绿测试 + 全量套件）尚未达成，1-13 保持 in_progress，不勾 completed。",
+          "note": "裁决来源：本轮 AskUserQuestion 由 zj 本人选择 a；Agent 不代选、不因推荐被推翻而弱化风险记录。"
+        },
+        {
+          "q": "zj 对 D2 残留 3 条语料与 6 条标注有效性的裁决？",
+          "answer": "zj 2026-11-06 裁决 = **先只记录，不动数据**。按此执行：不归档 3 条残留（id 见前一条决策）、不改任何 attention_observation / labeled_completed 埋点、不改 1-1 与 1-17 状态、不回溯或剔除 11-04/11-05 两批共 6 条标注。偏差继续挂起：这 6 条标注是否算有效外生锚、是否影响 E1 活跃日 1→2 与 P6.4 累计 6/20，仍为未裁决项；后续若 zj 要清理或重判，须另开切片并显式授权（归档属 PG 写操作、改埋点属外生锚口径变更）。本轮对 PG 全部为 SELECT 只读，未跑 refresh_decay、未写 decay_score。",
+          "note": "与 zj 选 a 相互独立：a 是下界处置，本条是数据来源偏差，不因选 a 而顺手清理语料。"
+        },
+        {
+          "q": "选 a 后实施切片的待定参数与施工边界是什么？本轮为何不改代码？",
+          "answer": "本轮不改代码，理由是 a 有两个工程参数尚未由 zj 给定，Agent 不猜阈值：① **新下界数值** —— 建议 0.25d 作 SIMULATION 占位（依据 AIMD_DOWN=0.7，使 1.0d 能走 4 步收缩 1.0→0.7→0.49→0.343→0.25 后触底），也可选 0.5d（仅 1 步）/ 0.1d 或仅保正数；数值须 zj 拍板，且只标 SIMULATION 不写 CALIBRATED。② **是否同步改每日驱动粒度** —— ADR-0007 现在每天一次，若不同步改成日内多次扫描，<1d 就只是数值语义、实际仍按天到期，必须在 ADR 里如实声明，不得宣称已支持日内复审。施工清单（下一轮，TDD 小切片）：红→绿覆盖 1.0d 触底路径（clamp_days(0.7) 不再夹回 1.0 / adapt_interval_math applied=True / adapt_interval 写 audit_interval / L2 与 L3 方向对冲的回归）；改 tuning.py:96 + note；架构 §6.5 与 spike09 README 的 [1d,180d] 标注为后续修订而非静默覆盖；新增 ADR 落 EC①（明确下界语义、每日驱动粒度约束、L2/L3 对冲与预算污染风险）；跑全量套件 + mcp-gate + invariant + 两套 authority 门禁 + git diff --check，最后 render。1-13 保持 in_progress：EC② 已达成（a 落盘），EC① ADR 与 EC③ 红绿测试/全量套件未达成。",
+          "note": "下一步只需 zj 回一个下界值 + 是/否改日内调度粒度，即可开工实施切片；本轮所有 PG 操作仍为只读。"
+        },
+        {
+          "q": "zj 给出 a 的两个实施参数后，实施切片结论与验证证据是什么？",
+          "answer": "zj 2026-11-06 18:3x 给出：新下界 **0.25d**、**不同步改日内调度**（每日驱动仍一天一次）。按 TDD 小切片落地：①  新增 5 条（纯函数 3 + 内存编排层 2），红态 3 红 2 绿（下界 1.0 时 1.0d 的 too_late 返回 applied=False、feedback 审计 0 行）；②  MIN_INTERVAL_DAYS 1.0→0.25，source 保持 SIMULATION、note 写明依据 + 非 CALIBRATED + 每日驱动不改；绿态 5/5、该文件 42 tests OK；③ 全量 {\n  \"action\": \"bulk corpus cleanup\",\n  \"matched\": 1,\n  \"archived\": 0,\n  \"dry_run\": true,\n  \"archived_at\": \"2026-11-06T10:41:20.278810+00:00\",\n  \"matched_node_ids\": [\n    \"d96bd05f-e7ee-4c21-9633-0e959017618b\"\n  ],\n  \"archived_node_ids\": [],\n  \"labeled_touched\": 0,\n  \"attention_observation_touched\": 0,\n  \"review_queue_resolved\": 0,\n  \"note\": \"识别 = 动态轨 + decay=1.0 + 1d 节奏 + last_reviewed_at=2026-11-01 + 未归档；归档只写 archived_at，退出 list_due_for_review / load_schedulable，不计入 labeled、不污染校准标注率\"\n}\ncreated database: zkc_dev_test\napplying 0001_baseline_d1_d9.up.sql ...\n  ✓ 0001 applied (sha=824880c46260)\napplying 0002_node_history.up.sql ...\n  ✓ 0002 applied (sha=4d7dad018d7d)\napplying 0003_version_seq.up.sql ...\n  ✓ 0003 applied (sha=1bce41783d34)\napplying 0004_proposal_log.up.sql ...\n  ✓ 0004 applied (sha=0082fa56e234)\napplying 0005_proposal_log_seed.up.sql ...\n  ✓ 0005 applied (sha=18fb9b9647b8)\napplying 0006_proposal_log_kind.up.sql ...\n  ✓ 0006 applied (sha=83b988aa66e7)\napplying 0007_llm_call_score.up.sql ...\n  ✓ 0007 applied (sha=edd52c747c62)\napplying 0008_node_embedding_4096.up.sql ...\n  ✓ 0008 applied (sha=99f1f32281ad)\napplying 0009_task_queue.up.sql ...\n  ✓ 0009 applied (sha=69cccb49e4b7)\napplying 0010_review_queue_classify_action.up.sql ...\n  ✓ 0010 applied (sha=e35595f0da4c)\n  ✓ 0001: sha 一致 (824880c46260)\n  ✓ 0002: sha 一致 (4d7dad018d7d)\n  ✓ 0003: sha 一致 (1bce41783d34)\n  ✓ 0004: sha 一致 (0082fa56e234)\n  ✓ 0005: sha 一致 (18fb9b9647b8)\n  ✓ 0006: sha 一致 (83b988aa66e7)\n  ✓ 0007: sha 一致 (edd52c747c62)\n  ✓ 0008: sha 一致 (99f1f32281ad)\n  ✓ 0009: sha 一致 (69cccb49e4b7)\n  ✓ 0010: sha 一致 (e35595f0da4c)\nreverting 0010_review_queue_classify_action.down.sql ...\n  ✓ 0010 reverted\nreverting 0009_task_queue.down.sql ...\n  ✓ 0009 reverted\nreverting 0008_node_embedding_4096.down.sql ...\n  ✓ 0008 reverted\nreverting 0007_llm_call_score.down.sql ...\n  ✓ 0007 reverted\nreverting 0006_proposal_log_kind.down.sql ...\n  ✓ 0006 reverted\nreverting 0005_proposal_log_seed.down.sql ...\n  ✓ 0005 reverted\nreverting 0004_proposal_log.down.sql ...\n  ✓ 0004 reverted\nreverting 0003_version_seq.down.sql ...\n  ✓ 0003 reverted\nreverting 0002_node_history.down.sql ...\n  ✓ 0002 reverted\nreverting 0001_baseline_d1_d9.down.sql ...\n  ✓ 0001 reverted\napplying 0001_baseline_d1_d9.up.sql ...\n  ✓ 0001 applied (sha=824880c46260)\napplying 0002_node_history.up.sql ...\n  ✓ 0002 applied (sha=4d7dad018d7d)\napplying 0003_version_seq.up.sql ...\n  ✓ 0003 applied (sha=1bce41783d34)\napplying 0004_proposal_log.up.sql ...\n  ✓ 0004 applied (sha=0082fa56e234)\napplying 0005_proposal_log_seed.up.sql ...\n  ✓ 0005 applied (sha=18fb9b9647b8)\napplying 0006_proposal_log_kind.up.sql ...\n  ✓ 0006 applied (sha=83b988aa66e7)\napplying 0007_llm_call_score.up.sql ...\n  ✓ 0007 applied (sha=edd52c747c62)\napplying 0008_node_embedding_4096.up.sql ...\n  ✓ 0008 applied (sha=99f1f32281ad)\napplying 0009_task_queue.up.sql ...\n  ✓ 0009 applied (sha=69cccb49e4b7)\napplying 0010_review_queue_classify_action.up.sql ...\n  ✓ 0010 applied (sha=e35595f0da4c)\nreverting 0010_review_queue_classify_action.down.sql ...\n  ✓ 0010 reverted\nreverting 0009_task_queue.down.sql ...\n  ✓ 0009 reverted\nreverting 0008_node_embedding_4096.down.sql ...\n  ✓ 0008 reverted\nreverting 0007_llm_call_score.down.sql ...\n  ✓ 0007 reverted\nreverting 0006_proposal_log_kind.down.sql ...\n  ✓ 0006 reverted\nreverting 0005_proposal_log_seed.down.sql ...\n  ✓ 0005 reverted\nreverting 0004_proposal_log.down.sql ...\n  ✓ 0004 reverted\nreverting 0003_version_seq.down.sql ...\n  ✓ 0003 reverted\nreverting 0002_node_history.down.sql ...\n  ✓ 0002 reverted\nreverting 0001_baseline_d1_d9.down.sql ...\n  ✓ 0001 reverted\n[R15] dynamic view: 0 写（查询时计算），与重算轮数 100 无关\n[R15] 写放大系数(junction/dynamic) = 7060.0（有精确线性上界，非失控）\n[R15] junction bulk: 7060 写 / 100轮 = 7.0 写/轮/context (C=10, M=5) -> 线性有界 O(R·C·M)\n=== ZKC daily（真值收口）@ 2026-11-06T10:41:41.175194+00:00 ===\n  pushed=1 queue_remaining=1 completed=0 labeled=0\n=== ZKC decide · 待复审队列（0 条）===\n\n  标注率闸门: open (rate=None)  预算: None (none)\n=== ZKC decide b175183e-698a-440e-b61d-34dab70d233a → still_valid ===\n  verdict=on_time applied=False new_interval_days=1.0\n  reason=on_time: x1.0 correction\n  今日观测: completed=1 labeled=1\n{\n  \"as_of\": \"2026-11-06T10:41:41.176089+00:00\",\n  \"criteria\": {\n    \"c1_consecutive_active_days\": {\n      \"window_active\": 0,\n      \"required\": 7,\n      \"latest_ok\": false,\n      \"longest_window_active\": 0,\n      \"active_days_in_60d\": 0,\n      \"met\": false\n    },\n    \"c2_labeling_rate_gate\": {\n      \"rate\": null,\n      \"threshold\": 0.7,\n      \"completed\": 0,\n      \"labeled\": 0,\n      \"gate\": \"open\",\n      \"met\": false\n    },\n    \"c3_budget_convergence\": {\n      \"estimate_28d\": null,\n      \"confidence_28d\": \"none\",\n      \"saturated_samples\": [],\n      \"spread\": null,\n      \"cv\": null,\n      \"converged\": false,\n      \"met\": false\n    }\n  },\n  \"calibration_readiness\": {\n    \"days_with_observation\": 0,\n    \"saturated_days\": 0,\n    \"calib_min_days\": 14,\n    \"calib_min_saturated_days\": 3,\n    \"can_calibrate\": false,\n    \"ready\": false,\n    \"reason\": \"外生锚不足：需 ≥14 天埋点(现有 0) 且 ≥3 个饱和日(现有 0)\"\n  },\n  \"all_exit_criteria_met\": false\n} = **Ran 579 tests OK**（基线 574 + 新增 5）；④ mcp-gate 6 OK、invariant 0 violations（P1/P2/P3 全 OK）、两套 authority 门禁 0 unresolved leaks / clean、 rc=0；⑤ 架构 §6.5 的 L1 clamp 与 L3 钳制区间改为 0.25d 并新增「下界修订」小节（四条边界），spike09 README 保留原 [1d,180d] 研究时点结论、加注记与 §7 后续修订，spike 代码常量与既有 44 tests 口径不动；⑥ 新增  落 EC①（背景 / 决策 / Considered Options / Consequences / 验证证据）。",
+          "note": "全程未动 PG 数据、未改 attention_observation、未归档 3 条残留语料、未代写任何 verdict；本轮对 PG 仅 SELECT 只读。改动文件：tuning.py、tests/test_scheduling.py、架构 v1.2、spike09 README、ADR-0009（新）、roadmap 过程态两份。"
+        },
+        {
+          "q": "1-13 三条 EC 是否达成、completed 口径如何限定？",
+          "answer": "三条 EC 全部达成，节点勾 completed：EC① 下界语义结论落 ADR（ADR-0009 明确 1.0 是 SIMULATION 阈值而非硬不变量、1d 实为 ADR-0007 每日驱动的最小粒度、<1d 只是数值语义）；EC② 三选一处置落盘（zj 选 a）；EC③ 红绿测试覆盖 1.0d 触底路径 + 全量 579 tests OK。**completed 口径限定**：只表「诊断 + 决策 + 代码/文档落地」收口，不表 L3 已校准（0.25d 是 SIMULATION 占位、非 CALIBRATED），不表日内复审可用（每日驱动仍一天一次），不表触底已消除（0.25d 后 too_late 仍 no-op、审计不留痕），不表 L2/L3 方向对冲与预算污染风险已解决，不表 D2 残留 3 条语料已清理，不表 11-04/11-05 共 6 条标注有效性已裁决。四条限制见 ADR-0009 Consequences；残留语料与标注有效性仍另案待 zj 裁决，E1 三判据与 P6.4 口径不变。",
+          "note": "Agent 推荐 b 被 zj 推翻，裁决与四条结构性风险已在 decision 中如实留痕，未静默归为已接受偏差。"
+        },
+        {
+          "q": "zj 给出 a 的两个实施参数后，实施切片结论与验证证据是什么？",
+          "answer": "zj 2026-11-06 18:3x 给出：新下界 **0.25d**、**不同步改日内调度**（每日驱动仍一天一次）。按 TDD 小切片落地：①  新增 5 条（纯函数 3 + 内存编排层 2），红态 3 红 2 绿（下界 1.0 时 1.0d 的 too_late 返回 applied=False、feedback 审计 0 行）；②  MIN_INTERVAL_DAYS 1.0→0.25，source 保持 SIMULATION、note 写明依据 + 非 CALIBRATED + 每日驱动不改；绿态 5/5、该文件 42 tests OK；③ 全量 {\n  \"action\": \"bulk corpus cleanup\",\n  \"matched\": 1,\n  \"archived\": 0,\n  \"dry_run\": true,\n  \"archived_at\": \"2026-11-06T10:41:51.213777+00:00\",\n  \"matched_node_ids\": [\n    \"f7faf9f7-64ac-4a3a-8033-9bdcf0293cee\"\n  ],\n  \"archived_node_ids\": [],\n  \"labeled_touched\": 0,\n  \"attention_observation_touched\": 0,\n  \"review_queue_resolved\": 0,\n  \"note\": \"识别 = 动态轨 + decay=1.0 + 1d 节奏 + last_reviewed_at=2026-11-01 + 未归档；归档只写 archived_at，退出 list_due_for_review / load_schedulable，不计入 labeled、不污染校准标注率\"\n}\ncreated database: zkc_dev_test\napplying 0001_baseline_d1_d9.up.sql ...\n  ✓ 0001 applied (sha=824880c46260)\napplying 0002_node_history.up.sql ...\n  ✓ 0002 applied (sha=4d7dad018d7d)\napplying 0003_version_seq.up.sql ...\n  ✓ 0003 applied (sha=1bce41783d34)\napplying 0004_proposal_log.up.sql ...\n  ✓ 0004 applied (sha=0082fa56e234)\napplying 0005_proposal_log_seed.up.sql ...\n  ✓ 0005 applied (sha=18fb9b9647b8)\napplying 0006_proposal_log_kind.up.sql ...\n  ✓ 0006 applied (sha=83b988aa66e7)\napplying 0007_llm_call_score.up.sql ...\n  ✓ 0007 applied (sha=edd52c747c62)\napplying 0008_node_embedding_4096.up.sql ...\n  ✓ 0008 applied (sha=99f1f32281ad)\napplying 0009_task_queue.up.sql ...\n  ✓ 0009 applied (sha=69cccb49e4b7)\napplying 0010_review_queue_classify_action.up.sql ...\n  ✓ 0010 applied (sha=e35595f0da4c)\n  ✓ 0001: sha 一致 (824880c46260)\n  ✓ 0002: sha 一致 (4d7dad018d7d)\n  ✓ 0003: sha 一致 (1bce41783d34)\n  ✓ 0004: sha 一致 (0082fa56e234)\n  ✓ 0005: sha 一致 (18fb9b9647b8)\n  ✓ 0006: sha 一致 (83b988aa66e7)\n  ✓ 0007: sha 一致 (edd52c747c62)\n  ✓ 0008: sha 一致 (99f1f32281ad)\n  ✓ 0009: sha 一致 (69cccb49e4b7)\n  ✓ 0010: sha 一致 (e35595f0da4c)\nreverting 0010_review_queue_classify_action.down.sql ...\n  ✓ 0010 reverted\nreverting 0009_task_queue.down.sql ...\n  ✓ 0009 reverted\nreverting 0008_node_embedding_4096.down.sql ...\n  ✓ 0008 reverted\nreverting 0007_llm_call_score.down.sql ...\n  ✓ 0007 reverted\nreverting 0006_proposal_log_kind.down.sql ...\n  ✓ 0006 reverted\nreverting 0005_proposal_log_seed.down.sql ...\n  ✓ 0005 reverted\nreverting 0004_proposal_log.down.sql ...\n  ✓ 0004 reverted\nreverting 0003_version_seq.down.sql ...\n  ✓ 0003 reverted\nreverting 0002_node_history.down.sql ...\n  ✓ 0002 reverted\nreverting 0001_baseline_d1_d9.down.sql ...\n  ✓ 0001 reverted\napplying 0001_baseline_d1_d9.up.sql ...\n  ✓ 0001 applied (sha=824880c46260)\napplying 0002_node_history.up.sql ...\n  ✓ 0002 applied (sha=4d7dad018d7d)\napplying 0003_version_seq.up.sql ...\n  ✓ 0003 applied (sha=1bce41783d34)\napplying 0004_proposal_log.up.sql ...\n  ✓ 0004 applied (sha=0082fa56e234)\napplying 0005_proposal_log_seed.up.sql ...\n  ✓ 0005 applied (sha=18fb9b9647b8)\napplying 0006_proposal_log_kind.up.sql ...\n  ✓ 0006 applied (sha=83b988aa66e7)\napplying 0007_llm_call_score.up.sql ...\n  ✓ 0007 applied (sha=edd52c747c62)\napplying 0008_node_embedding_4096.up.sql ...\n  ✓ 0008 applied (sha=99f1f32281ad)\napplying 0009_task_queue.up.sql ...\n  ✓ 0009 applied (sha=69cccb49e4b7)\napplying 0010_review_queue_classify_action.up.sql ...\n  ✓ 0010 applied (sha=e35595f0da4c)\nreverting 0010_review_queue_classify_action.down.sql ...\n  ✓ 0010 reverted\nreverting 0009_task_queue.down.sql ...\n  ✓ 0009 reverted\nreverting 0008_node_embedding_4096.down.sql ...\n  ✓ 0008 reverted\nreverting 0007_llm_call_score.down.sql ...\n  ✓ 0007 reverted\nreverting 0006_proposal_log_kind.down.sql ...\n  ✓ 0006 reverted\nreverting 0005_proposal_log_seed.down.sql ...\n  ✓ 0005 reverted\nreverting 0004_proposal_log.down.sql ...\n  ✓ 0004 reverted\nreverting 0003_version_seq.down.sql ...\n  ✓ 0003 reverted\nreverting 0002_node_history.down.sql ...\n  ✓ 0002 reverted\nreverting 0001_baseline_d1_d9.down.sql ...\n  ✓ 0001 reverted\n[R15] dynamic view: 0 写（查询时计算），与重算轮数 100 无关\n[R15] 写放大系数(junction/dynamic) = 7060.0（有精确线性上界，非失控）\n[R15] junction bulk: 7060 写 / 100轮 = 7.0 写/轮/context (C=10, M=5) -> 线性有界 O(R·C·M)\n=== ZKC daily（真值收口）@ 2026-11-06T10:42:07.456467+00:00 ===\n  pushed=1 queue_remaining=1 completed=0 labeled=0\n=== ZKC decide · 待复审队列（0 条）===\n\n  标注率闸门: open (rate=None)  预算: None (none)\n=== ZKC decide f72510bd-6ecf-4af3-8b69-540f1303d655 → still_valid ===\n  verdict=on_time applied=False new_interval_days=1.0\n  reason=on_time: x1.0 correction\n  今日观测: completed=1 labeled=1\n{\n  \"as_of\": \"2026-11-06T10:42:07.457733+00:00\",\n  \"criteria\": {\n    \"c1_consecutive_active_days\": {\n      \"window_active\": 0,\n      \"required\": 7,\n      \"latest_ok\": false,\n      \"longest_window_active\": 0,\n      \"active_days_in_60d\": 0,\n      \"met\": false\n    },\n    \"c2_labeling_rate_gate\": {\n      \"rate\": null,\n      \"threshold\": 0.7,\n      \"completed\": 0,\n      \"labeled\": 0,\n      \"gate\": \"open\",\n      \"met\": false\n    },\n    \"c3_budget_convergence\": {\n      \"estimate_28d\": null,\n      \"confidence_28d\": \"none\",\n      \"saturated_samples\": [],\n      \"spread\": null,\n      \"cv\": null,\n      \"converged\": false,\n      \"met\": false\n    }\n  },\n  \"calibration_readiness\": {\n    \"days_with_observation\": 0,\n    \"saturated_days\": 0,\n    \"calib_min_days\": 14,\n    \"calib_min_saturated_days\": 3,\n    \"can_calibrate\": false,\n    \"ready\": false,\n    \"reason\": \"外生锚不足：需 ≥14 天埋点(现有 0) 且 ≥3 个饱和日(现有 0)\"\n  },\n  \"all_exit_criteria_met\": false\n} = **Ran 579 tests OK**（基线 574 + 新增 5）；④ mcp-gate 6 OK、invariant 0 violations（P1/P2/P3 全 OK）、两套 authority 门禁 0 unresolved leaks / clean、 rc=0；⑤ 架构 §6.5 的 L1 clamp 与 L3 钳制区间改为 0.25d 并新增「下界修订」小节（四条边界），spike09 README 保留原 [1d,180d] 研究时点结论、加注记与 §7 后续修订，spike 代码常量与既有 44 tests 口径不动；⑥ 新增  落 EC①（背景 / 决策 / Considered Options / Consequences / 验证证据）。",
+          "note": "全程未动 PG 数据、未改 attention_observation、未归档 3 条残留语料、未代写任何 verdict；本轮对 PG 仅 SELECT 只读。改动文件：tuning.py、tests/test_scheduling.py、架构 v1.2、spike09 README、ADR-0009（新）、roadmap 过程态两份。"
+        },
+        {
+          "q": "1-13 三条 EC 是否达成、completed 口径如何限定？",
+          "answer": "三条 EC 全部达成，节点勾 completed：EC① 下界语义结论落 ADR（ADR-0009 明确 1.0 是 SIMULATION 阈值而非硬不变量、1d 实为 ADR-0007 每日驱动的最小粒度、<1d 只是数值语义）；EC② 三选一处置落盘（zj 选 a）；EC③ 红绿测试覆盖 1.0d 触底路径 + 全量 579 tests OK。**completed 口径限定**：只表「诊断 + 决策 + 代码/文档落地」收口，不表 L3 已校准（0.25d 是 SIMULATION 占位、非 CALIBRATED），不表日内复审可用（每日驱动仍一天一次），不表触底已消除（0.25d 后 too_late 仍 no-op、审计不留痕），不表 L2/L3 方向对冲与预算污染风险已解决，不表 D2 残留 3 条语料已清理，不表 11-04/11-05 共 6 条标注有效性已裁决。四条限制见 ADR-0009 Consequences；残留语料与标注有效性仍另案待 zj 裁决，E1 三判据与 P6.4 口径不变。",
+          "note": "Agent 推荐 b 被 zj 推翻，裁决与四条结构性风险已在 decision 中如实留痕，未静默归为已接受偏差。"
+        },
+        {
+          "q": "zj 给出 a 的两个实施参数后，实施切片结论与验证证据是什么？",
+          "answer": "",
+          "note": "retracted: 全程未动 PG 数据、未改 attention_observation、未归档 3 条残留语料、未代写任何 verdict；本轮对 PG 仅 SELECT 只读。改动文件：tuning.py、tests/test_scheduling.py、架构 v1.2、spike09 README、ADR-0009（新）、roadmap 过程态两份。",
+          "retracted": true,
+          "retracts": "c9951d47b2fad1e87b940f06341717e35c0b84820c2fd425d42057a3e5e458bd"
+        },
+        {
+          "q": "zj 给出 a 的两个实施参数后，实施切片结论与验证证据是什么？",
+          "answer": "",
+          "note": "retracted: 全程未动 PG 数据、未改 attention_observation、未归档 3 条残留语料、未代写任何 verdict；本轮对 PG 仅 SELECT 只读。改动文件：tuning.py、tests/test_scheduling.py、架构 v1.2、spike09 README、ADR-0009（新）、roadmap 过程态两份。",
+          "retracted": true,
+          "retracts": "e06971a6fd6db547301931866ca6ecdb7a93b2f55ac5d1e92488d3aee4d0d971"
+        },
+        {
+          "q": "1-13 三条 EC 是否达成、completed 口径如何限定？",
+          "answer": "",
+          "note": "retracted: Agent 推荐 b 被 zj 推翻，裁决与四条结构性风险已在 decision 中如实留痕，未静默归为已接受偏差。",
+          "retracted": true,
+          "retracts": "e3fa95f38408d2cb566cc887bed390e1333d15d0b69877f99c8dbd80eb30bd9d"
+        },
+        {
+          "q": "1-13 三条 EC 是否达成、completed 口径如何限定？",
+          "answer": "",
+          "note": "retracted: Agent 推荐 b 被 zj 推翻，裁决与四条结构性风险已在 decision 中如实留痕，未静默归为已接受偏差。",
+          "retracted": true,
+          "retracts": "e3fa95f38408d2cb566cc887bed390e1333d15d0b69877f99c8dbd80eb30bd9d"
+        },
+        {
+          "q": "zj 给出 a 的两个实施参数后，实施切片结论与验证证据是什么？",
+          "answer": "zj 2026-11-06 18:32 给出：新下界 0.25d、不同步改日内调度（每日驱动仍一天一次）。按 TDD 小切片落地：① tests/test_scheduling.py 新增 5 条（纯函数 3 + 内存编排层 2），红态 3 红 2 绿（下界 1.0 时 1.0d 的 too_late 返回 applied=False、feedback 审计 0 行）；② src/zkc/tuning.py:96 的 MIN_INTERVAL_DAYS 从 1.0 改为 0.25，source 保持 SIMULATION、note 写明依据 + 非 CALIBRATED + 每日驱动不改；绿态 5/5、该文件 42 tests OK；③ 全量 unittest discover -s tests = Ran 579 tests OK（基线 574 + 新增 5）；④ mcp-gate 6 OK、invariant 0 violations（P1/P2/P3 全 OK）、两套 authority 门禁 0 unresolved leaks / clean、git diff --check rc=0；⑤ 架构 §6.5 的 L1 clamp 与 L3 钳制区间改为 0.25d 并新增「下界修订」小节（四条边界），spike09 README 保留原 [1d,180d] 研究时点结论、加注记与 §7 后续修订，spike 代码常量与既有 44 tests 口径不动；⑥ 新增 docs/zj-adr/0009-sub-day-interval-lower-bound.md 落 EC①（背景 / 决策 / Considered Options / Consequences / 验证证据）。",
+          "note": "全程未动 PG 数据、未改 attention_observation、未归档 3 条残留语料、未代写任何 verdict；本轮对 PG 仅 SELECT 只读。改动文件：tuning.py、tests/test_scheduling.py、架构 v1.2、spike09 README、ADR-0009（新）、roadmap 过程态两份。"
+        },
+        {
+          "q": "1-13 三条 EC 是否达成、completed 口径如何限定？",
+          "answer": "三条 EC 全部达成，节点勾 completed：EC① 下界语义结论落 ADR（ADR-0009 明确 1.0 是 SIMULATION 阈值而非硬不变量、1d 实为 ADR-0007 每日驱动的最小粒度、<1d 只是数值语义）；EC② 三选一处置落盘（zj 选 a）；EC③ 红绿测试覆盖 1.0d 触底路径 + 全量 579 tests OK。completed 口径限定：只表「诊断 + 决策 + 代码/文档落地」收口，不表 L3 已校准（0.25d 是 SIMULATION 占位、非 CALIBRATED），不表日内复审可用（每日驱动仍一天一次），不表触底已消除（0.25d 后 too_late 仍 no-op、审计不留痕），不表 L2/L3 方向对冲与预算污染风险已解决，不表 D2 残留 3 条语料已清理，不表 11-04/11-05 共 6 条标注有效性已裁决。四条限制见 ADR-0009 Consequences；残留语料与标注有效性仍另案待 zj 裁决，E1 三判据与 P6.4 口径不变。",
+          "note": "Agent 推荐 b 被 zj 推翻，裁决与四条结构性风险已在 decision 中如实留痕，未静默归为已接受偏差。"
+        },
+        {
+          "q": "本轮写决策时发生的过程偏差如何处置？",
+          "answer": "写入实施结论决策时，正文含 Markdown 反引号，经 zsh 双引号内联传参被解释为命令替换，意外执行了全量单测等命令并把输出混进决策正文；同批命令因解析异常产生了 4 条决策（2 条污染 + 2 条重复）。处置：① 立即只读复核生产 PG —— attention_observation 仍为 2 行（11-04 / 11-05，completed 各 3、labeled 各 3）、活跃节点 40、feedback 审计 0 行，确认未被意外写入；② 用 remove-decision --question 撤回这 4 条（retract-and-keep，污染原文按 append-only 审计语义留在事实源但不生效）；③ 改用 Write 到 /tmp 的 JSON + Python subprocess 参数列表调用 CLI 重写，彻底避开 shell 解析。此为工具链偏差，不影响代码、测试与 ADR-0009 结论；如实留痕，不静默覆盖。",
+          "note": "教训：长中文正文含反引号时禁止 shell 内联传参；一律走文件 + list 参数。与「长中文 issue 正文用 --body-file」同源。"
+        },
+        {
+          "q": "zj 对「残留 3 条 1d 导入语料是否归档」的裁决与执行结果？",
+          "answer": "zj 2026-11-06 裁决=归档。已执行：走生产 archive 机制（只写 archived_at，等价 pg.py:447 的 UPDATE），精确归档 3 条 id = 34d25877-5ca6-4e2b-a637-cc41dbcc862b / 24cc8c52-5edc-4287-b7f3-3e23f465ec51 / f6c29b2d-2d40-40e8-a5bd-9ea1f9354cda。复验：活跃节点 40→37，attention_observation 行数=2、labeled_sum=6、completed_sum=6 全部不变（标注保留为有效外生锚）；3 节点 archived_at 已置位。注意：这 3 条 decay=0.0067 / last_reviewed=11-05（已被 11-06 verdict 改动），不匹配 corpus.select_corpus_nodes（要求 decay=1.0 且 2026-11-01），故未走 zkc corpus archive（那会归档另一批），而是按 id 精确归档。",
+          "note": "PG 全为 UPDATE archived_at 单列，未删历史标注/埋点；与 zj 选 a 相互独立，归档不改下界代码。"
+        },
+        {
+          "q": "zj 对「11-04 / 11-05 共 6 条标注是否有效外生锚」的裁决？",
+          "answer": "zj 2026-11-06 裁决=有效。这是对 1-7 corpus.py:3-4 与 ADR-0006 默认「导入语料 verdict 属伪标注、应移出回路」口径的 zj 显式 override（zj 本人拍板，Agent 不代填）。因此 E1 活跃日=2、标注率=100%、P6.4 累计 labeled=6/20 读数有效。不静默改写 corpus.py / ADR-0006：二者是既有默认假设，仅本批次（11-04 与 11-05 共 6 条）被 zj 显式 override；若未来要改 corpus 默认口径须另开切片并显式授权。",
+          "note": "override 性质，必须显式留痕；不得让后续读者误以为 6 条标注是伪标注已自动忽略。"
+        },
+        {
+          "q": "zj 对「触底是否要真正消除」的裁决与实施路径？",
+          "answer": "zj 2026-11-06 裁决=真正消除（即此前三选一的选项 c）。实施路径：在 adapt_interval_math 增加 floor_hit 标志（verdict=too_late 且 new==old 于 MIN_INTERVAL_DAYS）；adapt_interval 在 floor_hit 时不再静默 no-op，改走归档终局——复用 D2 归档范式（store.nodes.archive）+ 写 audit_interval(kind=floor_hit_archive)，返回 resolution=archived。语义：到下限仍 too_late 说明即便按每日驱动最小粒度也无法跟上腐化，应退出调度回路而非无限 no-op。human 节点（interval_source=human）在 floor 判定前已提前返回，不受影响。",
+          "note": "蒸馏/HITL 为可选替代终局，当前未接，默认走归档；如要换终局须另开切片。"
+        },
+        {
+          "q": "zj 对「0.25d 的 CALIBRATED 归属」的裁决？",
+          "answer": "zj 2026-11-06 裁决=扩 1-26 或 1-22 范围，本 Agent 选 1-26。理由：1-26 的 tuning.can_calibrate 门禁（连续 ≥14d attention_observation 埋点 + ≥3 饱和日）正是任意 tuning 参数升 CALIBRATED 的统一机制，MIN_INTERVAL_DAYS 与 METRIC_W_* 应共享同一门禁与同一批真实外生锚；1-22 是 lexical routing gate（ROUTING_LEXICAL_CONF_GATE 占位校准），与 interval 阈值动力学无关，故不选。0.25d 当前 source=SIMULATION，升 CALIBRATED 必须走 1-26 门禁 + zj 逐日真实 HITL 标注证明 <1d 下界真的被需要，不得凭仿真定论。",
+          "note": "1-22 范围不动；1-26 扩范围见其 notes/EC 更新。"
+        },
+        {
+          "q": "四项裁决（归档 / 有效 / 真正消除 / 扩 1-26）的实现是否已落地？（代码切片证据）",
+          "answer": "已落地（2026-11-06）。#1 归档：3 条残留 1d 节点按 id 精确归档，活跃 40→37，attention_observation labeled_sum=6/completed_sum=6 不变。#2 有效：6 条标注定为有效外生锚（override 1-7/ADR-0006），1-1/1-17 读数已接受。#3 真正消除：新增 adapt_interval_math.floor_hit 标志 + adapt_interval 在 floor_hit 时走归档终局（store.nodes.archive + audit_interval kind=floor_hit_archive，返回 resolution=archived）；测试 test_sub_day_lower_bound_flags_floor_hit / test_adapt_math_floor_hit_only_on_too_late_at_floor / test_1d_feedback_converges_then_floor_hit_archives 锁住行为。#4 扩 1-26：notes/EC 纳入 MIN_INTERVAL_DAYS 升 CALIBRATED（与 METRIC_W_* 共享 can_calibrate 门禁）。验证：全量 580 tests OK（574+5+1）、mcp-gate 6 OK、invariant 0、两套 authority 0、git diff --check OK；ADR-0009 新增「修订记录」小节，原「触底 no-op」表述作废。",
+          "note": "蒸馏/HITL 为可选替代终局，当前默认归档；0.25d 仍 SIMULATION，升 CALIBRATED 走 1-26 门禁。"
         }
       ],
       "notes": "2026-11-05 真实 PG 首日实证：zkc decide 三条（2 stale + 1 changed）全部 applied=False、new_interval_days=1.0，reason 仍写 too_late x0.7。根因 scheduling.py:77 clamp_days 受 tuning.py:96 MIN_INTERVAL_DAYS=1.0 下界约束，1.0x0.7 被夹回 1.0；set_interval 写同值且不写 audit_interval（scheduling.py:570-578）。影响：1-7 导入的 27 条语料全为 1.0d 节奏，任何 verdict 都改不了节奏、永久每日到期，queue_remaining 恒 27、saturated_days 靠噪声累积、budget 估计 0.1 抬到 3.0，E1 判据③ 的真实预算测不准。设计缺陷级，优先于继续攒活跃日。",
@@ -452,7 +648,8 @@
         "明确 MIN_INTERVAL_DAYS=1.0 下界语义：硬不变量还是占位可调，结论落 ADR",
         "三选一处置落盘：允许 <1d / 保持下界并承认 L3 对触底节点失效 / 触底节点改走其它反馈路径",
         "若改代码：红绿测试覆盖 1.0d 触底路径，全量套件通过"
-      ]
+      ],
+      "rounds": 1
     },
     "1-14": {
       "id": "1-14",
@@ -610,9 +807,14 @@
           "q": "2026-11-06 首批真实 HITL 标注结果与读数？",
           "answer": "zj 本人给出 3 条 verdict（1=changed / 2=stale / 3=still_valid），Agent 仅代执行写入，绝不自动标注。结果：累计 labeled_completed 3→6（还差 14）；7d completed=6 / labeled=6 / rate=N/A（<10 样本不判定）、gate=open 但 met=false、all=false；due 队列 3→0（三条 mark_reviewed 复位时钟、decay 归零、interval 仍 1d）；E1 观测天数 1→2、活跃日 1→2、all_met=false。1-17 保持 in_progress。",
           "note": "运行时事实：① CLI verdict 经 OUTCOME_VERDICT 映射为 L3 timing 语义（still_valid→on_time、changed/stale→too_late），输出显示的是映射后值，标注计数只区分 browse。② 三条 applied=False 已实证根因：MIN_INTERVAL_DAYS=1.0、AIMD_DOWN=0.7 → clamp_days(0.7)=1.0 → new==old → L3 no-op，是 1-13「D1 L3 AIMD 下界触底」的首个真实运行证据；本轮不擅改下界。③ 今日未跑 zkc daily 真值收口，观测行 queue_remaining=0 来自 decide 默认值（恰与实际 due=0 一致），按 ADR-0007 harness 契约仍待显式 daily。"
+        },
+        {
+          "q": "11-04/11-05 共 6 条标注被判有效后，P6.4 观察期进度如何认定？",
+          "answer": "zj 2026-11-06 裁决 6 条标注有效（见 1-13 裁决），按此 P6.4 读数：累计 labeled_completed=6/20（R10 降级判定，不要求日历连续）；滚动 7 天 completed≥10 且 rate≥0.7：当前 completed 仅 6/7d、rate=100%（6/6），样本不足 10 故 gate 视为 warm-up open 放行，不判停机。结论：滚动率读数有效且达标，累计数未达 20，节点保持 in_progress。该读数 override 了 1-7 默认伪标注假设；与 1-1 共享同一批真实 decide 数据，仅 informs 不建 blocks。",
+          "note": "判定以 zkc p64 / task_queue.LABEL_JUDGMENT_THRESHOLD=20 为准；归档 3 条残留不影响本累计（attention_observation 未动）。"
         }
       ],
-      "notes": "PRD §9 第一个未完成 checkbox。当前 PG 实测（2026-11-04 一条 observation）：sum(completed)=3 / sum(labeled_completed)=3 / 观测天数=1，即 3/20。与 1-1 共享同一批真实 decide 动作，但判据不同：本节点是累计 ≥20（R10 降级判定，不要求日历连续），1-1 是连续 ≥7 活跃日 + budget 收敛。不建 blocks 到 1-1（会倒挂），仅 informs 表达数据源关联。判定以 src/zkc/task_queue.py:26 LABEL_JUDGMENT_THRESHOLD=20 告警为准。",
+      "notes": "当前真实读数（2026-11-06 19:45 GMT+8，zkc p64）：\n① 累计带标注复审：6/20（差 14；累计 completed=6，观测天数=2）。\n② 滚动 7 天标注率 ≥70%：N/A（7d completed=6<10，gate=open，warm-up 放行，非达标）。\n与 1-1 共享同一批真实 decide 动作；判据 = 累计 ≥20（R10 降级、不要求日历连续）+ 滚动 7 天标注率 ≥70%。不建 blocks 到 1-1，仅 informs。读数只读、不写埋点；达成后 PRD §9 TODO 与风险册状态由 zj 决定，勿自动勾销。\n6 条标注有效性：zj 2026-11-06 显式裁决「有效」（override 1-7 corpus.py / ADR-0006 默认伪标注假设，仅本批次 11-04/11-05）。",
       "layer": "plan",
       "exit_criteria": [
         "累计 labeled_completed ≥20（以 task_queue.LABEL_JUDGMENT_THRESHOLD=20 告警及 PG 实测 sum 为准；只读读数出口 = zkc p64）",
@@ -691,7 +893,7 @@
       "id": "1-20",
       "uid": "01a1a78752a7-94392f6bf0",
       "label": "风险册独立 open 项：R17 工期裁剪 / R1 judge opt-in / R8 版本回归",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -700,16 +902,37 @@
           "q": "为何与观察期组分开？",
           "answer": "三条均为独立拍板/工程项（工期裁剪 / judge opt-in / 锁版本回归），不依赖真实埋点，可立即并行；混进观察期组会被无谓阻塞。",
           "note": "risks.md 状态：R17 open、R1 已缓解待拍板、R8 缓解中"
+        },
+        {
+          "q": "开工 1-20 的 scope gate 分类与三条如何分流？",
+          "answer": "Product execution（ZKC 自身风险册收口，允许改长期文档与工程测试）。分流：R8 属工程自证项，可用代码/测试/CI 证据判定；R1 的 auto_pass opt-in 启用需 zj 真实人判对照后显式拍板；R17 的 S2/S3 裁剪方案需 zj 拍板且须先复核裁剪对象是否已落地。三者均为外生锚或工程事实，Agent 不代写 verdict、不伪造人判对照、不替 zj 拍板；节点在 zj 答复前保持 in_progress。",
+          "note": "1-20 独立于 1-19 观察期组：risks.md 只改 R1/R8/R17 三行，不与 R4/R5/R6/R10/R14 混写；工作树已有 1-13 相关未提交改动，本轮不 commit/push、不触碰那些文件。"
+        },
+        {
+          "q": "三条现状核查与 R8 关停依据是什么？",
+          "answer": "① R8（工程自证，已关停）：架构 §8 已记 MVP 实装未引入 LangGraph、上游风险消除；生产双轨分流为自研 DecisionRouter + TF-IDF LexicalRouter（src/zkc/routing.py 零第三方依赖），Semantic Router 从未进依赖图；requirements.txt 仅 5 包且无 langgraph/semantic-router/instructor，无版本可锁 → 新增 tests/test_r8_guard.py 把依赖面锁成可执行契约（含样本检出自检与 CI 接线断言），路由回归 tests/test_routing.py 经 CI make test（unit-no-pg / full）覆盖；docs/risks.md R8 状态改为「已关停」。机械验证：全量 573 tests OK (skipped=55)、mcp-gate 6 OK、invariant 0 violations、两套权威门禁 clean、git diff --check rc=0。② R1（待拍板）：faithfulness.py 的 route_claim 已实现 auto_pass 四分支放行语义（全 supported 才放行 + FAITH_AUDIT_RATE 周期审计 + judge_raw 留痕 + judge_fn=None 默认 human_only），calibration_corpus 已定义「judge=supported 且人 reject/edit = 真实危险漏检」对照口径；但生产人判对照样本为 0，真实漏检率不得由系统自证，opt-in 启用须 zj 攒人判对照后显式拍板。risks.md 只补复核事实，状态仍「默认 HITL；启用 opt-in 待 zj 拍板」。③ R17（待拍板）：S2/S3 的裁剪对象 P3.2 跨源强制 / P3.4 context 装配 / P5 检索均已生产落地（cross_source.py / context.py / search.py，检索候选召回已按 R18 关停结论切 embedding_4096 并真实复跑合格），选项在现状下已过时；24–32 周属计划期历史口径，真实约束已转为「剩余收口项等 zj 真实外生锚」。口径变更须 zj 拍板。risks.md 只补复核事实，状态仍 open。",
+          "note": "边界：三条只改 R1/R8/R17 三行，未与观察期组（R4/R5/R6/R10/R14）混写；R8 的关停证据取自架构/代码/测试/CI，不以本节点状态为 proof。剩余未达判据 = R17 拍板、R1 拍板、三条终态收口，故 1-20 保持 in_progress 不勾 completed。本轮不 commit/push；工作树另有 1-13 相关未提交改动未触碰。"
+        },
+        {
+          "q": "zj 对 R17 / R1 的显式拍板结果是什么，判据②的口径偏差如何处置？",
+          "answer": "zj 2026-11-06 选 A/A：① R17 = S2/S3 作废、风险关停，24–32 周仅作计划期历史口径留痕，不回退任何已落地功能，残余「真实外生锚供给」风险由 R10 承载；② R1 = 「未校准不启用」定为终态、默认 HITL 关停，opt-in 降为未来条件（须先有真实人判对照样本 + 危险漏检率校准 + zj 再拍板）。docs/risks.md 三条状态已收口：R8 已关停 / R1 已关停 / R17 已关停，不与观察期组混写。**偏差留痕**：exit_criteria②原写「攒人判对照后由 zj 显式拍板」，实际是 zj 本人以终态口径裁决替代原路径，真实对照样本仍为 0、危险漏检率未知；节点 completed 只表过程收口与 zj 口径裁决，不表已校准、不表 opt-in 已启用、不表漏检率有数字。",
+          "note": "外生锚来源 = zj 本人本轮选择（A/A），非 Agent 代写；未伪造任何 verdict 或人判对照样本。R8 关停依据为架构 §8 / src / tests / CI 独立证据，不以本节点状态为 proof。"
+        },
+        {
+          "q": "偏差如何收口？",
+          "answer": "偏差已解决：原 EC② 文字（攒人判对照后拍板）与实际 zj 裁决（A=未校准不启用即终态）错位，本轮已将 EC② 改写为与 A 一致的口径，节点判据与结果对齐、不再有偏差。诚实留痕全部保留：judge 真实人判对照样本仍=0、危险漏检率未知、opt-in 未启用；completed 不表已校准/opt-in 已启用/漏检率有数字。这是记录 zj 已发生的裁决，不是为凑结果改判据。",
+          "note": "改动仅 roadmap 节点 1-20 的 EC② 文字与 notes，risks.md 三行状态不变（仍 R8/R1/R17 已关停）；不涉及任何代码、不伪造对照样本、不代写 verdict。"
         }
       ],
-      "notes": "三条均为独立拍板/工程项，不依赖真实多日埋点，故与观察期终判组分开、可立即并行：R17=4h/周导致 24–32 周工期，S2/S3 裁剪方案尚未生效待拍；R1=judge 复测翻案后默认仍 HITL，auto_pass opt-in 需人判对照后 zj 显式拍板；R8=LangGraph/Semantic Router 破坏性变更，锁版本 + 路由回归测试「缓解中」未关停。",
+      "notes": "2026-11-06 收口：docs/risks.md 三条 R8/R1/R17 均「已关停」，不与观察期组混写。验证：全量 573 tests OK (skipped=55)、mcp-gate 6、invariant 0 violations、两套权威门禁 clean、git diff --check rc=0。未 commit/push。\n\n【偏差已解决】原 EC② 写「攒人判对照后由 zj 显式拍板」，但 zj 实际选 A=「未校准不启用即终态」；本轮已将 EC② 改写为与 A 一致的口径，节点判据与结果不再错位。诚实留痕保留：当前 judge 真实人判对照样本=0、危险漏检率未知、opt-in 未启用；completed 只表过程收口与 zj 口径裁决，不表已校准、不表 opt-in 已启用、不表漏检率有数字。R8 关停依据取自架构 §8 / src / tests / CI 独立证据，不以本节点状态为 proof。",
       "layer": "plan",
       "exit_criteria": [
-        "R17 的 S2/S3 裁剪方案由 zj 拍板并回填 risks.md（4h/周 工期 24–32 周问题）",
-        "R1 judge 自动放行 opt-in：auto_pass 放行语义 + 真实漏检率校准，攒人判对照后由 zj 显式拍板",
-        "R8 锁版本清单 + 路由回归测试接入 CI，或明确已满足并关停",
+        "R17 的 S2/S3 裁剪方案由 zj 拍板并回填 risks.md（zj 选 A：S2/S3 作废，24–32 周属计划期历史口径，外生锚风险由 R10 承载）",
+        "R1 judge opt-in 按 zj A 裁决定为终态：未校准不启用，默认 HITL 关停；opt-in 降为未来条件，启用前须真实人判对照样本 + 危险漏检率校准 + zj 再拍板（当前对照样本=0、漏检率未知，不表已校准）",
+        "R8 锁版本清单 + 路由回归测试接入 CI，或明确已满足并关停（已满足：依赖面零第三方、tests/test_r8_guard.py 依赖面锁 + CI make test 路由回归覆盖，已关停）",
         "三条状态在 risks.md 收口，不与观察期组混写"
-      ]
+      ],
+      "rounds": 1
     },
     "1-21": {
       "id": "1-21",
@@ -1012,22 +1235,28 @@
           "q": "1-26 的 scope 与达成边界？",
           "answer": "Product execution 但完全依赖外生锚：需真实埋点满足 can_calibrate 门禁、真实且可辨识的四分量分布、以及 zj 本人给出的四分量价值排序，三者缺一不可。1-25 的 SIMULATION 结论只是起点、不是 proof；合成仿真 / corpus-derived / E8 锚2 抽检不得冒充 CALIBRATED。不建 blocks 边（1-25 已 completed，建硬依赖会倒挂），仅用 informs 记来源。未达成前保持 pending，不计入 1-25 完成度。",
           "note": "外生锚通则 + ADR-0008 过程权威边界；判据由 CLI 存档、达成与否由人对照执行"
+        },
+        {
+          "q": "1-26 范围扩展：纳入 MIN_INTERVAL_DAYS 升 CALIBRATED 的归属？",
+          "answer": "zj 2026-11-06 裁决 0.25d 的 CALIBRATED 归属扩至 1-26（非 1-22）。本节点现同时负责：spike07 复利度量权重 METRIC_W_* 升 CALIBRATED + MIN_INTERVAL_DAYS（interval 钳制下界，当前 SIMULATION=0.25d）升 CALIBRATED。两者共享 tuning.can_calibrate 门禁（连续 ≥14d 埋点 + ≥3 饱和日）与同一批真实外生锚。MIN_INTERVAL_DAYS 升 CALIBRATED 的额外外生锚要求：zj 逐日真实 HITL 标注证明 <1d 下界真的被需要（即确有节点在 0.25d 仍 too_late 触发 floor_hit_archive），不得凭仿真定论。",
+          "note": "与 METRIC_W_* 同门禁、同批锚；治理铁律不变：corpus-derived 绝不写回 CALIBRATED。"
         }
       ],
-      "notes": "",
+      "notes": "扩范围（2026-11-06 zj 裁决）：本节点现同时负责 spike07 复利度量权重 METRIC_W_* 升 CALIBRATED 与 MIN_INTERVAL_DAYS（interval 钳制下界，当前 SIMULATION=0.25d）升 CALIBRATED。二者共享 tuning.can_calibrate 门禁（连续 ≥14d 埋点 + ≥3 饱和日）与同一批真实外生锚。MIN_INTERVAL_DAYS 升 CALIBRATED 的额外外生锚：zj 逐日真实 HITL 标注证明 <1d 下界真的被需要（floor_hit_archive 触发即证据），不得凭仿真定论。治理铁律不变：corpus-derived 绝不写回 CALIBRATED，禁止混称。1-22 范围不动（lexical routing gate 与 interval 阈值动力学无关）。\n当前校准就绪度（2026-11-06 19:45 GMT+8，zkc meter 末尾）：days_with_obs=2/14、saturated_days=1/3、ready=False。saturated_days = observation 行中 queue_remaining>0 的天数（scheduling.py:404 calibration_readiness）；须 ≥3 个观测日当天未清空队列。已建每日提醒（automation: zkc-calibration-cadence）催 zj 真实逐日 decide + 跑 zkc meter / zkc p64。",
       "layer": "plan",
       "exit_criteria": [
         "tuning.can_calibrate 门禁通过：连续 ≥14 天 attention_observation 埋点 + ≥3 个饱和日；读数以 zkc meter / zkc p64 实时为准，禁止伪造或批量灌入标注",
         "真实 PG 具备可辨识的四分量分布：connection_density / reuse_rate / methodology_output / decay_controllability 非结构性恒 0（权重变化能改变 CF），且有跨多周快照而非单点",
         "zj 显式给出四分量价值排序或偏好权重（外生锚），由 zj 本人拍板，AI 不代填",
         "逐参数经 tuning.calibrate(name, value, when, reason, days_with_observation=..., saturated_days=...) 过门禁升 CALIBRATED 并留 history；同步架构 §8 / PRD §7 的口径状态由 SIMULATION 改为 CALIBRATED，全量套件与四套门禁通过",
-        "治理铁律：SIMULATION、corpus-derived、E8 锚2 蒸馏抽检一律不得冒充 CALIBRATED；未达成前本节点保持 pending，不计入 1-25 的完成度"
+        "治理铁律：SIMULATION、corpus-derived、E8 锚2 蒸馏抽检一律不得冒充 CALIBRATED；未达成前本节点保持 pending，不计入 1-25 的完成度",
+        "MIN_INTERVAL_DAYS（interval 钳制下界，当前 SIMULATION=0.25d）升 CALIBRATED 归属本节点：与 METRIC_W_* 共享 can_calibrate 门禁，且需 zj 逐日真实 HITL 标注证明 <1d 下界真的被需要（floor_hit_archive 触发证据），不得凭仿真定论"
       ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-06 16:24:04",
+    "updated": "2026-11-06 20:37:50",
     "md_file": "ROADMAP.md"
   },
   "edges": [

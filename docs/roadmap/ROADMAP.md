@@ -7,13 +7,21 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-06 16:24:04
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-06 20:37:50
 
 [~][X+] 1. ZKC MCP 集成执行路线图
     ├── [~][X+] 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
     ... 该层还有 25 个兄弟，1 个 in_progress ▸
 
 ### 当前施工：1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
+
+当前真实读数（2026-11-06 19:45 GMT+8，zkc meter）：
+① 连续 ≥7 活跃日（空队列日豁免）：2/7 —— 窗口活跃 2、含最新日=True、历史最长 2、60d 内活跃 2 → 连续串仍活但仅 2 天。
+② 标注率闸门 ≥70%：N/A（7d completed=6<10，gate=open，warm-up 放行，非达标）。
+③ budget 收敛：✗（28d 估计 3.0、confidence=provisional、饱和样本 [3]、cv=0.0）。
+活跃日语义（calibration.py:_classify / _evaluate_active_streak）：active=completed≥1；missed=completed=0 且 queue_remaining>0（断签、重置连续窗口）；excused=completed=0 且 queue_remaining=0（空队列日，不破不断）；无观测日按断签处理。
+⚠️ 紧迫：11-06 当日尚无 observation 行。若今日不真实 decide（completed≥1）并跑 zkc daily 收口，11-06 成 gap → 11-04/11-05 的 2 日连续串于次日断签重置。
+每日动作（zj 真人）：review UI 或 zkc decide 做 ≥1 条真实复审 → zkc daily 收口当天快照（写 observation 行）。校准门禁另需 ≥3 个「饱和日」= 当天 queue_remaining>0（别把队列清空）。
 
 **决策：**
 - Q: 1-1 范围分类（scope gate）？ → Product execution（产品执行）：ZKC 自身路线图节点，操作/观测『已交付复审队列』校准闭环；目标代码保持只读除非发现 harness 缺口。本沙箱无 PG/Docker 无法跑实时回路，真实多日埋点须在 zj 本机（localhost:55433 + make serve）进行，严禁伪造数据。
@@ -26,10 +34,11 @@ promote-via: ADR|design|contract|runtime-evidence
 - Q: 每日运行机制（fork 1+2+3）？ → zj 拍板 fork 1+2+3 全选：(1) 新增服务端真值收口端点 POST /review/api/observe/auto（算 pushed=今日创建节点数、queue_remaining=当前到期数），由 scripts/daily_e1_driver.py 每日触发，修复『收口须真值不可手工乱填』的 harness gap；(2) 每日驱动仅自动化『真值收口 + 跑只读仪表』，复审标注(decide) 保持人工（不可自动化，否则伪造外生锚）；(3) 活跃日语义改『空队列日豁免、有 due 未复审才断签』(fork 3b)；(4) 跨平台调度：macOS launchd plist + Windows schtasks(.bat)。详见 ADR-0007。1-1 仍 product execution，新增端点属 harness gap 修复（非业务流改动）。
 - Q: 解绑后 1-1 的状态与证据边界？ → 1-1 保持 in_progress，继续以真实 PG 埋点观察，三条退出判据不变（连续≥7 活跃日 / 标注率≥70% / budget 多窗口 CV≤10% 且 28d observed）。E2–E5 开工不产生任何 E1 数据；严禁把 MCP 实现产物当作 E1 达成证据，也不得回填或伪造 attention_observation。1-1 只在 zj 本机每日真值收口 + 人工 decide 标注后自然收敛。 (外生锚铁律：无标注复审禁止写 interval；人环 verdict 绝不自动化)
 - Q: E2–E5 完成后 1-1 的判据复核结果（2026-11-05 收口）？ → 1-1 保持 in_progress，三条退出判据不变、不因 E 链落地而勾销。真实 PG 仪表复核（2026-11-05 13:25 UTC）：① 连续活跃日 1/7（60d 内 1 天，latest_ok=true）；② 标注率 gate=open（completed=3 < min_samples 10，rate=null）；③ budget 28d=3.0 provisional、cv=0.0 但 converged=false（can_calibrate=false：需 ≥14 天埋点 / ≥3 饱和日，现有 1/1）。all_exit_criteria_met=false，与开工前一致，未被本轮 523 条测试污染（days_with_observation 仍为 1）。**E2–E5 是 MCP 工程实现，不产生也不得回填 attention_observation；其完成不构成 E1 达成证据。**拓扑变化：e1 由 blocks 改 informs 后，critical-path 从 1-1→1-2→1-3→1-4→1-5 变为 1-8→1-18，E1 不再是 E 链的调度瓶颈，但仍是产品验收上的未闭合项，只能靠 zj 本机每日真值收口 + 人工 decide 标注自然收敛。 (下一步由 zj 决定：继续每日跑每日驱动累计活跃日，或先推进 E6–E9 / D 组独立节点；均不改写本节点状态)
+- Q: 11-04/11-05 共 6 条标注被判有效后，E1 三判据的当前读数如何认定？ → zj 2026-11-06 裁决 6 条标注有效（见 1-13 裁决），按此 E1 读数：连续活跃日=2（11-04、11-05 各交付复审队列 completed=3）；标注率闸门=100%（labeled/completed=6/6 ≥70%）；budget 收敛(CV≤10% 且 28d confidence=observed)尚未达成（仅 2 天观测）。结论：标注率与活跃日读数有效，但 E1 仍 pending（未达连续≥7活跃日、budget 未收敛）。节点保持 in_progress，不勾 completed。该读数 override 了 1-7 默认伪标注假设。 (仅 informs，不建 blocks 到 1-17（避免倒挂）；与 1-17 共享同一批真实 decide 数据。)
 
 ### 下一步可开工（ready 前 3）
 
-- 1-10. co-work(ZAgentic #234): E 链推进走 canonical reconcile+apply 路径，向 issue 回填真实一致性证据 [ ]
-- 1-11. co-work(ZAgentic #235): 将本 roadmap.json 置为只读副本进 tmp/skills-outputs/ 供回放；另补 ZBrain/ZAgentic 两份样本 [ ]
 - 1-12. co-work(ZAgentic #236): E6/E7/E8 复用共享 Work 入双 outline context 时，产出 reference Placement 真实用例供标记复核 [ ]
+- 1-19. 风险册观察期终判组：R4/R5/R6/R10/R14 终判与阈值 source 升级 [ ]
+- 1-22. 工程尾巴 B：lexical 语料冷启动 + 占位阈值（routing gate）校准收口 [ ]
 <!-- ROADMAP_SECTION_END -->
