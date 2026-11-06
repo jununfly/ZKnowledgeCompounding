@@ -169,6 +169,7 @@ def apply_all(db: str) -> None:
 
 def cmd_upgrade(db: str, to: str | None) -> int:
     ensure_database(db)
+    bootstrap(db)  # 全新库首次 upgrade 前必须先建 schema_migration 表，否则 applied() 报 relation does not exist
     done = applied(db)
     for version, up, _ in discover():
         if version in done:
