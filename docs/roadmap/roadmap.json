@@ -1355,6 +1355,11 @@
           "q": "1-26 启动实测：真实 PG 四分量结构性退化，时间门禁只是必要条件吗？",
           "answer": "实测（2026-11-06 21:34 GMT+8，zkc metrics_report 直读真实 PG）：64 节点 / 0 边 / 0 citation / 0 combine 产物 → connection_density=0、reuse_rate=0、methodology_output=0、decay_controllability=1.0（仅因无过期节点由归档 trivially 撑起）、compounding_factor=0.25 全由归档分量构成。结论：(1) 时间门禁（days_with_obs=3/14、saturated=1/3）只是必要条件非充分——即便撑到 14 天，cd/rr/mo 恒 0 使三个权重在真实数据上完全不可辨识（改权重不改 CF），METRIC_W_* 升 CALIBRATED 缺实证；(2) 这违反 exit_criteria②「四分量非结构性恒 0」，故 1-26 真正前置阻塞 = 真实 PG 须先产生可辨识四分量：reverse_link/derived_from 边(cd)、claim 被 citation 复用(rr)、combine 算子产出方法论 artifact(mo)；dc=1.0 当前是归档假象，须真实过期节点被蒸馏/结合引用或归档才算。(3) zj 四分量价值排序外生锚仍须 zj 本人给，AI 不代填。路径：先驱动真实复利使用攒出非零四分量 + 跑满 14d/3 饱和，再走 calibrate() 门禁。",
           "note": "zkc metrics_report 直读真实 PG；与 tuning.py 注释快照一致（cd/rr/mo=0,dc=1.0），非仿真"
+        },
+        {
+          "q": "1-26 续测（2026-11-07 11:46 GMT+8）：真实 PG 四分量 + can_calibrate 门禁最新读数？",
+          "answer": "续测确认 11-06 结构性结论未变。直连真实 PG 校验：node=64（dynamic 61 / static 2 / unrouted 1）、edge=0、citation=0、meta_claim=0、modeling_artifact=0（transform 仅有 context_assembly、无 combine）→ cd=0、rr=0、mo=0；dc 原始：expired_dynamic=15 且 expired_controlled=15——15 个过期动态节点全部仅因 archived_at 非空被计为受控，零条被 reverse_link/derived_from 边或 citation 或蒸馏引用，dc=1.0 纯归档假象、非复利产物。校准门禁（zkc meter 直读）：days_with_obs=4/14（较 11-06 增 1）、saturated_days=1/3、ready=False。结论不变：(1) 时间门禁仍只是必要条件非充分，cd/rr/mo 恒 0 使 METRIC_W_* 在真实数据上完全不可辨识，升 CALIBRATED 缺实证；(2) 真正前置阻塞 = 真实 PG 须先产生可辨识四分量（边/citation/combine），否则 14 天到了权重仍不可辨识；(3) zj 四分量价值排序外生锚仍须 zj 本人给。本节点继续 in_progress，不计入 1-25 完成度；未达 exit_criteria 任一即不勾销。",
+          "note": "zkc meter / zkc p64 直读 + 直连 PG 校验（edge/citation/modeling_artifact/archived_at），非仿真；复核 11-06 结论"
         }
       ],
       "notes": "扩范围（2026-11-06 zj 裁决）：本节点现同时负责 spike07 复利度量权重 METRIC_W_* 升 CALIBRATED 与 MIN_INTERVAL_DAYS（interval 钳制下界，当前 SIMULATION=0.25d）升 CALIBRATED。二者共享 tuning.can_calibrate 门禁（连续 ≥14d 埋点 + ≥3 饱和日）与同一批真实外生锚。MIN_INTERVAL_DAYS 升 CALIBRATED 的额外外生锚：zj 逐日真实 HITL 标注证明 <1d 下界真的被需要（floor_hit_archive 触发即证据），不得凭仿真定论。治理铁律不变：corpus-derived 绝不写回 CALIBRATED，禁止混称。1-22 范围不动（lexical routing gate 与 interval 阈值动力学无关）。\n当前校准就绪度（2026-11-06 21:34 GMT+8，zkc meter 直读真实 PG）：days_with_obs=3/14、saturated_days=1/3、ready=False。saturated_days = observation 行中 queue_remaining>0 的天数（scheduling.py:404 calibration_readiness）；须 ≥3 个观测日当天未清空队列。已建每日提醒（automation: zkc-calibration-cadence，21:00）催 zj 真实逐日 decide + 跑 zkc meter / zkc p64。\n⚠️ 结构性阻塞（2026-11-06 启动实测，见 1-26 decisions）：真实 PG 64 节点 / 0 边 / 0 citation / 0 combine 产物 → cd=0、rr=0、mo=0、dc=1.0（仅归档假象）、CF=0.25 全由归档撑起。四分量结构性退化违反 exit_criteria②，时间门禁(3/14)只是必要条件非充分——须先真实产生 reverse_link/derived_from 边 / citation / combine 产物使四分量可辨识，否则 14 天到了权重仍不可辨识。\n✅ 自动化 B（zkc daily 收口，2026-11-06 zj 选 B）：新建 automation `996bd6ec-1845-4ab0-9c7f-91e0bd3465f0`「ZKC 每日收口（zkc daily 自动写观测）」recurring DAILY;BYHOUR=22（GMT+8），纯跑 `zkc daily` 写当日 observation 行（pushed/queue_remaining 真实遥测 + 保留当日 completed/labeled）。只解 days_with_obs 的手动负担；saturated_days 仍需 zj 刻意留 ≥1 条 due 不复审（自动化不碰队列、不 decide）。已实跑验证 PG 写入路径可用：今日行 completed=14 labeled=14 queue_remaining=0（队列空→今天不计饱和日）。治理不变：任何自动化不替 zj 写 verdict。",
@@ -1372,7 +1377,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-07 11:30:32",
+    "updated": "2026-11-07 11:53:34",
     "md_file": "ROADMAP.md"
   },
   "edges": [
