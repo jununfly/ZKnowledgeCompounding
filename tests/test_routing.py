@@ -383,6 +383,23 @@ class LexicalGateCalibrationTest(unittest.TestCase):
         self.assertEqual(r.gate, r._seed_gate)
         self.assertEqual(r.gate_source, "seed")
 
+    def test_partial_fit_one_class_below_min_still_fitted_but_seed(self):
+        # 真实分布场景（1-22）：static 仅 2 例 < min_examples_per_class(3)，
+        # dynamic 61 例 ≥3 → dynamic 质心建起（fitted=True，动态类冷启动弃权解除），
+        # 但 static/dynamic 未同时 ≥3 → 自动推导门槛回退 seed（corpus-derived 未激活）。
+        # 这是「禁止伪造标注」铁律的直接后果：真实 static 不足，绝不为凑数灌入假样本。
+        r = LexicalRouter()
+        r.fit([
+            ("合同金额 100 万", "static"),
+            ("服务器 10.0.0.1", "static"),
+            ("明天开会讨论需求", "dynamic"),
+            ("今天回复邮件", "dynamic"),
+            ("下午处理线上故障", "dynamic"),
+        ])
+        self.assertTrue(r.fitted)               # dynamic 质心已建
+        self.assertEqual(r.gate_source, "seed")  # 单类不可分 → 回退 seed
+        self.assertEqual(r.gate, r._seed_gate)
+
 
 # ----------------------------------------------------------------- 校准边界锁定（残留闭环：语料推导 ≠ 埋点校准）
 class LexicalCalibrationGovernanceTest(unittest.TestCase):

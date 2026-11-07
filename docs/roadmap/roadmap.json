@@ -1086,7 +1086,7 @@
       "id": "1-22",
       "uid": "01a1a78754be-c2bcf51173",
       "label": "工程尾巴 B：lexical 语料冷启动 + 占位阈值（routing gate）校准收口",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -1105,16 +1105,22 @@
           "q": "复利度量权重校准为何拆出 1-25？",
           "answer": "原 label/exit_criteria/notes 把 METRIC_W_*(四 0.25) 与 METRIC_METHOD_TARGET 算在 1-22 scope，与新建的 1-25（spike07 复利度量权重校准）重复计数。本节点 scope 收窄为 lexical 语料冷启动 + routing gate 占位阈值校准；复利度量权重部分移交 1-25，避免完成度双重计数（display-id+label 双核对纪律）。",
           "note": "2026-11-06 拆分；1-25 为独立 sibling 节点"
+        },
+        {
+          "q": "1-22 真实语料落地后 fit() 的 gate 状态与收口判定？",
+          "answer": "scripts/export_lexical_corpus.py 从真实 PG 导出 data/lexical_corpus.json（63 条真实已定轨：dynamic 61 / static 2，unrouted 1 跳过不编造；文本格式镜像 resolve_classify 回灌 title+空格+content，零漂移）。结论：(1) fitted=True（dynamic 质心建起）→ 词法信号对动态类已激活，冷启动 predict 对动态文本不再恒 (None,0.0)，核心「冷启动恒弃权」bug 解除；(2) 但 static=2 小于 min_examples_per_class(3) → static 质心缺失 → _calibrate_gate 因未双类同时 ≥3 回退 seed，gate_source=seed（gate=0.5），corpus-derived 门槛未激活。此为「禁止伪造标注」铁律直接后果：真实 static 不足，绝不为凑数灌假样本。corpus-derived 激活需 zj 真实累计 ≥3 static 样本（数据侧依赖，与 1-26 同构，非工程阻塞）。",
+          "note": "2026-11-07 实测：全量套件 585 OK；ROUTING_LEXICAL_CONF_GATE 仍 PLACEHOLDER（治理测试锁定，未升 CALIBRATED）；新增 tests/test_routing.py::test_partial_fit_one_class_below_min_still_fitted_but_seed 锁「static<3 → fitted=True 但 gate_source=seed」诚实状态；导出脚本可随 KB 增长重跑"
         }
       ],
-      "notes": "重要事实更正：src/zkc/routing.py:186-190 已默认 auto_calibrate_gate=True，fit() 后按类内/类间质心余弦中点推导 gate（gate_source=corpus-derived），硬编码 0.5 恒弃权的 bug 早已修复；app.py:95-99 build_routers 会 fit 语料。真正缺口是 data/lexical_corpus.json 不存在 → 无标注语料 → 冷启动 predict 返回 (None,0.0) → 仍弃权；且 tuning.py:161 ROUTING_LEXICAL_CONF_GATE=0.5 仍是 PLACEHOLDER seed。治理铁律（routing.py:176-183）：corpus-derived 与 tuning.CALIBRATED 是两回事，绝不写回 REGISTRY，升 CALIBRATED 必须走 calibrate() 门禁。复利度量：tuning.py:178-181 四个 METRIC_W_* 均 0.25 PLACEHOLDER，metrics.py:101-113 的 weights/method_target 待校准。",
+      "notes": "重要事实更正：src/zkc/routing.py 已默认 auto_calibrate_gate=True，fit() 后按类内/类间质心余弦中点推导 gate（gate_source=corpus-derived），硬编码 0.5 恒弃权 bug 早已修复；语料 fit 路径实际在 src/zkc/web/app.py:85-99 build_routers（旧 note 误写 app.py:95-99，已更正）。真正缺口 data/lexical_corpus.json 现已由 scripts/export_lexical_corpus.py 从真实 PG 导出（63 条真实已定轨：dynamic 61/static 2，unrouted 跳过不编造）；fitted=True 解除动态类冷启动弃权，但 static=2 小于 3 致 static 质心缺失 → gate_source=seed（corpus-derived 未激活），需 zj 真实累计 ≥3 static（与 1-26 同构，数据侧依赖）。tuning.py:161 ROUTING_LEXICAL_CONF_GATE=0.5 仍 PLACEHOLDER seed（治理测试锁定，绝不写回 CALIBRATED；升 CALIBRATED 须走 calibrate() 门禁）。复利度量 METRIC_W_* 已拆至 1-25。全量 585 OK；新增 tests/test_routing.py::test_partial_fit_one_class_below_min_still_fitted_but_seed 锁诚实状态。",
       "layer": "plan",
       "exit_criteria": [
         "建立 data/lexical_corpus.json 真实标注语料，使 LexicalRouter.fit() 产出 corpus-derived gate（代码已支持自动校准）",
         "ROUTING_LEXICAL_CONF_GATE seed（tuning.py:161）走 calibrate() 门禁或显式标注 PLACEHOLDER 原因；复利度量权重 METRIC_W_*/METRIC_METHOD_TARGET 已拆至子节点 1-25，本节点不管",
         "治理铁律不变：corpus-derived 绝不写回 tuning 的 CALIBRATED，禁止混称",
         "routing gate 校准结论落 tuning 或 ADR，全量套件通过"
-      ]
+      ],
+      "rounds": 1
     },
     "1-23": {
       "id": "1-23",
@@ -1377,7 +1383,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-07 11:53:34",
+    "updated": "2026-11-07 12:31:02",
     "md_file": "ROADMAP.md"
   },
   "edges": [
