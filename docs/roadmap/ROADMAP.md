@@ -7,7 +7,7 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-07 01:05:20
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-07 11:09:59
 
 [~][X+] 1. ZKC MCP 集成执行路线图
     ├── [~][X+] 1-1. E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%
@@ -38,7 +38,5 @@ promote-via: ADR|design|contract|runtime-evidence
 
 ### 下一步可开工（ready 前 3）
 
-- 1-12. co-work(ZAgentic #236): E6/E7/E8 复用共享 Work 入双 outline context 时，产出 reference Placement 真实用例供标记复核 [ ]
 - 1-22. 工程尾巴 B：lexical 语料冷启动 + 占位阈值（routing gate）校准收口 [ ]
-- 1-26. spike07 复利度量权重升 CALIBRATED：真实埋点 + zj 四分量价值排序外生锚（承接 1-25 的遗留未决） [ ]
 <!-- ROADMAP_SECTION_END -->

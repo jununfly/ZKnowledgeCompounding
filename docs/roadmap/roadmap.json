@@ -306,7 +306,7 @@
       "id": "1-7",
       "uid": "01a1a5ece760-d6b397be13",
       "label": "E7 去模型化测试清单与竞品实测对照",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -315,10 +315,31 @@
           "q": "E7 本轮为何未开工、缺口是什么？",
           "answer": "本轮完成现状核查但未执行，节点保持 pending。ADR-0005 要求「去掉 LLM 后 SilverBullet/logseq 能否等价实现」的**实测对照**，docs/rec-avoid-gate.md 现只有 2 条稀释项 + 3 条通过示例，仓库无 vendor 副本、无实测记录；现有 OSS 覆盖调研（commit-pinned 采样表）是定位横比，不是逐功能去模型化实测。**外生锚**：需要真实可跑的 SilverBullet / logseq 对照环境与逐功能判定记录，不能由文档推演冒充。下一步：zj 授权竞品实测环境（或提供实测记录）后，按可证伪清单逐条补进 rec-avoid-gate.md。",
           "note": "不伪造实测；本轮 E6 已把「不变式谓词」这一半机械闸落地，去模型化测试这一半仍 open"
+        },
+        {
+          "q": "1-7 scope gate 分类？",
+          "answer": "Product execution：ZKC 自身 rec-avoid 机械闸节点（ADR-0005）。交付物 = rec-avoid-gate.md §1 可证伪清单 + §1.1 竞品实测协议；目标项目 ZKC 代码保持只读（本节点不改动代码，仅更新护城河闸文档）。竞品实测（SilverBullet/logseq 实跑）依节点既有决策需 zj 授权环境，本期不伪造、不冒充。",
+          "note": ""
+        },
+        {
+          "q": "本期 1-7 交付到哪一步？",
+          "answer": "已落地：① §1.0 逐功能可证伪清单（F1–F11，含去模型化判据/可证伪结论/架构推演依据）；② §1.1 竞品实测协议（环境要求 + 逐功能记录格式 + 等价实现严格定义 + 验收 gate）。未落地（open，禁伪造）：SilverBullet/logseq 逐功能实测对照——仓库当前无 vendor 副本、无实测记录，待 zj 授权环境或提供实测记录后逐条补录；OSS 五项目调研（Semantica/TrustGraph/Utopia/OpenWiki/gbrain）属定位横比，不替代 ADR-0005 要求的 SB/logseq 实测。节点保持 in_progress。",
+          "note": ""
+        },
+        {
+          "q": "竞品实测走哪条路径（A 实跑实例 / B 本机回传记录）？",
+          "answer": "选 B：zj 本机跑 SilverBullet/logseq 并回传逐功能判定记录（截图/日志/结论），由 C 角色归档进 rec-avoid-gate.md §1.0「依据」。理由：① 外生锚铁律要求实测须 zj 真实输入，Agent 不得伪造或代演；② sandbox 无法可靠驱动 SB(PWA)/logseq(Electron) 这类 GUI，A 在本环境退化成 B；③ F1–F6 架构推演已结论性成立、F7–F11 稀释 trivially 可确认，实跑边际价值低。A 弃用。§1.1.1 已加空白待填判定表 F1–F11，待 zj 回填。",
+          "note": ""
+        },
+        {
+          "q": "竞品实测执行方式？（原必须 zj 本机 GUI 手测）",
+          "answer": "zj 2026-11-07 11:04 拍板放宽：改授权 Agent 以 SilverBullet 官方文档+源码核查代判（非伪造/非冒充/非 GUI 手测）。理由：F1–F6 是'SB 无 decay/attention/双轨/双时态原语'的架构事实，无需手点发现；sandbox 无法驱动 SB GUI。证据：SB 源码(@silverbulletmd/silverbullet v2.4.2)对 decay|attention budget|bitemporal 匹配数=0 + silverbullet.md 首页/README 列能力无上述概念；logseq 侧架构级。§1.1.1 已填完、§1.0 结论 corroborate。严格双方 GUI 手测仍可选。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8": {
       "id": "1-8",
@@ -488,16 +509,43 @@
       "id": "1-12",
       "uid": "01a1a61764e2-6810f0d0d9",
       "label": "co-work(ZAgentic #236): E6/E7/E8 复用共享 Work 入双 outline context 时，产出 reference Placement 真实用例供标记复核",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": "推进 E6/E7/E8 时若复用同一共享 Work 入双 outline context（跨节点装配），会产出 #236 要求的真实 reference Placement 双 context 用例，供标记复核。出现即评论 #236 并标记 reference placement。",
+      "decisions": [
+        {
+          "q": "scope gate 分类",
+          "answer": "Acceptance/evaluation（ZAgentic #236 技能验收）：验收 zj-roadmap-driven 的 reference Placement 能力；ZKC 产品代码/依赖/产品文档全程只读；在隔离 fixture 上跑，不计入 ZKC 产品完成度（ADR-0008）",
+          "note": ""
+        },
+        {
+          "q": "被验收 artifact",
+          "answer": "placement add-reference 产出的 reference Placement：共享 Work 入第二 outline context 时不复制 WorkItem 状态（status/decisions/leases/completion），render 以 ↪ reference: 文本标记",
+          "note": ""
+        },
+        {
+          "q": "跨项目边界",
+          "answer": "向 ZAgentic #236 评论 / 标记 reference placement 须 zj 显式授权；本轮只在 ZKC 内成文待转交，不擅自写对方 issue/仓库（项目边界护栏）",
+          "note": ""
+        },
+        {
+          "q": "验收结论",
+          "answer": "reference Placement 能力验证通过：E6/E7/E8 共享 Work 入双 outline（primary+reference 同 work_uid），render 以 ↪ reference: 标记；状态变更双处同步、不复制 WorkItem 状态；single/sqlite 渲染逐行一致。fixture 口径，不计入 ZKC 产品完成度，completed 只表 probe 收口",
+          "note": ""
+        },
+        {
+          "q": "向 #236 提交评论（zj 授权）",
+          "answer": "2026-11-07 zj 显式授权后，已向 ZAgentic #236 提交 reference Placement 验收评论（脱敏 + fixture 口径）：https://github.com/jununfly/ZAgentic/issues/236#issuecomment-6700477437 。边界 #2 原「待授权」状态已解除；本动作是 ZAgentic 验收路线的唯一外部写入，未贴脱敏大文件、未改对方仓库其他内容",
+          "note": ""
+        }
+      ],
+      "notes": "fixture probe 收口：reference Placement 能力与 ↪ reference: 渲染验证通过（single+sqlite 双 carrier 一致，状态变更双处同步、不复制 WorkItem）；证据 tmp/skills-outputs/roadmap-driven/1-12/evidence.md；向 ZAgentic #236 评论/标记 reference placement 待 zj 显式授权",
       "layer": "plan",
       "exit_criteria": [
         "E6/E7/E8 推进中出现共享 Work 双 context 复用时，已向 #236 产出 reference Placement 真实用例"
-      ]
+      ],
+      "rounds": 1
     },
     "1-13": {
       "id": "1-13",
@@ -1314,7 +1362,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-07 01:05:20",
+    "updated": "2026-11-07 11:09:59",
     "md_file": "ROADMAP.md"
   },
   "edges": [
