@@ -72,7 +72,7 @@
     "1-1": {
       "id": "1-1",
       "uid": "01a1a5ece146-89f466a59c",
-      "label": "E1 校准闭环跑通：复审队列≥7活跃日且标注率≥70%",
+      "label": "E1 校准闭环跑通：复审队列累计≥7活跃日（不要求连续）且标注率≥70%",
       "status": "in_progress",
       "mode": "explore",
       "parent": "1",
@@ -135,12 +135,17 @@
           "q": "11-04/11-05 共 6 条标注被判有效后，E1 三判据的当前读数如何认定？",
           "answer": "zj 2026-11-06 裁决 6 条标注有效（见 1-13 裁决），按此 E1 读数：连续活跃日=2（11-04、11-05 各交付复审队列 completed=3）；标注率闸门=100%（labeled/completed=6/6 ≥70%）；budget 收敛(CV≤10% 且 28d confidence=observed)尚未达成（仅 2 天观测）。结论：标注率与活跃日读数有效，但 E1 仍 pending（未达连续≥7活跃日、budget 未收敛）。节点保持 in_progress，不勾 completed。该读数 override 了 1-7 默认伪标注假设。",
           "note": "仅 informs，不建 blocks 到 1-17（避免倒挂）；与 1-17 共享同一批真实 decide 数据。"
+        },
+        {
+          "q": "E1-① 活跃日判据是否仍需『连续 ≥7』？",
+          "answer": "2026-11-11 zj 拍板放宽：不再强制『连续无断签窗口』，改为**累计活跃日 ≥ 7**（src/zkc/calibration.py 的 _evaluate_active_days，原 _evaluate_active_streak 已更名重写）。理由：多天累计的真实复审行为即构成真实使用场景，不因某天漏跑(missed)整体断签重置。latest_ok 与 longest_consecutive_window 仍展示但不参与 met 判定。与 1-26 人工覆盖结案（CALIBRATED 升档）同源决策。",
+          "note": "supersedes 2026-11-04 fork 3b 的『连续窗口』口径；_classify 单日分类(missed/excused)不变"
         }
       ],
-      "notes": "当前真实读数（2026-11-06 19:45 GMT+8，zkc meter）：\n① 连续 ≥7 活跃日（空队列日豁免）：2/7 —— 窗口活跃 2、含最新日=True、历史最长 2、60d 内活跃 2 → 连续串仍活但仅 2 天。\n② 标注率闸门 ≥70%：N/A（7d completed=6<10，gate=open，warm-up 放行，非达标）。\n③ budget 收敛：✗（28d 估计 3.0、confidence=provisional、饱和样本 [3]、cv=0.0）。\n活跃日语义（calibration.py:_classify / _evaluate_active_streak）：active=completed≥1；missed=completed=0 且 queue_remaining>0（断签、重置连续窗口）；excused=completed=0 且 queue_remaining=0（空队列日，不破不断）；无观测日按断签处理。\n⚠️ 紧迫：11-06 当日尚无 observation 行。若今日不真实 decide（completed≥1）并跑 zkc daily 收口，11-06 成 gap → 11-04/11-05 的 2 日连续串于次日断签重置。\n每日动作（zj 真人）：review UI 或 zkc decide 做 ≥1 条真实复审 → zkc daily 收口当天快照（写 observation 行）。校准门禁另需 ≥3 个「饱和日」= 当天 queue_remaining>0（别把队列清空）。",
+      "notes": "当前真实读数（2026-11-06 19:45 GMT+8，zkc meter）：\n① 累计 ≥7 活跃日（不要求连续，空队列日豁免）：2/7 —— 累计活跃 2、含最新日=True、历史最长连续窗口 2、60d 内活跃 2 → 累计未达但串仍活。\n② 标注率闸门 ≥70%：N/A（7d completed=6<10，gate=open，warm-up 放行，非达标）。\n③ budget 收敛：✗（28d 估计 3.0、confidence=provisional、饱和样本 [3]、cv=0.0）。\n活跃日语义（calibration.py:_classify / _evaluate_active_days）：active=completed≥1；missed=completed=0 且 queue_remaining>0（漏跑、累计不因单日断签重置）；excused=completed=0 且 queue_remaining=0（空队列日，不破不断）；无观测日按断签处理。\n⚠️ 紧迫：11-06 当日尚无 observation 行。若今日不真实 decide（completed≥1）并跑 zkc daily 收口，11-06 成 gap → 11-04/11-05 的 2 日连续串于次日断签重置。\n每日动作（zj 真人）：review UI 或 zkc decide 做 ≥1 条真实复审 → zkc daily 收口当天快照（写 observation 行）。校准门禁另需 ≥3 个「饱和日」= 当天 queue_remaining>0（别把队列清空）。",
       "layer": "plan",
       "exit_criteria": [
-        "连续 ≥7 活跃日运行已交付复审队列",
+        "累计 ≥7 活跃日（不要求连续）运行已交付复审队列",
         "复审标注率闸门 ≥70%",
         "budget_per_day 派生估计在 [7,14,21,28] 天窗口轨迹收敛（CV≤10% 且 28d confidence=observed）"
       ],

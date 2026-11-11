@@ -38,4 +38,4 @@ L2 归一在观测出现前恒 passive，且即使观测出现，② 也从不�
 **空队列日豁免**：当日 `completed==0` 且 `queue_remaining==0`（队列本就空）→ 不破不断。
 **仅「有 due 未复审」才断签**：当日 `completed==0` 且 `queue_remaining>0`（有到期项却没复审）→ 串归零。
 **收口（`queue_remaining`）只影响 E1-③ 预算估计与 `can_calibrate` 门禁，不影响 E1-①**（见下「预算」条）。
-由 `scripts/e1_calibration_progress.py` 的 `_evaluate_active_streak` 量（连续非断签窗口内活跃日 ≥7）。
+由 `src/zkc/calibration.py` 的 `_evaluate_active_days` 量（**累计**活跃日 ≥7，不要求连续；2026-11-11 放宽）。
