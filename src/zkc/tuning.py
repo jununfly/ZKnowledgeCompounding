@@ -67,6 +67,10 @@ class Parameter:
 
 SPIKE14_AT = date(2026, 10, 31)   # spike 14 实测日期：编码器与维度在此定死
 R18_EVAL_AT = date(2026, 11, 1)   # 1-8-4 R18 中文召回实测日期：4096 加列路径依据
+# zj 显式拍板覆盖自动校准门禁的日期：多天累计真实复审已构成真实使用场景，
+# 据此将 P5.2 五参数（METRIC_W_* ×4 + METRIC_METHOD_TARGET）与 MIN_INTERVAL_DAYS
+# 直接标定为 CALIBRATED（**不经 calibrate() 门禁**，当时 days_with_obs=8/14 未达 14）。
+CALIB_OVERRIDE_AT = date(2026, 11, 11)
 
 
 def _p(name: str, value: Any, source: str, note: str = "",
@@ -93,11 +97,14 @@ REGISTRY: dict[str, Parameter] = {
            "L1 顺序中 self_loop 压过已捕获：项目躬身入局的条目即便被提炼过，原件仍在变"),
         _p("BASELINE_CONNECTED_DAYS", 14, PLACEHOLDER, "有 edge 或 higher_dim"),
         _p("BASELINE_ORPHAN_DAYS", 7, PLACEHOLDER, "孤儿条目"),
-        _p("MIN_INTERVAL_DAYS", 0.25, SIMULATION,
+        _p("MIN_INTERVAL_DAYS", 0.25, CALIBRATED,
            "interval 钳制下界（ADR-0009，2026-11-06 zj 拍板 0.25d）：原 spike09 为 1.0d，"
            "致 1.0d 触底节点的 L3 too_late 反馈恒 no-op；取 0.25d 使 AIMD_DOWN=0.7 "
-           "从 1.0d 可走 4 步收缩到新下界。**SIMULATION 占位、非 CALIBRATED**；"
-           "ADR-0007 每日驱动仍每天一次，<1d 只是数值语义、不构成日内复审能力"),
+           "从 1.0d 可走 4 步收缩到新下界。"
+           "**2026-11-11 zj 显式拍板覆盖自动门禁**：多天累计真实复审已构成真实使用场景，"
+           "据此标定为 CALIBRATED（非经 calibrate() 门禁，当时 days_with_obs=8/14）；"
+           "ADR-0007 每日驱动仍每天一次，<1d 只是数值语义、不构成日内复审能力",
+           calibrated_at=CALIB_OVERRIDE_AT),
         _p("MAX_INTERVAL_DAYS", 180.0, SIMULATION, "interval 钳制上界"),
         # ---- L2 预算归一化（spike 09 切片 B）
         _p("BUDGET_PER_DAY_DEFAULT", 1.0, PLACEHOLDER,
@@ -188,20 +195,34 @@ REGISTRY: dict[str, Parameter] = {
         # ③ target=10 由「14d 观察窗口 × 1.0/天默认预算 = 可达上界 14」的
         #    71% 量级 + 饱和/区分度网格支撑；真实 mo=0 时所有 target 等价。
         # 口径限制：这是「设计口径受控仿真」，不等于按真实行为校准。
-        # 升 CALIBRATED 仍须 can_calibrate 门禁（≥14d 埋点 + ≥3 饱和日）+
-        # zj 对四分量价值的显式外生排序 + 真实复用/连接密度/方法论产出分布；
-        # E8 锚2 蒸馏质量抽检是另一套度量，不得冒充本体系的校准证据。
-        _p("METRIC_W_DENSITY", 0.25, SIMULATION,
-           "复利系数·连接密度权重；SIMULATION 依据见 metric-weights-simulation.md（均匀先验 Bayes 最优等权）"),
-        _p("METRIC_W_REUSE", 0.25, SIMULATION,
-           "复利系数·复用率权重；SIMULATION 依据同上，真实快照该分量恒 0、不可辨识"),
-        _p("METRIC_W_METHOD", 0.25, SIMULATION,
-           "复利系数·方法论产出权重；SIMULATION 依据同上，真实快照该分量恒 0、不可辨识"),
-        _p("METRIC_W_DECAY", 0.25, SIMULATION,
-           "复利系数·衰减可控权重；SIMULATION 依据同上。当前该分量由归档构成，非复利产物"),
-        _p("METRIC_METHOD_TARGET", 10.0, SIMULATION,
+        # ⚠️ 2026-11-11 zj 显式拍板覆盖：多天累计真实复审已构成真实使用场景，
+        #    下面五个参数（4 权重 + method_target）据此直接标定为 CALIBRATED（带 calibrated_at），
+        #    **非经 calibrate() 自动门禁**（当时 days_with_obs=8/14 未达 14）。
+        #    本覆盖保留以下事实：真实快照中 cd/rr/mo 结构性为 0，权重在其上仍不可辨识；
+        #    0.25×4 等权与 target=10 的数值维持原 SIMULATION 结论不改，仅 source 标签升 CALIBRATED。
+        #    若日后要走正式自动门禁，仍需 ≥14d 埋点 + ≥3 饱和日 + zj 四分量价值排序；
+        #    E8 锚2 蒸馏质量抽检是另一套度量，不得冒充本体系的校准证据。
+        _p("METRIC_W_DENSITY", 0.25, CALIBRATED,
+           "复利系数·连接密度权重；SIMULATION 依据见 metric-weights-simulation.md（均匀先验 Bayes 最优等权）。"
+           "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
+           calibrated_at=CALIB_OVERRIDE_AT),
+        _p("METRIC_W_REUSE", 0.25, CALIBRATED,
+           "复利系数·复用率权重；SIMULATION 依据同上，真实快照该分量恒 0、不可辨识。"
+           "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
+           calibrated_at=CALIB_OVERRIDE_AT),
+        _p("METRIC_W_METHOD", 0.25, CALIBRATED,
+           "复利系数·方法论产出权重；SIMULATION 依据同上，真实快照该分量恒 0、不可辨识。"
+           "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
+           calibrated_at=CALIB_OVERRIDE_AT),
+        _p("METRIC_W_DECAY", 0.25, CALIBRATED,
+           "复利系数·衰减可控权重；SIMULATION 依据同上。当前该分量由归档构成，非复利产物。"
+           "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
+           calibrated_at=CALIB_OVERRIDE_AT),
+        _p("METRIC_METHOD_TARGET", 10.0, CALIBRATED,
            "方法论产出归一化目标：达到该产出数即记满分 1.0。SIMULATION 依据：14d×1.0/d 可达上界 14 的 71% 量级 + "
-           "target 饱和/区分度网格；真实 mo=0 时所有 target 等价、不可辨识，见 metric-weights-simulation.md"),
+           "target 饱和/区分度网格；真实 mo=0 时所有 target 等价、不可辨识，见 metric-weights-simulation.md。"
+           "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
+           calibrated_at=CALIB_OVERRIDE_AT),
         # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 · 1-5-4 收尾切片）
         _p("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.65, SIMULATION,
            "discover k-NN 近邻被纳入更高维聚合的最低余弦相似度（sim=1-余弦距离，1=完全相同）。"
