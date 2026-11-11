@@ -149,12 +149,12 @@ def _safe(fn):
 
 
 def _fmt_criteria(r: dict) -> str:
-    c1 = r["criteria"]["c1_consecutive_active_days"]
+    c1 = r["criteria"]["c1_cumulative_active_days"]
     c2 = r["criteria"]["c2_labeling_rate_gate"]
     c3 = r["criteria"]["c3_budget_convergence"]
     mark = lambda m: "✓" if m else "✗"
     return (
-        f"[1]活跃日 {mark(c1['met'])}(窗口{c1['window_active']}/{c1['required']},"
+        f"[1]活跃日 {mark(c1['met'])}(累计{c1['cumulative_active']}/{c1['required']},"
         f"最新日={c1['latest_ok']}) "
         f"[2]标注率 {mark(c2['met'])}({c2['rate']}) "
         f"[3]预算收敛 {mark(c3['met'])}(cv={c3['cv']})"

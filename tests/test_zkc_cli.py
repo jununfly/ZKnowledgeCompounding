@@ -64,7 +64,7 @@ class ZkcCliTest(unittest.TestCase):
         self.assertEqual(rc, 0)
         r = build_report("memory", storage=store)
         self.assertIn("criteria", r)
-        for k in ("c1_consecutive_active_days", "c2_labeling_rate_gate",
+        for k in ("c1_cumulative_active_days", "c2_labeling_rate_gate",
                   "c3_budget_convergence"):
             self.assertIn(k, r["criteria"])
 

@@ -59,7 +59,7 @@ class DriverDirectTest(unittest.TestCase):
             self.assertEqual(observe["queue_remaining"], 1, "queue_remaining=当前到期数(真值)")
             self.assertTrue(meter_ok, "direct 仪表应成功")
             self.assertIn("criteria", meter)
-            self.assertIn("c1_consecutive_active_days", meter["criteria"])
+            self.assertIn("c1_cumulative_active_days", meter["criteria"])
             self.assertIn("c3_budget_convergence", meter["criteria"])
 
     def test_direct_mode_observe_and_meter_share_store(self) -> None:
