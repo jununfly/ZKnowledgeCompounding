@@ -1,10 +1,15 @@
-"""spike07 复利度量权重 / method_target 的治理契约（1-25 校准切片的回归护栏）。
+"""spike07 复利度量权重 / method_target 的治理契约（1-25 校准切片 + 2026-11-11 覆盖）。
 
 守住四件事：
-1. 五个参数 source=SIMULATION（不是 PLACEHOLDER，更不是 CALIBRATED），数值一律不改；
-2. 校准门禁对仿真结论同样关闭 —— 受控仿真不得冒充真实埋点；
+1. 五个参数 source=CALIBRATED（2026-11-11 zj 显式拍板，覆盖自动门禁；数值一律不改、calibrated_at 已落）；
+2. 自动校准门禁 calibrate() 对**未授权**参数仍关闭 —— 本文件用仍 SIMULATION 的参数证明门禁机制未失效；
 3. ``metrics.compounding_factor`` 默认权重确实来自 tuning、且必须归一；
 4. 证据脚本的核心结论（等权在均匀先验下 MSE 最小 / 真实快照零信息量）可复跑。
+
+⚠️ 历史口径：原契约锁死这五个参数为 SIMULATION（防无门禁升 CALIBRATED）。
+2026-11-11 zj 以「多天累计真实复审已构成真实使用场景」为由，显式覆盖自动门禁，
+直接把 seed 标定为 CALIBRATED（带 calibrated_at），**不经 calibrate() 自动门禁**
+（当时 days_with_obs=8/14 未达 14）。这是人工决策记录，不表示门禁机制失效。
 """
 from __future__ import annotations
 
@@ -16,7 +21,7 @@ from unittest import mock
 
 from zkc import metrics as M
 from zkc import tuning
-from zkc.tuning import PLACEHOLDER, SIMULATION
+from zkc.tuning import CALIBRATED, SIMULATION
 
 W_NAMES = (
     "METRIC_W_DENSITY", "METRIC_W_REUSE", "METRIC_W_METHOD", "METRIC_W_DECAY",
@@ -35,36 +40,42 @@ def _load_sim_module():
 
 
 class TestMetricWeightsGovernance(unittest.TestCase):
-    def test_four_weights_equal_and_simulated(self):
+    def test_four_weights_equal_and_calibrated(self):
         for name in W_NAMES:
             p = tuning.param(name)
             self.assertEqual(p.value, 0.25, name)
-            self.assertEqual(p.source, SIMULATION, name)
-            self.assertNotEqual(p.source, PLACEHOLDER, name)
+            self.assertEqual(p.source, CALIBRATED, name)
+            self.assertIsNotNone(p.calibrated_at, name)
+            self.assertNotEqual(p.source, SIMULATION, name)
 
     def test_weights_sum_to_one(self):
         self.assertAlmostEqual(sum(tuning.get(n) for n in W_NAMES), 1.0, delta=1e-9)
 
-    def test_method_target_unchanged_and_simulated(self):
+    def test_method_target_unchanged_and_calibrated(self):
         p = tuning.param("METRIC_METHOD_TARGET")
         self.assertEqual(p.value, 10.0)
-        self.assertEqual(p.source, SIMULATION)
+        self.assertEqual(p.source, CALIBRATED)
+        self.assertIsNotNone(p.calibrated_at)
 
-    def test_none_is_calibrated(self):
+    def test_all_are_calibrated(self):
         for name in ALL_NAMES:
-            self.assertFalse(tuning.is_calibrated(name), name)
+            self.assertTrue(tuning.is_calibrated(name), name)
 
-    def test_calibrate_gate_refuses_simulation_as_telemetry(self):
-        """即便拿仿真结论当理由，无真实埋点也不得升 CALIBRATED。"""
-        for name in ALL_NAMES:
-            with self.subTest(name=name):
-                before = tuning.get(name)
-                with self.assertRaises(PermissionError):
-                    tuning.calibrate(name, 0.3, date(2026, 11, 6),
-                                     "受控仿真结论冒充真实埋点",
-                                     days_with_observation=2, saturated_days=0)
-                self.assertEqual(tuning.get(name), before)
-                self.assertEqual(tuning.param(name).source, SIMULATION)
+    def test_calibrate_gate_still_refuses_unauthorized_upgrade(self):
+        """门禁机制未失效：仍 SIMULATION 的参数未经真实埋点不得升 CALIBRATED。
+
+        注意：本测试不复测被人工覆盖的五个参数（它们已被显式标定为 CALIBRATED），
+        而是用 ROT_THRESHOLD（仍 SIMULATION、不在本次覆盖范围）证明 calibrate()
+        门禁本身仍然关闭。
+        """
+        name = "ROT_THRESHOLD"  # 仍 SIMULATION，未被本次覆盖
+        before = tuning.get(name)
+        with self.assertRaises(PermissionError):
+            tuning.calibrate(name, 0.95, date(2026, 11, 11),
+                             "借本次覆盖顺手改别的数",
+                             days_with_observation=2, saturated_days=0)
+        self.assertEqual(tuning.get(name), before)
+        self.assertEqual(tuning.param(name).source, SIMULATION)
 
     def test_default_compounding_factor_is_normalized_sum(self):
         # cd=rr=dc=1、mo=target → 四项均 1，CF 必须恰为权重和 1.0
