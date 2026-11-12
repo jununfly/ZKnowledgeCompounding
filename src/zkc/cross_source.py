@@ -21,7 +21,9 @@
 """
 from __future__ import annotations
 
+import statistics
 import time
+from dataclasses import dataclass
 from typing import Callable, Optional
 from uuid import UUID
 
@@ -362,4 +364,83 @@ def apply_combine(
         reason=f"combine persisted 1 modeling_artifact "
                f"({len(artifact.get('claims', []))} claims, "
                f"{len(ma.evidence_refs)} evidence nodes)",
+    )
+
+
+# ----------------------------------------------------------------- R14 判据聚合（1-19 Q3=A 收口衔接）
+# 纯函数：把一组跨源补全 run 的 report 聚合成 R14 裁决。不读数据、不碰 IO——
+# 把「completion_fired 无生产 run 落库、判据不可执行」转化为可机械判定的实现，
+# 待真实生产 run 落库聚合后即可裁决 R14 是否关补全。R14 节点本身仍 open（关闭挂真实数据）。
+R14_MIN_RUNS_DEFAULT = 10  # 默认最少样本量，防小样本误判；可由调用方按需放宽
+
+
+@dataclass
+class R14Verdict:
+    """R14 聚合裁决结果。"""
+
+    total: int
+    fired: int
+    trigger_rate: float
+    completion_latency_median: Optional[float]
+    main_latency_median: float
+    should_close_completion: bool
+    reason: str
+
+
+def judge_r14(runs: list[dict], *, min_runs: int = R14_MIN_RUNS_DEFAULT) -> R14Verdict:
+    """聚合跨源补全 run 的 R14 判据（纯函数）。
+
+    输入 runs：每个为 ``combine()`` 的 report dict，含
+      ``completion_fired: bool``、``main_latency_ms: float``、
+      ``completion_latency_ms: float | None``（仅触发补全的 run 有值）。
+
+    判据（risks.md R14 / roadmap 1-19 EC3）：
+      触发率 > 0.5 且 补全延迟中位 > 主生成延迟中位 × 1.5 → 关补全。
+
+    数据不足（total < min_runs 或补全延迟缺失）→ ``should_close_completion=False``
+    并注明 reason（insufficient_data / no_completion_fired / trigger_rate_within_budget
+    / completion_latency_within_budget），绝不伪造或误判。
+    """
+    total = len(runs)
+    fired = sum(1 for r in runs if r.get("completion_fired"))
+    trigger_rate = (fired / total) if total else 0.0
+
+    main_latencies = [float(r["main_latency_ms"])
+                      for r in runs if r.get("main_latency_ms") is not None]
+    completion_latencies = [float(r["completion_latency_ms"])
+                           for r in runs if r.get("completion_latency_ms") is not None]
+    main_latency_median = statistics.median(main_latencies) if main_latencies else 0.0
+    completion_latency_median = (statistics.median(completion_latencies)
+                                 if completion_latencies else None)
+
+    if total < min_runs:
+        return R14Verdict(
+            total=total, fired=fired, trigger_rate=trigger_rate,
+            completion_latency_median=completion_latency_median,
+            main_latency_median=main_latency_median,
+            should_close_completion=False, reason="insufficient_data",
+        )
+    if fired == 0:
+        return R14Verdict(
+            total=total, fired=fired, trigger_rate=trigger_rate,
+            completion_latency_median=completion_latency_median,
+            main_latency_median=main_latency_median,
+            should_close_completion=False, reason="no_completion_fired",
+        )
+    if (trigger_rate > 0.5 and completion_latency_median is not None
+            and completion_latency_median > main_latency_median * 1.5):
+        return R14Verdict(
+            total=total, fired=fired, trigger_rate=trigger_rate,
+            completion_latency_median=completion_latency_median,
+            main_latency_median=main_latency_median,
+            should_close_completion=True,
+            reason="trigger_rate_and_latency_exceed_budget",
+        )
+    reason = "trigger_rate_within_budget" if trigger_rate <= 0.5 \
+        else "completion_latency_within_budget"
+    return R14Verdict(
+        total=total, fired=fired, trigger_rate=trigger_rate,
+        completion_latency_median=completion_latency_median,
+        main_latency_median=main_latency_median,
+        should_close_completion=False, reason=reason,
     )
