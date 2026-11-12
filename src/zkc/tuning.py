@@ -177,6 +177,10 @@ REGISTRY: dict[str, Parameter] = {
            "CALIBRATED。本 seed 仅作未 fit / 类不可分时的回退保守门槛。"
            "**第二信号严禁用 embedding**(R16：embedding 仅限检索召回/反向连接候选，"
            "spike-03 实测 nomic dangerous=3)，故用 embedding-free 词法路由作交叉验证"),
+        # 2026-11-12 校准结论（1-22 收口）：真实语料达 4 static / 63 dynamic（≥3/类）后，
+        # LexicalRouter.fit() 已自动产出 corpus-derived gate（实测 gate_source 由 seed 切换为
+        # corpus-derived，gate≈0.44 量级），冷启动安全欠覆盖→学习闭环达成。seed 仍 PLACEHOLDER
+        # 作回退保守门槛；corpus-derived 是「语料分布推导」、绝不写回本 REGISTRY 的 CALIBRATED。
         _p("ROUTING_LEXICAL_CALIB_MIDPOINT", 0.5, PLACEHOLDER,
            "词法门槛自动推导的中点份额：gate = mean_out + 0.5*(mean_in - mean_out)。"
            "0.5=类内/类间相似度正中；越接近 0 越保守(贴近类间、少误提交)。"

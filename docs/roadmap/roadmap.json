@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a1a5ece014-f94076892c",
       "label": "ZKC MCP 集成执行路线图",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -934,7 +934,7 @@
       "id": "1-19",
       "uid": "01a1a787519c-ac3830ef68",
       "label": "风险册观察期终判组：R4/R5/R6/R10/R14 终判与阈值 source 升级",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -973,6 +973,28 @@
           "q": "Q4 R5/R6 与节点状态？",
           "answer": "A：按 EC④ 落地文档收口，顺手修 risks.md 过时描述（R5「依赖 P4.2」→ 每日复审队列已交付；R6「阈值全占位」→ METRIC_W_* 已 SIMULATION 并打来源标签）。节点保持 in_progress 挂 1-26（CALIBRATED 门禁未过）。R18 不在本组已由 D3 覆盖。",
           "note": "Q4=A 执行：R5/R6 状态与描述更新；节点保持 in_progress；不改 tuning.REGISTRY（只读）。"
+        },
+        {
+          "q": "2026-11-12 复判：1-26 结案后 1-19 是否可收口？",
+          "answer": "可收口：5 条风险判据全部落盘、gating 解除、无 scope 内遗留工程动作",
+          "note": ""
+        },
+        {
+          "q": "2026-11-12 复判：1-26 结案后 1-19 是否可收口？",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "f872b3b5c62e7795b9b512cb8eeaa2054b314e110929215d9a34158abcb85566"
+        },
+        {
+          "q": "2026-11-12 复判：1-26 结案后 1-19 是否可收口？",
+          "answer": "可收口：5 条风险判据全部落盘、gating 解除、scope 内无遗留工程动作",
+          "note": "2026-11-12 18:45 GMT+8 复判真值：① 1-26 已 completed（HEAD 57e3cd4；commits 03614c2/1965144/d0d9b1b 将 METRIC_W_*/MIN_INTERVAL_DAYS 升 CALIBRATED，人工覆盖门禁结案）-> 原『挂 1-26』gating 解除。② R4=已终判·缩动态集，ADR-0010 accepted，risks.md 同步。③ R5=已闭合/已交付，BOUNDARIES.md L62 列 R5 于已归档闭合项。④ R6=缓解，1-26 CALIBRATED 后同步。⑤ R10=已关闭，1-17 2026-11-07 归档（ZKC-risk-R10-closed.md）。⑥ R14=保持 open（判据不可执行）为 Q3=A 显式裁决输出，非遗留任务；关闭挂未来真实 run 落库数据，不在本节点 scope。结论：5 条判据全部落盘、gating 解除、risk-register 判定+长期文档/ADR 收口无遗留，节点可 completed；R14 open 作风险册残留随 risks.md 跟踪。"
+        },
+        {
+          "q": "2026-11-12 TDD：R14 判据「不可执行」如何解决（Q3=A 遗留）？",
+          "answer": "建 judge_r14 纯函数 + 7 测试，判据从不可执行变可执行就绪；R14 节点仍 open，关闭挂真实生产 run 落库聚合",
+          "note": "TDD 红绿：先写失败测试（ImportError）→ 实现 src/zkc/cross_source.py 的 judge_r14 + R14Verdict → 7 测试全绿；受影响 test_cross_source 13 测试无回归。judge_r14 纯函数聚合 completion_fired/main_latency_ms/completion_latency_ms，判据=触发率>0.5 且 补全延迟中位>主生成中位×1.5→关补全；默认 min_runs=10 防小样本误判（可调）。不读数据、不碰 IO、不伪造。R14 关闭仍需真实 run 聚合（数据侧，zj 提供），本函数仅使裁决可机械判定。scope 边界：本动作在 1-19 已 completed 后补落 R14 判据可执行实现，未改 R14 节点状态（仍 open）、未代 zj 给 verdict、未碰 tuning/埋点。risks.md R14 行同步更新为「判据已可执行就绪」。"
         }
       ],
       "notes": "聚合理由：R4（预算不足终判）、R5（L3 依赖标注）、R6（校准值 open）、R10（外生锚样本）、R14（补全延迟触发率）共享同一个外生锚——真实多日埋点，故同一节点判定，避免 5 个节点互相等待。与 1-22 的分工：1-22 提供工程动作（建语料、跑 calibrate、落权重），本节点负责风险册状态判定与文档收口，共享 tuning.calibrate() 门禁但不重复实现。R18 已由 1-15(D3) 覆盖，R1/R8/R17 不依赖观察期、另立 1-20。\n\n2026-11-06 Q1-Q4 终判执行（zj 拍板）：R4=缩动态集（落 ADR-0010，D2 归档 24 条退出调度回路为默认处置）；R5=每日复审队列已交付；R6=METRIC_W_* 已 SIMULATION 并打来源标签（CALIBRATED 升档挂 1-26 门禁）；R10=只留痕不勾销（待 1-17 由 zj 显式勾销并同步其滞后 notes，仍记 6/20）；R14=保持 open（判据不可执行：completion_fired 仅存运行时 report、无生产 run 落库、无聚合数据源，spike-11 旧样本与单测不得冒充真实触发率）。节点保持 in_progress 挂 1-26；risks.md 与 ADR-0010 已同步；未改 tuning.REGISTRY（只读）、未触 PRD §9、未代 zj 给 verdict。",
@@ -1094,7 +1116,7 @@
       "id": "1-22",
       "uid": "01a1a78754be-c2bcf51173",
       "label": "工程尾巴 B：lexical 语料冷启动 + 占位阈值（routing gate）校准收口",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -1118,6 +1140,11 @@
           "q": "1-22 真实语料落地后 fit() 的 gate 状态与收口判定？",
           "answer": "scripts/export_lexical_corpus.py 从真实 PG 导出 data/lexical_corpus.json（63 条真实已定轨：dynamic 61 / static 2，unrouted 1 跳过不编造；文本格式镜像 resolve_classify 回灌 title+空格+content，零漂移）。结论：(1) fitted=True（dynamic 质心建起）→ 词法信号对动态类已激活，冷启动 predict 对动态文本不再恒 (None,0.0)，核心「冷启动恒弃权」bug 解除；(2) 但 static=2 小于 min_examples_per_class(3) → static 质心缺失 → _calibrate_gate 因未双类同时 ≥3 回退 seed，gate_source=seed（gate=0.5），corpus-derived 门槛未激活。此为「禁止伪造标注」铁律直接后果：真实 static 不足，绝不为凑数灌假样本。corpus-derived 激活需 zj 真实累计 ≥3 static 样本（数据侧依赖，与 1-26 同构，非工程阻塞）。",
           "note": "2026-11-07 实测：全量套件 585 OK；ROUTING_LEXICAL_CONF_GATE 仍 PLACEHOLDER（治理测试锁定，未升 CALIBRATED）；新增 tests/test_routing.py::test_partial_fit_one_class_below_min_still_fitted_but_seed 锁「static<3 → fitted=True 但 gate_source=seed」诚实状态；导出脚本可随 KB 增长重跑"
+        },
+        {
+          "q": "1-22 EC1-EC4 是否全部达成，可收口？",
+          "answer": "可收口：EC1 corpus-derived 已激活(真实语料 4 static/63 dynamic, gate≈0.44); EC2 seed 仍 PLACEHOLDER 且有原因注释(tuning.py:172); EC3 治理铁律由 test_routing.py:414/422 锁死; EC4 校准结论已落 tuning.py 注释; 全量 592 tests OK",
+          "note": "2026-11-12 20:27 GMT+8 收口真值：① EC1=LexicalRouter.fit() 从真实 PG 语料自动推导 corpus-derived gate 已激活，gate_source 由 seed 切换为 corpus-derived（实测 gate≈0.44 量级），不再回退 0.5。语料由 zj 真实定轨累积：static=4(3×AINMM 定义性框架 + 1×ZKC PG16/pgvector/双时态架构事实)/dynamic=63，均≥3/类。② EC2=ROUTING_LEXICAL_CONF_GATE seed 维持 PLACEHOLDER(tuning.py:172) 且有详细原因注释，未走 calibrate() 门禁属合规(无真实埋点)；按治理铁律 corpus-derived 绝不写回 CALIBRATED/REGISTRY。③ EC3=test_routing.py:414/422 锁死 corpus-derived≠CALIBRATED、不改 REGISTRY；全量 592 tests OK 无破坏。④ EC4=校准结论(冷启动欠覆盖→学习闭环达成)已落 tuning.py 注释。数据修复细节：zj 经 web capture 真实节点 + /review 面板收编，曾把当下笔记 7edad303 误收 static 污染质心，已人工纠正(7edad303→dynamic、6b26b196→static)，static 节点现全为真实 static 型。结论：4 条 EC 全部达成，1-22 可 completed；root 1 随之收口。"
         }
       ],
       "notes": "重要事实更正：src/zkc/routing.py 已默认 auto_calibrate_gate=True，fit() 后按类内/类间质心余弦中点推导 gate（gate_source=corpus-derived），硬编码 0.5 恒弃权 bug 早已修复；语料 fit 路径实际在 src/zkc/web/app.py:85-99 build_routers（旧 note 误写 app.py:95-99，已更正）。真正缺口 data/lexical_corpus.json 现已由 scripts/export_lexical_corpus.py 从真实 PG 导出（63 条真实已定轨：dynamic 61/static 2，unrouted 跳过不编造）；fitted=True 解除动态类冷启动弃权，但 static=2 小于 3 致 static 质心缺失 → gate_source=seed（corpus-derived 未激活），需 zj 真实累计 ≥3 static（与 1-26 同构，数据侧依赖）。tuning.py:161 ROUTING_LEXICAL_CONF_GATE=0.5 仍 PLACEHOLDER seed（治理测试锁定，绝不写回 CALIBRATED；升 CALIBRATED 须走 calibrate() 门禁）。复利度量 METRIC_W_* 已拆至 1-25。全量 585 OK；新增 tests/test_routing.py::test_partial_fit_one_class_below_min_still_fitted_but_seed 锁诚实状态。",
@@ -1396,7 +1423,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-12 14:56:27",
+    "updated": "2026-11-12 20:33:37",
     "md_file": "ROADMAP.md"
   },
   "edges": [
