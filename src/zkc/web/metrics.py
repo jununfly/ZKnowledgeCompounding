@@ -80,8 +80,8 @@ def register_metrics_routes(app, store: Storage) -> None:
         report = M.metrics_report(store)
         # 附带口径说明与依赖状态，便于消费方核对（而非只看一个数）
         report["notes"] = {
-            "compounding_factor": "connection_density·w + reuse_rate·w + method_norm·w + decay_controllability·w（等权 0.25×4 + method_target=10 饱和归一；权重/目标 source=CALIBRATED，2026-11-11 zj 显式拍板覆盖门禁，数值维持 SIMULATION 等权结论，见 zkc.tuning）",
-            "compounding_factor_caveat": "权重/目标 2026-11-11 已由 zj 显式拍板覆盖自动门禁标定为 CALIBRATED，但数值仍为受控仿真等权结论；cd/rr/mo 结构性为 0 时合成值不代表复利健康度，复盘须看四个分量",
+            "compounding_factor": "connection_density·w + reuse_rate·w + method_norm·w + decay_controllability·w（等权 0.25×4 + method_target=10 饱和归一；权重/目标 source=CALIBRATED，2026-11-11 zj 显式拍板覆盖门禁，数值维持 SIMULATION 等权结论，见 zkc.tuning；2026-11-12 经 1-28 确认：此 CALIBRATED 为永久 caveat，非经 calibrate() 门禁，四分量结构性为 0 使其真实不可辨识）",
+            "compounding_factor_caveat": "权重/目标 2026-11-11 已由 zj 显式拍板覆盖自动门禁标定为 CALIBRATED，但数值仍为受控仿真等权结论；cd/rr/mo 结构性为 0 时合成值不代表复利健康度，复盘须看四个分量；2026-11-12 经 1-28 收口：该 CALIBRATED 标签定为**永久 caveat**（CALIB_OVERRIDE_AT 保留），calibrate() 真实门禁在真实数据上不可达，权重维持等权 0.25×4 为均匀先验 Bayes 最优默认，未来改权重须 zj 显式外生锚",
             "decay_controllability_precondition": "需满足注意力预算 n/(0.6×interval)，否则预期偏低",
             "attention_budget_demand": _budget_demand(store),
         }
