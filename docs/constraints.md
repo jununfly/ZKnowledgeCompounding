@@ -1,6 +1,6 @@
 # 本机环境与工程硬约束（长期沉淀）
 
-> 沉淀来源：原 `docs/plans/ZKC-implementation-plan.md` §8（2026-11-02 文档治理中沉淀至本长期文档；原件已归档至 `docs/archive/plans/ZKC-implementation-plan.md`）。
+> 沉淀来源：原 `docs/plans/ZKC-implementation-plan.md` §8（2026-11-02 文档治理中沉淀至本长期文档；原件已退役删除）。
 > 这一节是「实施时最容易漏掉、却会直接决定成败」的底层约束合集。它不是决策，而是决策的**承重墙**。每次开工前扫一遍。
 
 ## 8.1 第一性不变量（任何变更的判定基准，引架构 §3）
@@ -24,7 +24,7 @@
   - **⚠️ `zkc/migrate.py` 不读 DSN，读三个环境变量**（对账 2026-10-31 修正：此前误记为 `ZKC_PG_DSN`，**该变量不存在**）：`ZKC_PG_CONTAINER`（默认 `zkc-spike-pg`）、`ZKC_PG_USER`（默认 `postgres`）、`ZKC_PG_DB`（默认 `zkc_dev`）。它经 `docker exec psql` 执行，**不需要 Python DB 驱动**。
   - 遗留库 `zkc` = 14 个 spike 累积的**手工 schema**（15 表，`node` 0 行）→ **保留作时间胶囊，不回改**；新库 **`zkc_dev`** 由 `zkc/migrate.py` 从零建（实测 12 表 / `0001 applied` / 可 up+down 重放）。
   - ⚠️ 容器状态可被 docker 重启丢掉 → **任何 schema 变更必须进 `migrations/`，禁止手工建表**。
-- **⚠️ pip 必须走 Clash 代理，否则「装不上」是假象**：`python -m pip install --proxy http://127.0.0.1:7890 <pkg>`。不走代理时报 `from versions: none / No matching distribution found`，**看起来像「这个包不存在/沙箱禁网」，实为没配代理**。已实测装上 `instructor 1.17.0`、`psycopg[binary]`。**更正**：此前「semantic-router 装不上（沙箱网络）」以及据此写进 `zkc/migrate.py` docstring 的「本机 pip 无法访问 PyPI」**均已过时**——那是没走代理，不是装不上（连带影响见 R19，已关闭并归档至 docs/archive/plans/）。
+- **⚠️ pip 必须走 Clash 代理，否则「装不上」是假象**：`python -m pip install --proxy http://127.0.0.1:7890 <pkg>`。不走代理时报 `from versions: none / No matching distribution found`，**看起来像「这个包不存在/沙箱禁网」，实为没配代理**。已实测装上 `instructor 1.17.0`、`psycopg[binary]`。**更正**：此前「semantic-router 装不上（沙箱网络）」以及据此写进 `zkc/migrate.py` docstring 的「本机 pip 无法访问 PyPI」**均已过时**——那是没走代理，不是装不上（连带影响见 R19，已关闭，归档副本已退役删除）。
 - **蒸馏模型默认 `qwen3.5:4b-mlx`**（3.97GB）；`9b-mlx` 仅可选上限——9B 在 16GB 常驻 10–12GB、触发 swap、单次蒸馏 ~4.7min，不可用做日常迭代。
 - **Ollama 代理**：直连 registry 会 DNS 超时；需 `HTTP_PROXY/HTTPS_PROXY=http://127.0.0.1:7890`（Clash）。本地 `localhost:11434` 必须 `NO_PROXY=localhost,127.0.0.1` 绕过，否则 httpx 把本地也走代理 → 无限挂起。
 - **`num_ctx` 必须显式限制**：未限制时 9B GGUF 常驻 15GB、swap 用满 20GB+；限 `8192` 后空闲 9%→69%。控制上下文是 16GB 跑 9B 的前提。

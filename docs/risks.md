@@ -1,8 +1,8 @@
 # 风险登记册与降级链（长期沉淀）
 
-> 沉淀来源：原 `docs/plans/ZKC-implementation-plan.md` §5（2026-11-02 文档治理中沉淀至本长期文档；原件已归档至 `docs/archive/plans/ZKC-implementation-plan.md`）。
+> 沉淀来源：原 `docs/plans/ZKC-implementation-plan.md` §5（2026-11-02 文档治理中沉淀至本长期文档；原件已退役删除）。
 > 本文件是 ZKC 风险的**长期单一真相源**。状态变更请直接在此维护；open / 缓解的细节原文见归档原件与架构「证据来源」表。
-> 2026-11-06 清理：已闭合风险（已缓解 / 已关停 / 已交付 / 已解决）已从本表移除并归档至 `docs/archive/plans/`，本表仅保留仍活跃或挂观察期项（R4 / R6）。R10（外生锚供给风险）已于 2026-11-07 由 1-17 显式收口（实证达成），已归档至 `docs/archive/plans/ZKC-risk-R10-closed.md` 并从本表移除。**R14 已于 2026-11-12 由 1-27-2 真实 10 run 裁决收口为「确认安全·保持 completion 开启」，已归档至 `docs/archive/plans/ZKC-risk-R14-closed.md` 并从本表移除**。
+> 2026-11-06 清理：已闭合风险（已缓解 / 已关停 / 已交付 / 已解决）已从本表移除（归档副本已退役删除），本表仅保留仍活跃或挂观察期项（R4 / R6）。R10（外生锚供给风险）已于 2026-11-07 由 1-17 显式收口（实证达成），收口证据见 roadmap `1-17` 节点决策记录（`docs/roadmap/roadmap.json`），归档副本已退役删除。**R14 已于 2026-11-12 由 1-27-2 真实 10 run 裁决收口为「确认安全·保持 completion 开启」，收口证据见 `data/r14_telemetry.jsonl` + `scripts/r14_status.py` + roadmap `1-27-2` 节点，归档副本已退役删除**。
 
 ## 风险登记册
 

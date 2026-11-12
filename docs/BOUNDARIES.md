@@ -58,8 +58,7 @@
 
 ## 仍需关注的残留（建议，本次未自动改）
 
-- `docs/archive/plans/ZKC-implementation-plan.md`（原 ≈59KB，2026-11-02 已归档）→
-  风险表 R1–R19：已闭合项（R1/R2/R3/R5/R7/R8/R9/R11/R12/R13/R15/R16/R17/R18/R19）已归档至 `docs/archive/plans/`，活跃/挂观察期项（R4/R6/R10/R14）在 `docs/risks.md`；§8 硬约束在 `docs/constraints.md`；本文件不再持续维护，与 roadmap 双头真相已解除。
+- `docs/archive/plans/ZKC-implementation-plan.md`（原 ≈59KB，2026-11-02 已归档）→ 该归档目录已整体退役删除；其结论性内容（风险表 R1–R19 闭合项、§8 硬约束）已分别沉淀至 `docs/risks.md` 与 `docs/constraints.md`，与 roadmap 双头真相已解除。
 - 大量 `decide` 记录含历史代码路径 / 计数（29/48/49、391/403/407/409、commit hash） →
   这些是**审计留痕**，保留；理解时以代码 / 运行时为准，不以其中数字为当前真理。
 - `tuning` 多数参数仍为 `PLACEHOLDER`（校准门禁），属设计内，待 PRD §9 观察期目标（原 `1-7-4`）攒够埋点后 `calibrate()`。
