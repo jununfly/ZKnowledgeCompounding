@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a1a5ece014-f94076892c",
       "label": "ZKC MCP 集成执行路线图",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -1425,7 +1425,7 @@
       "id": "1-27",
       "uid": "01a1cfe524c1-6b6c6aed8c",
       "label": "R14 关闭：补全回路延迟成本真实数据侧落库聚合",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -1468,7 +1468,7 @@
       "id": "1-27-2",
       "uid": "01a1cfe75f00-9dc5ba8b8a",
       "label": "真实 run 积累（zj 经 dogfood）+ 据实裁决与 risks.md R14 更新",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-27",
       "children": [],
@@ -1477,15 +1477,21 @@
           "q": "本切片由谁执行？",
           "answer": "agent 只建好落库/聚合 plumbing；真实 run 由 zj 经 scripts/dogfood_combine_apply.py / dogfood_cross_source.py 在本机 Ollama 下产生，每次真实 run 自动 append 到 data/r14_telemetry.jsonl。积累 ≥ min_runs(默认10) 后由 zj 跑 r14_status.py 看 verdict。",
           "note": ""
+        },
+        {
+          "q": "本环境谁驱动真实 run？Ollama 可达性？",
+          "answer": "本机 Ollama 在 localhost:11434 可达（仅 qwen3.5:9b，无默认 4b-mlx，须显式传 model）；故 agent 在 1-27-2 内代 zj 驱动真实 dogfood run 积累（真实 LLM 调用、真实 completion_fired/延迟落库，不伪造）；cross_source 的 run_id 去重缺口已修，确保每次真实 run 都作为独立样本入 telemetry。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-12 21:16:49",
+    "updated": "2026-11-12 21:54:50",
     "md_file": "ROADMAP.md"
   },
   "edges": [
