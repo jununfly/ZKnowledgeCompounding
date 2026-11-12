@@ -72,8 +72,8 @@
     "1-1": {
       "id": "1-1",
       "uid": "01a1a5ece146-89f466a59c",
-      "label": "E1 校准闭环跑通：复审队列累计≥7活跃日（不要求连续）且标注率≥70%",
-      "status": "in_progress",
+      "label": "E1 校准闭环：已由 1-26 显式覆盖收口（不再追求统计收敛）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
@@ -140,14 +140,17 @@
           "q": "E1-① 活跃日判据是否仍需『连续 ≥7』？",
           "answer": "2026-11-11 zj 拍板放宽：不再强制『连续无断签窗口』，改为**累计活跃日 ≥ 7**（src/zkc/calibration.py 的 _evaluate_active_days，原 _evaluate_active_streak 已更名重写）。理由：多天累计的真实复审行为即构成真实使用场景，不因某天漏跑(missed)整体断签重置。latest_ok 与 longest_consecutive_window 仍展示但不参与 met 判定。与 1-26 人工覆盖结案（CALIBRATED 升档）同源决策。",
           "note": "supersedes 2026-11-04 fork 3b 的『连续窗口』口径；_classify 单日分类(missed/excused)不变"
+        },
+        {
+          "q": "E1 是否必须按原三判据（累计≥7活跃日 / 标注率≥70% / budget 多窗口收敛）收口？",
+          "answer": "否。2026-11-12 zj 拍板选 (b)：1-1 并入 1-26 已结案状态，不再追求统计收敛。原三判据是拍脑顶定的『统计收敛证明』，非必须：① 真实外生锚已由人工 decide 门禁 + 记忆纪律 + 1-26 CALIBRATED 显式覆盖兜底，与 E1 节点状态无关；② 三判据不被任何下游代码或 CI 消费（grep src/tests 实证）；③ 真实使用下 C3 零方差退化、几乎不可达，且与 1-26『四分量结构性为0、权重不可辨识』自相矛盾。故判据改为『已由 1-26 显式覆盖收口』并 close 1-1。",
+          "note": "necessity 拆解：必要的(真实锚/不伪造) 不等于 仪式的(统计收敛)。选项 a/b/c 中 zj 选 b"
         }
       ],
       "notes": "当前真实读数（2026-11-06 19:45 GMT+8，zkc meter）：\n① 累计 ≥7 活跃日（不要求连续，空队列日豁免）：2/7 —— 累计活跃 2、含最新日=True、历史最长连续窗口 2、60d 内活跃 2 → 累计未达但串仍活。\n② 标注率闸门 ≥70%：N/A（7d completed=6<10，gate=open，warm-up 放行，非达标）。\n③ budget 收敛：✗（28d 估计 3.0、confidence=provisional、饱和样本 [3]、cv=0.0）。\n活跃日语义（calibration.py:_classify / _evaluate_active_days）：active=completed≥1；missed=completed=0 且 queue_remaining>0（漏跑、累计不因单日断签重置）；excused=completed=0 且 queue_remaining=0（空队列日，不破不断）；无观测日按断签处理。\n⚠️ 紧迫：11-06 当日尚无 observation 行。若今日不真实 decide（completed≥1）并跑 zkc daily 收口，11-06 成 gap → 11-04/11-05 的 2 日连续串于次日断签重置。\n每日动作（zj 真人）：review UI 或 zkc decide 做 ≥1 条真实复审 → zkc daily 收口当天快照（写 observation 行）。校准门禁另需 ≥3 个「饱和日」= 当天 queue_remaining>0（别把队列清空）。",
       "layer": "plan",
       "exit_criteria": [
-        "累计 ≥7 活跃日（不要求连续）运行已交付复审队列",
-        "复审标注率闸门 ≥70%",
-        "budget_per_day 派生估计在 [7,14,21,28] 天窗口轨迹收敛（CV≤10% 且 28d confidence=observed）"
+        "已由 1-26 显式覆盖结案：zj 2026-11-11 拍板『多天累计真实复审即构成真实使用场景』，CALIBRATED 升档；E1 原三判据（累计≥7活跃日 / 标注率≥70% / budget 多窗口收敛）作为『统计收敛证明』不再作为收口必要条件。真实外生锚由人工 decide 门禁 + 记忆纪律 + 1-26 覆盖兜底，与 1-1 节点状态解耦。"
       ],
       "rounds": 1
     },
@@ -1393,7 +1396,7 @@
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-11 23:15:00",
+    "updated": "2026-11-12 14:56:27",
     "md_file": "ROADMAP.md"
   },
   "edges": [
