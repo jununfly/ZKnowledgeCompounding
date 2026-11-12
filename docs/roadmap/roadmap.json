@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a1a5ece014-f94076892c",
       "label": "ZKC MCP 集成执行路线图",
-      "status": "completed",
+      "status": "in_progress",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -37,7 +37,9 @@
         "1-24",
         "1-25",
         "1-26",
-        "1-27"
+        "1-27",
+        "1-28",
+        "1-29"
       ],
       "decisions": [
         {
@@ -1487,11 +1489,67 @@
       "notes": "",
       "layer": "plan",
       "rounds": 1
+    },
+    "1-28": {
+      "id": "1-28",
+      "uid": "01a1d0212329-40425b02c6",
+      "label": "正式自动校准门禁达标验证：走 calibrate() 真实门禁，确认 METRIC_W_* 权重在真实数据上可辨识并升 CALIBRATED",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "本节点 scope gate 分类与被验收 artifact？",
+          "answer": "Product execution（ZKC 自身产品路线节点的遗留验证）：验证 calibrate() 正式自动门禁在真实数据上是否可达；若可达则六参数经门禁升 CALIBRATED。目标代码（tuning.py / web/metrics.py / risks.md）可按结果修改，但必须经真实门禁、不得再次人工覆盖跳过。",
+          "note": ""
+        },
+        {
+          "q": "是否保留「≥14d 埋点 + ≥3 饱和日」自然日期门禁作为完成判据？",
+          "answer": "否。zj 明确要求去掉该自然日期限制。保留其余 3 条判据：① 真实四分量（cd/rr/mo/dc）价值排序外生锚；② calibrate() 在真实数据上通过或据实判不可达并标 caveat；③ risks.md R6 / web/metrics.py notes 据实更新 CALIB_OVERRIDE_AT 去留。",
+          "note": "去掉后，节点达成不再受自然日数硬约束，但 calibrate() 门禁本身的内部判定（如四分量可辨识性）仍取决于真实数据质量；门禁可达性由数据与 zj 外生锚决定，而非日历天数。"
+        },
+        {
+          "q": "1-28 收口走哪条路径？四分量外生锚如何处理？",
+          "answer": "A+(a)。路径 A：正式自动校准门禁 calibrate() 在真实数据上判定不可达（真实四分量 cd/rr/mo 结构性为 0、dc=1.0 为归档假象，权重完全不可辨识），保留 zj 2026-11-11 显式覆盖的 CALIB_OVERRIDE_AT 作为永久 caveat，权重维持等权 0.25×4（均匀先验 Bayes 最优默认）。(a)：zj 未给出具体四分量价值排序外生锚，故锚记为 deferred（仅记录未来目标：若真实四分量可辨识须由 zj 显式给锚后方可改权重；参考先验 cd .35/rr .30/mo .20/dc .15 仅作提案、未应用、未归因 zj）。",
+          "note": "为何不走 B/C：B 改代码门禁让 calibrate() 跑——四分量恒 0 无梯度，跑出仍是等权，标签却从 override 变 gate-passed 而数字未变，属冒充校准证据，踩纪律红线；C 攒真实数据再跑——与去掉日期限制的意图相悖，且根因是复利活动未产生可辨识信号而非时间不够。calibrate() 门禁机制未失效、仍作真实性护栏。"
+        }
+      ],
+      "notes": "承接 1-26 人工覆盖结案。当前 METRIC_W_*(×4) + METRIC_METHOD_TARGET + MIN_INTERVAL_DAYS 由 zj 拍板直标 CALIBRATED（CALIB_OVERRIDE_AT，不经 calibrate() 门禁），真实四分量（cd/rr/mo/dc）仍结构性为 0、权重在真实数据上仍不可辨识，calibrate() 门禁机制未失效但未走。本节点验证正式自动门禁路径是否可达，并据实决定保留人工覆盖或转正式校准。",
+      "layer": "plan",
+      "exit_criteria": [
+        "zj 给出真实四分量（cd/rr/mo/dc）价值排序外生锚（当前未给）。",
+        "calibrate() 在真实数据上通过，六参数经自动门禁升 CALIBRATED；或据实判定不可达，保留人工覆盖并标注永久 caveat。",
+        "risks.md R6 / web/metrics.py notes 据实更新，明确 CALIB_OVERRIDE_AT 的去留。"
+      ],
+      "rounds": 1
+    },
+    "1-29": {
+      "id": "1-29",
+      "uid": "01a1d021244e-d3634f216f",
+      "label": "co-work 节点完成度口径与跨项目验收边界复核（1-10/1-11/1-12 遗留）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "本节点 scope gate 分类？",
+          "answer": "Product execution（ZKC 内口径固化 + 待授权项登记）：只改 ZKC 内文档/记忆口径，登记跨项目验收剩余项；不写 ZAgentic / ZBrain 任何文件，跨项目动作一律等 Human 授权。",
+          "note": ""
+        }
+      ],
+      "notes": "1-10/1-11/1-12 completed 只表 fixture / ZKC 内 probe 收口，不计入 ZKC 产品完成度（ADR-0008）；#234/#235/#236 全量回放验收属 ZAgentic 上游，按 zj 2026-11-06 17:27 边界「只在 ZKC 本项目内处理、需要外部项目变更先问 Human」，不擅自写外部项目。本节点只做 ZKC 内口径固化与待授权项登记，不代执行跨项目动作。",
+      "layer": "plan",
+      "exit_criteria": [
+        "在 ROADMAP.md 或本节点 notes 明确单列「1-10~1-12 不计入产品完成度」，对外汇报口径固定、不与真实 E 链证据混用。",
+        "登记 #234/#235/#236 全量回放验收的剩余项（#234 标准 4/5、#235 三档全量、#236 已评论）与所需 Human 授权，作为待 Human 决策项（不代执行）。"
+      ]
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-12 21:54:50",
+    "updated": "2026-11-12 23:16:55",
     "md_file": "ROADMAP.md"
   },
   "edges": [
