@@ -7,9 +7,9 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-12 23:16:55
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-12 23:28:06
 
-[~][X+] 1. ZKC MCP 集成执行路线图
+[x][X+] 1. ZKC MCP 集成执行路线图
 ├── [x][X+] 1-1. E1 校准闭环：已由 1-26 显式覆盖收口（不再追求统计收敛）
 ├── [x][X+] 1-2. E2 transport seam 与 MCP server 骨架（stdio 薄适配层）
 ├── [x][X+] 1-3. E3 暴露面五 tool 实现与攻击面枚举表
@@ -41,9 +41,5 @@ promote-via: ADR|design|contract|runtime-evidence
 │   ├── [x][X+] 1-27-1. telemetry 落库+聚合模块 + TDD（record_run/load_runs/aggregate）
 │   └── [x][X+] 1-27-2. 真实 run 积累（zj 经 dogfood）+ 据实裁决与 risks.md R14 更新
 ├── [x][X+] 1-28. 正式自动校准门禁达标验证：走 calibrate() 真实门禁，确认 METRIC_W_* 权重在真实数据上可辨识并升 CALIBRATED
-└── [ ][X+] 1-29. co-work 节点完成度口径与跨项目验收边界复核（1-10/1-11/1-12 遗留）
-
-### 下一步可开工（ready 前 3）
-
-- 1-29. co-work 节点完成度口径与跨项目验收边界复核（1-10/1-11/1-12 遗留） [ ]
+└── [x][X+] 1-29. co-work 节点完成度口径与跨项目验收边界复核（1-10/1-11/1-12 遗留）
 <!-- ROADMAP_SECTION_END -->
