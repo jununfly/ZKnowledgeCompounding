@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a1a5ece014-f94076892c",
       "label": "ZKC MCP 集成执行路线图",
-      "status": "completed",
+      "status": "in_progress",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -36,7 +36,8 @@
         "1-23",
         "1-24",
         "1-25",
-        "1-26"
+        "1-26",
+        "1-27"
       ],
       "decisions": [
         {
@@ -1419,11 +1420,72 @@
         "MIN_INTERVAL_DAYS（interval 钳制下界，当前 SIMULATION=0.25d）升 CALIBRATED 归属本节点：与 METRIC_W_* 共享 can_calibrate 门禁，且需 zj 逐日真实 HITL 标注证明 <1d 下界真的被需要（floor_hit_archive 触发证据），不得凭仿真定论"
       ],
       "rounds": 1
+    },
+    "1-27": {
+      "id": "1-27",
+      "uid": "01a1cfe524c1-6b6c6aed8c",
+      "label": "R14 关闭：补全回路延迟成本真实数据侧落库聚合",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-27-1",
+        "1-27-2"
+      ],
+      "decisions": [
+        {
+          "q": "R14 关闭的剩余缺口是什么？",
+          "answer": "判据已就绪（judge_r14 + 7 测试，1-19 收口）；缺口在『真实生产 run 落库聚合』：combine/apply_combine 的 report（completion_fired/main_latency_ms/completion_latency_ms）仅被 dogfood 打印、从未持久化聚合。本节点补真实数据侧：telemetry 落库 + 聚合 + 接线到真实 run；agent 不伪造数据，真实 run 由 zj 经 dogfood 产生。",
+          "note": ""
+        },
+        {
+          "q": "落库载体选型？",
+          "answer": "data/r14_telemetry.jsonl（append-only 本地遥测，不引 DB migration、不碰核心 schema；最小可行、可人审、可随时清空重采）。judge_r14 纯函数复用，不重写判据。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1,
+      "exit_criteria": [
+        "真实 run 落库 ≥ 默认 min_runs(10) 且 judge_r14 在真实数据上给出非 insufficient_data 的可机械裁决 → 据实更新 risks.md R14 状态（关补全 或 确认安全保持 completion）。"
+      ]
+    },
+    "1-27-1": {
+      "id": "1-27-1",
+      "uid": "01a1cfe525fd-67cf45f184",
+      "label": "telemetry 落库+聚合模块 + TDD（record_run/load_runs/aggregate）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-27",
+      "children": [],
+      "decisions": [],
+      "notes": "src/zkc/r14_telemetry.py(record_run/load_runs/aggregate) + tests/test_r14_telemetry.py(11 测试全绿) + dogfood 两脚本接线(record_run, ZKC_NO_R14_TELEMETRY 可跳过) + scripts/r14_status.py 视图工具。落库载体 data/r14_telemetry.jsonl(已 gitignore)。判据复用 judge_r14，不重写。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-27-2": {
+      "id": "1-27-2",
+      "uid": "01a1cfe75f00-9dc5ba8b8a",
+      "label": "真实 run 积累（zj 经 dogfood）+ 据实裁决与 risks.md R14 更新",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-27",
+      "children": [],
+      "decisions": [
+        {
+          "q": "本切片由谁执行？",
+          "answer": "agent 只建好落库/聚合 plumbing；真实 run 由 zj 经 scripts/dogfood_combine_apply.py / dogfood_cross_source.py 在本机 Ollama 下产生，每次真实 run 自动 append 到 data/r14_telemetry.jsonl。积累 ≥ min_runs(默认10) 后由 zj 跑 r14_status.py 看 verdict。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-11-04 17:38:46",
-    "updated": "2026-11-12 20:33:37",
+    "updated": "2026-11-12 21:16:49",
     "md_file": "ROADMAP.md"
   },
   "edges": [
