@@ -160,7 +160,9 @@ def main() -> int:
     # data/r14_telemetry.jsonl，供 judge_r14 聚合裁决。不伪造数据；设环境变量
     # ZKC_NO_R14_TELEMETRY=1 可跳过落库。
     if not __import__("os").environ.get("ZKC_NO_R14_TELEMETRY"):
-        tel = record_run(rep, run_id=f"cross_source:{rep.get('kept_ids')}")
+        # run_id 含毫秒时间戳 nonce：同语料重复 run 也作为独立真实样本入 telemetry，
+        # 否则 kept_ids 恒定会触发 record_run 去重、阻塞 1-27-2 的 ≥10 样本积累。
+        tel = record_run(rep, run_id=f"cross_source:{rep.get('kept_ids')}:{int(time.time()*1000)}")
         if tel.get("skipped"):
             print(f"R14 telemetry: skipped (dup run_id {tel['run_id']})")
         else:
