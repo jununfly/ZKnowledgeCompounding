@@ -7,7 +7,7 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-11-12 23:28:06
+> 数据文件: `roadmap.json` | 最后更新: 2026-11-13 00:01:30
 
 [x][X+] 1. ZKC MCP 集成执行路线图
 ├── [x][X+] 1-1. E1 校准闭环：已由 1-26 显式覆盖收口（不再追求统计收敛）
