@@ -34,6 +34,7 @@ from zkc.cross_source import (  # noqa: E402
     apply_combine,
     revert_artifact,
 )
+from zkc.r14_telemetry import record_run  # noqa: E402
 from zkc.repository import get_storage  # noqa: E402
 from zkc.repository.models import Node  # noqa: E402
 
@@ -155,6 +156,16 @@ def main() -> int:
           f"produced_by={str(ma.produced_by)[:8]}  body_claims={len(ma.body['claims'])}")
     ok_refs = all(store.nodes.get(e) is not None for e in ma.evidence_refs)
     print(f"evidence_refs ⊆ store nodes: {ok_refs}")
+
+    # ---- R14 遥测落库（1-27）：真实 run 的 completion_fired/latency 追加到
+    # data/r14_telemetry.jsonl，供 judge_r14 聚合裁决。不伪造数据；设环境变量
+    # ZKC_NO_R14_TELEMETRY=1 可跳过落库（如仅做管线验证、不想污染样本）。
+    if not __import__("os").environ.get("ZKC_NO_R14_TELEMETRY"):
+        tel = record_run(rep, run_id=f"combine_apply:{ma.id}")
+        if tel.get("skipped"):
+            print(f"R14 telemetry: skipped (dup run_id {tel['run_id']})")
+        else:
+            print(f"R14 telemetry: recorded run (file=data/r14_telemetry.jsonl)")
 
     # ---- 调度信号：产物捕获 evidence 节点 -> 基线 28d
     S.assign_baselines(store)

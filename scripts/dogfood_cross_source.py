@@ -23,6 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from zkc.cross_source import CrossSourceOperator  # noqa: E402
+from zkc.r14_telemetry import record_run  # noqa: E402
 
 DEFAULT_URL = "http://localhost:11434"
 DEFAULT_MODEL = "qwen3.5:4b-mlx"
@@ -154,6 +155,16 @@ def main() -> int:
     print(f"title={art['title']!r}  kind={art['kind']}")
     for c in art["claims"]:
         print(f"  - [{c.get('level')}] {c.get('statement')!r} <- {c.get('evidence_ids')}")
+
+    # ---- R14 遥测落库（1-27）：真实 run 的 completion_fired/latency 追加到
+    # data/r14_telemetry.jsonl，供 judge_r14 聚合裁决。不伪造数据；设环境变量
+    # ZKC_NO_R14_TELEMETRY=1 可跳过落库。
+    if not __import__("os").environ.get("ZKC_NO_R14_TELEMETRY"):
+        tel = record_run(rep, run_id=f"cross_source:{rep.get('kept_ids')}")
+        if tel.get("skipped"):
+            print(f"R14 telemetry: skipped (dup run_id {tel['run_id']})")
+        else:
+            print(f"R14 telemetry: recorded run (file=data/r14_telemetry.jsonl)")
 
     gate = rep["n_cross_source_final"] >= rep["min_cross_source"]
     print(f"CROSS-SOURCE GATE: {'PASS' if gate else 'FAIL'}")

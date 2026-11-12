@@ -27,3 +27,6 @@ build/
 
 # Runtime driver logs (evidence output; grows over time, keep out of VCS)
 logs/
+
+# R14 真实 run 遥测（本地落库聚合样本，由 dogfood 产生；非源码，可清空重采）
+data/r14_telemetry.jsonl
