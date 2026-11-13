@@ -1,6 +1,6 @@
 ---
 name: zj-zkc-daily
-description: ZKC 知识复利工具的每日运行 harness 适配器（WorkBuddy 版）。当用户要跑 ZKC 每日循环（真值收口 + 复审人环 decide + E1 进度仪表）时加载；把 zkc CLI（daily/meter/decide）编排为「机械收口+仪表 + 对话内人环复审」流程。绝不自动标注复审结果。
+description: ZKC 知识复利工具的每日运行 harness 适配器（WorkBuddy 版）。当用户要跑 ZKC 每日循环（真值收口 + 补向量 + 复审人环 decide + E1 进度仪表）时加载；把 zkc CLI（daily/embed/meter/decide）编排为「机械收口与补向量 + 仪表 + 对话内人环复审」流程。绝不自动标注复审结果。
 disable-model-invocation: false
 argument-hint: "跑 ZKC 每日循环 / 收口 / decide / meter"
 source: zagentic
@@ -32,16 +32,24 @@ WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
 2. 预算语义 = A 无状态（ADR-0006），不改；E1 三判据只喂数据不改（E1 校准闭环）。
 3. `zkc daily` 只写 `attention_observation` 的 pushed/queue_remaining 真值，不碰业务表、
    不伪造复审标注。
+4. **补向量是并列任务，不是 E1 驱动的一部分**：`zkc embed` 写 node 派生列，故在
+   调度层是独立条目（launchd `com.zkc.daily-embed` / schtasks `ZKC Daily Embed`，
+   23:55）；对话内本 skill 把它作为第 2 步顺带跑，不改 ADR-0007 的「两件机械事」边界。
 
 ## 每日流程（按序）
 1. **机械收口（无交互）**：
    `zkc daily`（或 `python -m zkc.cli daily`，下同）
    真值写入 pushed=今日创建节点数、queue_remaining=当前到期数。绝不可手工乱填。
-2. **取待复审队列**：
+2. **补向量（无交互，best-effort）**：
+   `zkc embed`
+   把当日新捕获节点的 embedding 双列补齐（全轨、幂等、空正文用标题兜底）。
+   Ollama 不可达导致失败时记录并继续后续步骤——它与 E1 收口/仪表是并列任务，
+   不写 `attention_observation`、不碰标注埋点，失败不影响 E1 三判据。
+3. **取待复审队列**：
    `zkc decide --list --json`
    把返回的 `items`（id/title/track/decay_score/review_interval_days/...）逐条呈现给 zj，
    并给出标注率闸门(gate)与预算(budget)概览。
-3. **人环复审（关键）**：
+4. **人环复审（关键）**：
    让 zj 对每条给 verdict。zj 可逐条说，也可一次性给一批（"id1 still_valid, id2 changed"）。
    对每条调用：
    `zkc decide --id <id> --verdict <still_valid|changed|stale|browse>`
@@ -49,7 +57,7 @@ WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
    - changed / stale：信息比预期腐化更快（L3 缩短复审节奏）
    - browse：仅浏览未标注（复位时钟、completed++ 但不标 labeled，使标注率可 <100%）
    逐条回显写入结果（verdict/applied/new_interval_days/today_observation）。
-4. **进度仪表**：
+5. **进度仪表**：
    `zkc meter --json`
    读出 E1 三判据（连续≥7活跃日 / 标注率≥70% / budget 收敛），汇总给 zj：
    >>> E1 全满足 = YES/NO。
@@ -61,11 +69,12 @@ WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
 三者全满足 → E1 完成，可推进 roadmap 下一节点。
 
 ## 触发建议
-- 手动：zj 说「跑 ZKC 每日循环」即执行上述四步。
+- 手动：zj 说「跑 ZKC 每日循环」即执行上述五步。
 - 自动（可选）：WorkBuddy automation 每日定时触发本 skill；decide 人环那步仍须等待
-  zj 在对话里给 verdict（自动化只跑 daily + meter，decide 列表呈现后暂停待人）。
+  zj 在对话里给 verdict（自动化只跑 daily + embed + meter，decide 列表呈现后暂停待人）。
 - 机械收口 + 仪表也可脱离对话，由调度器跑（macOS `install_daily_driver.sh` /
-  Windows `install_daily_driver.bat`）；那条路径**不包含** decide 人环。
+  Windows `install_daily_driver.bat`）；补向量是并列的独立条目
+  （`--embed`，23:55）。调度路径**不包含** decide 人环。
 
 ## 纳管与同步（2026-11-05，zj 拍板 skill 纳管）
 - canonical = 本文件（ZKC 仓库，git 跟踪）；运行副本 =
@@ -82,5 +91,6 @@ WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
 - B 形态即 `zkc` CLI（去服务器化）；D 形态即本 skill（harness 中立协议的 WorkBuddy 适配器）。
 - **Codex / DeepSeek 适配器明确不做**（2026-11-05，zj 拍板）：本机无该侧运行环境，
   凭空产出无法验收的适配器等于伪造完成度。改为在 ADR-0007 落一份 **provider 无关的适配器
-  契约**（四步流程 + human-in-loop 硬约束 + CLI seam）；未来任何 harness 照契约接入即可，
+  契约**（四步流程 + human-in-loop 硬约束 + CLI seam；本 skill 现为五步——
+  第 2 步插入并列的补向量，ADR-0007 两件机械事边界不变）；未来任何 harness 照契约接入即可，
   ZKC 内部不硬编码 provider（防 product gap 陷阱）。

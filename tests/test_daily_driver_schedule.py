@@ -128,6 +128,71 @@ class ScheduleMainTest(unittest.TestCase):
         runner.assert_not_called()
 
 
+class EmbedScheduleTest(unittest.TestCase):
+    """并列的每日补向量任务：与 E1 驱动不同 Label / 包装 / 时间，互不覆盖。"""
+
+    def setUp(self) -> None:
+        self.silent = lambda _s: None
+
+    def test_embed_flag_renders_separate_task(self) -> None:
+        out = []
+        runner = mock.Mock()
+        rc = sched.main(["--embed", "--dry-run"], runner=runner, out=out.append)
+        text = "".join(out)
+        self.assertEqual(rc, 0)
+        runner.assert_not_called()
+        self.assertIn(sched.EMBED_TASK_NAME, text)
+        self.assertIn("/st 23:55", text)
+        self.assertIn("daily_embed_driver.bat", text)
+        self.assertNotIn("daily_e1_driver.bat", text)
+
+    def test_embed_does_not_reuse_e1_task_name_or_time(self) -> None:
+        self.assertNotEqual(sched.EMBED_TASK_NAME, sched.DEFAULT_TASK_NAME)
+        self.assertNotEqual(sched.EMBED_TIME, sched.DEFAULT_TIME)
+        cmd = sched.build_register_command(
+            str(sched.EMBED_WRAPPER), sched.EMBED_TASK_NAME, sched.EMBED_TIME)
+        self.assertEqual(cmd[cmd.index("/tn") + 1], sched.EMBED_TASK_NAME)
+        self.assertEqual(cmd[cmd.index("/st") + 1], sched.EMBED_TIME)
+        self.assertIn("daily_embed_driver.bat", cmd[cmd.index("/tr") + 1])
+
+    def test_embed_uninstall_targets_embed_task(self) -> None:
+        runner = mock.Mock(return_value=subprocess.CompletedProcess([], 0))
+        rc = sched.main(["--embed", "--uninstall"], runner=runner, out=self.silent)
+        self.assertEqual(rc, 0)
+        cmd = runner.call_args.args[0]
+        self.assertEqual(cmd[cmd.index("/tn") + 1], sched.EMBED_TASK_NAME)
+        self.assertIn("/delete", cmd)
+
+    def test_embed_wrapper_static_contract(self) -> None:
+        text = (ROOT / "scripts" / "daily_embed_driver.bat").read_text(encoding="utf-8")
+        self.assertIn("-m zkc.cli embed", text)
+        self.assertIn("ZKC_STORAGE=pg", text)
+        self.assertIn("exit /b %ERRORLEVEL%", text)
+        self.assertNotIn("%CD%", text)
+
+    def test_macos_embed_plist_static_contract(self) -> None:
+        text = (ROOT / "scripts" / "launchd" / "com.zkc.daily-embed.plist").read_text(
+            encoding="utf-8")
+        self.assertIn("com.zkc.daily-embed", text)
+        self.assertIn("zkc.cli", text)
+        self.assertIn("<string>embed</string>", text)
+        self.assertIn("<integer>55</integer>", text, "默认 23:55，与 E1 的 23:50 错开")
+        self.assertIn("__PYTHON__", text)
+        self.assertIn("__PROJECT_ROOT__", text)
+
+    def test_install_sh_supports_embed_flag(self) -> None:
+        text = (ROOT / "scripts" / "install_daily_driver.sh").read_text(encoding="utf-8")
+        self.assertIn("--embed) TASK_KIND=\"embed\"", text)
+        self.assertIn("com.zkc.daily-embed.plist", text)
+
+    def test_install_sh_verifies_service_really_loaded(self) -> None:
+        """回归：launchctl load 退出码 0 不等于服务进了 gui domain，必须回查。"""
+        text = (ROOT / "scripts" / "install_daily_driver.sh").read_text(encoding="utf-8")
+        self.assertIn('launchctl print "gui/$(id -u)/$LABEL"', text)
+        self.assertIn("任务当前未真正生效", text)
+        self.assertIn("exit 1", text, "校验失败必须返回非零，不能把未生效报成已挂上")
+
+
 class BatWrapperContractTest(unittest.TestCase):
     """静态契约：.bat 薄壳与旧包装的接线（本机无法执行 .bat）。"""
 

@@ -8,6 +8,9 @@ macOS 的 install_daily_driver.sh；Windows 侧只有运行包装 daily_e1_drive
 daily/meter/decide 语义，也不改 E1 判据：
   - 对齐 macOS 安装脚本：自动解析 python / 项目根、--dry-run 只预览不注册、
     覆盖式安装（/f）保证幂等、默认 23:50。
+  - `--embed` 切换到「每日补向量」并列条目（ZKC Daily Embed，23:55，
+    指向 daily_embed_driver.bat）。这是与 E1 驱动并列的独立任务：
+    ADR-0007 的「两件机械事」与 daily_e1_driver.py 语义均不变。
   - 任务动作指向现有 daily_e1_driver.bat 包装（一个路径），避免 schtasks /tr
     里「python + 脚本」多参数引号嵌套这个经典坑。
   - 渲染逻辑是纯函数，故本机 macOS 也能用单测覆盖命令契约；真实注册行为
@@ -32,6 +35,10 @@ ROOT = Path(__file__).resolve().parent.parent
 WRAPPER = ROOT / "scripts" / "daily_e1_driver.bat"
 DEFAULT_TASK_NAME = "ZKC Daily E1"
 DEFAULT_TIME = "23:50"  # 与 scripts/launchd/com.zkc.daily-e1.plist 保持一致
+# 并列的补向量条目：错开 5 分钟，避免与 E1 驱动并发抢 PG / Ollama
+EMBED_WRAPPER = ROOT / "scripts" / "daily_embed_driver.bat"
+EMBED_TASK_NAME = "ZKC Daily Embed"
+EMBED_TIME = "23:55"
 _TIME_RE = re.compile(r"^([01]\d|2[0-3]):([0-5]\d)$")
 
 
@@ -70,12 +77,13 @@ def build_unregister_command(task_name: str = DEFAULT_TASK_NAME) -> list[str]:
     return ["schtasks", "/delete", "/tn", task_name, "/f"]
 
 
-def resolve_paths() -> dict[str, str]:
+def resolve_paths(wrapper: Path | None = None) -> dict[str, str]:
     """解析真实路径（薄壳用 venv python 调进来，故 sys.executable 即真实解释器）。"""
+    active_wrapper = wrapper if wrapper is not None else WRAPPER
     return {
         "python": sys.executable,
         "project_root": str(ROOT),
-        "wrapper": str(WRAPPER),
+        "wrapper": str(active_wrapper),
         "log": str(ROOT / "logs" / "e1_daily.log"),
     }
 
@@ -106,8 +114,12 @@ def main(argv=None, runner=None, out=None) -> int:
     )
     parser.add_argument("--dry-run", action="store_true", help="只预览命令，不注册")
     parser.add_argument("--uninstall", action="store_true", help="删除同名计划任务")
-    parser.add_argument("--time", default=DEFAULT_TIME, help="每日触发时间 HH:MM，默认 23:50")
-    parser.add_argument("--task-name", default=DEFAULT_TASK_NAME, help="计划任务名")
+    parser.add_argument("--embed", action="store_true",
+                        help="注册/卸载并列的每日补向量任务（23:55，daily_embed_driver.bat）")
+    parser.add_argument("--time", default=None,
+                        help="每日触发时间 HH:MM（默认 E1 23:50 / embed 23:55）")
+    parser.add_argument("--task-name", default=None,
+                        help="计划任务名（默认按 --embed 选择）")
     try:
         args, unknown = parser.parse_known_args(argv)
     except SystemExit as exc:  # --help 等
@@ -116,12 +128,15 @@ def main(argv=None, runner=None, out=None) -> int:
         emit(f"未知选项: {' '.join(unknown)}")
         return 2
 
-    paths = resolve_paths()
+    task_name = args.task_name or (EMBED_TASK_NAME if args.embed else DEFAULT_TASK_NAME)
+    at = args.time or (EMBED_TIME if args.embed else DEFAULT_TIME)
+    active_wrapper = EMBED_WRAPPER if args.embed else WRAPPER
+    paths = resolve_paths(wrapper=active_wrapper)
     try:
         if args.uninstall:
-            cmd = build_unregister_command(args.task_name)
+            cmd = build_unregister_command(task_name)
         else:
-            cmd = build_register_command(paths["wrapper"], args.task_name, args.time)
+            cmd = build_register_command(paths["wrapper"], task_name, at)
     except ValueError as exc:
         emit(f"✗ 参数错误: {exc}")
         return 2
@@ -130,7 +145,7 @@ def main(argv=None, runner=None, out=None) -> int:
     emit(f"  PYTHON        = {paths['python']}")
     emit(f"  PROJECT_ROOT  = {paths['project_root']}")
     emit(f"  驱动包装      = {paths['wrapper']}")
-    emit(f"  任务名 / 时间 = {args.task_name} / {args.time if not args.uninstall else '(卸载)'}")
+    emit(f"  任务名 / 时间 = {task_name} / {at if not args.uninstall else '(卸载)'}")
     emit("")
     emit("将执行：" if args.dry_run else "执行：")
     emit(f"  {format_command(cmd)}")
@@ -154,12 +169,16 @@ def main(argv=None, runner=None, out=None) -> int:
         return rc
 
     if args.uninstall:
-        emit(f"✓ 已删除计划任务 {args.task_name}")
+        emit(f"✓ 已删除计划任务 {task_name}")
+    elif args.embed:
+        emit(f"✓ 已注册每日 {at} 自动跑 zkc embed（补向量，与 E1 驱动并列）。")
+        emit("  E1 驱动仍是「真值收口 + 仪表」两件机械事，未被本任务改动（ADR-0007）。")
+        emit("  失败写 daily_embed_driver.bat 的任务状态，不阻塞 E1 驱动；复审标注仍须人工。")
     else:
-        emit(f"✓ 已注册每日 {args.time} 自动跑 真值收口 + E1 仪表。")
+        emit(f"✓ 已注册每日 {at} 自动跑 真值收口 + E1 仪表。")
         emit("  仅自动化收口 + 仪表；复审标注(decide)仍须人工，不在此任务内。")
         emit(f"  日志：{paths['log']}（JSONL）")
-        emit("  卸载：scripts\\install_daily_driver.bat --uninstall")
+        emit("  并列补向量：scripts\\install_daily_driver.bat --embed（23:55）")
     return 0
 
 

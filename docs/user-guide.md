@@ -136,15 +136,25 @@ python scripts/metrics_snapshot.py        # 打印当前度量快照（JSON）
 **复审标注（`decide`）永远不在此自动化范围内**——那是需要你本人判断的外生锚。
 设计与边界见 ADR-0007；底层是 `zkc` CLI（`daily` / `meter` / `decide`）。
 
+> **第三个条目是并列的，不塞进 E1 驱动**：`zkc embed`（补向量）每天 **23:55** 由
+> 独立任务触发，比 E1 驱动晚 5 分钟避免并发抢 PG / Ollama。它写 `node` 派生列，
+> 不写 `attention_observation`、不碰标注埋点；失败不影响 E1 两件机械事与三判据。
+> 所以 ADR-0007 的「两件机械事」边界和 `daily_e1_driver.py` 都没有被改动。
+
 ### macOS（launchd）
 
 ```bash
-scripts/install_daily_driver.sh --dry-run    # 预览渲染后的 plist，不安装
-scripts/install_daily_driver.sh              # 写入 ~/Library/LaunchAgents/ 并注册
+scripts/install_daily_driver.sh --dry-run    # 预览渲染后的 E1 plist，不安装
+scripts/install_daily_driver.sh              # 写入 ~/Library/LaunchAgents/ 并注册 E1 驱动
+scripts/install_daily_driver.sh --embed --dry-run   # 预览并列的补向量 plist
+scripts/install_daily_driver.sh --embed      # 注册每日 23:55 的 zkc embed
 launchctl unload ~/Library/LaunchAgents/com.zkc.daily-e1.plist && rm ~/Library/LaunchAgents/com.zkc.daily-e1.plist
+launchctl unload ~/Library/LaunchAgents/com.zkc.daily-embed.plist && rm ~/Library/LaunchAgents/com.zkc.daily-embed.plist
 ```
 
-脚本自动解析 venv python 与仓库根，plist 模板在 `scripts/launchd/com.zkc.daily-e1.plist`。
+脚本自动解析 venv python 与仓库根；两个 plist 模板在 `scripts/launchd/`
+（`com.zkc.daily-e1.plist` 23:50 / `com.zkc.daily-embed.plist` 23:55），Label 不同、互不覆盖。
+补向量任务的日志单独写 `<仓库>/logs/daily_embed.out` / `.err`。
 
 ### Windows（计划任务）
 
@@ -153,14 +163,20 @@ scripts\install_daily_driver.bat --dry-run     :: 预览 schtasks 命令，不�
 scripts\install_daily_driver.bat                :: 注册每日 23:50
 scripts\install_daily_driver.bat --uninstall    :: 卸载
 scripts\install_daily_driver.bat --time 07:15   :: 改触发时间
+scripts\install_daily_driver.bat --embed --dry-run  :: 预览并列的补向量任务
+scripts\install_daily_driver.bat --embed        :: 注册每日 23:55 的 zkc embed
+scripts\install_daily_driver.bat --embed --uninstall :: 卸载补向量任务
 ```
 
-任务调用 `scripts\daily_e1_driver.bat` 包装（venv python 优先、`ZKC_MODE=direct`）；
+E1 任务调用 `scripts\daily_e1_driver.bat` 包装（venv python 优先、`ZKC_MODE=direct`）；
+补向量任务调用独立的 `scripts\daily_embed_driver.bat`（`-m zkc.cli embed`），
+任务名 `ZKC Daily Embed` 与 E1 的 `ZKC Daily E1` 分开。
 `--dry-run` 不写任何计划任务，重复安装用 `/f` 覆盖同名任务。
 > **未实机验证**：本仓库开发机是 macOS，Windows 注册流程只经过命令契约单测与 dry-run 冒烟，
 > 未在 Windows 上真实注册过。首次在 Windows 使用时按 ADR-0007 的复核清单逐条确认。
 
-两端日志都写 `<仓库>/logs/e1_daily.log`（JSONL，每次运行一行）。
+E1 驱动两端日志都写 `<仓库>/logs/e1_daily.log`（JSONL，每次运行一行）；
+补向量条目的输出单独落在 `logs/daily_embed.out` / `.err`，互不混写。
 
 ### WorkBuddy 侧的 zj-zkc-daily skill
 
@@ -174,7 +190,8 @@ python scripts/install_harness_skill.py --force     # canonical 更新后同步�
 ```
 
 脚本不删除 home 下目录；副本被手工改过时默认拒绝覆盖。在 WorkBuddy 里说
-「跑 ZKC 每日循环」即按该 skill 走四步流程，其中 `decide` 会停下来等你给 verdict。
+「跑 ZKC 每日循环」即按该 skill 走五步流程（收口 → 补向量 → 列队列 → 人环复审 → 仪表），
+其中 `decide` 会停下来等你给 verdict；补向量为 best-effort，失败不阻塞其余步骤。
 
 ---
 
@@ -214,3 +231,37 @@ MCP client 的 `command` / `args` 配置：
 > 不需要 PG / Ollama，本地可随时复跑。
 
 设计与安全边界见 `docs/zj-adr/0004-mcp-interface-contract.md`。
+
+---
+
+## 7. 补向量运行契约（`zkc embed`）
+
+**为什么需要单独一步**：`zkc_capture` 走 capture profile（ADR-0004），默认**只加源节点**，
+不计算 embedding。所以刚摄入 / 快捕获的条目能被结构化检索找到，但**不会被语义召回**
+（`/browse` 默认走 `embedding_4096` 列）。补向量是独立、可调度的一步：
+
+```bash
+zkc embed --dry-run --json   # 只看缺口，不编码不写库
+zkc embed                   # 全轨补齐双列（幂等，可每天挂调度重复跑）
+zkc embed --storage memory  # 单测 / 无 PG 环境
+```
+
+行为口径（`src/zkc/embedding_backfill.py`）：
+
+- **全轨**：static / dynamic / unrouted 都扫，不只动态轨；已归档节点跳过（已移出召回，不再补向量）；
+- **空正文兜底**：`text = title + "\n" + content`，无正文时只用标题——旧脚本
+  `and n.content` 会把这类节点永久跳过，已修复；
+- **双列共存**：`embedding`(nomic 768d) 与 `embedding_4096`(qwen3 4096d) 各自补齐；
+- **幂等 / 去重**：只写缺失列；相同文本只编码一次（重复节点共享同一向量）；
+- **原子**：先全部编码成功再统一写；Ollama 不可达导致任一编码失败 → 零写入，不留半成品；
+- **不污染版本链**：走 `set_embedding_column` 轻量路径，不写 `node_history`、不 bump `tx_from`。
+
+> **边界（刻意不自动化）**：补向量**没有**接进 capture 链路。在 capture 时编码会把
+> encoder 依赖引入 transport seam、扩大 capture profile 写入面，并让每次 MCP 捕获
+> 多等十几秒（长文 4096d 编码），属需单独拍板的架构变更。当前以 `zkc embed` 作为
+> 显式、可调度的正式入口；如需「捕获即补」，先落 ADR 再改，不要在这里偷偷接线。
+
+历史脚本 `scripts/backfill_embedding_4096.py` 仍保留 R18 的「dynamic + 4096」窄口径，
+但已修掉空正文漏补；日常一律用 `zkc embed`。**每日调度已挂**：见 §5 的并列条目
+（macOS `--embed` launchd / Windows `--embed` schtasks，均 23:55），
+WorkBuddy 里跑「ZKC 每日循环」也会把它作为第 2 步执行。

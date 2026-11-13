@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ZKC 每日补向量（macOS launchd）模板 —— 与 com.zkc.daily-e1 并列的独立调度条目。
+  不要手工改 PYTHON / PROJECT_ROOT —— 由 scripts/install_daily_driver.sh --embed 自动解析替换。
+
+  为什么是独立条目而不是塞进 daily_e1_driver.py：
+    ADR-0007 把每日驱动限定为「两件机械事」（真值收口 + 只读仪表），且
+    `daily` 只写 attention_observation、不碰业务表。补向量写 node 派生列，
+    属并列的第三件机械事，故单独注册，不改动 E1 驱动的语义与退出码契约。
+
+  默认每天 23:55（比 E1 驱动晚 5 分钟，避免并发抢 PG / Ollama）。
+  失败不阻塞 E1 驱动；日志单独写 logs/daily_embed.out / .err。
+-->
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>com.zkc.daily-embed</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>__PYTHON__</string>
+      <string>-m</string>
+      <string>zkc.cli</string>
+      <string>embed</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>__PROJECT_ROOT__</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+      <key>ZKC_STORAGE</key>
+      <string>pg</string>
+    </dict>
+    <key>StartCalendarInterval</key>
+    <dict>
+      <key>Hour</key>
+      <integer>23</integer>
+      <key>Minute</key>
+      <integer>55</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>__PROJECT_ROOT__/logs/daily_embed.out</string>
+    <key>StandardErrorPath</key>
+    <string>__PROJECT_ROOT__/logs/daily_embed.err</string>
+    <key>RunAtLoad</key>
+    <false/>
+  </dict>
+</plist>
