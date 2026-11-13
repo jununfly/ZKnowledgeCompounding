@@ -136,25 +136,22 @@ python scripts/metrics_snapshot.py        # 打印当前度量快照（JSON）
 **复审标注（`decide`）永远不在此自动化范围内**——那是需要你本人判断的外生锚。
 设计与边界见 ADR-0007；底层是 `zkc` CLI（`daily` / `meter` / `decide`）。
 
-> **第三个条目是并列的，不塞进 E1 驱动**：`zkc embed`（补向量）每天 **23:55** 由
-> 独立任务触发，比 E1 驱动晚 5 分钟避免并发抢 PG / Ollama。它写 `node` 派生列，
-> 不写 `attention_observation`、不碰标注埋点；失败不影响 E1 两件机械事与三判据。
-> 所以 ADR-0007 的「两件机械事」边界和 `daily_e1_driver.py` 都没有被改动。
+> **日常运行形态（当前口径）**：每天 23:50 由 **WorkBuddy 每日定时任务**跑完整循环
+> （`zkc daily` → `zkc embed` → `zkc meter` → `zkc decide --list` 呈现待人环），
+> `decide` 的 verdict 仍须 zj 本人给。`zkc embed` 写 `node` 派生列，
+> 不写 `attention_observation`、不碰标注埋点，失败不影响 E1 两件机械事与三判据。
+> 下面 macOS / Windows 的系统调度是 ADR-0007 既有的**可选**能力，本机未启用；
+> ADR-0007 的「两件机械事」边界和 `daily_e1_driver.py` 都没有被改动。
 
 ### macOS（launchd）
 
 ```bash
-scripts/install_daily_driver.sh --dry-run    # 预览渲染后的 E1 plist，不安装
-scripts/install_daily_driver.sh              # 写入 ~/Library/LaunchAgents/ 并注册 E1 驱动
-scripts/install_daily_driver.sh --embed --dry-run   # 预览并列的补向量 plist
-scripts/install_daily_driver.sh --embed      # 注册每日 23:55 的 zkc embed
+scripts/install_daily_driver.sh --dry-run    # 预览渲染后的 plist，不安装
+scripts/install_daily_driver.sh              # 写入 ~/Library/LaunchAgents/ 并注册
 launchctl unload ~/Library/LaunchAgents/com.zkc.daily-e1.plist && rm ~/Library/LaunchAgents/com.zkc.daily-e1.plist
-launchctl unload ~/Library/LaunchAgents/com.zkc.daily-embed.plist && rm ~/Library/LaunchAgents/com.zkc.daily-embed.plist
 ```
 
-脚本自动解析 venv python 与仓库根；两个 plist 模板在 `scripts/launchd/`
-（`com.zkc.daily-e1.plist` 23:50 / `com.zkc.daily-embed.plist` 23:55），Label 不同、互不覆盖。
-补向量任务的日志单独写 `<仓库>/logs/daily_embed.out` / `.err`。
+脚本自动解析 venv python 与仓库根，plist 模板在 `scripts/launchd/com.zkc.daily-e1.plist`。
 
 ### Windows（计划任务）
 
@@ -163,20 +160,14 @@ scripts\install_daily_driver.bat --dry-run     :: 预览 schtasks 命令，不�
 scripts\install_daily_driver.bat                :: 注册每日 23:50
 scripts\install_daily_driver.bat --uninstall    :: 卸载
 scripts\install_daily_driver.bat --time 07:15   :: 改触发时间
-scripts\install_daily_driver.bat --embed --dry-run  :: 预览并列的补向量任务
-scripts\install_daily_driver.bat --embed        :: 注册每日 23:55 的 zkc embed
-scripts\install_daily_driver.bat --embed --uninstall :: 卸载补向量任务
 ```
 
-E1 任务调用 `scripts\daily_e1_driver.bat` 包装（venv python 优先、`ZKC_MODE=direct`）；
-补向量任务调用独立的 `scripts\daily_embed_driver.bat`（`-m zkc.cli embed`），
-任务名 `ZKC Daily Embed` 与 E1 的 `ZKC Daily E1` 分开。
+任务调用 `scripts\daily_e1_driver.bat` 包装（venv python 优先、`ZKC_MODE=direct`）；
 `--dry-run` 不写任何计划任务，重复安装用 `/f` 覆盖同名任务。
 > **未实机验证**：本仓库开发机是 macOS，Windows 注册流程只经过命令契约单测与 dry-run 冒烟，
 > 未在 Windows 上真实注册过。首次在 Windows 使用时按 ADR-0007 的复核清单逐条确认。
 
-E1 驱动两端日志都写 `<仓库>/logs/e1_daily.log`（JSONL，每次运行一行）；
-补向量条目的输出单独落在 `logs/daily_embed.out` / `.err`，互不混写。
+两端日志都写 `<仓库>/logs/e1_daily.log`（JSONL，每次运行一行）。
 
 ### WorkBuddy 侧的 zj-zkc-daily skill
 
@@ -262,6 +253,6 @@ zkc embed --storage memory  # 单测 / 无 PG 环境
 > 显式、可调度的正式入口；如需「捕获即补」，先落 ADR 再改，不要在这里偷偷接线。
 
 历史脚本 `scripts/backfill_embedding_4096.py` 仍保留 R18 的「dynamic + 4096」窄口径，
-但已修掉空正文漏补；日常一律用 `zkc embed`。**每日调度已挂**：见 §5 的并列条目
-（macOS `--embed` launchd / Windows `--embed` schtasks，均 23:55），
-WorkBuddy 里跑「ZKC 每日循环」也会把它作为第 2 步执行。
+但已修掉空正文漏补；日常一律用 `zkc embed`。**每日触发由 WorkBuddy 定时任务承担**
+（每天 23:50，见 §5）：补向量是循环第 2 步。WorkBuddy 里说「跑 ZKC 每日循环」
+也会按 skill 五步跑同样序列。

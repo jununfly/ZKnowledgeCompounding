@@ -32,9 +32,9 @@ WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
 2. 预算语义 = A 无状态（ADR-0006），不改；E1 三判据只喂数据不改（E1 校准闭环）。
 3. `zkc daily` 只写 `attention_observation` 的 pushed/queue_remaining 真值，不碰业务表、
    不伪造复审标注。
-4. **补向量是并列任务，不是 E1 驱动的一部分**：`zkc embed` 写 node 派生列，故在
-   调度层是独立条目（launchd `com.zkc.daily-embed` / schtasks `ZKC Daily Embed`，
-   23:55）；对话内本 skill 把它作为第 2 步顺带跑，不改 ADR-0007 的「两件机械事」边界。
+4. **补向量不进 E1 驱动**：`zkc embed` 写 node 派生列，日常由 WorkBuddy 每日定时任务
+   作为循环第 2 步执行，不改 ADR-0007 的「两件机械事」边界。本机不启用系统级调度，
+   仓库也没有补向量专用的 launchd / schtasks 条目（该实现已撤销）。
 
 ## 每日流程（按序）
 1. **机械收口（无交互）**：
@@ -70,11 +70,10 @@ WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
 
 ## 触发建议
 - 手动：zj 说「跑 ZKC 每日循环」即执行上述五步。
-- 自动（可选）：WorkBuddy automation 每日定时触发本 skill；decide 人环那步仍须等待
+- 日常运行形态（已配置）：WorkBuddy 每日定时任务（23:50）触发本流程；decide 人环那步仍须等待
   zj 在对话里给 verdict（自动化只跑 daily + embed + meter，decide 列表呈现后暂停待人）。
-- 机械收口 + 仪表也可脱离对话，由调度器跑（macOS `install_daily_driver.sh` /
-  Windows `install_daily_driver.bat`）；补向量是并列的独立条目
-  （`--embed`，23:55）。调度路径**不包含** decide 人环。
+- 本机**不启用系统级调度**。仓库里 `install_daily_driver.*` 是 ADR-0007 既有的
+  E1 驱动可选安装脚本（本机未安装），不含任何补向量条目；那条路径同样不包含 decide 人环。
 
 ## 纳管与同步（2026-11-05，zj 拍板 skill 纳管）
 - canonical = 本文件（ZKC 仓库，git 跟踪）；运行副本 =
