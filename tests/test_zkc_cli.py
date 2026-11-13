@@ -68,6 +68,40 @@ class ZkcCliTest(unittest.TestCase):
                   "c3_budget_convergence"):
             self.assertIn(k, r["criteria"])
 
+    def test_embed_backfills_all_tracks_and_is_idempotent(self) -> None:
+        """zkc embed：全轨 + 空正文兜底 + dry-run 不写 + 第二遍零编码。"""
+        store = get_storage("memory")
+        empty = store.nodes.save(Node(track="static", title="v1", content=None))
+        normal = store.nodes.save(Node(track="dynamic", title="AINMM", content="body"))
+        calls: list[str] = []
+
+        def encoder(column, dim):
+            def encode(texts):
+                calls.extend(f"{column}:{t}" for t in texts)
+                return [[0.1] * dim for _ in texts]
+            return encode
+
+        enc = {"embedding": encoder("768", 768),
+               "embedding_4096": encoder("4096", 4096)}
+
+        self.assertEqual(dispatch(parse_args(["embed", "--dry-run", "--json"]),
+                                  store=store, encoders=enc), 0)
+        self.assertEqual(calls, [])  # dry-run 不编码、不写
+        self.assertIsNone(store.nodes.get(empty.id).embedding)
+
+        self.assertEqual(dispatch(parse_args(["embed", "--json"]),
+                                  store=store, encoders=enc), 0)
+        for nid in (empty.id, normal.id):
+            saved = store.nodes.get(nid)
+            self.assertEqual(len(saved.embedding), 768)
+            self.assertEqual(len(saved.embedding_4096), 4096)
+        first_calls = len(calls)
+        self.assertEqual(first_calls, 4)  # 2 texts × 2 columns
+
+        self.assertEqual(dispatch(parse_args(["embed", "--json"]),
+                                  store=store, encoders=enc), 0)
+        self.assertEqual(len(calls), first_calls)  # 幂等：第二遍零编码零写入
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,6 +15,8 @@ harness gap 修复）。
                       （v ∈ still_valid | changed | stale | browse）
   zkc archive --corpus [--dry-run] [--json]
                        导入语料批量归档（D2）：只写 archived_at，不动标注埋点
+  zkc embed [--dry-run] [--json]
+                       补齐节点 embedding 双列（全轨、幂等、空正文用标题兜底）
 
 存储：默认 pg（ZKC_PG_DSN 或默认 localhost:55433/zkc_dev）；--storage memory 走内存后端。
 
@@ -81,6 +83,12 @@ def _make_parser() -> argparse.ArgumentParser:
                            help="按导入语料派生特征批量归档")
     p_archive.add_argument("--dry-run", action="store_true", help="只预览命中，不写库")
     p_archive.add_argument("--json", action="store_true", help="输出 JSON")
+
+    p_embed = sub.add_parser(
+        "embed", help="补齐节点 embedding 双列（全轨、幂等、空正文用标题兜底）")
+    p_embed.add_argument("--storage", default="pg", help="pg（默认）或 memory")
+    p_embed.add_argument("--dry-run", action="store_true", help="只统计缺口，不编码不写库")
+    p_embed.add_argument("--json", action="store_true", help="输出 JSON 供管道消费")
     return ap
 
 
@@ -89,8 +97,8 @@ def parse_args(argv=None) -> argparse.Namespace:
     return _make_parser().parse_args(argv)
 
 
-def dispatch(args: argparse.Namespace, store=None) -> int:
-    """命令分发核心。store 可注入（复用同一实例，内存后端一致）；不传则按 --storage 建。"""
+def dispatch(args: argparse.Namespace, store=None, encoders=None) -> int:
+    """命令分发核心。store / encoders 可注入（单测用内存后端与 fake encoder）。"""
     store = store or get_storage(args.storage)
 
     if args.command == "daily":
@@ -164,6 +172,28 @@ def dispatch(args: argparse.Namespace, store=None) -> int:
                   f"dry_run={result['dry_run']}")
             print(f"  labeled_touched={result['labeled_touched']} "
                   f"review_queue_resolved={result['review_queue_resolved']}")
+        return 0
+
+    if args.command == "embed":
+        from zkc.embedding_backfill import backfill_embeddings, make_default_encoders
+
+        result = backfill_embeddings(
+            store, encoders=encoders or make_default_encoders(),
+            dry_run=args.dry_run,
+        )
+        if args.json:
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            print(f"=== ZKC embed · 双列补齐（dry_run={result['dry_run']}）===")
+            print(f"  scanned={result['scanned']} "
+                  f"archived_skipped={result['archived_skipped']} "
+                  f"gap_nodes={result['gap_nodes']} "
+                  f"gap_columns={result['gap_columns']} "
+                  f"unique_texts={result['unique_texts']}")
+            print(f"  encoded={result['encoded']} "
+                  f"columns_written={result['columns_written']}")
+            if not result["columns_written"]:
+                print("  已是全覆盖，无需写入（幂等）")
         return 0
 
     return 2  # 兜底（argparse required 已拦截未知命令）
