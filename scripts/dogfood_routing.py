@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ZKC · 路由引擎真实 LLM dogfood（roadmap 1-3-3 / 残留#1 验证器）。
+"""ZKC · 路由引擎真实 LLM dogfood（路由联调 / 残留验证器）。
 
 用途：在本机起 Ollama 后手动执行，验证 DecisionRouter(OllamaClient) 真实链路。
 沙箱/无 Ollama 环境执行 → 打印 SKIP 并以 0 退出（非失败，捕获不因此阻塞）。

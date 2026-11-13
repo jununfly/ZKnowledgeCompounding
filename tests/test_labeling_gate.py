@@ -1,8 +1,8 @@
-"""ZKC · P4.4 标注率闸门 端到端验证（1-4-4）。
+"""ZKC · P4.4 标注率闸门 端到端验证。
 
-闸门逻辑在 1-4-1 落地（zkc.scheduling.labeling_rate_from + adapt_interval 的 gate 分支），
-1-4-2 的 UI 负责持续喂入标注数据。本文件验证「闸门在真实多日观测下按口径开关」——
-这是 1-4-4 作为闭环验收的核心，而非只测纯函数。
+闸门逻辑在标注闸门 L1 落地（zkc.scheduling.labeling_rate_from + adapt_interval 的 gate 分支），
+标注 UI 负责持续喂入标注数据。本文件验证「闸门在真实多日观测下按口径开关」——
+这是标注闸门作为闭环验收的核心，而非只测纯函数。
 
 口径（架构 §6.5 / 工作记忆）：
 - 滚动 7 天 labeled_completed / completed ≥ 70% → 闸门开放，L3 可改写 interval；

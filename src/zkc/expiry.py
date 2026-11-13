@@ -143,7 +143,7 @@ def apply_distill(
     任一步失败（DistillationError / LLM 异常）→ 回落 enqueue 人审 + applied=False，
     绝不静默丢弃（PRD §8 宁少勿错）。
 
-    度量（1-5-6）：每次调用落一行 llm_call_score（成功与失败都记）——latency_ms /
+    度量（蒸馏结构化接线）：每次调用落一行 llm_call_score（成功与失败都记）——latency_ms /
     parse_ok / attempts（来自 result.attempts）/ n_claims / n_citations / error；
     ``model`` 由调用方从 ``getattr(llm, "model_name", None)`` 透传（distiller 是
     不透明 callable，模型名不在本层可见）。rubric 人工打分经

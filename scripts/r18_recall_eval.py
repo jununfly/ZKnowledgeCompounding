@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-"""R18 中文检索召回质量评测（1-8-4）。
+"""R18 中文检索召回质量评测（R18 实测）。
 
-对 zkc_dev 真实语料（1-7-2 导入的 61 条 AI-Coding 文档）测 embedding 候选召回质量。
+对 zkc_dev 真实语料（导入的 61 条 AI-Coding 文档）测 embedding 候选召回质量。
 评测集：scripts/r18_eval_queries.json（32 条人工改写中文 query，禁止照抄标题）。
 
-判据（roadmap 1-8-4 decide 已落盘）：
+判据（R18 中文召回实测结论已落盘）：
   Recall@10 >= 0.85 且 MRR >= 0.5 → 合格（R18 关停，实测数为证据）；
   不合格 → 同查询集跑 qwen3-embedding 4096d 对比，仅当 4096 达标且显著优于 768
   才开加列路径。
@@ -186,7 +186,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     ap.add_argument(
         "--column", default="embedding", choices=["embedding", "embedding_4096"],
-        help="生产模式读取的向量列（1-8-4-1 后可对 embedding_4096 复测）",
+        help="生产模式读取的向量列（双列共存后可对 embedding_4096 复测）",
     )
     args = ap.parse_args(argv)
 

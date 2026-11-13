@@ -75,7 +75,7 @@ class DistillOperatorTest(unittest.TestCase):
 
 
 class DistillStructuredWiringTest(unittest.TestCase):
-    """1-5-6 结构化接线：JSON 契约解析 + 手写校验重试（Instructor 等价）。"""
+    """蒸馏结构化接线：JSON 契约解析 + 手写校验重试（Instructor 等价）。"""
 
     def test_json_contract_multi_claim(self):
         s1, s2 = uuid4(), uuid4()

@@ -1,4 +1,4 @@
-"""ZKC · 1-5-5-1 忠实度闸门后续切片测试：F_cap 日队列 + 审查卡片 UI + adjudicate 包装。
+"""ZKC · 忠实度闸门后续切片测试：F_cap 日队列 + 审查卡片 UI + adjudicate 包装。
 
 三层验证（与 test_web_review 同构）：
 - 纯函数层（zkc.faithfulness.daily_faithfulness_queue）：R11 独立预算语义——
@@ -98,7 +98,7 @@ class DailyQueuePureTest(unittest.TestCase):
         self.assertEqual(len(routes), 3)
 
     def test_threshold_carries_source_label(self):
-        # 1-2-7 铁律：UI 展示阈值必须带来源标签
+        # 阈值来源标签铁律：UI 展示阈值必须带来源标签
         _seed_gated(self.store, 1)
         q = daily_faithfulness_queue(self.store)
         self.assertEqual(q["f_cap_ratio"], float(tuning.get("F_CAP_RATIO")))

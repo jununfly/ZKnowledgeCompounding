@@ -1,7 +1,7 @@
-"""zkc/llm 单测（1-5-6）：真实 Ollama 接线的三条铁律编码为测试。
+"""zkc/llm 单测：真实 Ollama 接线的三条铁律编码为测试。
 
 不依赖真实 Ollama：patch urllib.request.urlopen 捕获请求体，验证 payload 构造。
-铁律（1-5-2 dogfood 定位 + spike-10 记录）：
+铁律（跨源 dogfood 定位 + spike-10 记录）：
   ① 只走原生 /api/chat + format:"json"，绝不用 /v1+response_format（qwen3.5-mlx 挂死）；
   ② 每次调用 think=False + num_ctx=8192（防 256K 默认加载爬行）；
   ③ num_predict 显式给足（默认截断腰斩 JSON）。

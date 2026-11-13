@@ -1,6 +1,6 @@
 # 过程权威边界：仓库内自包含门禁 + 上游对齐的结构性过程态判据
 
-Status: accepted（2026-11-05，zj 以「开始 1-23」拍板）；2026-11-05 修订（1-23-1，zj 以「a」拍板收敛 6 条白名单）
+Status: accepted（2026-11-05，zj 拍板启动）；2026-11-05 修订（zj 以「a」拍板收敛 6 条白名单）
 
 ## 背景与实测
 
@@ -14,8 +14,8 @@ zj-roadmap-driven 的权威边界规定：roadmap 只回答「当前计划 / 进
 | 分类 | 位置 | 判定 |
 | --- | --- | --- |
 | 真违规 1 | `docs/prds/knowledge-compounding-prd.md:168` | PRD 是长期文档，却把过程编排稿当作决策引用源 |
-| 误扫 4 | `.workbuddy/memory/2026-11-04.md:6/27/33`、`.workbuddy/memory/2026-11-05.md:59` | append-only 过程日志（记忆系统硬约束禁改；第 4 条是 1-21 收口日志本会话引入） |
-| 误扫 2 | `docs/roadmap/roadmap.json:3`、`:419` | roadmap 事实源自身：root description（CLI 无 `--description` 可改、Agent 禁手改 JSON）与节点 1-18 notes（含证据缺口分层原文）。**该 carrier 文件已于 2026-11-13 与本仓解耦移除**（见下文 §2026-11-13） |
+| 误扫 4 | `.workbuddy/memory/2026-11-04.md:6/27/33`、`.workbuddy/memory/2026-11-05.md:59` | append-only 过程日志（记忆系统硬约束禁改；第 4 条是 Windows 实机复核收口日志本会话引入） |
+| 误扫 2 | `docs/roadmap/roadmap.json:3`、`:419` | roadmap 事实源自身：root description（CLI 无 `--description` 可改、Agent 禁手改 JSON）与节点 notes（含证据缺口分层原文）。**该 carrier 文件已于 2026-11-13 与本仓解耦移除**（见下文 §2026-11-13） |
 
 当时的根因（上游旧版实现）：`authority_boundary.py` 把过程产物目录下的文件当作 process target，
 却扫描 `root.rglob('*')` 下全部 durable 后缀文件，而 `EXCLUDED_DIR_PARTS` 只有
@@ -24,7 +24,7 @@ zj-roadmap-driven 的权威边界规定：roadmap 只回答「当前计划 / 进
 修复，见下文 Follow-up。
 
 治理还有一个自指陷阱：检查器按行做子串匹配，凡在事实源 / 过程日志 / 长期记忆里写出
-process target 的完整相对路径，记录行为本身就会新增一条泄漏（1-23 建模期间曾由 7 涨到 10，
+process target 的完整相对路径，记录行为本身就会新增一条泄漏（建模期间曾由 7 涨到 10，
 改用「仅文件名 / 占位表述」后回到 7）。本轮所有新增文本一律不携带完整触发串。
 
 ## 决策
@@ -42,8 +42,8 @@ process target 的完整相对路径，记录行为本身就会新增一条泄�
      `status` 识别（普通 `nodes.json` 长出同名键不得借机逃逸）；
    - `render` / `section` 产出的 Markdown 视图：按开头 512 字节内完整的
      `zj-roadmap-authority/v1` 权威信封识别。
-   初版（1-23）曾用 6 条 (相对路径 + 行内容锚点 + 命中上限 1) 显式白名单兜底并逐条打印
-   `ALLOW` / `STALE`；上游 #240 修复并重装后，1-23-1 删除全部条目。理由：每新增一天过程日志、
+   初版曾用 6 条 (相对路径 + 行内容锚点 + 命中上限 1) 显式白名单兜底并逐条打印
+   `ALLOW` / `STALE`；上游 #240 修复并重装后，本 ADR 开发期收敛项删除了全部条目。理由：每新增一天过程日志、
    一条节点 notes、一次 carrier 改写都要人工加条目或处理 STALE，而结构判据可在同一 tree 上
    复刻验证，无需维护清单。**剪枝只改扫描范围、判定规则不放宽**；跳过清单逐条打印，替代原
    `STALE` 的「静默吞掉」防线。
@@ -55,16 +55,16 @@ process target 的完整相对路径，记录行为本身就会新增一条泄�
 
 ## Considered Options
 
-- **A 改 skill 的 `EXCLUDED_DIR_PARTS`**（1-23 时拒绝）：当时属跨项目资产，需单独授权 +
+- **A 改 skill 的 `EXCLUDED_DIR_PARTS`**（开发时拒绝）：当时属跨项目资产，需单独授权 +
   删除重装；即使改了，CI runner 仍没有该 skill，自包含 wrapper 照旧要做，收益不抵协调成本。
   *修订*：#240 已由 ZAgentic 侧修复并重装，协调成本由上游承担；ZKC 侧拿到的是**语义基准**，
-  因此 1-23-1 只同步本仓 wrapper 的扫描范围，仍不改 skill 本体。
-- **B 仓库内自包含 wrapper + 显式白名单**（1-23 时采纳）：一次改动同时解决「CI 可执行」与
-  「6 处误扫」；白名单逐条可审，新泄漏仍 fail。*修订*：1-23-1 用结构性判据替换白名单，
+  因此本 ADR 开发期收敛项只同步本仓 wrapper 的扫描范围，仍不改 skill 本体。
+- **B 仓库内自包含 wrapper + 显式白名单**（开发时采纳）：一次改动同时解决「CI 可执行」与
+  「6 处误扫」；白名单逐条可审，新泄漏仍 fail。*修订*：本 ADR 开发期收敛项用结构性判据替换白名单，
   保留 wrapper 与 CI job 不变（命令仍是同一入口）。
 - **C 归档过程编排稿后全量清引用**（拒绝）：root description 无 CLI 命令可改，
   4 条过程日志 append-only 禁改，且证据缺口原文须先沉淀到持久权威，阻塞面最大。
-- **1-23-1 追加：issue #3 的 A（同步语义、收敛白名单）/ B（显式维持分叉）** → 采纳 A。
+- **本 ADR 开发期收敛项追加：issue #3 的 A（同步语义、收敛白名单）/ B（显式维持分叉）** → 采纳 A。
   B 会长期维护两套判定口径且每增一处过程态引用都要加白名单。可重复 `--exclude` 属**扩展能力**
   而非判定语义，当前 tree 无新增过程态目录需求，先不加（YAGNI）；未来若需要，须与上游语义一致
   地补，不得放宽判定。
@@ -78,7 +78,7 @@ process target 的完整相对路径，记录行为本身就会新增一条泄�
   仓库的 branch protection 里把该 job 设为 required check —— 属仓库设置，不在本仓文件内。
 - 上游用户级 skill 的 `authority-check` 已在 #240 修复并重装，同一 tree 上返回
   `Authority boundary: clean.` / `exit 0`；本仓 wrapper 同为 `0 unresolved` / `exit 0`。
-  两套实现判定结论一致，1-23 时期「上游仍报 6 行已知误扫」的口径差已消失。
+  两套实现判定结论一致，本 ADR 开发期「上游仍报 6 行已知误扫」的口径差已消失。
 - 结构性判据维护约定：新增过程态目录时改 `EXCLUDED_DIR_PARTS` 并补测试；carrier 结构签名
   与权威信封必须**完整匹配**，不得放宽成「只要出现标记行就跳过」；任何新增泄漏不得靠
   扩大排除集合了事，须先判断它是否真是过程态。测试里有防 `nodes.json` 逃逸与防半截信封
@@ -87,14 +87,14 @@ process target 的完整相对路径，记录行为本身就会新增一条泄�
   能力，不影响判定语义。若未来出现，须同步上游语义并补测试，不要偷偷放宽。
 - 检查器自身与治理文档都不得携带完整 process target 串，否则「记录治理」会自引入新泄漏。
 - 判定语义若与上游 skill 分叉，以本 ADR + 测试为准，并在 roadmap 立节点追踪偏差
-  （本条在 1-23-1 语义对齐后仍有效，作为未来分叉的处置规则）。
+  （本条在本 ADR 开发期收敛项语义对齐后仍有效，作为未来分叉的处置规则）。
 
 ## Follow-up
 
 ### 2026-11-05：维护主场所澄清与上游 bug 追踪
 
 zj 澄清了本 ADR 中「跨项目资产」这一表述：真正的边界不是抽象的「需单独授权」，而是
-**维护主场所**。1-21 拍板的「repo 完全纳管 + 安装脚本」**只适用 ZKC 自有 skill**
+**维护主场所**。Windows 实机复核拍板的「repo 完全纳管 + 安装脚本」**只适用 ZKC 自有 skill**
 （`skills/zj-zkc-daily/`），其语境默认都是本项目的；`zj-roadmap-driven` 的维护主场所是
 **ZAgentic workspace 与对应 chats with agent** —— 为避免多个 Agent 产生混乱，不在 ZKC
 仓库就地改它，也不在本机 ZAgentic 目录里顺手改。
@@ -108,7 +108,7 @@ zj 澄清了本 ADR 中「跨项目资产」这一表述：真正的边界不是
 当时的待办写的是「若判定影响正常使用：zj 在 ZAgentic 修复并重装后，ZKC 侧复跑上游门禁，
 复核 6 条白名单是否可收敛（**上游不再误报即可删除**）」。该括号内判据**不成立**，见下节修正。
 
-### 2026-11-05：1-23-1 收敛（上游修复后）
+### 2026-11-05：开发期收敛（上游修复后）
 
 - ZAgentic #239 `CLOSED(COMPLETED)`，PR #240 / #241 均 `MERGED`，用户级
   `zj-roadmap-driven` 已删除重装到修复版；修复只改扫描范围（目录剪枝 + carrier 结构签名 +
@@ -117,7 +117,7 @@ zj 澄清了本 ADR 中「跨项目资产」这一表述：真正的边界不是
   上游误报消失 ≠ 独立 wrapper 误报消失 —— 上一轮反事实清空 6 条白名单仍得到 6 unresolved。
   **修正为可验证条件**：「本仓 wrapper 自身不再产生这 6 处命中」，以本地复跑 +
   CI checkout 模拟 + 缺陷态红 / 修复态绿为准。
-- zj 以「a」采纳 issue #3 的 A 方案。1-23-1 执行：删 `ALLOWANCES` 6 条及 `STALE` 逻辑、
+- zj 以「a」采纳 issue #3 的 A 方案。本 ADR 开发期收敛项执行：删 `ALLOWANCES` 6 条及 `STALE` 逻辑、
   wrapper 对齐上游三类结构判据、重写测试（3 条白名单用例改为结构判据用例，补防 carrier
   签名逃逸与防半截信封逃逸）、更新本 ADR 与 `ci.yml` 注释；CI job 命令未变。
 - **真实环境实测（2026-11-05，zj 授权提交并推 main）**：实现 commit `75db9a0` 推 main 后
@@ -154,4 +154,4 @@ zj 澄清了本 ADR 中「跨项目资产」这一表述：真正的边界不是
   `authority (process boundary)` job 输出 `skipped 0 process-state file(s)`、`0 unresolved`
   仍成立（实测复跑通过）。
 - 本仓内仍不得引用任何过程编排稿作为 proof/evidence；roadmap 节点 id 作溯源锚的既有约定
-  不受影响（见 ADR-0006 / 0010 的 `1-1` / `1-19` 节点引用）。
+  不受影响（见 ADR-0006 / 0010 的 E1 / R14 节点引用）。

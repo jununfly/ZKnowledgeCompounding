@@ -186,7 +186,7 @@ class IngestWithRoutingTest(unittest.TestCase):
         self.assertEqual(open_items[0].node_id, node.id)
 
 
-# ----------------------------------------------------------------- P2.3 联调（1-3-3）
+# ----------------------------------------------------------------- P2.3 联调（路由联调）
 class HealthAndAutoOfflineTest(unittest.TestCase):
     """残留#1：Ollama 探活 + route_text 自动离线降级（沙箱无 Ollama 也可验证）。"""
 
@@ -384,7 +384,7 @@ class LexicalGateCalibrationTest(unittest.TestCase):
         self.assertEqual(r.gate_source, "seed")
 
     def test_partial_fit_one_class_below_min_still_fitted_but_seed(self):
-        # 真实分布场景（1-22）：static 仅 2 例 < min_examples_per_class(3)，
+        # 真实分布场景（路由校准）：static 仅 2 例 < min_examples_per_class(3)，
         # dynamic 61 例 ≥3 → dynamic 质心建起（fitted=True，动态类冷启动弃权解除），
         # 但 static/dynamic 未同时 ≥3 → 自动推导门槛回退 seed（corpus-derived 未激活）。
         # 这是「禁止伪造标注」铁律的直接后果：真实 static 不足，绝不为凑数灌入假样本。
@@ -403,7 +403,7 @@ class LexicalGateCalibrationTest(unittest.TestCase):
 
 # ----------------------------------------------------------------- 校准边界锁定（残留闭环：语料推导 ≠ 埋点校准）
 class LexicalCalibrationGovernanceTest(unittest.TestCase):
-    """锁定两条「校准」路径不互相替代（修复 1-3-1 后残留项）：
+    """锁定两条「校准」路径不互相替代（修复校准路径后残留项）：
 
     1) 语料分布推导：LexicalRouter.fit() 自动算出 gate，gate_source='corpus-derived'
        —— 这是「从标注语料分布推导」，与 tuning 的 CALIBRATED（运行时埋点校准）是两回事。

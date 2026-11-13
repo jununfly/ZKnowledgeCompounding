@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""R18 加列路径回填（1-8-4-1）：给 zkc_dev 的 node.embedding_4096 补齐 qwen3 向量。
+"""R18 加列路径回填（双列共存）：给 zkc_dev 的 node.embedding_4096 补齐 qwen3 向量。
 
 走 repository seam（NodeRepository.set_embedding_column 轻量路径），不直连 SQL。
 幂等：只回填该列为空且有 content 的动态节点。4096 长文编码慢（~7.5min/61 条），

@@ -139,7 +139,7 @@ class MemoryNodeRepository(NodeRepository):
             )
         return out[: max(1, int(limit))]
 
-    # 1-8-4-1 双列共存白名单（与 pg.EMBEDDING_COLUMNS 同口径）
+    # 双列共存白名单（与 pg.EMBEDDING_COLUMNS 同口径）
     EMBEDDING_COLUMNS = {"embedding", "embedding_4096"}
 
     def search_by_embedding(
@@ -511,7 +511,7 @@ class MemoryScoreRepository(ScoreRepository):
 
 
 class MemoryTaskQueueRepository(TaskQueueRepository):
-    """task_queue 内存实现（1-9）：进程内 dict，按 (day, kind) 幂等 upsert。"""
+    """task_queue 内存实现（任务队列）：进程内 dict，按 (day, kind) 幂等 upsert。"""
 
     def __init__(self) -> None:
         # (day, kind) -> TaskItem

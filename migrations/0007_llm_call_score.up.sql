@@ -1,4 +1,4 @@
--- 0007_llm_call_score · 轻量 LLM 调用度量表（1-5-6，替代 Langfuse）
+-- 0007_llm_call_score · 轻量 LLM 调用度量表（蒸馏结构化接线，替代 Langfuse）
 --
 -- 用途：Langfuse 提供 trace/score/eval 全家桶但自带 ClickHouse+Redis+Node 栈，
 -- 对单人 MVP 太重（调研 distill-llm-2026-10-29-draft.md §101）。本表只记

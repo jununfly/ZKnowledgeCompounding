@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ZKC · R14 真实数据侧裁决状态（roadmap 1-27 视图工具）。
+"""ZKC · R14 真实数据侧裁决状态（R14 真实数据侧视图工具）。
 
 读 data/r14_telemetry.jsonl（由 dogfood 脚本在真实 run 时落库），跑 judge_r14
 聚合，打印当前 R14 裁决。供 zj 积累真实 run 后随时查看是否该关补全。

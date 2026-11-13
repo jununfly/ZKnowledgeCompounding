@@ -300,13 +300,13 @@ def dismiss_higher_dim(store: Storage, seed_node_id,
                 day=str(now.date()))
 
 
-# ---------------------------------------------------------------- 忠实度人审卡片（1-5-5-1）
+# ---------------------------------------------------------------- 忠实度人审卡片（忠实度闸门）
 
 def faithfulness_queue_view(store: Storage, now: Optional[datetime] = None) -> dict:
     """忠实度人审查看视图：F_cap 日队列 + 校准语料概览（纯函数，无 HTTP 依赖）。
 
     R11 独立预算：本视图与 adjudicate_claim 均不写 attention_observation——
-    蒸馏人审不占复审容量口径，1-7-4 的标注率语义不被 claim 人审污染。
+    蒸馏人审不占复审容量口径，R10 的标注率语义不被 claim 人审污染。
     校准语料在 judge 上线前恒空（human_only 的 judge_raw 无 atomic_facts，
     无对照价值），属预期而非缺陷。
     """
@@ -677,7 +677,7 @@ def register_review_routes(app, store: Storage) -> None:
 
     @router.get("/review/api/faithfulness")
     def faithfulness_api() -> dict:
-        """忠实度人审查看：F_cap 日队列 + 校准语料概览（1-5-5-1）。"""
+        """忠实度人审查看：F_cap 日队列 + 校准语料概览（忠实度闸门）。"""
         return faithfulness_queue_view(store)
 
     @router.post("/review/api/faithfulness/adjudicate")

@@ -1,4 +1,4 @@
-"""ZKC · Windows schtasks 注册渲染器（roadmap 1-21，ADR-0007 跨平台条款补齐）。
+"""ZKC · Windows schtasks 注册渲染器（ADR-0007 跨平台条款补齐）。
 
 ADR-0007 承诺「macOS launchd plist + Windows schtasks(.bat 包装)」，但此前实物只有
 macOS 的 install_daily_driver.sh；Windows 侧只有运行包装 daily_e1_driver.bat，

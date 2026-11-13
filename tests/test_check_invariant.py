@@ -1,4 +1,4 @@
-"""1-6 · ADR-0005 rec-avoid 不变式 CI 谓词的 TDD 验收。
+"""ADR-0005 rec-avoid 不变式 CI 谓词的 TDD 验收。
 
 两条断言：① claim 落库仍受 meta_claim.evidence_refs NOT NULL 约束；
 ② 任何 feature 不得提供关闭 decay / attention 的全局开关。

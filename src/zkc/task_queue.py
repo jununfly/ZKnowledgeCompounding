@@ -1,4 +1,4 @@
-"""ZKC · 任务队列领域逻辑（1-9，MVP）。
+"""ZKC · 任务队列领域逻辑（任务队列切片，MVP）。
 
 把观察期 zj 的过渡待办清单，转为「规则自动生成的任务卡片队列」，并入 /review
 顶部，避免遗忘，并打通现有闭环（复审标注率 / budget 收口埋点）。
@@ -11,7 +11,7 @@
 - 一次性任务 commit_push 不自动执行 git（UI 完成仅标记 done + 记 note），git 操作仍等
   用户显式触发（一次性任务完成仅标记 done + 记 note；git 操作仍等用户显式触发）。
 
-溯源锚：roadmap 1-9 decisions；原过渡待办清单已逐项映射到下方规则。
+溯源锚：任务队列设计决策（见 src/zkc/task_queue.py）；原过渡待办清单已逐项映射到下方规则。
 """
 from __future__ import annotations
 
@@ -22,8 +22,8 @@ from uuid import UUID
 from zkc.repository.models import TaskItem, TaskSpec
 from zkc.repository.protocols import Storage
 
-# --- 规则常量（与 roadmap 1-9 对齐；如需调参集中在此）---
-LABEL_JUDGMENT_THRESHOLD = 20          # 累计带标注复审 ≥20 → 判 1-7-4（R10 降级判定）
+# --- 规则常量（与任务队列设计对齐；如需调参集中在此）---
+LABEL_JUDGMENT_THRESHOLD = 20          # 累计带标注复审 ≥20 → 判 R10 降级判定
 ORPHAN_SPIKE_START = date(2026, 11, 5)  # orphan(7d) 基线集中到期窗口起点
 ORPHAN_SPIKE_END = date(2026, 11, 6)    # 窗口终点
 
@@ -75,13 +75,13 @@ def generate_due_tasks(store: Storage, now: Optional[datetime] = None) -> list[T
             due_date=_as_datetime(day), source_rule="alert.orphan_spike",
         ))
 
-    # ---- 带日历预警：累计 ≥20 标注复审判定 1-7-4 ----
+    # ---- 带日历预警：累计 ≥20 标注复审判定 R10 ----
     total_labeled = _total_labeled_completed(store)
     if total_labeled >= LABEL_JUDGMENT_THRESHOLD:
         specs.append(TaskSpec(
             day=now, category="alert", kind="labeled_judgment",
-            title="达成 1-7-4 降级判定",
-            detail=f"累计带标注复审已达 {total_labeled}（≥{LABEL_JUDGMENT_THRESHOLD}）→ 判 1-7-4（R10），"
+            title="达成 R10 降级判定",
+            detail=f"累计带标注复审已达 {total_labeled}（≥{LABEL_JUDGMENT_THRESHOLD}）→ 判 R10，"
                    "roadmap 翻 completed。",
             due_date=_as_datetime(day),
             source_rule="alert.labeled_judgment",

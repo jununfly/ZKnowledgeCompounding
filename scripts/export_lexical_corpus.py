@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""ZKC · 词法路由冷启动语料导出（1-22 交付物）。
+"""ZKC · 词法路由冷启动语料导出（交付物）。
 
 从真实 PG 读取已定轨节点的 (title, content, track)，按与增量回灌
 （`resolve_classify` 的 `title + " " + content`）**完全一致**的文本格式，

@@ -60,7 +60,7 @@ def decay_controllability(inp: MetricInputs, rot_threshold: float | None = None)
     """到期(decay>=rot)动态节点中，被蒸馏/结合引用或已归档的比例。
 
     「被处理」= 其 id 出现在某 claim / artifact 的 evidence_refs，或已 archived。
-    注：本指标成立前提是注意力预算满足 n/(0.6×interval)（R4，节点 1-8-6）；预算不满足时
+    注：本指标成立前提是注意力预算满足 n/(0.6×interval)（R4，注意力预算维度）；预算不满足时
     该比例预期偏低属供给问题而非指标问题——此处只算原始 handled 比例。
     """
     rot = rot_threshold if rot_threshold is not None else tuning.get("ROT_THRESHOLD")

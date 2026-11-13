@@ -13,10 +13,10 @@
 
 与 Spike 11 的差异（生产化裁剪）：
 - 不引 instructor/openai 重依赖：LLM 调用全部走可注入 callable（同 distill.py seam），
-  真实接线（Instructor + Ollama）属 1-5-6 后续切片。
+  真实接线（Instructor + Ollama）属蒸馏结构化接线的后续切片。
 - 阈值走 zkc.tuning（P1.4 铁律）；Spike 11 算子严格优于 Spike 05 baseline
   （4B 3/3 vs 2/3），故漏斗/引用强制作为本算子必要基础设施随本切片进来；
-  repository 落库接线 + 级联撤销联调属 1-5-3。
+  repository 落库接线 + 级联撤销联调属结合算子落库切片。
 - schema 与 Spike 05 ModelingArtifact 保持同构（刻意不变——证明是算子层可解）。
 """
 from __future__ import annotations
@@ -274,7 +274,7 @@ class CrossSourceOperator:
         }
 
 
-# ---------------------------------------------------------------- 落库接线（1-5-3）
+# ---------------------------------------------------------------- 落库接线（结合算子）
 # kind 三值与 DB CHECK（migration 0001 modeling_artifact）一致——落库前预校验，
 # 让 memory/pg 双实现走同一条失败路径（PG 侧 CHECK 只是最后防线）。
 ARTIFACT_KINDS = ("methodology", "mental_model", "tradeoff_map")
@@ -311,7 +311,7 @@ def apply_combine(
     *,
     produced_by=None,
 ) -> dict:
-    """生产入口：跨源结合 -> 落库一条 modeling_artifact（1-5-3 接线）。
+    """生产入口：跨源结合 -> 落库一条 modeling_artifact（结合落库接线）。
 
     语义流程：
       1. 源节点校验（fail-fast）：每个 source id 必须是 store 中的真实节点 UUID——
@@ -367,7 +367,7 @@ def apply_combine(
     )
 
 
-# ----------------------------------------------------------------- R14 判据聚合（1-19 Q3=A 收口衔接）
+# ----------------------------------------------------------------- R14 判据聚合（R14 收口衔接）
 # 纯函数：把一组跨源补全 run 的 report 聚合成 R14 裁决。不读数据、不碰 IO——
 # 把「completion_fired 无生产 run 落库、判据不可执行」转化为可机械判定的实现，
 # 待真实生产 run 落库聚合后即可裁决 R14 是否关补全。R14 节点本身仍 open（关闭挂真实数据）。
@@ -394,7 +394,7 @@ def judge_r14(runs: list[dict], *, min_runs: int = R14_MIN_RUNS_DEFAULT) -> R14V
       ``completion_fired: bool``、``main_latency_ms: float``、
       ``completion_latency_ms: float | None``（仅触发补全的 run 有值）。
 
-    判据（risks.md R14 / roadmap 1-19 EC3）：
+    判据（risks.md R14 / 架构 §8）：
       触发率 > 0.5 且 补全延迟中位 > 主生成延迟中位 × 1.5 → 关补全。
 
     数据不足（total < min_runs 或补全延迟缺失）→ ``should_close_completion=False``

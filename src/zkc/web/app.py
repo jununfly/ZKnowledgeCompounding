@@ -213,7 +213,7 @@ def create_app(
     # P5.1 检索/复利产物浏览：挂载到同一 app（共享 store_）。
     register_browse_routes(app, store_)
 
-    # 1-9 任务队列 UI：挂载到同一 app（共享 store_），并入 /review 顶部。
+    # 任务队列 UI：挂载到同一 app（共享 store_），并入 /review 顶部。
     register_taskqueue_routes(app, store_)
 
     return app

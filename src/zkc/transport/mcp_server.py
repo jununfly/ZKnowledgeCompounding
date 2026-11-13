@@ -2,7 +2,7 @@
 
 第四 seam：与 storage / provider / encoder 并列。本模块**只做协议分发**：
 - 不 import 任何 repository / 驱动，不写 DDL，不自行获取 storage；
-- 所有 tool / resource 的 handler 由调用方在构造时注入（1-3 接线）；
+- 所有 tool / resource 的 handler 由调用方在构造时注入（注入防护接线）；
 - 对外契约以 `zkc-mcp-contract v1` 快照为唯一事实源；
 - 零网络面：真正的 I/O 只在 `stdio.py` 的 stdin/stdout 循环里。
 
@@ -253,8 +253,8 @@ def build_server(
 ) -> McpServer:
     """构造可由 MCP client 通过 stdio 连接的 server。
 
-    1-2 阶段是骨架：注册表为空，只提供协议能力；1-3 注入五个白名单 tool
-    与「该关注清单」resource，1-4 补 capture 分流闸，1-5 接注入验收用例。
+    transport 骨架阶段：注册表为空，只提供协议能力；注入防护阶段注入五个白名单 tool
+    与「该关注清单」resource，注入防护补 capture 分流闸，接入注入验收用例。
     """
     return McpServer(tools=tools, resources=resources, audit_sink=audit_sink)
 

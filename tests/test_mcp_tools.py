@@ -1,8 +1,8 @@
-"""1-3 · 暴露面五 tool 的接线验收（含黑名单拒绝、攻击面枚举表）。
+"""暴露面五 tool 的接线验收（含黑名单拒绝、攻击面枚举表）。
 
 ADR-0004：白名单五 tool、黑名单四类危险写绝不暴露、handler 只调既有
 repository/command API、零网络面。私人 claim 默认脱敏在此层落地，
-完整注入验收链路在 1-5。
+完整注入验收链路在注入防护切片。
 """
 from __future__ import annotations
 

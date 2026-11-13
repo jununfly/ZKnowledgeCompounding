@@ -1,4 +1,4 @@
-"""spike07 复利度量权重 / method_target 的治理契约（1-25 校准切片 + 2026-11-11 覆盖）。
+"""spike07 复利度量权重 / method_target 的治理契约（度量治理切片 + 2026-11-11 覆盖）。
 
 守住四件事：
 1. 五个参数 source=CALIBRATED（2026-11-11 zj 显式拍板，覆盖自动门禁；数值一律不改、calibrated_at 已落）；

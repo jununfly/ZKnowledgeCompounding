@@ -24,7 +24,7 @@ def _node(track="dynamic", title="", content=None, decay=0.0, emb=None,
 
 
 DIM = 768  # 与 node.embedding vector(768) 对齐（spike 14）
-DIM4096 = 4096  # 与 node.embedding_4096 vector(4096) 对齐（1-8-4-1）
+DIM4096 = 4096  # 与 node.embedding_4096 vector(4096) 对齐（双列共存）
 
 
 def _vec(*vals):
@@ -138,7 +138,7 @@ class MemorySearchTest(unittest.TestCase):
                                                   [1.0, 0.0])
 
     def test_embedding_4096_dual_column_independent(self):
-        # 1-8-4-1 双列共存：4096 列与 768 列互不影响
+        # 双列共存：4096 列与 768 列互不影响
         self.store.nodes.set_embedding_column(
             self.n4.id, "embedding_4096", _vec4096(1.0, 0.0))
         hits = self.store.nodes.search_by_embedding(
@@ -197,7 +197,7 @@ def _run_pg_contract(store):
     assert knn[0][0].id == n1.id, "kNN 首位不符"
     assert abs(knn[0][1] - 1.0) < 1e-6, "cosine sim 不符"
     assert n3.id not in [n.id for n, _ in knn], "kNN 应排除归档"
-    # 4096 列（1-8-4-1 双列共存）：先空召回，回填后命中且互不干扰
+    # 4096 列（双列共存）：先空召回，回填后命中且互不干扰
     n4 = store.nodes.save(_node(title="仅4096列", decay=0.1, created=base))
     assert store.nodes.search_by_embedding(_vec4096(1.0, 0.0), k=5,
                                            column="embedding_4096") == []

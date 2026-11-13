@@ -10,7 +10,7 @@ source: zagentic
 
 ZKC（个人知识复利工具）每日运行循环的 **harness 适配器**。底层是已正式化的 `zkc` CLI
 （Form B 去服务器化，composer Plan `zkc-daily-run-forms-v1`），本 skill 把它编排成
-WorkBuddy 对话里可执行的每日流程。对应 roadmap node 1-1（E1 校准闭环）。
+WorkBuddy 对话里可执行的每日流程。对应 E1 校准闭环。
 
 > **纳管**：本文件是 **canonical（唯一真相源）**，位于 ZKC 仓库
 > `skills/zj-zkc-daily/SKILL.md`（git 跟踪）。`~/.workbuddy/skills/zj-zkc-daily/SKILL.md`
@@ -29,7 +29,7 @@ WorkBuddy 对话里可执行的每日流程。对应 roadmap node 1-1（E1 校�
    必须是 zj 在对话里给出的，绝不可由模型自行编造或默认填值。自动标注 = 伪造外生锚 A，
    会废掉 L3 interval 反馈闭环（架构 §6.5.1 通则）。本 skill 只负责「呈现条目 + 捕获
    zj 的 verdict + 写入」，不替 zj 做判断。
-2. 预算语义 = A 无状态（ADR-0006），不改；E1 三判据只喂数据不改（roadmap 1-1）。
+2. 预算语义 = A 无状态（ADR-0006），不改；E1 三判据只喂数据不改（E1 校准闭环）。
 3. `zkc daily` 只写 `attention_observation` 的 pushed/queue_remaining 真值，不碰业务表、
    不伪造复审标注。
 
@@ -54,7 +54,7 @@ WorkBuddy 对话里可执行的每日流程。对应 roadmap node 1-1（E1 校�
    读出 E1 三判据（连续≥7活跃日 / 标注率≥70% / budget 收敛），汇总给 zj：
    >>> E1 全满足 = YES/NO。
 
-## 退出判据（E1，roadmap 1-1）
+## 退出判据（E1）
 - [1] 连续 ≥7 活跃日（空队列日豁免、有 due 未复审断签）
 - [2] 标注率闸门 ≥70%（滚动 7 日 labeled_completed/completed）
 - [3] budget_per_day 派生估计在 [7,14,21,28] 天窗口轨迹收敛（CV≤10% & 28d observed）
@@ -67,7 +67,7 @@ WorkBuddy 对话里可执行的每日流程。对应 roadmap node 1-1（E1 校�
 - 机械收口 + 仪表也可脱离对话，由调度器跑（macOS `install_daily_driver.sh` /
   Windows `install_daily_driver.bat`）；那条路径**不包含** decide 人环。
 
-## 纳管与同步（2026-11-05，roadmap 1-21，zj 拍板）
+## 纳管与同步（2026-11-05，zj 拍板 skill 纳管）
 - canonical = 本文件（ZKC 仓库，git 跟踪）；运行副本 =
   `~/.workbuddy/skills/zj-zkc-daily/SKILL.md`。
 - 安装/同步：`python scripts/install_harness_skill.py --dry-run` 预览；

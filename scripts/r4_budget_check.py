@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""R4 注意力预算校验（1-8-6）：对真实语料跑 n/(0.6×interval) 需求 vs 预算。
+"""R4 注意力预算校验（注意力预算维度）：对真实语料跑 n/(0.6×interval) 需求 vs 预算。
 
 复用 zkc/scheduling.py 现成机器（零重复实现）：
   daily_demand = Σ 1/(0.6×Iᵢ)（架构 §6.5 需求公式）
@@ -8,7 +8,7 @@
 
 健康度量（R4 真信号）：被 L2 延后的条目若 0.6×I_eff/I_base ≥ ROT_THRESHOLD(0.9)，
 复审时 decay 必已到腐化线——该比例 >0 说明当前预算撑不住真实腐化节奏，
-「衰减可控」指标将恒 0。**只报告不调参**：处置选项见 roadmap 1-8-6 decide
+「衰减可控」指标将恒 0。**只报告不调参**：处置选项见注意力预算维度决策
 （① 观察期真实 budget 产出后重跑 ② 缩动态集 ③ 调 SURFACE_THRESHOLD）。
 
 用法：python scripts/r4_budget_check.py [--dry-run 默认即只读]
@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> int:
     if rot_before_review:
         print(f"  ⚠ 健康信号: {len(rot_before_review)}/{n} 条被延后后在复审时 decay 已 ≥{rot:g}"
               f"（注定腐化）→ 当前预算撑不住真实腐化节奏，衰减可控指标将恒 0")
-        print("  处置选项（不静默调参）: ① 1-7-4 观察期产出真实 budget 后重跑本探针；"
+        print("  处置选项（不静默调参）: ① R10 观察期产出真实 budget 后重跑本探针；"
               "② 缩小动态集（DISTILL/ARCHIVE 归档）；③ 调 SURFACE_THRESHOLD（需留痕）")
     elif not fit["applied"]:
         print("  需求 ≤ 预算，L2 未触发——预算校验通过")

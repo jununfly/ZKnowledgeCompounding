@@ -2,12 +2,12 @@
 
 把已落地的 direct-mode 纯函数（record_daily_observation_auto / decide_review /
 review_queue_view / E1 仪表 build_report）提升为正式 `zkc` CLI 子命令，使每日循环
-不再依赖 web 服务常驻（ADR-0007 已授权；node 1-1 是 product execution，本文件即
+不再依赖 web 服务常驻（ADR-0007 已授权；E1 校准闭环是 product execution，本文件即
 harness gap 修复）。
 
 子命令：
   zkc daily           每日真值收口（替代 /review/api/observe/auto，无需 web 服务）
-  zkc meter [--json]  E1 校准进度仪表（roadmap 1-1 退出判据读数）
+  zkc meter [--json]  E1 校准进度仪表（E1 退出判据读数）
   zkc p64 [--json]    PRD §9 P6.4 观察期达成读数（只读，不写埋点）
   zkc decide          人环复审：
                       默认（无 --id）= 列出当前 due 复审条目（供 harness 呈现给人）
@@ -55,7 +55,7 @@ def _make_parser() -> argparse.ArgumentParser:
     p_daily = sub.add_parser("daily", help="每日真值收口（无需 web 服务）")
     p_daily.add_argument("--storage", default="pg", help="pg（默认）或 memory")
 
-    p_meter = sub.add_parser("meter", help="E1 校准进度仪表（roadmap 1-1 退出判据读数）")
+    p_meter = sub.add_parser("meter", help="E1 校准进度仪表（E1 退出判据读数）")
     p_meter.add_argument("--storage", default="pg", help="pg（默认）或 memory")
     p_meter.add_argument("--json", action="store_true", help="输出 JSON 供管道消费")
 

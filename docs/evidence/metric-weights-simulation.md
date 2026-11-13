@@ -1,5 +1,8 @@
 # spike07 复利度量权重 / method_target 受控仿真（SIMULATION 依据）
 
+> ⚠️ **本文件为 2026-11-06 受控仿真快照（source=SIMULATION），非当前生效依据。**
+> 权重 / method_target 已于 2026-11-11 经人工覆盖标定为 `CALIBRATED`（数值维持等权结论），当前生效值见 `src/zkc/tuning.py` 的 `CALIB_OVERRIDE_AT` 常量。本快照仅作「等权选择」的推导佐证，不得当作现行参数。
+
 - 采集时刻：2026-11-06T08:17:09.321808+00:00
 - 命令：`python scripts/metric_weights_sim.py --storage pg --samples 20000 --seed 20261106`
 - 真实快照来源：`zkc.metrics.metrics_report` 只读查询（后端 `pg`），与 `/metrics` 面板同口径。

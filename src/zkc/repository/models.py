@@ -45,7 +45,7 @@ class Node:
     last_reviewed_at: datetime | None = None
     attention_signal: float = 0.0
     embedding: list[float] | None = None
-    # R18 加列路径（1-8-4-1）：qwen3-embedding 4096d 候选召回列。
+    # R18 加列路径（双列共存）：qwen3-embedding 4096d 候选召回列。
     # 派生数据：nomic 768 列保留（双列共存）；不入 node_history（非事实）。
     embedding_4096: list[float] | None = None
     archived_at: datetime | None = None
@@ -179,7 +179,7 @@ class AttentionObservation:
 
 @dataclass
 class LLMCallScore:
-    """一次 LLM 调用的轻量度量（对应 schema `llm_call_score`，1-5-6；Langfuse 替代）。
+    """一次 LLM 调用的轻量度量（对应 schema `llm_call_score`，蒸馏结构化接线；Langfuse 替代）。
 
     成功与失败都记：失败行的 error 是接线质量的第一手观测。
     human_verdict = 蒸馏质量 rubric 的人工打分入口（复审流回填，默认 NULL）。
@@ -201,7 +201,7 @@ class LLMCallScore:
 
 @dataclass
 class TaskSpec:
-    """任务生成规格（1-9）：领域规则产出的「待入库任务」草样，无 id/status 等持久态字段。
+    """任务生成规格（任务队列）：领域规则产出的「待入库任务」草样，无 id/status 等持久态字段。
 
     upsert 幂等键 = (day, kind)，已存在则保留其 status（done 不被覆盖）。
     """
@@ -218,7 +218,7 @@ class TaskSpec:
 
 @dataclass
 class TaskItem:
-    """任务队列项（对应 schema `task_queue`，1-9）。"""
+    """任务队列项（对应 schema `task_queue`）。"""
 
     id: UUID | None = None
     day: datetime = field(default_factory=datetime.utcnow)

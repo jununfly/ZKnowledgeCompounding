@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""R13 常驻实测探针（1-8-1）：qwen3.5:9b GGUF + num_ctx 8192 的真实常驻。
+"""R13 常驻实测探针（R13 相关切片）：qwen3.5:9b GGUF + num_ctx 8192 的真实常驻。
 
 回答 spike-10 遗留 open 项：「9B GGUF 6.55GB + num_ctx 8192 常驻」未实测，
 旧结论「9B 在 16GB 不可用于迭代」基于 mlx 8.9GB 权重 + 原生 256K 加载

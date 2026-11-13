@@ -166,7 +166,7 @@ class PgApplyDistillTest(PgExpiryTest):
         self.assertEqual(cur.fetchone()[0], 0)
 
 
-# ============================================================ 1-5-6：score 表（PG）
+# ============================================================ 蒸馏结构化接线：score 表（PG）
 
 class PgScoreTest(PgExpiryTest):
     """llm_call_score 真实 PG：apply_distill 落库 + rubric 回填（Langfuse 替代）。"""

@@ -1,6 +1,6 @@
 """ZKC · PRD §9 P6.4 观察期达成读数（只读）单测。
 
-与 E1(1-1) 判据独立：① 累计 labeled_completed ≥20（不要求日历连续）；
+与 E1 判据独立：① 累计 labeled_completed ≥20（不要求日历连续）；
 ② 滚动 7 天样本达标（completed ≥10）且 rate ≥0.7。
 
 回归重点：`labeling_rate_from` 在「样本不足 warm-up 放行」时同样返回

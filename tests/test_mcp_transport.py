@@ -1,4 +1,4 @@
-"""1-2 · transport seam / MCP server 骨架的协议层单测（零领域语义）。
+"""transport seam / MCP server 骨架的协议层单测（零领域语义）。
 
 ADR-0004 要求：单边 server（stdio 默认，零网络面）、transport seam 为第四 seam、
 handler 只调注入的 repository/command API、不直连 DDL，

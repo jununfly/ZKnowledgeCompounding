@@ -84,7 +84,7 @@ class EncodeTextsTest(unittest.TestCase):
         self.assertEqual(enc.model_name, tuning.get("EMBEDDING_MODEL"))
 
     def test_dim_override_validates_against_explicit_dim(self):
-        # 1-8-4-1：dim 覆写（4096 列）按显式维度校验，不再绑定 768
+        # 双列共存：dim 覆写（4096 列）按显式维度校验，不再绑定 768
         with mock.patch.object(E, "_OPENER") as op:
             resp = mock.MagicMock()
             resp.read.return_value = json.dumps(

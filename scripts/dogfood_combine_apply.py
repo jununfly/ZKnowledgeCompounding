@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""ZKC · 结合算子落库接线真实 LLM dogfood（roadmap 1-5-3 验证器）。
+"""ZKC · 结合算子落库接线真实 LLM dogfood（结合落库接线验证器）。
 
-用途：在本机起 Ollama 后手动执行，验证 1-5-3 全链路——真实 store 节点（UUID id）
+用途：在本机起 Ollama 后手动执行，验证结合落库接线全链路——真实 store 节点（UUID id）
 → CrossSourceOperator（真实 LLM）→ apply_combine 落库 modeling_artifact
 （evidence_refs UUID 化 + produced_by + body）→ 节点进「已捕获」基线 →
 revert_artifact 级联 capture-loss 重算。
 
-与 scripts/dogfood_cross_source.py（1-5-2，纯算子）的区别：本脚本验证的是
+与 scripts/dogfood_cross_source.py（跨源强制算子，纯算子）的区别：本脚本验证的是
 **store 接线**（源校验 / 落库 / 调度信号 / 撤销级联），存储用 ephemeral memory
 store（落库行为与 PG 同构，PG 侧另有 test_cross_source_apply.PgApplyCombineTest）。
 
@@ -42,7 +42,7 @@ DEFAULT_URL = "http://localhost:11434"
 DEFAULT_MODEL = "qwen3.5:4b-mlx"
 QUERY = "从这些项目经历中提炼出一个关于技术决策时机的可复用方法论"
 
-# 与 1-5-2 dogfood 同语料（5 条互关联中文动态条目），但 id 换成真实 store 节点 UUID
+# 与跨源 dogfood 同语料（5 条互关联中文动态条目），但 id 换成真实 store 节点 UUID
 _TEXTS = [
     ("鉴权返工", "把鉴权逻辑放在客户端做，被安全评审整体打回，服务端全部重做，返工两周。"),
     ("SDK 升级", "第三方 SDK 的升级一直拖到上游停止维护前一周才做，被动手忙脚乱，也是两周。"),
@@ -134,14 +134,14 @@ def main() -> int:
         raise last  # type: ignore[misc]
 
     op = CrossSourceOperator(summarize, score, generate)
-    tf = store.record_transform("combine", {"query": QUERY, "dogfood": "1-5-3"})
+    tf = store.record_transform("combine", {"query": QUERY, "dogfood": "结合落库"})
 
     # ---- apply_combine：校验 -> 算子 -> 落库
     t0 = time.perf_counter()
     res = apply_combine(store, QUERY, sources, op, produced_by=tf)
     wall = time.perf_counter() - t0
 
-    print("=== dogfood combine_apply (real Ollama, 1-5-3) ===")
+    print("=== dogfood combine_apply (real Ollama, 结合落库) ===")
     print(f"model={model}  wall={wall:.1f}s")
     if not res["applied"]:
         print(f"APPLY: FAIL -> {res['reason']}")
@@ -157,7 +157,7 @@ def main() -> int:
     ok_refs = all(store.nodes.get(e) is not None for e in ma.evidence_refs)
     print(f"evidence_refs ⊆ store nodes: {ok_refs}")
 
-    # ---- R14 遥测落库（1-27）：真实 run 的 completion_fired/latency 追加到
+    # ---- R14 遥测落库（R14 真实数据侧）：真实 run 的 completion_fired/latency 追加到
     # data/r14_telemetry.jsonl，供 judge_r14 聚合裁决。不伪造数据；设环境变量
     # ZKC_NO_R14_TELEMETRY=1 可跳过落库（如仅做管线验证、不想污染样本）。
     if not __import__("os").environ.get("ZKC_NO_R14_TELEMETRY"):

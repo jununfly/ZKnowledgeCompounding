@@ -1,7 +1,7 @@
-"""1-21 TDD · zj-zkc-daily skill 纳管同步脚本（zj 拍板：repo canonical + 安装脚本）。
+"""zj-zkc-daily skill 纳管同步脚本 TDD（zj 拍板：repo canonical + 安装脚本）。
 
 背景：该 skill 原本只在 `~/.workbuddy/skills/zj-zkc-daily/SKILL.md`，不在 git、无备份。
-1-21 决定把 canonical 迁进 ZKC 仓库 `skills/`，运行副本由安装脚本同步生成。
+纳管决策把 canonical 迁进 ZKC 仓库 `skills/`，运行副本由安装脚本同步生成。
 
 安全边界（必须被测试守住）：
   - 目标默认是 home 下的用户级副本；脚本**绝不删除目录**，只覆盖单个 SKILL.md；

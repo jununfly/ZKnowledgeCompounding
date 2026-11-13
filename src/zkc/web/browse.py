@@ -1,6 +1,6 @@
 """ZKC · 复利产出检索/浏览 UI（P5.1，T6.1 生产落地）。
 
-两个 tab（decide 已落盘 1-6-1）：
+两个 tab（decide 已落盘）：
   检索 tab —— 双路：结构化（track/decay 区间/q 子串，R18 主路）
              + embedding 候选召回（nomic 768d，仅候选+人确认，encoder 不可用自动降级）；
   产物 tab —— 复利产出浏览：meta_claim / modeling_artifact 列表 + evidence 反查
@@ -19,8 +19,8 @@ from fastapi.responses import HTMLResponse
 from zkc import search as S
 from zkc.encoder import make_encoder_4096
 
-# R18 加列路径（1-8-4-1）：候选召回默认走 4096 列（qwen3-embedding，
-# 1-8-4 实测中文召回合格）；nomic 768 列保留，可用 column="embedding" 切回。
+# R18 加列路径（双列共存）：候选召回默认走 4096 列（qwen3-embedding，
+# R18 实测中文召回合格）；nomic 768 列保留，可用 column="embedding" 切回。
 RETRIEVAL_COLUMN = "embedding_4096"
 
 BROWSE_HTML = """<!doctype html>

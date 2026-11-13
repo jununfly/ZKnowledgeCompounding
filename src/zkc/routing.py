@@ -8,7 +8,7 @@
   embedding 严禁用于安全判定（spike 03 实测 nomic dangerous=3），故第二信号改为词法
   TF-IDF（spike 03 实测 TF-IDF 三路 dangerous=0，安全属性达标）。
 
-双信号弃权规则（见 roadmap 1-3-2 决策）：
+双信号弃权规则（见路由设计决策）：
 - 同时满足 ①LLM conf≥GATE ②词法 conf≥GATE ③两信号轨道一致 才提交真实轨道；
 - 任一不满足（含任一信号判 vague / 两信号不一致）→ vague → 人工兜底（安全欠覆盖，非危险）。
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
-"""R1 judge 复测探针（1-8-5）：9B GGUF + Ollama 铁律下自动忠实度判定是否可行。
+"""R1 judge 复测探针（忠实度 judge 探针）：9B GGUF + Ollama 铁律下自动忠实度判定是否可行。
 
 背景：spike-13b 对 9B 的否决（~6min/条 + 不产 JSON）是在 9b-mlx @ 原生 256K ctx
-下测的——与 1-8-1 R13 同源伪影。本探针用 qwen3.5:9b GGUF + 铁律全套
+下测的——与 R13 同源伪影。本探针用 qwen3.5:9b GGUF + 铁律全套
 （原生 /api/chat + format:json、think=false、num_ctx=8192、num_predict=2048）
 复测 zkc/faithfulness.py 现成 judge seam（零改动）。
 
-判据（roadmap 1-8-5 decide 已落盘）：
+判据（忠实度 judge 结论已落盘）：
   4 条合成 claim（2 supported / 1 unsupported / 1 contradicted）对一篇真实语料
   —— JSON 全部可解析（4/4）且判定与预期一致（≥3/4）且延迟 ≤60s/条
   → 「judge 可选启用」实证成立（默认仍 HITL，启用开关另行拍板）。

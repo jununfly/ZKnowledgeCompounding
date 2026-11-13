@@ -233,7 +233,7 @@ class ApplyDistillTest(unittest.TestCase):
         self.assertFalse(res["applied"])
         self.assertEqual(len(self.store.review_queue.list_open()), 1)
 
-    # ---------------------------------------------- 1-5-6：score 表落库（Langfuse 替代）
+    # ---------------------------------------------- 蒸馏结构化接线：score 表落库（Langfuse 替代）
 
     def test_apply_distill_success_records_score(self):
         n = self._expired_connected()

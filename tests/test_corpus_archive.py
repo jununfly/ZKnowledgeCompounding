@@ -1,4 +1,4 @@
-"""1-14 · D2 导入语料隔离的 TDD 验收。
+"""D2 导入语料隔离的 TDD 验收。
 
 核心缺陷：list_due_for_review 双实现原本不过滤 archived_at，
 只调 nodes.archive() 并不能把语料移出复审队列。

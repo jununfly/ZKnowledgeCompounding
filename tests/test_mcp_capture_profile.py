@@ -1,4 +1,4 @@
-"""1-4 · `zkc_capture` 完整规格：push + 分流闸 + capture profile + 注入防护。
+"""`zkc_capture` 完整规格：push + 分流闸 + capture profile + 注入防护。
 
 ADR-0004 §3.3：push 模型、必须过分流闸、capture profile 默认开启（安全写：
 只加源节点，不写 interval / 不触发 distill / 不直写 meta_claim / 不绕过 HITL）、

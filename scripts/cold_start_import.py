@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ZKC 冷启动导入（1-7-2）：把一批真实动态型素材批量灌入本机 ZKC。
+"""ZKC 冷启动导入（导入切片）：把一批真实动态型素材批量灌入本机 ZKC。
 
 用法：
     python scripts/cold_start_import.py 素材文件.md           # 导入并种下调度基线
@@ -127,7 +127,7 @@ def import_entries(entries: list[dict], *, store, mode: str) -> dict:
 def fill_embeddings(store) -> int:
     """给缺 embedding 的节点补向量（/browse 语义召回用）。失败降级返回 0。
 
-    1-8-4-1 双列共存：nomic 768 列经 save() 常规写入；qwen3 4096 列走
+    双列共存：nomic 768 列经 save() 常规写入；qwen3 4096 列走
     set_embedding_column 轻量路径补齐（4096 不可达不阻塞 768）。
     """
     try:
@@ -188,7 +188,7 @@ def backfill_embedding_column(store, *, column: str, model: str, dim: int,
 
 
 def main(argv: list[str] | None = None) -> int:
-    ap = argparse.ArgumentParser(description="ZKC 冷启动批量导入（1-7-2）")
+    ap = argparse.ArgumentParser(description="ZKC 冷启动批量导入（导入切片）")
     ap.add_argument("source", help="素材文件（.json/.md/.txt，或 - 读 stdin）")
     ap.add_argument("--mode", choices=["direct", "route"], default="direct",
                     help="direct=直接落 dynamic（默认）；route=走双信号分流")

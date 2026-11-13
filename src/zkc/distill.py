@@ -8,9 +8,9 @@
      该语义必须由 ZKC 自建。
 - 本切片交付：ZKC 自建蒸馏语义的数据模型 + 校验规则，以及一个 **provider 无关**的算子
   （LLM 调用通过可注入 callable 传入）。这样在真实 Ollama/Instructor 接线之前即可单测，
-  不阻断整条 critical path（1-5-1 是 1-5-2~1-5-5 的 blocks 前驱）。
-- 1-5-6 结构化接线已落地：JSON 契约解析 + 手写校验重试（Instructor 等价，决策见
-  roadmap 1-5-6 decisions）+ 真实 Ollama 客户端（zkc.llm.make_distill_llm，铁律内置）。
+  不阻断整条 critical path（蒸馏结构化切片的前驱依赖）。
+- 蒸馏结构化接线已落地：JSON 契约解析 + 手写校验重试（Instructor 等价，决策见
+  蒸馏设计决策）+ 真实 Ollama 客户端（zkc.llm.make_distill_llm，铁律内置）。
   LangGraph 不引入：HITL 语义已由 expiry.apply_distill 失败回落 review_queue 承载；
   score 表见 migrations/0007_llm_call_score + expiry.apply_distill 落库点。
 
@@ -62,7 +62,7 @@ class DistillationResult:
     """一次蒸馏的结构化产出。"""
     claims: list[MetaClaim] = field(default_factory=list)
     notes: str = ""
-    # 结构化接线（1-5-6）：本次蒸馏实际消耗的 LLM 尝试次数（含首次），
+    # 结构化接线（Instructor 等价手写重试）：本次蒸馏实际消耗的 LLM 尝试次数（含首次），
     # 供 score 表（llm_call_score.attempts）记录重试成本。
     attempts: int = 1
 
@@ -97,7 +97,7 @@ def _build_prompt(
     return f"{head}\n\n材料：\n{body}\n\n节点：{node_id}"
 
 
-# 结构化 JSON 契约（1-5-6）：prompt 层 schema 提示，等同 Instructor Mode.JSON 的
+# 结构化 JSON 契约（蒸馏结构化接线）：prompt 层 schema 提示，等同 Instructor Mode.JSON 的
 # 提示层行为（铁律①：禁用 /v1+response_format 与 Instructor Mode.JSON_SCHEMA/OPENAI_TOOLS——
 # 对 qwen3.5-mlx 永久挂死；JSON 合规由提示约束 + 调用方正则抽取兜底）。
 DISTILL_SCHEMA_HINT = (
@@ -125,7 +125,7 @@ def _extract_json(raw: str) -> Optional[dict]:
 def _parse_json_output(
     raw: str, source_texts: Sequence[tuple[UUID, str]]
 ) -> Optional[DistillationResult]:
-    """解析结构化 JSON 契约为 DistillationResult（1-5-6 主路径）。
+    """解析结构化 JSON 契约为 DistillationResult（蒸馏主路径）。
 
     契约：{"claims": [{text, topic, citations: [uuid, ...]}]}。
     - citations 里非源集合的 uuid 一律丢弃（与文本解析同语义：不许编造来源）；
@@ -203,7 +203,7 @@ def distill_node(
 
     - source_texts: [(源节点id, 文本), ...]，提供反向连接与引用目标。
     - llm: provider 无关的文本生成 callable（真实环境见 zkc.llm.make_distill_llm）。
-    - 结构化接线（1-5-6，Instructor 等价）：prompt 带 JSON schema 提示；解析顺序
+    - 结构化接线（Instructor 等价）：prompt 带 JSON schema 提示；解析顺序
       JSON 契约 → 旧文本标记 fallback；任一解析成功但**语义校验失败**（引用不足），
       或两种解析都失败 → 带一条短修正提示重调 LLM，最多 max_attempts 次
       （tuning.DISTILL_MAX_ATTEMPTS）。超限抛最后一次的 DistillationError。

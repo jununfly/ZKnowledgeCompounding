@@ -1,4 +1,4 @@
-"""R14 真实数据侧落库聚合 — telemetry 模块（TDD，roadmap 1-27-1）。
+"""R14 真实数据侧落库聚合 — telemetry 模块（TDD）。
 
 只验证落库/读回/聚合的 plumbing 与 run_id 去重、容错、字段校验；判据本身由
 tests/test_r14_judgment.py 覆盖（本模块直接委托 judge_r14，不重写）。真实 run

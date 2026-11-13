@@ -11,7 +11,7 @@
 
 动态轨 + `decay_score=1.0` + `review_interval=1 day`
 + `last_reviewed_at` 日期为 `2026-11-01` + `archived_at IS NULL`。
-这是 1-7 导入语料的派生特征；归档本身（`archived_at` + 本留痕）即后续可识别标记。
+这是导入语料的派生特征；归档本身（`archived_at` + 本留痕）即后续可识别标记。
 **边界**：该口径按历史批次识别，未来新导入语料若形态不同需另补结构化 `corpus_tag` 列。
 
 ## 命令与结果

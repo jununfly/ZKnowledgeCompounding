@@ -17,7 +17,7 @@ from zkc.repository.models import Claim, ModelingArtifact, Node
 from zkc.web.browse import artifacts_payload, register_browse_routes, search_payload
 
 DIM = 768
-DIM4096 = 4096  # R18 加列（1-8-4-1）：/browse 候选召回默认走 embedding_4096
+DIM4096 = 4096  # R18 加列（双列共存）：/browse 候选召回默认走 embedding_4096
 
 
 def _vec(*vals):
@@ -79,7 +79,7 @@ class ServicePayloadTest(unittest.TestCase):
         self.assertAlmostEqual(cand["sim"], 1.0, delta=1e-6)
 
     def test_search_payload_768_column_opt_in(self):
-        # 双列共存（1-8-4-1）：column="embedding" 可切回 nomic 768 列，
+        # 双列共存：column="embedding" 可切回 nomic 768 列，
         # 同一 fixture 下 768 列召回结果独立成立（n1 被结构化去重，n2 追加）
         st, _n1, n2, *_ = _store()
         p = search_payload(st, q="rust", encoder=_enc, k=5, column="embedding")
@@ -87,7 +87,7 @@ class ServicePayloadTest(unittest.TestCase):
         self.assertEqual(p["hits"][-1]["id"], str(n2.id))
 
     def test_search_payload_4096_column_independent(self):
-        # 双列独立（1-8-4-1）：4096 列与 768 列各走各的，不静默回退
+        # 双列独立：4096 列与 768 列各走各的，不静默回退
         st, _n1, n2, *_ = _store()
         st.nodes.set_embedding_column(n2.id, "embedding_4096", _vec4096(0.0, 1.0))
         p = search_payload(st, q="rust", encoder=_enc, k=5)

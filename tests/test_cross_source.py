@@ -1,4 +1,4 @@
-"""P3.2 跨源强制算子单测（1-5-2，移植 Spike 11 test_enforcement.py）。
+"""P3.2 跨源强制算子单测（移植 Spike 11 test_enforcement.py）。
 
 机制层验证（stub 注入，不依赖模型）：
   1. 主生成/补全 prompt 均含跨源硬约束措辞；

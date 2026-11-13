@@ -1,7 +1,7 @@
-"""ZKC · 真实 LLM 接线（1-5-6）：Ollama 原生 /api/chat 客户端（stdlib urllib，零依赖）。
+"""ZKC · 真实 LLM 接线（蒸馏结构化接线）：Ollama 原生 /api/chat 客户端（stdlib urllib，零依赖）。
 
 本模块是蒸馏算子（zkc.distill）到本地 Ollama 的生产接线层。三条实测铁律
-（1-5-2 dogfood 复现定位 + spike-10 rerun.py 记录，见 roadmap 1-5-6 decisions）：
+（dogfood 复现定位 + spike-10 rerun.py 记录，见蒸馏设计决策）：
   ① **/v1 端点 + response_format {"type":"json_object"} 对 qwen3.5-mlx 永久挂死**
      （单次小调用 >900s 无响应；同请求去掉 response_format 13s 返回，
      原生 /api/chat + format:"json" 0.6s 返回）。因此本模块只走原生 /api/chat；

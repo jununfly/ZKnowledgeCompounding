@@ -66,14 +66,14 @@ L3 复审反馈 AIMD），L3 钳制区间写作 `[1d,180d]`。真实运行暴露
 4. **生产数据已按 zj 裁决变更（2026-11-06 续）**：原「全程只读」仅限本 ADR 初次落地；
    后续 zj 裁决归档 3 条残留 1d 导入语料（活跃 40→37，仅写 `archived_at`，
    `attention_observation` 的 labeled_sum=6 / completed_sum=6 不变），并将 11-04/11-05
-   共 6 条标注定为有效外生锚（override 1-7 corpus.py / ADR-0006 默认伪标注假设，
-   仅本批次 6 条，不静默改写既有默认口径）。详见 roadmap 1-13 / 1-1 / 1-17 决策。
+   共 6 条标注定为有效外生锚（override corpus.py / ADR-0006 默认伪标注假设，
+   仅本批次 6 条，不静默改写既有默认口径）。详见子日 interval / E1 / 观察期收口决策。
 5. **E1 三判据与 P6.4 观察期口径不变**：本决策只改调度阈值语义，不改验收口径。
 
 ## 修订记录（2026-11-06 续，zj 裁决）
 
 初次落地时 Consequence 1 写「触底没有消失，只是下移」、Consequence 4 写「全程只读」。
-同日 zj 就 1-13 的待裁决项拍板，推翻上述两条默认口径，记录如下：
+同日 zj 就待裁决项拍板，推翻上述两条默认口径，记录如下：
 
 - **触底真正消除（选项 c）**：zj 裁决不再把 floor no-op 当永久限制。实施 =
   `adapt_interval_math` 增加 `floor_hit` 标志（verdict=too_late 且 new==old 于
@@ -83,11 +83,11 @@ L3 复审反馈 AIMD），L3 钳制区间写作 `[1d,180d]`。真实运行暴露
 - **3 条残留 1d 导入语料已归档**：按 id 精确归档（不走 `zkc corpus archive`，因其
   corpus 选择器不匹配这 3 条——它们 decay=0.0067 / last_reviewed=11-05，已被 11-06
   verdict 改动）。活跃 40→37，`attention_observation` 不变。
-- **6 条标注定为有效外生锚**：11-04 / 11-05 共 6 条标注，zj 显式 override 1-7
+- **6 条标注定为有效外生锚**：11-04 / 11-05 共 6 条标注，zj 显式 override
   corpus.py / ADR-0006 的「导入语料 verdict 属伪标注」默认假设（仅本批次 6 条），
   E1 活跃日=2、标注率=100%、P6.4 累计=6/20 读数有效。
-- **0.25d 的 CALIBRATED 归属**：扩至 1-26（与 METRIC_W_* 共享 `can_calibrate` 门禁），
-  见 1-26 notes / EC。
+- **0.25d 的 CALIBRATED 归属**：扩至人工覆盖校准（与 METRIC_W_* 共享 `can_calibrate` 门禁），
+  见人工覆盖校准 notes / EC。
 
 ## 验证证据
 

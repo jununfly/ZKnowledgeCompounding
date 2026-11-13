@@ -66,7 +66,7 @@ class Parameter:
 # ---------------------------------------------------------------- 常量表
 
 SPIKE14_AT = date(2026, 10, 31)   # spike 14 实测日期：编码器与维度在此定死
-R18_EVAL_AT = date(2026, 11, 1)   # 1-8-4 R18 中文召回实测日期：4096 加列路径依据
+R18_EVAL_AT = date(2026, 11, 1)   # R18 中文召回实测日期：4096 加列路径依据
 # zj 显式拍板覆盖自动校准门禁的日期：多天累计真实复审已构成真实使用场景，
 # 据此将 P5.2 五参数（METRIC_W_* ×4 + METRIC_METHOD_TARGET）与 MIN_INTERVAL_DAYS
 # 直接标定为 CALIBRATED（**不经 calibrate() 门禁**，当时 days_with_obs=8/14 未达 14）。
@@ -136,12 +136,12 @@ REGISTRY: dict[str, Parameter] = {
         _p("DISTILL_MIN_CITATIONS_PER_CLAIM", 1, PLACEHOLDER,
            "每条 meta-claim 至少引用 1 个来源（去繁非凭空）。属逻辑不变式而非可调阈值，"
            "但经 tuning 统一出口，便于后续若放宽（如纯综述节点允许 0）可留痕"),
-        # ---- 蒸馏结构化接线（1-5-6 · Instructor 等价的手写重试）
+        # ---- 蒸馏结构化接线（Instructor 等价的手写重试）
         _p("DISTILL_MAX_ATTEMPTS", 2, PLACEHOLDER,
-           "蒸馏 LLM 结构化解析/语义校验失败的最大尝试次数（含首次）。对齐 1-5-2 先例："
+           "蒸馏 LLM 结构化解析/语义校验失败的最大尝试次数（含首次）。对齐跨源 dogfood 先例："
            "不引 Instructor，校验重试由手写循环等价实现；超限抛 DistillationError"),
         _p("DISTILL_NUM_PREDICT", 1024, PLACEHOLDER,
-           "Ollama num_predict 显式值（默认截断会把产物 JSON 腰斩——1-5-2 铁律③）。"
+           "Ollama num_predict 显式值（默认截断会把产物 JSON 腰斩——蒸馏铁律③）。"
            "随 claims 数量增长需重估"),
         # ---- embedding（spike 14 实测定死）
         _p("EMBEDDING_MODEL", "nomic-embed-text:latest", CALIBRATED,
@@ -154,15 +154,15 @@ REGISTRY: dict[str, Parameter] = {
            "**换维度 = 重建索引**，如需升级走加列路径而非改本值",
            calibrated_at=SPIKE14_AT,
            ),
-        # ---- embedding 4096 候选召回列（1-8-4/1-8-4-1 实测定死，2026-11-01）
+        # ---- embedding 4096 候选召回列（R18 实测，2026-11-01）
         _p("EMBEDDING_4096_MODEL", "qwen3-embedding:latest", CALIBRATED,
-           "1-8-4 实测（61 条真实语料 × 32 条改写中文 query）：768d 中文召回不合格"
+           "R18 实测（61 条真实语料 × 32 条改写中文 query）：768d 中文召回不合格"
            "（Recall@10=0.562/MRR=0.345），本模型 4096d 合格（@10=0.938/MRR=0.824）→"
            "加列路径当选。仅限检索召回候选，严禁安全判定（R16 同 768 列）",
            calibrated_at=R18_EVAL_AT,
            ),
         _p("EMBEDDING_4096_DIM", 4096, CALIBRATED,
-           "qwen3-embedding 实测维度（/api/embed 返回 4096，1-8-4-1 复核）。"
+           "qwen3-embedding 实测维度（/api/embed 返回 4096，双列共存复核）。"
            "列 node.embedding_4096 vector(4096)；768 列保留（nomic 双列共存）",
            calibrated_at=R18_EVAL_AT,
            ),
@@ -177,7 +177,7 @@ REGISTRY: dict[str, Parameter] = {
            "CALIBRATED。本 seed 仅作未 fit / 类不可分时的回退保守门槛。"
            "**第二信号严禁用 embedding**(R16：embedding 仅限检索召回/反向连接候选，"
            "spike-03 实测 nomic dangerous=3)，故用 embedding-free 词法路由作交叉验证"),
-        # 2026-11-12 校准结论（1-22 收口）：真实语料达 4 static / 63 dynamic（≥3/类）后，
+        # 2026-11-12 校准结论（路由校准收口）：真实语料达 4 static / 63 dynamic（≥3/类）后，
         # LexicalRouter.fit() 已自动产出 corpus-derived gate（实测 gate_source 由 seed 切换为
         # corpus-derived，gate≈0.44 量级），冷启动安全欠覆盖→学习闭环达成。seed 仍 PLACEHOLDER
         # 作回退保守门槛；corpus-derived 是「语料分布推导」、绝不写回本 REGISTRY 的 CALIBRATED。
@@ -227,7 +227,7 @@ REGISTRY: dict[str, Parameter] = {
            "target 饱和/区分度网格；真实 mo=0 时所有 target 等价、不可辨识，见 metric-weights-simulation.md。"
            "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
            calibrated_at=CALIB_OVERRIDE_AT),
-        # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 · 1-5-4 收尾切片）
+        # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 收尾切片）
         _p("CONTEXT_HIGHER_DIM_SIM_THRESHOLD", 0.65, SIMULATION,
            "discover k-NN 近邻被纳入更高维聚合的最低余弦相似度（sim=1-余弦距离，1=完全相同）。"
            "D4 按 2026-11-05 的 4096d 真实余弦分布重校准：node↔node 1770 对 p50=0.579 / p90=0.702，"

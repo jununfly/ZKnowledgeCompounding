@@ -147,7 +147,7 @@ class NodeRepository(ABC):
     def set_embedding_column(
         self, node_id: UUID, column: str, vector: list[float]
     ) -> None:
-        """写入指定 embedding 列（1-8-4-1 双列共存；回填/补齐用）。
+        """写入指定 embedding 列（双列共存；回填/补齐用）。
 
         派生数据轻量路径（与 update_decay 同理由）：FOR UPDATE 持锁 + version_seq
         自增保活 OCC，但不写 node_history、不 bump tx_from（embedding 非事实）。
@@ -317,7 +317,7 @@ class TaskQueueRepository(ABC):
 
 
 class ScoreRepository(ABC):
-    """llm_call_score（1-5-6）：轻量 LLM 调用度量（Langfuse 替代），append-only。"""
+    """llm_call_score（蒸馏结构化接线）：轻量 LLM 调用度量（Langfuse 替代），append-only。"""
 
     @abstractmethod
     def record(self, score: LLMCallScore) -> LLMCallScore:

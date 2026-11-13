@@ -3,8 +3,8 @@
 覆盖 L1 时间锚解析 / 基线阶梯、L2 优先级延后、L3 AIMD、标注率闸门、budget 删失估计。
 全部走纯函数，可在无 docker 环境运行；PG 集成行为见 tests/test_scheduling_pg.py。
 
-注：本文件对应 1-4-1（P4.1）标准 L1 顺序 = 时间锚 > self_loop(3d) > 已捕获(28d) >
-connected(14d) > orphan(7d)。「self_loop 压过 已捕获」顺序变更已由节点 1-4-5（ADR-0002
+注：本文件对应标注闸门 L1（P4.1）标准 顺序 = 时间锚 > self_loop(3d) > 已捕获(28d) >
+connected(14d) > orphan(7d)。「self_loop 压过 已捕获」顺序变更已由 ADR-0002
 边界 2）落地，故此处按修正后口径断言。
 """
 from __future__ import annotations
@@ -58,7 +58,7 @@ class SchedulingPureTest(unittest.TestCase):
         self.assertEqual(r["days"], 7.0)
 
     def test_baseline_selfloop_beats_captured(self):
-        # 1-4-5 边界 2（ADR-0002）：self_loop(3d) 压过已捕获(28d)
+        # ADR-0002 边界 2：self_loop(3d) 压过已捕获(28d)
         r = S.baseline_for_signals("dynamic", False, "项目 A 阻塞点", "b", True, 1, 0, 0)
         self.assertEqual(r["tier"], "self_loop")
         self.assertEqual(r["days"], S._t("BASELINE_SELF_LOOP_DAYS"))

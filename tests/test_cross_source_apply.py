@@ -1,4 +1,4 @@
-"""1-5-3 结合算子落库接线单测（apply_combine + to_modeling_artifact + revert 联调）。
+"""结合算子落库接线单测（apply_combine + to_modeling_artifact + revert 联调）。
 
 机制层验证（stub operator，不依赖模型）：
   1. apply_combine 把一个 combine 产物落成一条 modeling_artifact：

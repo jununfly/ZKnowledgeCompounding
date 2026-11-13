@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""ZKC · 忠实度闸门 human_only 模式端到端 dogfood（roadmap 1-5-5-1 验证器）。
+"""ZKC · 忠实度闸门 human_only 模式端到端 dogfood（忠实度闸门验证器）。
 
-用途：验证 1-5-5-1 全链路**不依赖 judge**（本机 4B/9B 已被 13b-probe 否决，
+用途：验证忠实度闸门全链路**不依赖 judge**（本机 4B/9B 已被 13b-probe 否决，
 judge_fn=None 是当前真实运行模式）——
 
     造来源节点 + 三类 claim（照抄/好抽象/空来源文本）
@@ -11,7 +11,7 @@ judge_fn=None 是当前真实运行模式）——
     → adjudicate_claim（confirm/reject 人审裁决）
     → calibration_corpus（human_only 模式无 atomic_facts → 恒空，属预期）
 
-存储用 ephemeral memory store（行为与 PG 同构）。judge 真实接线 dogfood 归 1-8-5。
+存储用 ephemeral memory store（行为与 PG 同构）。judge 真实接线 dogfood 归忠实度 judge 探针。
 
 用法：
     python3 scripts/dogfood_faithfulness.py
@@ -40,7 +40,7 @@ def check(name: str, ok: bool, detail: str = "") -> None:
 
 
 def main() -> int:
-    print("== ZKC 1-5-5-1 dogfood：忠实度闸门 human_only 模式（judge_fn=None）==\n")
+    print("== ZKC 忠实度闸门 dogfood：human_only 模式（judge_fn=None）==\n")
     store = get_storage("memory")
 
     # ---- 1. 造来源（真实 store 节点，UUID id）
@@ -110,7 +110,7 @@ def main() -> int:
             print(f"  FAIL: {name} {detail}")
         return 1
     print("全链路（gate → F_cap 队列 → 视图 → adjudicate → 语料语义）符合设计。")
-    print("下一步：judge 真实接线（1-8-5 R1）后，校准语料将随人判自然生长。")
+    print("下一步：judge 真实接线（忠实度 judge 探针 R1）后，校准语料将随人判自然生长。")
     return 0
 
 

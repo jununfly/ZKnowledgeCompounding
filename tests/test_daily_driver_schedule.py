@@ -1,4 +1,4 @@
-"""1-21 TDD · Windows schtasks 注册脚本（对齐 macOS install_daily_driver.sh）。
+"""Windows schtasks 注册脚本（对齐 macOS install_daily_driver.sh）。
 
 背景：ADR-0007 写「跨平台调度：macOS launchd plist + Windows schtasks(.bat 包装)」，
 但实物只有 macOS 安装脚本；`daily_e1_driver.bat:20` 仅是一句 REM 注释形式的

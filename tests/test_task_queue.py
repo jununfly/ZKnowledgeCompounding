@@ -1,4 +1,4 @@
-"""ZKC · 任务队列单测（1-9）：MemoryStorage 注入，覆盖生成规则与完成闭环。"""
+"""ZKC · 任务队列单测：MemoryStorage 注入，覆盖生成规则与完成闭环。"""
 from __future__ import annotations
 
 import unittest

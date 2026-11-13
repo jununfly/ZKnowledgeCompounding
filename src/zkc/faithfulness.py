@@ -134,7 +134,7 @@ def build_judge_prompt(claim: str, sources: list[dict]) -> str:
         f"4. overall 由事实标签推导（我们也会自己重算，你可填可空）。\n"
         f"5. reason：一句话说明最关键的依据。\n"
         f"逐条核验，宁可标 unsupported 也不要脑补支持。\n\n"
-        f"【输出格式】只输出一个 JSON 对象，**键名必须与下面完全一致**（1-8-5 实测："
+        f"【输出格式】只输出一个 JSON 对象，**键名必须与下面完全一致**（忠实度 judge 探针实测："
         f"不给显式 schema 时小模型会自造键名导致解析为空分解）：\n"
         f'{{"atomic_facts": [{{"fact": "原子事实原文", "verdict": "supported|unsupported|contradicted", '
         f'"evidence": "来源id 或 无"}}], "overall": "supported|partial|unsupported|contradicted", '
@@ -375,7 +375,7 @@ def pending_human_queue(store: Storage, limit: int = 50) -> list[dict]:
     return [_claim_to_dict(c) for c in items[:limit]]
 
 
-# ---------------------------------------------------------------- F_cap 日队列（1-5-5-1 · R11 独立预算联动）
+# ---------------------------------------------------------------- F_cap 日队列（忠实度闸门 · R11 独立预算联动）
 
 # 强制侧路由：永无预算上限（judge 不可用全人工 = forced 语义；judge 模式下四分支中
 # 空分解/矛盾也是 forced_*）。封顶侧 = 抽检命中 + 周期审计——这些「可延后」。
@@ -390,14 +390,14 @@ def _is_forced(route: Optional[str]) -> bool:
 def daily_faithfulness_queue(store: Storage) -> dict:
     """忠实度人审的**每日展示切片**：F_cap 只封顶抽检+审计侧（R11 独立预算联动）。
 
-    语义（1-5-5-1 decide 已登记）：
+    语义（忠实度闸门 decided）：
     - 强制侧（forced_* / human_only）**全量展示，永无上限、绝不丢弃**——安全关键，
       与注意力预算解耦（R11：蒸馏人审是独立预算，不占 decay 复审预算）。
     - 封顶侧（periodic_audit / sampled_unsupported 抽检命中）每日最多展示
       ``int(F_CAP_RATIO × (强制 + 封顶总数))`` 条（按 pending_human_queue 的
       红旗加权序取前 cap 条），其余**留痕不丢弃**（状态仍是 pending_human，
       只是今天不推进屏幕——明天的 cap 会轮到它们）。
-    - 阈值带来源标签（1-2-7 铁律）：f_cap_source 随展示值一起返回。
+    - 阈值带来源标签（阈值来源标签铁律）：f_cap_source 随展示值一起返回。
     """
     queue = pending_human_queue(store, limit=10 ** 9)
     forced = [d for d in queue if _is_forced(d["faithfulness_route"])]

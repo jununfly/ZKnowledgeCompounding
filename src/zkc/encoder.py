@@ -45,7 +45,7 @@ def encode_texts(
     """批量编码：list[text] -> list[vector]（校验维度与指定 dim 一致）。
 
     dim 缺省 = tuning.EMBEDDING_DIM（nomic 768）；4096 候选召回列传
-    tuning.EMBEDDING_4096_DIM 覆写（1-8-4-1 双列共存，见 make_encoder_4096）。
+    tuning.EMBEDDING_4096_DIM 覆写（双列共存，见 make_encoder_4096）。
     """
     if not texts:
         return []
@@ -93,7 +93,7 @@ def make_encoder(
 def make_encoder_4096(
     url: str = DEFAULT_OLLAMA_URL, *, timeout: float = 60.0
 ) -> Encoder:
-    """4096 候选召回列专用编码器（qwen3-embedding，1-8-4-1）。
+    """4096 候选召回列专用编码器（qwen3-embedding，双列共存）。
 
     模型/维度均取 tuning.EMBEDDING_4096_*，与 nomic 768 编码器并存、互不覆盖。
     """

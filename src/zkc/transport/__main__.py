@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sys
 
-from .mcp_server import build_server  # noqa: F401  (1-2 骨架工厂，协议层自测仍用)
+from .mcp_server import build_server  # noqa: F401  (transport 骨架工厂，协议层自测仍用)
 from .stdio import serve_stdio
 
 

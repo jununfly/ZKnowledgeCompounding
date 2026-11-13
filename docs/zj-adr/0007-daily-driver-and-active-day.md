@@ -11,7 +11,7 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
    `saturated_days` 同义。无 ≥3 饱和日 → E1-③ 永远拿不到 `confidence=observed`、`can_calibrate`
    永远不 ready。`pushed` 则不被任何 E1 判据消费（纯遥测）。
 2. **收口（尤其 `queue_remaining`）必须真值、不可手工乱填**：自动收口若硬编码 `0/0` 会主动毒化校准。
-3. **活跃日定义自相矛盾**：roadmap 1-1 决策 2 写"活跃日需 completed≥1 **且**收口"，但仪表
+3. **活跃日定义自相矛盾**：E1 决策 2 写"活跃日需 completed≥1 **且**收口"，但仪表
    `_distinct_active_days` 只查 `completed≥1`、不看收口——且按仪表逻辑，不做收口也能"通过"E1-①
    但 E1-③ 永远不达标（无饱和日）。三条判据并非独立。
 4. **E1-① 可行性漏洞**：某天 due 队列为空 → `completed=0` → 当天不算活跃日；低活跃期
@@ -23,7 +23,7 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
   仅用极简每日驱动自动化两件机械事：① 真值收口 ② 跑只读仪表。不碰收口的数字造假。
 - **fork 2**：新增服务端真值收口端点 `POST /review/api/observe/auto`（算
   `pushed=今日创建节点数`、`queue_remaining=当前到期数`），由 `scripts/daily_e1_driver.py`
-  每日触发。修复「收口须真值、不可手工乱填」的 harness gap（1-1 范围：harness 修复非业务流改动）。
+  每日触发。修复「收口须真值、不可手工乱填」的 harness gap（E1 范围：harness 修复非业务流改动）。
 - **fork 3**：
   - **3a 活跃日定义统一**：去掉"需收口"约束（收口只影响 E1-③/can_calibrate），仪表与决策一致。
   - **3b 空队列日豁免**：活跃日 = `completed≥1`；空队列日（`queue_remaining==0 且 completed==0`）
@@ -50,7 +50,7 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
 - `scripts/launchd/com.zkc.daily-e1.plist` + `scripts/daily_e1_driver.bat`：跨平台调度样本。
 - `scripts/e1_calibration_progress.py`：`_evaluate_active_streak` 取代 `_distinct_active_days` /
   `_longest_consecutive_streak`，实现空队列豁免语义。
-- roadmap 1-1：决策 2 标记 superseded，新增正确活跃日定义 + fork 1+2+3 决策；`glossary.md` 活跃日与
+- E1：决策 2 标记 superseded，新增正确活跃日定义 + fork 1+2+3 决策；`glossary.md` 活跃日与
   预算条同步。
 
 ## 风险点解决（2026-11-04 后续，经 zj-tdd 收口）
@@ -85,7 +85,7 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
 
 > 注：direct 模式仅去除「收口对 HTTP 服务的依赖」；复审标注（`decide`）仍须人工，不在自动化范围。
 
-## 运行形态补齐（2026-11-05，roadmap 1-21，zj 拍板）
+## 运行形态补齐（2026-11-05，zj 拍板 skill 纳管）
 
 本节记录三项工程尾巴的处置。**边界不变**：不改 `zkc` CLI 的 `daily` / `meter` / `decide`
 语义，不动 E1 三判据，不碰 `scripts/daily_e1_driver.py` 的收口与仪表逻辑。
@@ -120,9 +120,9 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
   由 **WorkBuddy 定时任务**（`wsl -u root -e bash -c "...service postgresql start; ...daily_e1_driver.py"`，
   每日 23:50）接管每日触发，与 macOS launchd 在「每日 23:50 触发驱动」语义上对齐。
 
-- **遗留（非 1-24 scope，待独立 fix）**：`zkc.migrate` 的 `cmd_upgrade` 在全新库上漏调 `bootstrap(db)`，
+- **遗留（非 Windows 实机复核 scope，待独立 fix）**：`zkc.migrate` 的 `cmd_upgrade` 在全新库上漏调 `bootstrap(db)`，
   致首次 `upgrade` 报 `relation "schema_migration" does not exist`；绕过法为先跑一次 `status`/`verify`
-  （其内部 `bootstrap`）再 `upgrade`。此为 migrate 工具自身 bug，不动 `zkc` CLI 语义，不计入 1-24 验收。
+  （其内部 `bootstrap`）再 `upgrade`。此为 migrate 工具自身 bug，不动 `zkc` CLI 语义，不计入 Windows 实机复核验收。
 
 ### 2. zj-zkc-daily skill 纳管（zj 显式推翻跨项目既有约定）
 - 原状：该 skill 只有 `~/.workbuddy/skills/zj-zkc-daily/SKILL.md` 一份，不在 git、无备份。

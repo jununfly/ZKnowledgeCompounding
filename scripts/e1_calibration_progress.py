@@ -7,7 +7,7 @@
     python scripts/e1_calibration_progress.py --storage memory
     python scripts/e1_calibration_progress.py --json     # 机器可读
 
-详见 src/zkc/calibration.py 与 ADR-0006（roadmap 1-1 节点）。
+详见 src/zkc/calibration.py 与 ADR-0006（E1 校准闭环）。
 """
 from __future__ import annotations
 

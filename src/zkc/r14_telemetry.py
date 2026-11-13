@@ -1,6 +1,6 @@
-"""ZKC · R14 真实数据侧落库聚合（roadmap 1-27）。
+"""ZKC · R14 真实数据侧落库聚合（R14 真实数据侧）。
 
-背景：``cross_source.judge_r14``（1-19 TDD 收口）已把 R14「补全回路延迟成本」
+背景：``cross_source.judge_r14``（R14 判据 TDD 收口）已把 R14「补全回路延迟成本」
 判据落成可机械判定的纯函数，但真实生产 run 的 report
 （``completion_fired`` / ``main_latency_ms`` / ``completion_latency_ms``）此前
 只在 dogfood 脚本里 print，**从不被持久化聚合**——这正是 ``risks.md`` R14 行

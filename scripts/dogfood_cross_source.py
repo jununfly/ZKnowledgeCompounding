@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""ZKC · 跨源强制算子真实 LLM dogfood（roadmap 1-5-2 验证器）。
+"""ZKC · 跨源强制算子真实 LLM dogfood（跨源强制算子验证器）。
 
 用途：在本机起 Ollama 后手动执行，验证生产算子 zkc.cross_source.CrossSourceOperator
 的真实链路（注入 callable 直连 Ollama /v1 JSON 模式，不经 Instructor——
-Instructor 正式接线属 1-5-6 后续切片）。
+Instructor 正式接线属蒸馏结构化接线后续切片）。
 
 无 Ollama 环境执行 → 打印 SKIP 并以 0 退出（非失败）。
 
@@ -53,7 +53,7 @@ def _chat(url: str, model: str, prompt: str) -> str:
     2. **/v1 端点 + response_format {"type":"json_object"} 对 qwen3.5-mlx 永久挂死**
        （单次小调用 >900s 无响应；同请求去掉 response_format 13s 返回，
        原生 /api/chat + format:"json" 0.6s 返回）。Instructor Mode.JSON 不发
-       response_format（走提示层），故 spike 未踩；真实接线（1-5-6）禁用
+       response_format（走提示层），故 spike 未踩；真实接线（蒸馏结构化接线）禁用
        Mode.JSON_SCHEMA/OPENAI_TOOLS 或直接走 /api/chat。
     JSON 合规由 prompt 约束 + 调用方正则抽取兜底（同 spike 的提示层路线）。
     """
@@ -156,12 +156,12 @@ def main() -> int:
     for c in art["claims"]:
         print(f"  - [{c.get('level')}] {c.get('statement')!r} <- {c.get('evidence_ids')}")
 
-    # ---- R14 遥测落库（1-27）：真实 run 的 completion_fired/latency 追加到
+    # ---- R14 遥测落库（R14 真实数据侧）：真实 run 的 completion_fired/latency 追加到
     # data/r14_telemetry.jsonl，供 judge_r14 聚合裁决。不伪造数据；设环境变量
     # ZKC_NO_R14_TELEMETRY=1 可跳过落库。
     if not __import__("os").environ.get("ZKC_NO_R14_TELEMETRY"):
         # run_id 含毫秒时间戳 nonce：同语料重复 run 也作为独立真实样本入 telemetry，
-        # 否则 kept_ids 恒定会触发 record_run 去重、阻塞 1-27-2 的 ≥10 样本积累。
+        # 否则 kept_ids 恒定会触发 record_run 去重、阻塞 R14 真实 run 的 ≥10 样本积累。
         tel = record_run(rep, run_id=f"cross_source:{rep.get('kept_ids')}:{int(time.time()*1000)}")
         if tel.get("skipped"):
             print(f"R14 telemetry: skipped (dup run_id {tel['run_id']})")

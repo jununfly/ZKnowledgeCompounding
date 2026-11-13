@@ -1,10 +1,10 @@
-"""ZKC · E1 校准闭环进度仪表（roadmap node 1-1 退出判据实时读数）。
+"""ZKC · E1 校准闭环进度仪表（E1 校准闭环退出判据实时读数）。
 
 原 scripts/e1_calibration_progress.py 的纯逻辑已**提升为本模块**（Form B：zkc CLI
 正式化，composer Plan `zkc-daily-run-forms-v1`）。scripts/e1_calibration_progress.py
-现为其薄外壳，`zkc meter` 子命令亦复用同一份。E1 退出判据见本模块下方与 ADR-0006（roadmap 1-1 节点）。
+现为其薄外壳，`zkc meter` 子命令亦复用同一份。E1 退出判据见本模块下方与 ADR-0006。
 
-E1 退出判据（来自 roadmap 1-1）：
+E1 退出判据（见 ADR-0006）：
   1) 累计 ≥7 活跃日（不要求连续，2026-11-11 放宽）
   2) 复审标注率闸门 ≥70%（滚动 7 天 labeled_completed / completed）
   3) budget_per_day 派生估计在 [7,14,21,28] 天窗口轨迹收敛（CV≤10% 且 28d confidence=observed）
@@ -159,7 +159,7 @@ def build_report(storage_kind: str = "pg", storage=None) -> dict:
 
 def format_human(r: dict) -> None:
     """E1 读数人类可读输出（供 zkc meter 与脚本共用）。"""
-    print("=== ZKC · E1 校准闭环进度（node 1-1）===")
+    print("=== ZKC · E1 校准闭环进度（E1 节点）===")
     print(f"  as_of: {r['as_of']}")
     c1 = r["criteria"]["c1_cumulative_active_days"]
     c2 = r["criteria"]["c2_labeling_rate_gate"]

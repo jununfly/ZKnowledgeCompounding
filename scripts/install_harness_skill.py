@@ -1,4 +1,4 @@
-"""ZKC · 把 zj-zkc-daily skill 从仓库 canonical 同步到用户级运行副本（roadmap 1-21）。
+"""ZKC · 把 zj-zkc-daily skill 从仓库 canonical 同步到用户级运行副本（skill 纳管）。
 
 2026-11-05 zj 拍板：本仓库 `skills/zj-zkc-daily/SKILL.md` 是 **唯一真相源**，
 `~/.workbuddy/skills/zj-zkc-daily/SKILL.md` 只是运行副本。此脚本是两者的唯一接线。

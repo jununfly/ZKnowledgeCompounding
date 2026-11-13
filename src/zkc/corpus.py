@@ -1,6 +1,6 @@
 """ZKC · D2 导入语料隔离（只读筛选 + 批量归档，绝不碰外生锚）。
 
-1-7 导入的 AI-Coding 子文档按 orphan 1d 节奏逐日逾期，不是 zj 真实消费的知识；
+导入的 AI-Coding 子文档按 orphan 1d 节奏逐日逾期，不是 zj 真实消费的知识；
 对其给 verdict 属伪标注（架构 §6.5.1 / ADR-0006）。正确处置是**移出调度回路**。
 
 识别方式（等价字段，不新增 schema 列）：动态轨 + decay=1.0 + review_interval=1d

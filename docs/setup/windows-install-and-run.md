@@ -1,6 +1,6 @@
 # Windows 上安装并运行 ZKC 指南（WSL2 原生 PostgreSQL 路线）
 
-Status: accepted (2026-11-07, 经 1-24 实机验收收敛)
+Status: accepted (2026-11-07, 经 Windows 实机复核验收收敛)
 Scope: 在 Windows + WSL2 主机上从零搭建 ZKC 运行时、跑通数据库迁移、并驱动 E1 每日收口写入真实 PostgreSQL。
 适用场景: 本机无 Docker / Docker 被环境拦截 / 不想手编 Windows 原生 pgvector。
 
@@ -210,7 +210,7 @@ ERROR:  relation "schema_migration" does not exist
 
 **绕过**：先跑一次 `python -m zkc.migrate status`（它会 `bootstrap` 建表），再 `upgrade`。脚本 C.2 已包含该顺序。
 
-> 这是 `migrate` 工具自身 bug，**不改动源码**（符合 1-24 scope gate）。后续可在独立 fix 里给 `cmd_upgrade` 在 `ensure_database(db)` 后补一行 `bootstrap(db)`。
+> 这是 `migrate` 工具自身 bug，**不改动源码**（符合 Windows 实机复核 scope gate）。后续可在独立 fix 里给 `cmd_upgrade` 在 `ensure_database(db)` 后补一行 `bootstrap(db)`。
 
 ---
 

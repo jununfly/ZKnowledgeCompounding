@@ -1,6 +1,6 @@
 """ZKC · 复利产出检索编排（P5.1 / T6.1，生产落地）。
 
-双路检索（R18 缓解，decide 已落盘 1-6-1）：
+双路检索（R18 缓解，decide 已落盘）：
   ① 结构化为主：track/decay 区间/q 子串/排序，纯过滤零新依赖；
   ② embedding 候选召回为辅：q 经 encoder（nomic 768d，仅限召回用途，
      严禁安全判定——R16）→ kNN，结果作为候选追加、交人工确认。
@@ -43,7 +43,7 @@ def search(
 ) -> dict:
     """双路检索：结构化命中在前（按 order），embedding 候选追加在后（按 sim 降序）。
 
-    column 指定候选召回用的 embedding 列（1-8-4-1 双列共存）：
+    column 指定候选召回用的 embedding 列（双列共存：768d + 4096d）：
       "embedding"=nomic 768d，"embedding_4096"=qwen3 4096d（/browse 生产默认，见 browse.py）。
       encoder 与 column 的模型/维度必须配对，配对错会因维度校验失败而降级——不静默混用。
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""ZKC · 蒸馏算子真实 LLM dogfood（roadmap 1-5-6 验证器）。
+"""ZKC · 蒸馏算子真实 LLM dogfood（蒸馏结构化接线验证器）。
 
-用途：在本机起 Ollama 后手动执行，验证 1-5-6 结构化接线全链路：
+用途：在本机起 Ollama 后手动执行，验证蒸馏结构化接线全链路：
   zkc.llm.make_distill_llm（铁律①②③内置）
     → zkc.distill.distill_node（JSON 契约解析 + 校验重试）
     → zkc.expiry.apply_distill（落 claim + llm_call_score）。

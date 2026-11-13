@@ -1,6 +1,6 @@
 """ZKC · Postgres 实现（P1.2）：raw SQL + psycopg，不引入 SQLAlchemy ORM。
 
-承接 1-2-4 决策（不回迁 Alembic）与 1-2-5 约束（seam = raw SQL + repository）。
+承接迁移决策（不回迁 Alembic）与 repository seam 约束（seam = raw SQL + repository）。
 psycopg 懒加载于 connect()；本模块 import 不依赖 DB 驱动，便于无 DB 单测导入。
 """
 from __future__ import annotations
@@ -50,7 +50,7 @@ def _vec_to_sql(emb) -> Optional[str]:
     return "[" + ",".join(repr(float(x)) for x in emb) + "]"
 
 
-# embedding 列白名单（1-8-4-1 双列共存）：防列名注入，search/set 共用。
+# embedding 列白名单（双列共存）：防列名注入，search/set 共用。
 EMBEDDING_COLUMNS = {"embedding", "embedding_4096"}
 
 
@@ -182,7 +182,7 @@ class PgNodeRepository(NodeRepository):
         return self._row_to_node(row) if row else None
 
     def history(self, node_id: UUID) -> list[Node]:
-        # 显式列清单（1-8-4-1 起禁止 SELECT *）：node 已比 node_history 多出
+        # 显式列清单（双列共存起禁止 SELECT *）：node 已比 node_history 多出
         # embedding_4096（派生数据，按决策不入双时态历史），UNION 两侧必须同列。
         # 新增派生列时同样只加在 node、不改本清单。
         cols = ("id, track, routing_confidence, title, content, valid_from, valid_to, "
@@ -964,7 +964,7 @@ class PgAttentionRepository(AttentionRepository):
 
 
 class PgScoreRepository(ScoreRepository):
-    """llm_call_score（1-5-6）：轻量 LLM 调用度量，append-only。"""
+    """llm_call_score（蒸馏结构化接线）：轻量 LLM 调用度量，append-only。"""
 
     def __init__(self, conn) -> None:
         self._conn = conn
@@ -1029,7 +1029,7 @@ class PgScoreRepository(ScoreRepository):
 
 
 class PgTaskQueueRepository(TaskQueueRepository):
-    """task_queue（1-9）：规则自动生成的 zj 待办队列，按 (day, kind) 幂等 upsert。"""
+    """task_queue（任务队列）：规则自动生成的 zj 待办队列，按 (day, kind) 幂等 upsert。"""
 
     def __init__(self, conn) -> None:
         self._conn = conn
