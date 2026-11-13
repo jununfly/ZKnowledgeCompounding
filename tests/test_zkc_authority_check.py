@@ -111,7 +111,7 @@ class AuthorityCheckTests(unittest.TestCase):
 
     def test_roadmap_completion_claim_fails(self) -> None:
         """「节点完成即证据」同样属于过程权威泄漏，判定规则必须复刻。"""
-        claim = "proof: roadmap " + "node is completed"
+        claim = "proof: roadmap " + "node 1-1 is completed"
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             make_project(root, {"docs/guide.md": claim + "\n"})
