@@ -7,7 +7,7 @@
     python scripts/e1_calibration_progress.py --storage memory
     python scripts/e1_calibration_progress.py --json     # 机器可读
 
-详见 src/zkc/calibration.py 与 docs/roadmap/roadmap.json 1-1.exit_criteria。
+详见 src/zkc/calibration.py 与 ADR-0006（roadmap 1-1 节点）。
 """
 from __future__ import annotations
 

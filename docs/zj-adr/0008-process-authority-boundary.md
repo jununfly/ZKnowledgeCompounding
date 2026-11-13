@@ -15,7 +15,7 @@ zj-roadmap-driven 的权威边界规定：roadmap 只回答「当前计划 / 进
 | --- | --- | --- |
 | 真违规 1 | `docs/prds/knowledge-compounding-prd.md:168` | PRD 是长期文档，却把过程编排稿当作决策引用源 |
 | 误扫 4 | `.workbuddy/memory/2026-11-04.md:6/27/33`、`.workbuddy/memory/2026-11-05.md:59` | append-only 过程日志（记忆系统硬约束禁改；第 4 条是 1-21 收口日志本会话引入） |
-| 误扫 2 | `docs/roadmap/roadmap.json:3`、`:419` | roadmap 事实源自身：root description（CLI 无 `--description` 可改、Agent 禁手改 JSON）与节点 1-18 notes（含证据缺口分层原文） |
+| 误扫 2 | `docs/roadmap/roadmap.json:3`、`:419` | roadmap 事实源自身：root description（CLI 无 `--description` 可改、Agent 禁手改 JSON）与节点 1-18 notes（含证据缺口分层原文）。**该 carrier 文件已于 2026-11-13 与本仓解耦移除**（见下文 §2026-11-13） |
 
 当时的根因（上游旧版实现）：`authority_boundary.py` 把过程产物目录下的文件当作 process target，
 却扫描 `root.rglob('*')` 下全部 durable 后缀文件，而 `EXCLUDED_DIR_PARTS` 只有
@@ -134,3 +134,24 @@ zj 澄清了本 ADR 中「跨项目资产」这一表述：真正的边界不是
   required_pull_request_reviews / restrictions 均未启用；GET 复核与 PUT 一致。
   该规则只约束 PR 合并，admin 直接 push main 不受影响 —— 与 ZKC 现有工作流一致。
   若未来要连直推也强制，需把 `enforce_admins` 改为 true 并同步改工作流为分支 + PR。
+
+### 2026-11-13：roadmap carrier 与本仓解耦移除
+
+- zj 决策：将 `docs/roadmap/roadmap.json` 与本仓解耦并移除。外部 ZAgentic 相应 issue 已
+  close，`zj-roadmap-driven` 不再需要以本仓文件为工作样本，故 2026-11-13 文档治理时
+  「live carrier 不可删」的保留理由已失效。
+- 解耦动作（仅触及过程态载体，未改门禁判定语义）：
+  1. `git rm docs/roadmap/roadmap.json` 并清理空目录 `docs/roadmap/`；
+  2. `src/zkc/calibration.py` / `scripts/e1_calibration_progress.py` 的 docstring 去掉
+     `docs/roadmap/roadmap.json` 文件路径引用，保留 roadmap 节点 id 作为溯源锚（符合
+     BOUNDARIES 规则#2），判据指向 ADR-0006 / 本模块常量；
+  3. `tests/test_zkc_authority_check.py` 的 `CARRIER_PATH` / `VIEW_PATH` 由
+     `docs/roadmap/...` 改为中性路径（`roadmap.json` / `ROADMAP.md`）；
+  4. `docs/risks.md` R10 / R14 收口证据去掉对 roadmap.json 的文件引用，R14 保留 durable
+     证据 `data/r14_telemetry.jsonl` + `scripts/r14_status.py`。
+- 门禁机制**保持不变**：carrier 仍按结构签名（`title/version/nodes/metadata` + 每节点
+  `status`）识别、与路径无关；删除本仓 carrier 后，本仓不再有被跳过的 process-state 文件，
+  `authority (process boundary)` job 输出 `skipped 0 process-state file(s)`、`0 unresolved`
+  仍成立（实测复跑通过）。
+- 本仓内仍不得引用任何过程编排稿作为 proof/evidence；roadmap 节点 id 作溯源锚的既有约定
+  不受影响（见 ADR-0006 / 0010 的 `1-1` / `1-19` 节点引用）。

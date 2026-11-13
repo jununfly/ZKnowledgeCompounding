@@ -34,8 +34,8 @@ CARRIER = {
     "metadata": {},
     "nodes": {"1": {"status": "pending"}},
 }
-CARRIER_PATH = "docs/roadmap/roadmap.json"
-VIEW_PATH = "docs/roadmap/ROADMAP.md"
+CARRIER_PATH = "roadmap.json"
+VIEW_PATH = "ROADMAP.md"
 PRUNED_DIRS = (
     ".git",
     ".workbuddy/memory",

@@ -2,8 +2,7 @@
 
 原 scripts/e1_calibration_progress.py 的纯逻辑已**提升为本模块**（Form B：zkc CLI
 正式化，composer Plan `zkc-daily-run-forms-v1`）。scripts/e1_calibration_progress.py
-现为其薄外壳，`zkc meter` 子命令亦复用同一份。详见 docs/roadmap/roadmap.json
-1-1.exit_criteria。
+现为其薄外壳，`zkc meter` 子命令亦复用同一份。E1 退出判据见本模块下方与 ADR-0006（roadmap 1-1 节点）。
 
 E1 退出判据（来自 roadmap 1-1）：
   1) 累计 ≥7 活跃日（不要求连续，2026-11-11 放宽）
