@@ -9,7 +9,7 @@
      （仍有效 / 已变 / 已腐 / 仅浏览）；
   4. POST /review/api/observe（每日收口：pushed=10, queue_remaining=3）；
   5. 用独立 PG 连接直查，验证两个外生锚真的落库：
-       锚 A · 复审结果标注 → node.last_reviewed_at 复位 + decay=0；changed/stale 写 interval_adjustment(feedback)
+       锚 A · 复审结果标注 → node.last_reviewed_at 复位 + decay=0；changed/stale 走终局动作写内容双时态新版本（不写 interval_adjustment，AIMD 已移除，DI-1）
        锚 B · 每日收口埋点 → attention_observation(completed/labeled/pushed/queue_remaining)
 
 运行：python scripts/dogfood_review_drive.py
@@ -74,14 +74,21 @@ def main() -> None:
     ok = r.status == 200 and "每日复审队列" in html
     print(f"   HTTP {r.status}，含标题={'是' if ok else '否'}")
 
-    print("== 3) 按标题映射，喂 4 条复审标注（锚 A + 锚 B 累加）==")
+    print("== 3) 按标题映射，喂 4 条复审标注（v2 终局动作 + 锚 B 累加）==")
     by_outcome: dict[str, str] = {}
     for it in q["items"]:
         outcome = next((o for k, o in TITLE_TO_OUTCOME.items() if k in it["title"]), None)
         if outcome is None:
             continue
-        res = _http("POST", "/review/api/decide",
-                    form={"node_id": it["id"], "outcome": outcome})
+        # v2（ADR-0011/0012 DI-3）：changed / stale 必填 content，stale 必填 stale_branch。
+        # 内容载荷与分支只能由 Human 逐条给出；dogfood 用确定性占位载荷模拟人工逐条输入。
+        form: dict[str, str] = {"node_id": it["id"], "outcome": outcome}
+        if outcome == "changed":
+            form["content"] = f"[dogfood] {it['title']} 内容已更新（人工逐条给）"
+        elif outcome == "stale":
+            form["stale_branch"] = "cover"
+            form["content"] = f"[dogfood] {it['title']} 覆盖内容（人工逐条给）"
+        res = _http("POST", "/review/api/decide", form=form)
         by_outcome[outcome] = res
         print(f"   {it['title'][:18]:<20} -> {outcome:<10} verdict={res.get('verdict')} "
               f"applied={res.get('applied')} new_interval={res.get('new_interval_days')} "
@@ -121,9 +128,22 @@ def verify() -> None:
         "WHERE node_id IN (SELECT id FROM public.node WHERE title LIKE 'DOGFOOD%') "
         "ORDER BY node_id")
     ia = cur.fetchall()
-    print(f"  [锚 A] interval_adjustment 写入 {len(ia)} 行（on_time 无操作已跳过审计；仅 too_late=7→4.9 缩短）：")
+    # v2（DI-1）：AIMD 自适应环路人工输入归零，decide_review 不再调用 adapt_interval，
+    # 故不应写任何 interval_adjustment 行（v1 的 too_late=7→4.9 缩短已移除）。
+    print(f"  [锚 A] interval_adjustment 写入 {len(ia)} 行（v2 应为 0：AIMD 已移除）")
     for r in ia:
         print(f"    node={str(r['node_id'])[:8]} kind={r['kind']} {r['old_days']}d -> {float(r['new_days']):.2f}d")
+
+    # v2：changed / stale+cover 走终局动作写节点双时态内容新版本（content 不再为 NULL）；
+    # still_valid / browse 不写内容。
+    cur.execute(
+        "SELECT title, content FROM public.node WHERE title LIKE 'DOGFOOD%' ORDER BY title")
+    content_map = {r["title"]: r["content"] for r in cur.fetchall()}
+    print("  [锚 A] v2 内容新版本写入核对：")
+    for t in ("DOGFOOD 待复审-已变样本", "DOGFOOD 待复审-已腐样本",
+             "DOGFOOD 待复审-仍有效样本", "DOGFOOD 待复审-仅浏览样本"):
+        c = content_map.get(t)
+        print(f"    {t[:22]:<24} content={'已写' if c else 'NULL'}")
 
     # 锚 B：attention_observation
     cur.execute(
@@ -137,14 +157,15 @@ def verify() -> None:
 
     # 断言
     assert all_reset, "锚 A 失败：存在未复位的 node"
-    feedback = [r for r in ia if r["kind"] == "feedback"]
-    shortened = [r for r in feedback if float(r["new_days"]) < float(r["old_days"])]
-    assert len(shortened) == 2, f"锚 A 失败：too_late 缩短行应为 2（已变+已腐），实际 {len(shortened)}"
-    assert any(float(r["new_days"]) < float(r["old_days"]) for r in feedback), "锚 A 失败：too_late 未缩短 interval"
+    assert len(ia) == 0, f"锚 A 失败：v2 不应写 interval_adjustment，实际 {len(ia)} 行"
+    assert content_map.get("DOGFOOD 待复审-已变样本") is not None, "锚 A 失败：changed 未写内容新版本"
+    assert content_map.get("DOGFOOD 待复审-已腐样本") is not None, "锚 A 失败：stale+cover 未写内容新版本"
+    assert content_map.get("DOGFOOD 待复审-仍有效样本") is None, "锚 A 失败：still_valid 不应写内容"
+    assert content_map.get("DOGFOOD 待复审-仅浏览样本") is None, "锚 A 失败：browse 不应写内容"
     assert ao and ao[0]["completed"] == 4, f"锚 B 失败：completed 应为 4，实际 {ao[0]['completed'] if ao else '无'}"
     assert ao and ao[0]["labeled_completed"] == 3, f"锚 B 失败：labeled_completed 应为 3（browse 不标注），实际 {ao[0]['labeled_completed'] if ao else '无'}"
     assert ao and ao[0]["pushed"] == 10 and ao[0]["queue_remaining"] == 3, "锚 B 失败：收口 pushed/queue_remaining 未写入"
-    print("\n✅ 两个外生锚均真实写入：锚 A（node 复位 + interval_adjustment feedback×2）+ 锚 B（attention_observation 收口埋点）。")
+    print("\n✅ 两个外生锚均真实写入：锚 A（node 复位 + changed/stale 写内容双时态新版本，AIMD 已归零）+ 锚 B（attention_observation 收口埋点）。")
 
 
 if __name__ == "__main__":
