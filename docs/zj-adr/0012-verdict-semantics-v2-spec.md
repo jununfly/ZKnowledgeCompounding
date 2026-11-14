@@ -130,3 +130,28 @@ zkc decide --id <uuid> --verdict browse                      # 无载荷
 - **风险册 R15**（docs/risks.md，本次联动新增）：承载上述硬不变量，状态「缓解·待 Step 4 测试守卫」。
 - **1-26 CALIBRATED 口径**：本规格**不改**任何阈值常量（`tuning.py` 的 `AIMD_UP`/`AIMD_DOWN`/`MIN_INTERVAL_DAYS`/`METRIC_W_*`），不写回 `REGISTRY`；与 verdict 反馈路径正交。
 - **注释方向偏差（裁决④）**：`tuning.py:120-121` 注释修订是独立 doc-only 切片（Plan Step 7），**不并入本规格的实现批次**。
+
+## 9. Step 3 设计评审结论（锁不变量，2026-11-14 19:57 zj 授权落码后落定）
+
+> 本节约等于 Plan Step 3 的设计评审产物：把 ADR-0011 决策 + §1–8 规格收敛为**实现时必须守住的不变量**，
+> 供 Step 4 红绿以测试锁死、Step 5 审查核对。每条约等于一条可被测试反驳的不变式。
+
+- **DI-1 · 外生锚 A 归零（最硬）**：`decide_review` 对**任何** outcome 都**不得**调用 `S.adapt_interval`（AIMD 乘因子）。
+  verdict 改走终局动作，AIMD 自适应环路的人工输入归零。验证：spy `S.adapt_interval` 在所有 verdict 分支调用次数 = 0（测试 `test_aimd_loop_human_input_zeroed`）。
+- **DI-2 · 终局动作分发**：按 §4 表 A——`changed`/`stale+cover` 经 `nodes.save`（写双时态新版本）
+  + `set_baseline_interval`（重置 L1 基线）+ `mark_reviewed`（时钟复位）；`stale+purge` 经 `archive`；
+  `still_valid`/`browse` 仅 `mark_reviewed`。`changed`/`stale+cover` **不退出**调度回路（仍在 due 队列），`stale+purge` **必须退出**（due 队列 −1）。
+- **DI-3 · 内容载荷 / 分支 Human-only 门禁**：`changed` 缺 `--content` → `ValueError`（不自动填/不推测）；
+  `stale` 缺/非法 `--stale-branch` → `ValueError`（**绝不默认 purge**）；`stale+cover` 缺 `--content` → `ValueError`；
+  `still_valid`/`browse` 携带 `--content`/`--stale-branch` → `ValueError`（一致拒绝，避免静默丢信息）。
+  映射层 `OUTCOME_VERDICT` 旧 AIMD 映射**删除**，改由 `REVIEW_REASON` 常量承载审计 reason。
+- **DI-4 · 四类 reason 集中常量互异**：`REVIEW_REASON = {still_valid, changed, stale_overwrite, stale_purged, browsed_without_label}`，
+  禁止字符串散落；与 `D2`（expiry archive reason）无关、不混同。测试 `test_four_audit_reasons_distinct` 断言 5 值两两不同。
+- **DI-5 · 无物理删除**：`stale+purge` 只映射 `archive` 软归档（`archived_at` 置位），**不新增/不调用任何节点物理删除接口**。
+- **DI-6 · 阈值正交**：实现**不改** `tuning.py` 任何常量（`AIMD_UP`/`AIMD_DOWN`/`MIN_INTERVAL_DAYS`/`METRIC_W_*`），**不写回** `REGISTRY`；与 1-26 CALIBRATED 口径无关。`adapt_interval` 函数本身保留（仍被 `classify`/其他路径或回归测试引用），仅 `decide_review` 不再调用。
+- **DI-7 · 历史不回填**：v2 只改变**新一次** `decide_review` 调用的行为，**无任何 retroactive 改写路径**；已落库的 3 条旧 `changed`（too_late×0.7）保持其 interval 不变。测试 `test_historical_changed_not_refilled`。
+- **DI-8 · 签名向后兼容扩展**：`decide_review(store, node_id, outcome, now=None, content=None, stale_branch=None)`；
+  参数顺序：`store`/`node_id`/`outcome`（必填位置参）→ `now`（第 4 位）→ `content`（第 5 位）→ `stale_branch`（第 6 位），三者均为可选、**可位置可关键字（非 keyword-only）**。
+  选此顺序的取舍原因：`now` 保持第 4 位置参可零改动兼容旧调用方 `decide_review(store, id, "still_valid", NOW)`（以位置参把 `NOW` 传入第 4 位）；若改 `*` 后 keyword-only 或把 `now` 挪到末尾，会导致该历史调用把 `NOW` 误绑到 `content` 而失效（Step 4 落码已实测此回归并回退）。
+  旧调用方（`still_valid`/`browse` 无载荷、仅传 3–4 位置参）继续工作；Human-only 必填约束仍由 DI-3 的 `ValueError` 门禁守住，不因可位置传参而降低误用风险。
+- **DI-9 · 不触发 distill**：`changed`/`stale+cover` 写内容新版本**不**产出 meta_claim / `produced_by` 复利变换（≠ 结合算子），避免撞「不触发 distill」硬约束（S1-b）。纯 `nodes.save` 内容替换。

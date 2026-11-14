@@ -15,7 +15,7 @@ from zkc.decay import refresh_decay
 from zkc.repository import get_storage
 from zkc.repository.models import AttentionObservation, Node
 from zkc.web.review import (
-    OUTCOME_VERDICT,
+    REVIEW_REASON,
     approve_higher_dim,
     decide_review,
     dismiss_higher_dim,
@@ -72,19 +72,19 @@ class ReviewPureTest(unittest.TestCase):
         # 衰减时钟复位
         self.assertEqual(after.decay_score, 0.0)
         self.assertEqual(after.last_reviewed_at, NOW)
-        # still_valid → on_time → 节奏不变（applied 可能为 False，但 reason 表明 on_time）
-        self.assertEqual(res["verdict"], "on_time")
+        # still_valid → 时钟复位、节奏不变（applied=False，verdict 为 still_valid，不再 on_time AIMD）
+        self.assertEqual(res["verdict"], "still_valid")
         self.assertIsNotNone(res["reason"])
 
-    def test_decide_changed_shrinks_interval(self):
-        old_days = self.store.nodes.get(self.ids[0]).review_interval.total_seconds() / 86400.0
-        self.assertAlmostEqual(old_days, 7.0, delta=0.01)
-        res = decide_review(self.store, self.ids[0], "changed", NOW)
-        new_days = res["new_interval_days"]
-        # too_late → AIMD_DOWN(0.7) → 缩短
-        self.assertTrue(res["applied"])
-        self.assertLess(new_days, old_days)
-        self.assertAlmostEqual(new_days, old_days * 0.7, delta=0.01)
+    def test_decide_changed_requires_content_v2(self):
+        # v2（ADR-0011/0012）：changed 不再走 AIMD 缩短；缺内容载荷即拒收
+        with self.assertRaises(ValueError):
+            decide_review(self.store, self.ids[0], "changed", NOW)
+        res = decide_review(self.store, self.ids[0], "changed", content="修正内容", now=NOW)
+        new = self.store.nodes.get(self.ids[0])
+        self.assertEqual(new.content, "修正内容")
+        self.assertEqual(res["verdict"], "changed")
+        self.assertEqual(res["reason"], REVIEW_REASON["changed"])
 
     def test_decide_browse_counts_unlabeled(self):
         # browse：completed++ 但 labeled 不增（闸门因此可能关闭）
@@ -97,7 +97,7 @@ class ReviewPureTest(unittest.TestCase):
 
     def test_observation_accumulates_across_reviews(self):
         decide_review(self.store, self.ids[0], "still_valid", NOW)
-        decide_review(self.store, self.ids[1], "changed", NOW)
+        decide_review(self.store, self.ids[1], "changed", content="修正内容", now=NOW)
         obs = self.store.attention.get(NOW.date())
         self.assertEqual(obs.completed, 2)
         self.assertEqual(obs.labeled_completed, 2)
@@ -105,7 +105,7 @@ class ReviewPureTest(unittest.TestCase):
     # ---- 锚 B：每日收口保留已累加计数 ----
     def test_record_daily_observation_preserves_counts(self):
         decide_review(self.store, self.ids[0], "still_valid", NOW)
-        decide_review(self.store, self.ids[1], "stale", NOW)
+        decide_review(self.store, self.ids[1], "stale", stale_branch="purge", now=NOW)
         row = record_daily_observation(self.store, pushed=5, queue_remaining=3, now=NOW)
         self.assertEqual(row["pushed"], 5)
         self.assertEqual(row["queue_remaining"], 3)
@@ -116,10 +116,13 @@ class ReviewPureTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             decide_review(self.store, self.ids[0], "bogus", NOW)
 
-    def test_outcome_verdict_mapping(self):
-        self.assertEqual(OUTCOME_VERDICT["still_valid"], "on_time")
-        self.assertEqual(OUTCOME_VERDICT["changed"], "too_late")
-        self.assertEqual(OUTCOME_VERDICT["stale"], "too_late")
+    def test_review_reason_distinct_no_aimd(self):
+        # v2：审计 reason 集中常量、互异、且不再含 AIMD 的 too_late/on_time
+        vals = list(REVIEW_REASON.values())
+        self.assertEqual(len(vals), len(set(vals)))
+        self.assertEqual(len(vals), 5)
+        self.assertNotIn("too_late", vals)
+        self.assertNotIn("on_time", vals)
 
 
 class ReviewHttpTest(unittest.TestCase):
@@ -149,16 +152,25 @@ class ReviewHttpTest(unittest.TestCase):
         self.assertIn("gate", body)
         self.assertIn("budget", body)
 
-    def test_decide_api_runs_l3(self):
+    def test_decide_api_runs_v2_changed(self):
+        # v2：changed 带内容载荷 → 写新版本 + 重置 L1 基线，verdict=changed
         r = self.client.post(
             "/review/api/decide",
-            data={"node_id": str(self.ids[0]), "outcome": "changed"},
+            data={"node_id": str(self.ids[0]), "outcome": "changed",
+                  "content": "修正内容"},
         )
         self.assertEqual(r.status_code, 200)
         body = r.json()
         self.assertEqual(body["outcome"], "changed")
-        self.assertEqual(body["verdict"], "too_late")
-        self.assertTrue(body["applied"])
+        self.assertEqual(body["verdict"], "changed")
+
+    def test_decide_api_rejects_stale_without_branch(self):
+        # v2：stale 缺 --stale-branch → 拒绝（400），绝不默认 purge
+        r = self.client.post(
+            "/review/api/decide",
+            data={"node_id": str(self.ids[0]), "outcome": "stale"},
+        )
+        self.assertEqual(r.status_code, 400)
 
     def test_observe_api_records_close(self):
         r = self.client.post(

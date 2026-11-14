@@ -72,6 +72,10 @@ def _make_parser() -> argparse.ArgumentParser:
     p_decide.add_argument("--id", help="节点 id（与 --verdict 同用，写一条复审标注）")
     p_decide.add_argument("--verdict", choices=VERDICTS,
                           help="still_valid | changed | stale | browse")
+    p_decide.add_argument("--content", default=None,
+                          help="changed / stale 覆盖的内容载荷（必填，只由人逐条给）")
+    p_decide.add_argument("--stale-branch", default=None, choices=("cover", "purge"),
+                          help="stale 的分支：cover（覆盖，需 --content）/ purge（清除退出回路），必填")
     p_decide.add_argument("--list", action="store_true",
                           help="列出当前 due 复审条目（默认行为，可省略）")
     p_decide.add_argument("--json", action="store_true", help="输出 JSON")
@@ -143,7 +147,13 @@ def dispatch(args: argparse.Namespace, store=None, encoders=None) -> int:
                       f"({view['budget'].get('confidence')})")
             return 0
         # --id + --verdict 齐备：写一条复审标注（human-in-loop，verdict 必来自人）
-        res = decide_review(store, args.id, args.verdict)
+        try:
+            res = decide_review(
+                store, args.id, args.verdict,
+                content=args.content, stale_branch=args.stale_branch)
+        except ValueError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
         if args.json:
             print(json.dumps(res, ensure_ascii=False, indent=2, default=str))
         else:

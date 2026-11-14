@@ -2,9 +2,11 @@
 
 承载两个自指闭环的唯一外生锚（架构 §6.5.1 / PRD 目标 5）：
 
-  锚 A · 复审结果标注（still_valid / changed / stale / browse）
-       → 驱动 L3 interval 反馈（zkc.scheduling.adapt_interval）
-       → 必须携带标注，否则 L3 是装饰（衰减-only 复审是永久 no-op，spike-09 F1）
+  锚 A · 复审结果标注（still_valid / changed / stale[cover|purge] / browse）
+       → v2（ADR-0011/0012）：走「终局动作」替代 AIMD 乘因子——
+         changed / stale+cover 写节点双时态新版本 + 重置 L1 基线；stale+purge 走 archive；
+         still_valid / browse 仅时钟复位。AIMD 自适应环路的人工输入由此归零（外生锚 A）。
+         内容载荷（--content）与 stale 分支（--stale-branch）只能由 Human 逐条给出。
 
   锚 B · 每日收口埋点（pushed / completed / queue_remaining / labeled_completed）
        → 驱动 budget 估计（zkc.scheduling.estimate_budget / update_budget）
@@ -35,12 +37,16 @@ from zkc.ingest import list_pending_classify, resolve_classify
 from zkc.repository.models import AttentionObservation
 from zkc.repository.protocols import Storage
 
-# 复审标注 → L3 判定语义（AIMD 因子）。still_valid=节奏恰当(on_time, ×1)；
-# changed/stale 都表示信息比预期腐化更快(too_late, ×0.7 缩短)；browse=仅浏览不标注。
-OUTCOME_VERDICT = {
-    "still_valid": "on_time",
-    "changed": "too_late",
-    "stale": "too_late",
+# v2（ADR-0011/0012）：复审标注四类终局动作的审计 reason，集中常量、禁止字符串散落（规格 F1）。
+# 注意：v2 不再把 verdict 映射成 AIMD 因子（changed/stale 不再走 too_late×0.7）；
+# 旧 OUTCOME_VERDICT（still_valid:on_time / changed:too_late / stale:too_late）已删除。
+# 四类 reason 互异，且与 D2（expiry archive reason「archived」）无关、不混同（S1-c）。
+REVIEW_REASON = {
+    "still_valid": "still_valid",            # 仅时钟复位，不调 AIMD
+    "changed": "changed",                    # changed 写节点双时态新版本
+    "stale_overwrite": "stale_overwrite",    # stale 覆盖写节点双时态新版本
+    "stale_purged": "stale_purged",          # stale 清除走 archive 软归档
+    "browsed_without_label": "browsed_without_label",  # 仅浏览不标注
 }
 
 
@@ -87,17 +93,64 @@ def review_queue_view(store: Storage, now: Optional[datetime] = None) -> dict:
     )
 
 
+def _iv_days(node) -> Optional[float]:
+    return (node.review_interval.total_seconds() / 86400.0
+            if node.review_interval is not None else None)
+
+
+def _write_content_version(store: Storage, node_id, content: str) -> None:
+    """changed / stale 覆盖：把内容载荷写节点双时态新版本（nodes.save 触发 OCC 版本链）。
+
+    不触发 distill（≠ 复利变换 claim，规格 S1-b / DI-9）。
+    """
+    node = store.nodes.get(node_id)
+    if node is None:
+        raise ValueError(f"node {node_id} not found")
+    node.content = content
+    store.nodes.save(node)   # OCC：node 持有当前 version_seq，save 写新版本 + 版本链 +1
+
+
+def _reset_to_l1_baseline(store: Storage, node_id, now: datetime) -> None:
+    """changed / stale 覆盖：review_interval 重置为 L1 基线（baseline_interval），不继承旧收缩。
+
+    规格 §4 表 A：重置 L1 基线（同构）。若 baseline_interval 缺失，按当前结构信号重算兜底。
+    """
+    node = store.nodes.get(node_id)
+    if node is None:
+        return
+    baseline = node.baseline_interval
+    if baseline is None:
+        row = next((r for r in store.load_schedulable() if r.id == node_id), None)
+        if row is not None:
+            sug = S.baseline_for_node(row)
+            if sug["days"] is not None:
+                baseline = timedelta(days=sug["days"])
+    if baseline is not None:
+        store.nodes.set_baseline_interval(
+            node_id, baseline, "auto",
+            "verdict v2: reset review_interval to L1 baseline")
+
+
 def decide_review(
     store: Storage,
     node_id,
     outcome: str,
     now: Optional[datetime] = None,
+    content: Optional[str] = None,
+    stale_branch: Optional[str] = None,
 ) -> dict:
-    """处理一次复审标注（锚 A + 锚 B 累加）。
+    """处理一次复审标注（锚 A + 锚 B 累加，v2 语义）。
 
-    outcome ∈ {still_valid, changed, stale} 触发 L3 + 标注计数；
-    outcome == 'browse' 仅复位衰减时钟 + completed++（不标注，不触发 L3），
-    用于让标注率闸门有意义（completed > labeled 时率可 < 100%，L3 停机）。
+    verdict 语义矩阵（ADR-0011 §语义矩阵 v2 / ADR-0012 §4 表 A）：
+      still_valid : 仅时钟复位（维持 interval），不调 AIMD
+      changed     : 写内容新版本 + review_interval 重置 L1 基线（不退出调度回路）；内容载荷必填
+      stale+cover : 写内容新版本 + 重置 L1 基线（不退出）；分支与内容载荷均必填
+      stale+purge: archive 软归档（退出调度回路）；仅分支必填
+      browse      : 时钟复位 + completed++（不标注，不调 L3）
+
+    外生锚 A（ADR-0011）：verdict 不再调 S.adapt_interval，AIMD 自适应环路人工输入归零。
+
+    content / stale_branch 是 Human-only 门禁参数：缺失即 ValueError（不自动填 / 不默认 purge）。
     """
     now = now or datetime.now(timezone.utc)
     if isinstance(node_id, str):
@@ -106,22 +159,58 @@ def decide_review(
     if node is None:
         raise ValueError(f"node {node_id} not found")
 
+    # ---- 内容载荷 / stale 分支门禁（Human-only，缺失即拒，不自动填/不默认 purge）----
+    if outcome == "changed":
+        if not content:
+            raise ValueError(
+                "changed 需要内容载荷（--content），且只能由人工逐条给出；缺失即拒收")
+    elif outcome == "stale":
+        if stale_branch not in ("cover", "purge"):
+            raise ValueError(
+                "stale 需要 --stale-branch cover|purge，且只能由人工逐条给出；"
+                "缺失或非法即拒收，绝不默认 purge")
+        if stale_branch == "cover" and not content:
+            raise ValueError(
+                "stale cover 需要内容载荷（--content）；缺失即拒收")
+    elif outcome in ("still_valid", "browse"):
+        # 规格 C4：非内容类 verdict 不应携带载荷；携带即拒（一致处理，避免静默丢信息）
+        if content is not None or stale_branch is not None:
+            raise ValueError(
+                f"{outcome} 不接受 --content / --stale-branch；请仅用于 changed / stale")
+
     result = dict(node_id=str(node_id), outcome=outcome)
+
     if outcome == "browse":
         # 仅浏览未标注：复位时钟 + completed++（不标注），不触发 L3
         store.nodes.mark_reviewed(node_id, now)
         result.update(verdict=None, applied=False, new_interval_days=None,
-                      reason="browsed without label: clock reset, no L3")
-    elif outcome in OUTCOME_VERDICT:
-        verdict = OUTCOME_VERDICT[outcome]
-        res = S.adapt_interval(store, node_id, node.decay_score, outcome=verdict)
+                      reason=REVIEW_REASON["browsed_without_label"])
+    elif outcome == "still_valid":
+        # 仅时钟复位；不再走 AIMD（规格 A3 人工输入归零）
         store.nodes.mark_reviewed(node_id, now)
-        result.update(
-            verdict=verdict,
-            applied=res.get("applied"),
-            new_interval_days=res.get("new_days"),
-            reason=res.get("reason"),
-        )
+        result.update(verdict=REVIEW_REASON["still_valid"], applied=False,
+                      new_interval_days=_iv_days(node),
+                      reason=REVIEW_REASON["still_valid"])
+    elif outcome == "changed":
+        _write_content_version(store, node_id, content)
+        _reset_to_l1_baseline(store, node_id, now)
+        store.nodes.mark_reviewed(node_id, now)
+        result.update(verdict=REVIEW_REASON["changed"], applied=True,
+                      new_interval_days=_iv_days(store.nodes.get(node_id)),
+                      reason=REVIEW_REASON["changed"])
+    elif outcome == "stale":
+        if stale_branch == "cover":
+            _write_content_version(store, node_id, content)
+            _reset_to_l1_baseline(store, node_id, now)
+            store.nodes.mark_reviewed(node_id, now)
+            result.update(verdict=REVIEW_REASON["stale_overwrite"], applied=True,
+                          new_interval_days=_iv_days(store.nodes.get(node_id)),
+                          reason=REVIEW_REASON["stale_overwrite"])
+        else:  # purge
+            store.nodes.archive(node_id, now)
+            result.update(verdict=REVIEW_REASON["stale_purged"], applied=True,
+                          new_interval_days=None,
+                          reason=REVIEW_REASON["stale_purged"])
     else:
         raise ValueError(f"unknown outcome: {outcome}")
 
@@ -477,9 +566,26 @@ REVIEW_HTML = """<!doctype html>
       </div>`).join('');
   }
   async function decide(id, outcome) {
+    let body = 'node_id=' + encodeURIComponent(id) + '&outcome=' + outcome;
+    if (outcome === 'changed') {
+      // 内容载荷必填，且只能由人逐条给出
+      const c = prompt('内容更新载荷（changed 必填，请逐条给出）：');
+      if (c === null) return;                       // 取消
+      body += '&content=' + encodeURIComponent(c);
+    } else if (outcome === 'stale') {
+      const b = prompt('stale 分支：cover（覆盖，需内容）/ purge（清除退出回路）', 'cover');
+      if (b !== 'cover' && b !== 'purge') return;   // 取消 / 非法
+      body += '&stale_branch=' + encodeURIComponent(b);
+      if (b === 'cover') {
+        const c = prompt('覆盖内容载荷（必填）：');
+        if (c === null) return;
+        body += '&content=' + encodeURIComponent(c);
+      }
+    }
     const r = await fetch('/review/api/decide', {
       method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
-      body: 'node_id=' + encodeURIComponent(id) + '&outcome=' + outcome });
+      body });
+    if (!r.ok) { alert('复审标注被拒：' + (await r.json()).detail); await load(); return; }
     const j = await r.json();
     const el = $('it-' + id);
     if (el) { el.style.opacity = .5; el.querySelector('.title').insertAdjacentHTML('beforeend',
@@ -637,8 +743,19 @@ def register_review_routes(app, store: Storage) -> None:
         return review_queue_view(store)
 
     @router.post("/review/api/decide")
-    def decide_api(node_id: str = Form(...), outcome: str = Form(...)) -> dict:
-        return decide_review(store, node_id, outcome)
+    def decide_api(
+        node_id: str = Form(...),
+        outcome: str = Form(...),
+        content: Optional[str] = Form(None),
+        stale_branch: Optional[str] = Form(None),
+    ) -> dict:
+        try:
+            return decide_review(
+                store, node_id, outcome,
+                content=content, stale_branch=stale_branch)
+        except ValueError as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail=str(e))
 
     @router.post("/review/api/observe")
     def observe_api(pushed: int = Form(0), queue_remaining: int = Form(0)) -> dict:
