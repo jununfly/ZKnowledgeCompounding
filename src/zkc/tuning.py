@@ -117,8 +117,8 @@ REGISTRY: dict[str, Parameter] = {
         # ---- L3 AIMD 反馈
         _p("EARLY_THRESHOLD", 0.3, PLACEHOLDER,
            "复审时 decay < 此值 = too_early（节奏比真实腐化快，骚扰过度 → 拉长）"),
-        _p("AIMD_UP", 1.5, PLACEHOLDER, "复审判 late → 缩短 interval（乘）"),
-        _p("AIMD_DOWN", 0.7, PLACEHOLDER, "复审判 early → 拉长 interval（乘）"),
+        _p("AIMD_UP", 1.5, PLACEHOLDER, "复审判 too_early → 拉长 interval（乘）"),
+        _p("AIMD_DOWN", 0.7, PLACEHOLDER, "复审判 too_late → 缩短 interval（乘）"),
         _p("ON_TIME_BAND", 0.20, SIMULATION,
            "仿真判据：收敛目标 H/0.6（非真值 H），振荡带 ±50%"),
         # ---- 标注率闸门（L3 停机条件）
