@@ -1,0 +1,771 @@
+{
+  "title": "ZKC 复审标注四档语义缺口收敛 · Plan 过程态 roadmap",
+  "description": "由 docs/plans/2026-11-14-zkc-verdict-semantics-plan.md（已批准归档）编排而成的过程态 roadmap。只承载计划、进度、决策与下一步，不是权威源。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a1d9c02f67-de18c177f8",
+      "label": "ZKC 复审标注四档语义缺口收敛 · Plan 过程态 roadmap",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7"
+      ],
+      "decisions": [
+        {
+          "q": "把已批准 Plan 编排成 roadmap 属于什么 scope？",
+          "answer": "过程态编排（类比 Acceptance/evaluation）：仅写 docs/plans/ 下 carrier 与 Markdown 视图；目标项目源码、阈值、长期文档保持只读；不启动 Step 2–7 能力链、不进入 Composer handoff、不启动 TDD 执行链、不改任何 verdict 或内容载荷；不把任何节点置 in_progress 或 completed。",
+          "note": "zj 2026-11-14 16:53 指令「把 ...plan.md 编排成roadmap，保存到 docs/plans/ 下」；Scope gate 分类声明。"
+        },
+        {
+          "q": "与 16:40/16:43 归档口径「不恢复 carrier / 视图 / 过程编排链」冲突怎么处理？",
+          "answer": "按 zj 更晚的显式指令执行：本次恢复单份 carrier + 单份轻量 md 视图 + 一份全量导出，但仅作该 Plan 的过程态投影，不重建全局过程编排链。2026-11-14 18:57 zj 指令「解决这些风险与偏差」后，原 Plan 已补记 §口径变更记录：把过时的「不恢复 carrier / 视图 / 目录下仅此一份文件」改为真实口径，并显式列出未被覆盖的批准状态、plan_acceptance=pending、Step 1–7 未执行、不进 handoff、不启动 TDD 执行链。口径冲突已收口，不再是待确认项。",
+          "note": "zj 口述 > workspace 实物；偏差以补记方式留痕，不静默改写已批准归档的裁决/规格/验收字段。"
+        },
+        {
+          "q": "Step 节点的状态怎么定？",
+          "answer": "全部 pending。Plan 明载 plan_acceptance=pending、Step 1–7 能力链未执行，不得把节点 completed 当作 proof / evidence；已由 zj 给出的裁决只以 decisions 形式落盘，不改状态。",
+          "note": "ADR-0008 与项目护栏 #9：节点完成状态不是长期事实的证明。"
+        },
+        {
+          "q": "carrier 与视图的命名/落点怎么定？",
+          "answer": "carrier = 2026-11-14-zkc-verdict-semantics-roadmap.json；轻量视图 = 2026-11-14-zkc-verdict-semantics-ROADMAP.md（render 生成）；全量导出 = 2026-11-14-zkc-verdict-semantics-ROADMAP-full.md（section --all 生成）。三者都在 docs/plans/，与 Plan 同目录、同日期前缀一一对应。",
+          "note": "带日期前缀而非通用 roadmap.json / ROADMAP.md，避免被误读为重开全局过程编排链；全量导出是 CLI 显式导出视图，供 Human 审阅全量决策表，不是手工编辑的 md section。"
+        },
+        {
+          "q": "权威边界与结论提炼路径？",
+          "answer": "process-state only：本 roadmap 回答接下来执行什么，不回答产品行为、架构、发布状态或正确性。语义矩阵 v2 与外生锚 A 由乘因子改终局动作、AIMD 自适应环路人工输入归零 → ADR；标注率闸门与 archive 退出契约 → risks；zkc decide --list --json 真值回读 → evidence。未完成提炼前只作决策脉络溯源。",
+          "note": "durable 代码与长期文档不得引用 docs/plans/ 下文件作 proof / evidence。"
+        },
+        {
+          "q": "零 completed 与 ready 读数怎么约束执行授权？",
+          "answer": "零 completed 是刻意口径，不是遗漏：Plan 明载 plan_acceptance=pending、Step 1–7 能力链未执行，未获 zj 显式授权前任何节点不得置 in_progress 或 completed；节点 completed 须同时具备 zj 显式授权与该 Step 的独立证据（ADR / contract / runtime-evidence），不得用节点完成状态当 proof / evidence。ready 是 CLI 按 blocks 边派生的「图上无未完成前驱」读数，不等于执行授权；子节点通过上游继承 blocks 边继承父 Step 的硬依赖，避免被误读为可开工。根节点作为分组节点仍会出现在 ready，属 CLI 已知口径。",
+          "note": "收口上一轮「状态诚实」与「ready 派生噪声」两条偏差；对应 Plan §口径变更记录 与 ADR-0008 / 护栏 #9。"
+        },
+        {
+          "q": "子工作为什么继承上游 Step 的 blocks 边？",
+          "answer": "纯机械修正，不是新增 Human 裁决：原图只有 Step 级 blocks 边，CLI 的 ready 把无前驱的 20 个子节点列为可开工，与「执行链未授权」的真实状态不符。给每个子节点补一条来自其父 Step 最近上游 Step 的 blocks 边后，ready 只剩根节点（分组节点，CLI 已知口径）与 1-1。边来源全是 Step 级外部节点，不依赖子节点完成状态，不引入父等子/子等父死锁；Plan §Capability composition 的 Step 级 dependencies 语义不变。",
+          "note": "20 条继承边（e9–e28）；由 zj「解决这些风险与偏差」指令派生，Human 可否决。"
+        }
+      ],
+      "notes": "来源：docs/plans/2026-11-14-zkc-verdict-semantics-plan.md（zj 2026-11-14 16:40 批准归档，plan_id zkc-verdict-semantics-2026-11-14，status=approved，human_review=approved，plan_acceptance=pending）。本次按 zj 16:53 指令把该 Plan 编排成本 roadmap，落在同一过程态目录；原 Plan 已于 18:57 按 zj「解决这些风险与偏差」指令补记 §口径变更记录（只改目录/产物口径，批准状态、执行边界与全部裁决/规格/验收字段逐字不动）。【口径改定】16:40/16:43 归档口径为「不恢复 roadmap.json carrier / ROADMAP.md 视图 / 过程编排链」；本次按 zj 更晚的显式指令恢复单份 carrier + 单份轻量 md 视图，仅作该 Plan 的过程态投影，不重开全局过程编排链；是否同步修订 Plan 头部说明待 zj 确认。【状态口径】Plan 批准范围仅状态定案与归档：Step 1–7 能力链未启动、plan_acceptance=pending、未进入 Composer handoff、未启动 TDD 执行链。所有 Step 节点保持 pending；已由 zj 给出的裁决只以 decisions 落盘，不作为节点完成状态，不伪造通过。【Scope gate】过程态编排（类比 Acceptance/evaluation）：只写 docs/plans/ 下 carrier 与视图；目标项目源码、阈值、长期文档保持只读；不改任何 verdict / 内容载荷，不触发 distill，不写 meta_claim，不做 git 提交推送，不安装或创建能力包，不注册调度。【权威边界】role: process-state / durable-citation: forbidden / promote-via: ADR|design|contract|runtime-evidence。结论须提炼到 ADR / PRD / 架构 / risks / evidence 后才可进入代码与长期文档（ADR-0008、项目护栏 #9、scripts/zkc_authority_check.py）。【硬约束】verdict 只能由 Human 本人给；changed 与 stale 覆盖的内容载荷只能由 Human 本人逐条给、缺失即拒收；stale 走覆盖还是清除只能由 Human 逐条给、不得自动判定或默认清除；历史 3 条 changed 不回填不重标记；不得静默改阈值参数；清除只映射 archive 软归档、不得物理删除节点。【全局停线条件（Plan §Failure and rollback）】任一决定项无 Human 结论 / 内容载荷来源非 zj 本人或被自动填充 / stale 分支非 Human 给出或被默认清除 / 仍走 AIMD 乘因子 / 覆盖走 archive 或清除写新版本 / 覆盖未重置 L1 基线 / 出现物理删除节点 / 四类审计 reason 混同 / 清除后仍在 due 队列或覆盖后从 due 队列消失 / 红阶段无法构造失败断言 / 全量测试未绿 / 真值回读与埋点不一致 / 审查退回 / 注释切片混入非 doc-only 改动 —— 任一命中即停。safe_stop=停在 Human 审批前，本阶段不产生源码改动。【缺口与建议（Plan §Gaps，只记录不创建）】ZKC 内缺「语义定案→ADR+契约回归」证据协议、缺「外生锚 A 与埋点口径隔离审计」能力；建议增设绑定 zkc decide 真值回读的语义契约回归清单。三者均未安装、未授权。【fixed oracle】python -m unittest discover -s tests 全绿（基线 574）；tests/test_web_review.py:120-122 的 OUTCOME_VERDICT 断言须随定案同步更新。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a1d9c0375e-7c6554bfc1",
+      "label": "Step 1 语义裁决：收敛四档语义的 Human 逐项拍板（zj-grilling）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "①–④ 四项语义裁决怎么定？",
+          "answer": "zj 2026-11-14 15:46 原话「① 否；② 拆；③ 承载；④独立」：①不新增 too_early 档（人工通道维持单向收缩，记为已知取舍）；②changed 与 stale 拆成不同信号；③changed 承载内容更新动作；④tuning.py:120-121 注释方向偏差独立成 doc-only 切片、独立提交。",
+          "note": "Plan §Human checkpoints.decisions_needed；原话逐字保留。"
+        },
+        {
+          "q": "changed / stale 的语义定案（S0）是什么？",
+          "answer": "zj 2026-11-14 16:08 原话（须逐字保留）：changed = 内容变了，但还有参考价值；stale = 内容腐坏了，基本没有参考价值，要么被 enrich / refresh 覆盖，要么被清除。",
+          "note": "两档都属内容/价值生命周期轴，不是节奏轴；原建议 b（stale 保留 too_late ×0.7）据此作废。"
+        },
+        {
+          "q": "a–d 规格衍生决策怎么定？（S1）",
+          "answer": "zj 2026-11-14 16:25 原话「a–d 同意推荐」：a. changed / stale 走 L3 终局动作、不走 AIMD 乘因子 —— changed 更新内容（nodes.save 双时态新版本）且 interval 重置为 L1 基线，stale 走 archive 退出调度回路；b. 「enrich / refresh 覆盖」= 节点双时态新版本，不是蒸馏产出 claim；c. 「清除」只映射 archive 软归档，审计 reason 须与 D2「价值已升元认知层」分开记；c2. changed 内容载荷新增必填参数，只由 zj 本人逐条给，缺失即拒收，绝不自动填充或推测；d. 今日已写入的 3 条 changed 保留旧语义产物 + 标注口径切换点，不回填、不重标记、不撤销 interval 调整。",
+          "note": "规格输入 S1，须逐字保留；不触发 distill 是硬约束。"
+        },
+        {
+          "q": "stale 覆盖分支是否纳入本批次？（S2）",
+          "answer": "zj 2026-11-14 16:33 原话「stale 覆盖分支纳入」：S0 中 stale 的 enrich / refresh 覆盖分支与清除分支并列纳入本批次，S1-a 中对 stale 的单条 archive 描述据此细化为两分支，属补充而非推翻。覆盖 → nodes.save() 双时态新版本 + interval 重置 L1 基线、不退出调度回路；清除 → archive 软归档、退出 due 队列，审计 reason 与 D2 区分。",
+          "note": "规格输入 S2，须逐字保留。"
+        },
+        {
+          "q": "由 S2 + 外生锚铁律推导出的规格约束？",
+          "answer": "①stale 走覆盖还是清除只能由 zj 本人逐条给，不得自动判定或默认清除；②覆盖的内容载荷同样必填且只由 zj 给；③覆盖按 a 的 L1 基线同构重置，不继承旧内容收缩结果；④覆盖分支不退出调度回路、清除分支必须退出；⑤changed / stale 覆盖 / stale 清除 / D2 四类审计 reason 互不相同。",
+          "note": "agent 推导并明确标注：非 Human 新增裁决，Human 可否决。"
+        },
+        {
+          "q": "两处不因裁决收口而消失的结构性问题？",
+          "answer": "①changed 与 stale 覆盖在系统动作上同构（都是双时态新版本 + L1 基线重置），②「拆」的价值判定差别必须落在审计 reason 与用例断言，否则等于只拆名字；②终局动作让 L3 不空转，但 AIMD ×1.5 / ×0.7 自适应环路的人工输入仍归零，退回 decay-only 恒 no-op，须由 Step 3 锁不变量并进 ADR，不因 a 已裁决而视为解决。",
+          "note": "Plan §Human checkpoints 结构性提醒；不得静默归为已解决。"
+        },
+        {
+          "q": "「开始 1-1」的授权范围怎么定？",
+          "answer": "zj 2026-11-14 19:21 指令「开始 1-1」= 仅对节点 1-1 的定点开工授权，构成对根节点门禁「未获 zj 显式授权前任何节点不得置 in_progress」的例外，只此一节点，不扩及 1-2–1-7。Scope gate 分类：Acceptance/evaluation 类比的过程态节点操作 —— 本 roadmap 是已批准 Plan 的过程态投影，项目不继续完成/发布；允许按请求更新 roadmap 元数据（状态 + 决策 + 视图），目标项目代码 / 依赖 / 产品文档保持只读。不启动 zj-grilling 重做裁决（①–④、S0、S1、S2 已于 15:46–16:33 由 zj 本人逐项给出并逐字落盘，重跑会重复劳动且可能扰动已定案裁决）；不进入 Composer handoff；不启动 Step 2–7 / TDD 执行链；不把 1-1 标 completed。",
+          "note": "节点开工 ≠ 能力链启动。completed 仍受根节点门禁约束：须 zj 显式授权 + 该 Step 的独立证据（ADR / contract / runtime-evidence）；当前裁决原文只落在过程态 Plan / roadmap decisions，尚未提炼到 ADR，故不自动打勾。"
+        },
+        {
+          "q": "1-1 的 completed 门禁怎么处理？（zj 19:31 选 A）",
+          "answer": "zj 2026-11-14 19:31 原话「A」：保持 1-1 为 `in_progress`，等 Step 6（长期文档收口）把语义矩阵 v2 定案提炼到 ADR 后，再谈 1-1 的 `completed`。不立即打勾、不放宽根节点门禁（`completed` 须 zj 显式授权 + ADR / contract / runtime-evidence 独立证据）、不把过程态 Plan / roadmap decisions / 工作日志当作独立证据。四条 exit_criteria 虽已满足，但判据满足不等于可 completed。",
+          "note": "决策由 zj 本人给出，agent 只转录、不代拍。用 1-6 → 1-1 的 informs 边（非调度、不引入 blocks 环）标注「Step 6 的 ADR 是 1-1 completed 的证据来源」这一上下文。"
+        },
+        {
+          "q": "ADR-0011 提炼完成，1-1 是否转 completed？",
+          "answer": "是；依 zj 19:31 选项 A（等 Step 6 把语义矩阵 v2 提炼到 ADR 后再谈 completed），ADR-0011 已于 19:57 落盘，1-1 在此转 completed",
+          "note": "语义裁决（Step 1）产物已沉淀为长期 ADR；代码实现（Step 2-5）仍 pending、未授权；completed 只表 Step 1 决策定案收口，不作下游执行授权"
+        }
+      ],
+      "notes": "role: 用多轮追问收敛四档语义的开放决策，产出 Human 逐项拍板记录。inputs: 只读核查结论（review.py:40 映射表、scheduling.py:220 因子分支、tuning.py:120-121 注释偏差）与 Plan Intent。outputs: ①–④ 裁决记录、16:08 语义定案 S0、16:25 a–d 结论 S1、16:33 覆盖分支裁决 S2，均作为语义矩阵 v2 的固定输入移交 Step 2。prerequisites: 核查结论已落盘于 .workbuddy/memory/2026-11-14.md 且 Human 逐项裁决已给出。dependencies: 无。excluded: zj-discuss（发散讨论不产出可验收拍板）、zj-steelman（只替对立立场辩护，不收敛）。所有 Human 决定项已收口；本节点 pending 只表 zj-grilling 能力链未启动，不改「裁决已给出并落盘」这一事实。",
+      "layer": "plan",
+      "exit_criteria": [
+        "裁决记录逐项有 Human 结论（①–④）",
+        "16:08 语义定案 S0 原文已落盘",
+        "16:25 a–d 结论 S1 原文已落盘",
+        "16:33 覆盖分支裁决 S2 原文已落盘"
+      ],
+      "rounds": 1
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a1d9c03828-ceda46917f",
+      "label": "Step 2 规格与验收判据：把 S0/S1/S2 转成可测断言（zj-to-spec）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5"
+      ],
+      "decisions": [
+        {
+          "q": "「A 授权落码(Step 2 规格链)」的授权范围怎么定？",
+          "answer": "A = 执行 Step 2 规格链（zj-to-spec）：产出可测规格与验收断言（ADR-0012），不含源码/测试实现；落码本体在 Step 4（zj-tdd）。B = 联动 docs/risks.md（新增 R15 硬不变量）。C = commit+push 作 batch checkpoint。",
+          "note": "Step 2 spec 已落 ADR-0012 为 completed 证据；源码/阈值/测试零改动；1-2 completed 不等同授权 Step 3-5 执行链"
+        }
+      ],
+      "notes": "role: 以已收口的 a / b / c / c2 / d 结论与 S2 为固定输入，把裁决与 16:08 语义定案转成可测规格与失败在先的验收断言，并定出 stale 分支选择参数的形态。reason: TDD 红阶段需要明确的验收判据。inputs: 裁决记录、S0、S1、S2、src/zkc/cli.py 的 VERDICTS 常量、src/zkc/web/review.py 的 OUTCOME_VERDICT、src/zkc/expiry.py 动作枚举、src/zkc/repository/protocols.py 的 NodeRepository 接口清单、tests/test_web_review.py:120-122 的映射断言。excluded: zj-to-tickets、zj-teach。待定实现细节（Plan §Evidence.unknowns，由本步骤定，不得代拍）：stale 分支选择参数名与取值形态、必填内容载荷参数名与落库字段、L1 基线重置落点（复用 adapt_interval 还是新路径）、覆盖成功后 decay 时钟复位口径、四类审计 reason 枚举值、口径切换点记录格式、注释切片独立提交时点。",
+      "layer": "plan",
+      "exit_criteria": [
+        "规格含每条语义的可测断言",
+        "内容轴与节奏轴分列",
+        "a / b / c / c2 / d 与 S2 逐条映射为断言",
+        "stale 覆盖与清除两分支分列，且分支选择须由 Human 给出",
+        "changed / stale 覆盖 / stale 清除 / D2 四类审计 reason 互异"
+      ]
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a1d9c038f7-ad30a2a6c3",
+      "label": "Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3"
+      ],
+      "decisions": [],
+      "notes": "role: 评审语义变更对外生锚 A、L3 AIMD、标注率闸门与埋点口径的连带影响，并锁定人工侧改走终局动作后 AIMD 自适应环路人工输入归零的架构级结论。reason: 验收要求先证明改动不污染已结案的 1-26 CALIBRATED 口径，证据来自现有 ADR 与风险册。inputs: 规格、docs/zj-adr/、docs/risks.md、src/zkc/scheduling.py:548-599。dependencies: Step 1, Step 2。excluded: zj-wait-what、zj-domain-modeling。prerequisites: 规格已成文且 Human 已确认决定项；源码改动仍须 Human 单独授权。",
+      "layer": "plan",
+      "exit_criteria": [
+        "不变量清单覆盖外生锚 A",
+        "不变量清单覆盖标注率闸门",
+        "覆盖不退出与清除必须退出调度回路的硬契约已锁定",
+        "AIMD 自适应环路人工输入归零的架构级结论已写入",
+        "证明不污染 1-26 CALIBRATED 口径"
+      ]
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a1d9c039c1-139bd6880d",
+      "label": "Step 4 小切片实现：红绿重构语义矩阵 v2 与 CLI 契约（zj-tdd）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3",
+        "1-4-4",
+        "1-4-5"
+      ],
+      "decisions": [],
+      "notes": "role: 以红绿重构实现语义矩阵 v2、changed 与 stale 覆盖的必填内容载荷及 nodes.save 双时态新版本、L1 基线重置、stale 清除归档退出、分支选择人工门禁、四类审计 reason 区分、以及 CLI 契约。reason: 验收要求每条语义都有失败在先的测试证据。inputs: 规格、不变量清单、tests/test_web_review.py 与 tests/test_p1_review_fixes.py。outputs: 新增与更新的用例、最小实现、全量测试输出证据、2026-11-14 语义口径切换点记录。constraints: 不得静默改动阈值参数；源码改动须 Human 单独授权（Plan §side_effect_authorization）。dependencies: Step 2, Step 3。excluded: zj-prototype、zj-implement。",
+      "layer": "plan",
+      "exit_criteria": [
+        "红绿两阶段输出齐备",
+        "必填内容载荷缺失时拒收",
+        "stale 分支选择拒自动判定",
+        "changed 与 stale 覆盖的 interval 重置为 L1 基线",
+        "make test 全量结果（基线 574）全绿",
+        "新增用例先失败后通过的两次输出已留存"
+      ]
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a1d9c03a8f-0d0805b67d",
+      "label": "Step 5 代码审查与证据复核：改动、测试与不变量三方对齐（zj-code-review）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2"
+      ],
+      "decisions": [],
+      "notes": "role: 复核改动、测试证据与不变量是否仍成立。reason: Plan acceptance 需要独立的证据复核。inputs: 上一环节产物、zkc decide --list --json 真值回读、OUTCOME_VERDICT 与 CLI choices 一致性。outputs: 审查结论（通过或退回）与证据清单。prerequisites: 上一环节全量测试通过。dependencies: Step 4。excluded: zj-review-findings、zj-neat-freak。审查退回即停。",
+      "layer": "plan",
+      "exit_criteria": [
+        "审查结论与证据清单已产出",
+        "真值回读与埋点一致",
+        "不变量清单逐条仍成立"
+      ]
+    },
+    "1-6": {
+      "id": "1-6",
+      "uid": "01a1d9c03b70-986e8d7a72",
+      "label": "Step 6 长期文档收口：ADR、风险册与证据提炼（zj-doc-health）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3"
+      ],
+      "decisions": [],
+      "notes": "role: 把语义矩阵 v2 定案、changed 与 stale 覆盖的内容更新通道、stale 两分支与 D2 的审计 reason 区分、外生锚 A 由乘因子改终局动作后的存续结论与已知取舍（不新增 too_early）沉淀到 ADR 与风险册。reason: 项目护栏要求过程结论提炼到长期文档，验收要求语义定案与已结案 1-26 CALIBRATED 口径互不污染。inputs: 裁决记录、规格、审查结论、docs/zj-adr/、docs/risks.md。outputs: ADR 与风险册更新、语义口径切换点记录、一致性检查记录。prerequisites: Step 5 审查结论为通过且 Human 已审批语义定案。dependencies: Step 5。excluded: zj-docs-architecture、zj-edit-article。提炼路径见根节点决策。",
+      "layer": "plan",
+      "exit_criteria": [
+        "ADR 更新已落盘",
+        "语义口径切换点记录已落盘",
+        "risks 与 evidence 的一致性检查记录齐备"
+      ]
+    },
+    "1-7": {
+      "id": "1-7",
+      "uid": "01a1d9c03c3a-3ce9949a51",
+      "label": "Step 7 注释方向偏差独立收口：tuning.py doc-only 切片（zj-doc-health）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-7-1",
+        "1-7-2"
+      ],
+      "decisions": [],
+      "notes": "role: 独立 doc-only 切片，只修订 src/zkc/tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向，不改运行逻辑与阈值常量，单独提交。reason: Human 裁决④要求注释偏差独立成片，验收要求注释与实现一致且不与语义实现混在同一变更批次。inputs: src/zkc/tuning.py:119-121 注释、scheduling.py:220 的 _aimd_factor 因子分支、Step 5 审查结论。outputs: doc-only 注释修订与一致性检查记录，独立提交，不并入语义实现批次。prerequisites: Step 5 审查结论为通过，且 Human 已确认该切片独立提交。dependencies: Step 5。excluded: zj-refactor（会触碰运行逻辑）、zj-neat-freak（只整理不校验一致性）。failure_exit: 注释切片混入非 doc-only 改动即停。",
+      "layer": "plan",
+      "exit_criteria": [
+        "注释与 scheduling.py:220 的因子分支方向一致",
+        "提交范围仅含 doc-only 改动",
+        "独立提交，不并入语义实现批次"
+      ]
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a1d9c04371-dc7d9a69fe",
+      "label": "语义矩阵 v2 规格：内容轴与节奏轴分列、stale 两分支分列",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "把四档 verdict 重画成内容/价值生命周期轴与 L3 节奏轴两张表；changed 与 stale-覆盖 系统动作同构，价值判定差别必须落在审计 reason 与用例断言上。",
+      "layer": "plan",
+      "exit_criteria": [
+        "两张表逐档可对照，无旧 too_late ×0.7 残留映射"
+      ]
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a1d9c04543-5f8427a396",
+      "label": "CLI verdict 与必填内容载荷、stale 分支选择的参数变更清单",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "现有 zkc decide 只有 --id 与 --verdict，没有任何内容载荷参数；须定参数名、落库字段名、缺失即拒收的失败断言；stale 分支选择不得自动判定或默认清除。",
+      "layer": "plan",
+      "exit_criteria": [
+        "参数名与落库字段已定",
+        "缺失即拒收的断言已写成",
+        "分支来源非 Human 即拒收的断言已写成"
+      ]
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "uid": "01a1d9c0472a-f6d4ba85dc",
+      "label": "OUTCOME_VERDICT 与终局动作两张表的断言更新清单",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "tests/test_web_review.py:120-122 已固化三条映射，语义变更后必须同步更新；changed 与 stale 的映射不再相等且 stale 不再复用 ×0.7 缩短 interval。",
+      "layer": "plan",
+      "exit_criteria": [
+        "逐档断言与语义矩阵 v2 一致",
+        "原三条映射断言已列出更新位置"
+      ]
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "uid": "01a1d9c048f7-4b8cbb04dc",
+      "label": "L1 基线重置、archive 退出调度回路与四类审计 reason 的断言口径",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "changed 与 stale 覆盖 interval 重置为 L1 基线而非继承旧内容收缩结果；覆盖不退出调度回路、清除必须退出；清除只映射 archive 软归档且审计 reason 与 D2 区分。",
+      "layer": "plan",
+      "exit_criteria": [
+        "L1 基线重置断言已写成",
+        "覆盖仍在 list_due_for_review / 清除退出 due 队列的断言已写成"
+      ]
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "uid": "01a1d9c04ac7-f86add5ec9",
+      "label": "口径切换点记录格式与回归用例清单",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "2026-11-14 已写入的 3 条 changed 保留旧语义产物 + 标注口径切换点，不回填、不重标记、不撤销 interval 调整；格式与回归用例在本步骤定。",
+      "layer": "plan",
+      "exit_criteria": [
+        "口径切换点格式已定",
+        "历史标注不回填不重标记的回归用例已列出"
+      ]
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a1d9c04d71-3588456bd8",
+      "label": "复核外生锚 A、标注率闸门与埋点口径的连带影响",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "E1 已并入 1-26 结案，meter 仪表只读、不作完成度证明；人工 verdict 改走终局动作后，L3 的人工反馈来源与标注率闸门口径须逐项复核。",
+      "layer": "plan",
+      "exit_criteria": [
+        "三项连带影响逐条有评审结论"
+      ]
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a1d9c04f3c-767765a7ea",
+      "label": "锁定 AIMD 自适应环路人工输入归零的架构级结论",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "终局动作让 L3 不空转，但 ×1.5 / ×0.7 的自适应纠偏退回 decay-only 恒 on_time；该结论属架构级，须由本步骤锁不变量并进 ADR，不得因 a 已裁决而视为解决。",
+      "layer": "plan",
+      "exit_criteria": [
+        "结论已写成 ADR 输入",
+        "decay-only 恒 no-op 的证据来源已注明"
+      ]
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "uid": "01a1d9c05159-ba507d5a1e",
+      "label": "产出不变量清单：L1 基线重置与 archive 退出边界",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "覆盖分支不退出调度回路而清除分支必须退出的硬契约；不得引入节点物理删除；不得静默改动阈值参数。",
+      "layer": "plan",
+      "exit_criteria": [
+        "不变量清单逐条可测",
+        "硬契约已明确覆盖与清除两条分支"
+      ]
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a1d9c05444-f1a822d256",
+      "label": "红阶段：逐条构造失败在先的语义断言",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "必填内容载荷拒收、stale 分支缺失或自动判定拒收、L1 基线而非 ×0.7、覆盖留在 due 队列 / 清除退出 due 队列、四类审计 reason 互异等断言先失败。",
+      "layer": "plan",
+      "exit_criteria": [
+        "红阶段输出已留存",
+        "红阶段无法构造失败断言即停"
+      ]
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a1d9c0561c-db94fe2d61",
+      "label": "绿阶段：语义矩阵 v2 与 nodes.save 双时态新版本",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "changed 与 stale 覆盖都写节点双时态新版本，不触发 distill、不写 meta_claim；OUTCOME_VERDICT 与 CLI choices 同步；tests/test_web_review.py:120-122 同步更新。",
+      "layer": "plan",
+      "exit_criteria": [
+        "双时态新版本落库可回读",
+        "无 distill / meta_claim 副作用"
+      ]
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "uid": "01a1d9c05816-d0981499df",
+      "label": "绿阶段：L1 基线重置与 archive 软归档退出调度回路",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "覆盖重置 L1 基线且不退出调度回路；清除走 archive 且退出 list_due_for_review 与 due_count；不得引入节点物理删除。",
+      "layer": "plan",
+      "exit_criteria": [
+        "覆盖后节点仍在 due 队列",
+        "清除后 due_count 真值回读一致"
+      ]
+    },
+    "1-4-4": {
+      "id": "1-4-4",
+      "uid": "01a1d9c059fc-a6bce120cb",
+      "label": "绿阶段：分支选择人工门禁与四类审计 reason 区分",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "stale 走覆盖还是清除只由 zj 逐条给；changed / stale 覆盖 / stale 清除 / D2 四类 reason 互不相同；与 D2「价值已升元认知层」区分。",
+      "layer": "plan",
+      "exit_criteria": [
+        "四类 reason 枚举互异且有断言",
+        "非 Human 来源的分支选择被拒收"
+      ]
+    },
+    "1-4-5": {
+      "id": "1-4-5",
+      "uid": "01a1d9c05bd8-7e4755b77f",
+      "label": "绿阶段：CLI 契约、全量测试证据与口径切换点记录",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "zkc decide 新增参数与 --list --json 真值回读一致；输出 2026-11-14 语义口径切换点记录，历史 3 条 changed 不回填不重标记。",
+      "layer": "plan",
+      "exit_criteria": [
+        "zkc decide --list --json 回读 due_count 与 today_observation 保持真值",
+        "全量测试输出已留存"
+      ]
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a1d9c05e84-1adf11a339",
+      "label": "复核改动范围、测试证据与不变量是否仍成立",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "检查是否混入阈值改写、物理删除节点、非 Human 内容载荷、distill / meta_claim 副作用；审查退回即停。",
+      "layer": "plan",
+      "exit_criteria": [
+        "改动清单逐项有结论",
+        "无越界副作用"
+      ]
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "uid": "01a1d9c06076-abdb43356c",
+      "label": "zkc decide --list --json 真值回读与 choices 一致性核对",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "due_count 与 today_observation 保持真值；OUTCOME_VERDICT 与 CLI choices 逐档一致；证据清单与真值回读一致。",
+      "layer": "plan",
+      "exit_criteria": [
+        "回读结果已留存",
+        "一致性核对无偏差"
+      ]
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "uid": "01a1d9c06324-c3bc442320",
+      "label": "ADR：语义矩阵 v2、外生锚 A 改终局动作、AIMD 人工输入归零与已知取舍",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "不新增 too_early 属已知取舍而非遗漏；终局动作不等于 AIMD 自适应环路仍有人工输入。结论进 ADR 后才可被 durable 代码与长期文档引用。",
+      "layer": "plan",
+      "exit_criteria": [
+        "ADR 条目可引用独立证据",
+        "已知取舍写明"
+      ]
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "uid": "01a1d9c064ff-fc773e7b45",
+      "label": "risks：标注率闸门与 archive 退出调度回路契约",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "覆盖不退出 / 清除必须退出两条分支的硬契约；与 D2 归档 reason 的区分口径。不得污染 1-26 CALIBRATED 已结案状态。",
+      "layer": "plan",
+      "exit_criteria": [
+        "风险册条目已更新",
+        "CALIBRATED 口径未被改写"
+      ]
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "uid": "01a1d9c066dc-94bb012636",
+      "label": "evidence：真值回读证据、口径切换点与一致性检查记录",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "zkc decide --list --json 回读结果归档为 evidence；口径切换点记录格式由 Step 2 定，本步骤落盘并做一致性检查。",
+      "layer": "plan",
+      "exit_criteria": [
+        "证据文件已归档",
+        "一致性检查记录齐备"
+      ]
+    },
+    "1-7-1": {
+      "id": "1-7-1",
+      "uid": "01a1d9c0698a-e97fa63518",
+      "label": "修订 tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "现状把 AIMD_UP=1.5 注释成「判 late → 缩短」、AIMD_DOWN=0.7 注释成「判 early → 拉长」，与 _aimd_factor（too_early→UP / too_late→DOWN）及 line 119 EARLY_THRESHOLD 注释矛盾；只改文案，不动常量与运行逻辑。",
+      "layer": "plan",
+      "exit_criteria": [
+        "注释方向已修正",
+        "阈值常量未改动"
+      ]
+    },
+    "1-7-2": {
+      "id": "1-7-2",
+      "uid": "01a1d9c06b60-8f65cdff60",
+      "label": "一致性检查与独立提交（不并入语义实现批次）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "对照 scheduling.py:220 与 line 119 复核；提交只含 doc-only 改动；独立提交时点由 Step 2 定、须 zj 确认。",
+      "layer": "plan",
+      "exit_criteria": [
+        "一致性检查记录已留存",
+        "git 提交范围仅含注释文件"
+      ]
+    }
+  },
+  "metadata": {
+    "created": "2026-11-14 19:10:13",
+    "updated": "2026-11-14 20:15:45",
+    "md_file": "2026-11-14-zkc-verdict-semantics-ROADMAP.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c03828-ceda46917f",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c038f7-ad30a2a6c3",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a1d9c03828-ceda46917f",
+      "to": "01a1d9c038f7-ad30a2a6c3",
+      "type": "blocks"
+    },
+    {
+      "id": "e4",
+      "from": "01a1d9c03828-ceda46917f",
+      "to": "01a1d9c039c1-139bd6880d",
+      "type": "blocks"
+    },
+    {
+      "id": "e5",
+      "from": "01a1d9c038f7-ad30a2a6c3",
+      "to": "01a1d9c039c1-139bd6880d",
+      "type": "blocks"
+    },
+    {
+      "id": "e6",
+      "from": "01a1d9c039c1-139bd6880d",
+      "to": "01a1d9c03a8f-0d0805b67d",
+      "type": "blocks"
+    },
+    {
+      "id": "e7",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c03b70-986e8d7a72",
+      "type": "blocks"
+    },
+    {
+      "id": "e8",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c03c3a-3ce9949a51",
+      "type": "blocks"
+    },
+    {
+      "id": "e9",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c04371-dc7d9a69fe",
+      "type": "blocks"
+    },
+    {
+      "id": "e10",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c04543-5f8427a396",
+      "type": "blocks"
+    },
+    {
+      "id": "e11",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c0472a-f6d4ba85dc",
+      "type": "blocks"
+    },
+    {
+      "id": "e12",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c048f7-4b8cbb04dc",
+      "type": "blocks"
+    },
+    {
+      "id": "e13",
+      "from": "01a1d9c0375e-7c6554bfc1",
+      "to": "01a1d9c04ac7-f86add5ec9",
+      "type": "blocks"
+    },
+    {
+      "id": "e14",
+      "from": "01a1d9c03828-ceda46917f",
+      "to": "01a1d9c04d71-3588456bd8",
+      "type": "blocks"
+    },
+    {
+      "id": "e15",
+      "from": "01a1d9c03828-ceda46917f",
+      "to": "01a1d9c04f3c-767765a7ea",
+      "type": "blocks"
+    },
+    {
+      "id": "e16",
+      "from": "01a1d9c03828-ceda46917f",
+      "to": "01a1d9c05159-ba507d5a1e",
+      "type": "blocks"
+    },
+    {
+      "id": "e17",
+      "from": "01a1d9c038f7-ad30a2a6c3",
+      "to": "01a1d9c05444-f1a822d256",
+      "type": "blocks"
+    },
+    {
+      "id": "e18",
+      "from": "01a1d9c038f7-ad30a2a6c3",
+      "to": "01a1d9c0561c-db94fe2d61",
+      "type": "blocks"
+    },
+    {
+      "id": "e19",
+      "from": "01a1d9c038f7-ad30a2a6c3",
+      "to": "01a1d9c05816-d0981499df",
+      "type": "blocks"
+    },
+    {
+      "id": "e20",
+      "from": "01a1d9c038f7-ad30a2a6c3",
+      "to": "01a1d9c059fc-a6bce120cb",
+      "type": "blocks"
+    },
+    {
+      "id": "e21",
+      "from": "01a1d9c038f7-ad30a2a6c3",
+      "to": "01a1d9c05bd8-7e4755b77f",
+      "type": "blocks"
+    },
+    {
+      "id": "e22",
+      "from": "01a1d9c039c1-139bd6880d",
+      "to": "01a1d9c05e84-1adf11a339",
+      "type": "blocks"
+    },
+    {
+      "id": "e23",
+      "from": "01a1d9c039c1-139bd6880d",
+      "to": "01a1d9c06076-abdb43356c",
+      "type": "blocks"
+    },
+    {
+      "id": "e24",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c06324-c3bc442320",
+      "type": "blocks"
+    },
+    {
+      "id": "e25",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c064ff-fc773e7b45",
+      "type": "blocks"
+    },
+    {
+      "id": "e26",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c066dc-94bb012636",
+      "type": "blocks"
+    },
+    {
+      "id": "e27",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c0698a-e97fa63518",
+      "type": "blocks"
+    },
+    {
+      "id": "e28",
+      "from": "01a1d9c03a8f-0d0805b67d",
+      "to": "01a1d9c06b60-8f65cdff60",
+      "type": "blocks"
+    },
+    {
+      "id": "e29",
+      "from": "01a1d9c03b70-986e8d7a72",
+      "to": "01a1d9c0375e-7c6554bfc1",
+      "type": "informs"
+    }
+  ],
+  "edge_seq": 29
+}
