@@ -1,0 +1,35 @@
+{
+  "as_of": "2026-11-14T13:24:39.002581+00:00",
+  "items": [],
+  "due_count": 0,
+  "today_observation": {
+    "day": "2026-11-14",
+    "pushed": 0,
+    "completed": 7,
+    "queue_remaining": 0,
+    "labeled_completed": 7
+  },
+  "gate": {
+    "rate": 1.0,
+    "completed": 28,
+    "labeled": 28,
+    "threshold": 0.7,
+    "gate": "open",
+    "reason": "labeling rate 100% over 28 completed meets 70% -> L3 runs"
+  },
+  "budget": {
+    "estimate": 3.0,
+    "confidence": "observed",
+    "n_days": 10,
+    "n_saturated": 5,
+    "saturated_samples": [
+      0,
+      3,
+      3,
+      3,
+      3
+    ],
+    "max_completed": 14,
+    "reason": "5 saturated day(s): ceiling hit at [0.0, 3.0, 3.0, 3.0, 3.0] -> p25 = 3"
+  }
+}

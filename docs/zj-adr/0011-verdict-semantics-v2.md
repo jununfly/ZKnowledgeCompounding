@@ -104,3 +104,13 @@ S0 中 `stale` 的 enrich / refresh 覆盖分支与清除分支**并列纳入本
 - **代码现状（可核对）**：`web/review.py:40-44`、`cli.py:47`、`scheduling.py:220-221`、`tuning.py:120-121`、`expiry.py` 动作枚举、`repository/protocols.py` NodeRepository 接口，均为本仓库当前事实。
 - **TDD 证据 = N/A**：实现（Step 2–5）未启动，无红绿输出、`make test` 增量、`zkc decide --list --json` 真值回读对照。本 ADR 不声称任何运行时验证。
 - **roadmap 联动**：节点 `1-1`（Step 1 语义裁决）依 zj 2026-11-14 19:31 选项 A（「保持 in_progress，等 Step 6 把语义矩阵 v2 提炼到 ADR 后再谈 completed」），在本 ADR 落盘后转为 `completed`；下游 `1-2`–`1-7` 仍 `pending`，受 `blocks` 边阻塞，未授权执行。
+
+## 实现跟进（2026-11-14 Step 4 落码后）
+
+> 本 ADR 决策已于 2026-11-14 Step 4（TDD 落码，zj 20:49 授权）实现。上方「实现状态 = 未做、未授权」「本 ADR 只定决策，代码未改」「下游 1-2–1-7 仍 pending」均为**定案时刻（19:57）状态描述，现已过时**，以 `2026-11-14-verdict-semantics-cutover.md` 为准。
+
+- **代码已实现**：`src/zkc/web/review.py` 重写为终局动作分支 + `REVIEW_REASON` 常量（替代 `OUTCOME_VERDICT`）；`src/zkc/cli.py` 新增 `--content`/`--stale-branch`（choices=cover/purge），`ValueError`→`exit 2`；新增 `tests/test_verdict_v2.py`（12 项）+ 改写 `tests/test_web_review.py`（22 项）。
+- **门禁与健康度**（见 cutover §6）：全量 **626 tests OK**（基线 613，+13）、authority 0 leaks、mcp-gate 6 OK、invariant 0 violations。
+- **不变量已落实**：外生锚 A 人工输入归零（DI-1，A3）、覆盖不退出·清除退出（DI-4，B2/D2）、四类 reason 互异（DI-2，F1）均被测试守住。
+- **口径未污染**：阈值常量（`AIMD_UP`/`AIMD_DOWN`/`MIN_INTERVAL_DAYS`/`METRIC_W_*`）未动、不写回 `REGISTRY`，与 1-26 CALIBRATED 正交（DI-6）。
+- **本文档定位不变**：仍是 Step 1 语义裁决的长期归档；上方决策正文（①–④ / S0 / S1 / S2 / 外生锚 A 结论 / 语义矩阵 v2）一字未改，仅补充实现跟进，不涂改原决策。
