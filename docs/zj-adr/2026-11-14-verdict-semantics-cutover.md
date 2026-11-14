@@ -55,7 +55,7 @@
 - `scripts/zkc_authority_check.py`：**0 unresolved leaks**（process boundary）。
 - `make mcp-gate`（`tests.test_mcp_injection_gate`）：**6 OK**（CI 同口径）。
 - `make invariant`（`scripts/check_invariant.py`）：**0 violations**（P1 meta_claim.evidence_refs / P2 无全局衰减开关 / P3 archived 退出调度回路）。
-- roadmap 过程态 carrier `docs/plans/2026-11-14-zkc-verdict-semantics-roadmap.json` 节点 `1-3`（设计评审）/ `1-4`（TDD）及其子树已转 `completed`（非权威源，只作进度投影）。
+- 设计评审（Step 3）与 TDD 落码（Step 4）已收口，长期事实以 ADR-0011（决策）/ ADR-0012（规格 + §9 不变量）为准；过程态节点 1-3（设计评审）/ 1-4（TDD）仅作进度投影、非权威源。
 
 ## 7. 未决 / 后续
 
