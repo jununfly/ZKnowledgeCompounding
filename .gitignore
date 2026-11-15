@@ -30,3 +30,7 @@ logs/
 
 # R14 真实 run 遥测（本地落库聚合样本，由 dogfood 产生；非源码，可清空重采）
 data/r14_telemetry.jsonl
+
+# 运行时数据 + 一次性脚本/技能产物（非源码，不进 VCS；2026-11-14 巡检补）
+data/
+tmp/

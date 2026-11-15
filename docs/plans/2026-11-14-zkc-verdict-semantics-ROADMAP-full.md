@@ -6,49 +6,40 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `2026-11-14-zkc-verdict-semantics-roadmap.json` | 最后更新: 2026-11-14 20:15:45
+> 数据文件: `2026-11-14-zkc-verdict-semantics-roadmap.json` | 最后更新: 2026-11-15 09:23:33
 
 
 <!-- ROADMAP_TREE_START -->
 <!-- 由 zj-roadmap-driven 自动生成，请勿手动编辑 -->
-[ ][Y+] 1. ZKC 复审标注四档语义缺口收敛 · Plan 过程态 roadmap
+[x][Y+] 1. ZKC 复审标注四档语义缺口收敛 · Plan 过程态 roadmap
 ├── [x][Y+] 1-1. Step 1 语义裁决：收敛四档语义的 Human 逐项拍板（zj-grilling）
 ├── [x][Y+] 1-2. Step 2 规格与验收判据：把 S0/S1/S2 转成可测断言（zj-to-spec）
-│   ├── [ ][Y+] 1-2-1. 语义矩阵 v2 规格：内容轴与节奏轴分列、stale 两分支分列
-│   ├── [ ][Y+] 1-2-2. CLI verdict 与必填内容载荷、stale 分支选择的参数变更清单
-│   ├── [ ][Y+] 1-2-3. OUTCOME_VERDICT 与终局动作两张表的断言更新清单
-│   ├── [ ][Y+] 1-2-4. L1 基线重置、archive 退出调度回路与四类审计 reason 的断言口径
-│   └── [ ][Y+] 1-2-5. 口径切换点记录格式与回归用例清单
-├── [ ][Y+] 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review）
-│   ├── [ ][Y+] 1-3-1. 复核外生锚 A、标注率闸门与埋点口径的连带影响
-│   ├── [ ][Y+] 1-3-2. 锁定 AIMD 自适应环路人工输入归零的架构级结论
-│   └── [ ][Y+] 1-3-3. 产出不变量清单：L1 基线重置与 archive 退出边界
-├── [!][Y+] 1-4. Step 4 小切片实现：红绿重构语义矩阵 v2 与 CLI 契约（zj-tdd）
-│   ├── [!][Y+] 1-4-1. 红阶段：逐条构造失败在先的语义断言
-│   ├── [!][Y+] 1-4-2. 绿阶段：语义矩阵 v2 与 nodes.save 双时态新版本
-│   ├── [!][Y+] 1-4-3. 绿阶段：L1 基线重置与 archive 软归档退出调度回路
-│   ├── [!][Y+] 1-4-4. 绿阶段：分支选择人工门禁与四类审计 reason 区分
-│   └── [!][Y+] 1-4-5. 绿阶段：CLI 契约、全量测试证据与口径切换点记录
-├── [!][Y+] 1-5. Step 5 代码审查与证据复核：改动、测试与不变量三方对齐（zj-code-review）
-│   ├── [!][Y+] 1-5-1. 复核改动范围、测试证据与不变量是否仍成立
-│   └── [!][Y+] 1-5-2. zkc decide --list --json 真值回读与 choices 一致性核对
-├── [!][Y+] 1-6. Step 6 长期文档收口：ADR、风险册与证据提炼（zj-doc-health）
-│   ├── [!][Y+] 1-6-1. ADR：语义矩阵 v2、外生锚 A 改终局动作、AIMD 人工输入归零与已知取舍
-│   ├── [!][Y+] 1-6-2. risks：标注率闸门与 archive 退出调度回路契约
-│   └── [!][Y+] 1-6-3. evidence：真值回读证据、口径切换点与一致性检查记录
-└── [!][Y+] 1-7. Step 7 注释方向偏差独立收口：tuning.py doc-only 切片（zj-doc-health）
-    ├── [!][Y+] 1-7-1. 修订 tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向
-    └── [!][Y+] 1-7-2. 一致性检查与独立提交（不并入语义实现批次）
+│   ├── [x][Y+] 1-2-1. 语义矩阵 v2 规格：内容轴与节奏轴分列、stale 两分支分列
+│   ├── [x][Y+] 1-2-2. CLI verdict 与必填内容载荷、stale 分支选择的参数变更清单
+│   ├── [x][Y+] 1-2-3. OUTCOME_VERDICT 与终局动作两张表的断言更新清单
+│   ├── [x][Y+] 1-2-4. L1 基线重置、archive 退出调度回路与四类审计 reason 的断言口径
+│   └── [x][Y+] 1-2-5. 口径切换点记录格式与回归用例清单
+├── [x][Y+] 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review）
+│   ├── [x][Y+] 1-3-1. 复核外生锚 A、标注率闸门与埋点口径的连带影响
+│   ├── [x][Y+] 1-3-2. 锁定 AIMD 自适应环路人工输入归零的架构级结论
+│   └── [x][Y+] 1-3-3. 产出不变量清单：L1 基线重置与 archive 退出边界
+├── [x][Y+] 1-4. Step 4 小切片实现：红绿重构语义矩阵 v2 与 CLI 契约（zj-tdd）
+│   ├── [x][Y+] 1-4-1. 红阶段：逐条构造失败在先的语义断言
+│   ├── [x][Y+] 1-4-2. 绿阶段：语义矩阵 v2 与 nodes.save 双时态新版本
+│   ├── [x][Y+] 1-4-3. 绿阶段：L1 基线重置与 archive 软归档退出调度回路
+│   ├── [x][Y+] 1-4-4. 绿阶段：分支选择人工门禁与四类审计 reason 区分
+│   └── [x][Y+] 1-4-5. 绿阶段：CLI 契约、全量测试证据与口径切换点记录
+├── [x][Y+] 1-5. Step 5 代码审查与证据复核：改动、测试与不变量三方对齐（zj-code-review）
+│   ├── [x][Y+] 1-5-1. 复核改动范围、测试证据与不变量是否仍成立
+│   └── [x][Y+] 1-5-2. zkc decide --list --json 真值回读与 choices 一致性核对
+├── [x][Y+] 1-6. Step 6 长期文档收口：ADR、风险册与证据提炼（zj-doc-health）
+│   ├── [x][Y+] 1-6-1. ADR：语义矩阵 v2、外生锚 A 改终局动作、AIMD 人工输入归零与已知取舍
+│   ├── [x][Y+] 1-6-2. risks：标注率闸门与 archive 退出调度回路契约
+│   └── [x][Y+] 1-6-3. evidence：真值回读证据、口径切换点与一致性检查记录
+└── [x][Y+] 1-7. Step 7 注释方向偏差独立收口：tuning.py doc-only 切片（zj-doc-health）
+    ├── [x][Y+] 1-7-1. 修订 tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向
+    └── [x][Y+] 1-7-2. 一致性检查与独立提交（不并入语义实现批次）
 <!-- ROADMAP_TREE_END -->
-
-### 阻塞链
-
-- 1-4. Step 4 小切片实现：红绿重构语义矩阵 v2 与 CLI 契约（zj-tdd） ← e5: 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review） [ ]
-- 1-4-1. 红阶段：逐条构造失败在先的语义断言 ← e17: 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review） [ ]
-- 1-4-2. 绿阶段：语义矩阵 v2 与 nodes.save 双时态新版本 ← e18: 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review） [ ]
-- 1-4-3. 绿阶段：L1 基线重置与 archive 软归档退出调度回路 ← e19: 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review） [ ]
-- 1-4-4. 绿阶段：分支选择人工门禁与四类审计 reason 区分 ← e20: 1-3. Step 3 契约与设计评审：锁定外生锚 A 与不变量清单（zj-tech-design-review） [ ]
-- ... 另有 11 个节点被阻塞未列出
 
 ### 决策历史
 
@@ -71,5 +62,15 @@ promote-via: ADR|design|contract|runtime-evidence
 | 1-1 | 1-1 的 completed 门禁怎么处理？（zj 19:31 选 A） | zj 2026-11-14 19:31 原话「A」：保持 1-1 为 `in_progress`，等 Step 6（长期文档收口）把语义矩阵 v2 定案提炼到 ADR 后，再谈 1-1 的 `completed`。不立即打勾、不放宽根节点门禁（`completed` 须 zj 显式授权 + ADR / contract / runtime-evidence 独立证据）、不把过程态 Plan / roadmap decisions / 工作日志当作独立证据。四条 exit_criteria 虽已满足，但判据满足不等于可 completed。 | 决策由 zj 本人给出，agent 只转录、不代拍。用 1-6 → 1-1 的 informs 边（非调度、不引入 blocks 环）标注「Step 6 的 ADR 是 1-1 completed 的证据来源」这一上下文。 |
 | 1-1 | ADR-0011 提炼完成，1-1 是否转 completed？ | 是；依 zj 19:31 选项 A（等 Step 6 把语义矩阵 v2 提炼到 ADR 后再谈 completed），ADR-0011 已于 19:57 落盘，1-1 在此转 completed | 语义裁决（Step 1）产物已沉淀为长期 ADR；代码实现（Step 2-5）仍 pending、未授权；completed 只表 Step 1 决策定案收口，不作下游执行授权 |
 | 1-2 | 「A 授权落码(Step 2 规格链)」的授权范围怎么定？ | A = 执行 Step 2 规格链（zj-to-spec）：产出可测规格与验收断言（ADR-0012），不含源码/测试实现；落码本体在 Step 4（zj-tdd）。B = 联动 docs/risks.md（新增 R15 硬不变量）。C = commit+push 作 batch checkpoint。 | Step 2 spec 已落 ADR-0012 为 completed 证据；源码/阈值/测试零改动；1-2 completed 不等同授权 Step 3-5 执行链 |
+| 1-3 | Step 3 契约与设计评审的 completed 依据（事后归档） | 设计评审产物 ADR-0012 §9 DI-1..DI-9 九条不变量已锁定；zj 2026-11-14 20:49 指令「Step 3 设计评审 → Step 4 TDD 落码」授权执行链。本条为 agent 事后转录既成事实，非 Human 新增裁决。 | 事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-3 | Step 3 的执行授权佐证（原话佐证，20:49） | zj 2026-11-14 20:49 指令「Step 3 设计评审 → Step 4 TDD 落码」，工作日志 143–144 行记为「zj 显式授权 Plan Step 3（设计评审）+ Step 4（zj-tdd 红绿落码）执行链」。本条为原话佐证（逐字转录日志），非新裁决。 | Human 原话佐证（20:49 指令，逐字转录日志）；非新裁决；更正上一轮把 Step 3/4 一并标为「授权记录不完整」的过度保守标注；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-4 | Step 4 TDD 落码的 completed 依据（事后归档） | commit cad4f0c：src/zkc/web/review.py 终局动作分发 + REVIEW_REASON 常量、src/zkc/cli.py --content/--stale-branch 门禁、tests/test_verdict_v2.py 12 项 + tests/test_web_review.py 22 项；全量 626 tests OK、authority 0 leaks / mcp-gate 6 OK / invariant 0 violations。本条为 agent 事后转录既成事实，非 Human 新增裁决。 | 事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-4 | Step 4 的执行授权佐证（原话佐证，20:49） | 同一条 zj 2026-11-14 20:49 指令「Step 3 设计评审 → Step 4 TDD 落码」显式授权 Step 4（zj-tdd 红绿落码）；落码产物 commit cad4f0c（626 tests OK）。本条为原话佐证（逐字转录日志），非新裁决。 | Human 原话佐证（20:49 指令，逐字转录日志）；非新裁决；更正上一轮把 Step 3/4 一并标为「授权记录不完整」的过度保守标注；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-5 | Step 5 代码审查与证据复核的 completed 依据（事后归档） | 结论 PASS（DI-1..DI-9 三方对齐 + 真值回读 + choices 一致性核对）；DI-8 规格漂移已于 20:59 校正 ADR-0012 文字；证据 docs/evidence/verdict-v2-consistency-2026-11-14.md C1–C5。本条为 agent 事后转录既成事实，非 Human 新增裁决。 | 事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-5 | Step 5 的执行授权（zj 2026-11-15 事后追认） | zj 2026-11-15 09:14 选择「追认三步」口径，确认 Step 5/6/7 的执行链有效（选项原文口径：事后追认、非 11-14 当时的逐条指令、不补造原话）。本条转录该真实交互，属事后追认，不补造 zj 原话。独立证据：Step 5 审查结论 PASS（DI-1..DI-9 三方对齐 + 真值回读 + choices 一致性核对），见 docs/evidence/verdict-v2-consistency-2026-11-14.md C1–C5。 | Human 授权（事后追认 2026-11-15，非 11-14 当时的逐条指令）；原始逐条指令记录仍缺失、已由 zj 追认补齐；不补造原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-6 | Step 6 长期文档收口的 completed 依据（事后归档） | commit 7a60779：docs/evidence/verdict-v2-consistency-2026-11-14.md + 真值回读 JSON、docs/risks.md R15 状态改为「已落码守住」、ADR-0011 补「实现跟进」段。本条为 agent 事后转录既成事实，非 Human 新增裁决。 | 事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-6 | Step 6 的执行授权（zj 2026-11-15 事后追认） | zj 2026-11-15 09:14 选择「追认三步」口径，确认 Step 5/6/7 的执行链有效（选项原文口径：事后追认、非 11-14 当时的逐条指令、不补造原话）。本条转录该真实交互，属事后追认，不补造 zj 原话。独立证据：commit 7a60779：docs/evidence 真值回读一致性记录 + 回读 JSON、docs/risks.md R15 状态改为「已落码守住」、ADR-0011 补「实现跟进」段。 | Human 授权（事后追认 2026-11-15，非 11-14 当时的逐条指令）；原始逐条指令记录仍缺失、已由 zj 追认补齐；不补造原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-7 | Step 7 注释方向偏差独立收口的 completed 依据（事后归档） | commit 173fa99：src/zkc/tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向订正（diff 已复核），doc-only 独立提交、不并入语义实现批次。本条为 agent 事后转录既成事实，非 Human 新增裁决。 | 事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
+| 1-7 | Step 7 的执行授权（zj 2026-11-15 事后追认） | zj 2026-11-15 09:14 选择「追认三步」口径，确认 Step 5/6/7 的执行链有效（选项原文口径：事后追认、非 11-14 当时的逐条指令、不补造原话）。本条转录该真实交互，属事后追认，不补造 zj 原话。独立证据：commit 173fa99：src/zkc/tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向订正，doc-only 独立提交、不并入语义实现批次。 | Human 授权（事后追认 2026-11-15，非 11-14 当时的逐条指令）；原始逐条指令记录仍缺失、已由 zj 追认补齐；不补造原话；不作 proof/evidence（ADR-0008 / 护栏 #9） |
 
 

@@ -238,3 +238,13 @@ suggested capability：在 ZKC 仓库内增设绑定 zkc decide 真值回读的�
 - 门禁历史读数：收敛前 `0 process target(s)` / `scanned 256 durable source(s)` / `0 unresolved leaks`；16:46 收敛后 `1 process target(s)` / `254 durable` / `0 leaks`；**2026-11-14 17:10 编排成 roadmap 后复跑 `python scripts/zkc_authority_check.py .`：`4 process target(s)` / `scanned 254 durable source(s)` / `0 unresolved leaks`**（3 份新增产物同在 `docs/plans/`，受目录剪枝保护）。
 - **权威边界**（ADR-0008 / 护栏 #9）：本文件是过程态计划，**不得作为权威源引用**；durable 代码与长期文档不得引用它作 proof / evidence，不得把其结论直接写成完成度证明。结论提炼路径固定为：语义矩阵 v2 与外生锚 A 由乘因子改终局动作、AIMD 自适应环路人工输入归零 → ADR；标注率闸门与归档退出契约 → risks；`zkc decide --list --json` 真值回读 → evidence。未完成提炼前，本文件只作决策脉络溯源。
 - 已删除的 `docs/roadmap/roadmap.json` carrier 与 `ROADMAP.md` 视图**仍不恢复**；按 zj 16:53 指令，`docs/plans/` 下新增的是本 Plan 的过程态 roadmap 投影（单份 carrier + 两份 CLI 生成视图），连同本文件共 4 份，均带 `zj-roadmap-authority/v1` 信封。**不重建全局过程编排链路，也不授权执行 Step 1–7**（见 §口径变更记录）。
+
+## 附录 C · 状态快照更新（2026-11-14 23:3x，只读巡检后补记）
+
+> 本节是**过程态状态注记**，只补齐「§口径变更记录（18:57）是历史快照」这一上下文；**不改动 §Identity 的任何契约字段，也不构成验收通过**（`plan_acceptance` 仍为 `pending`）。节点 completed 只表过程状态，不作 proof / evidence（ADR-0008 / 护栏 #9）。
+
+- **历史快照**：§口径变更记录 18:57 记「28 节点零 completed、19:21 起 1-1 为唯一 in_progress、其余 27 pending、ready 只剩根节点」，描述的是当时的真实状态，逐字保留不动。
+- **当前状态（2026-11-14 21:37:38 读数）**：carrier 已 **28/28 completed**、0 pending / 0 in_progress / 0 blocked、17 decisions；`ready` 空、`critical-path` 无未完工链、`signals` 0、`validate` Valid。Step 1–7 已全部执行，故 §Identity 与 §口径变更记录中「Step 1–7 未执行 / 不授权执行链」是**当时的授权边界陈述**，不是当前进度描述。
+- **落地证据（durable，非过程态）**：`docs/zj-adr/0011-verdict-semantics-v2.md`（决策）、`docs/zj-adr/0012-verdict-semantics-v2-spec.md`（规格 DI-1..DI-9）、`docs/zj-adr/2026-11-14-verdict-semantics-cutover.md`（口径切换点）、`docs/risks.md` R15（已落码守住）、`docs/evidence/verdict-v2-consistency-2026-11-14.md`（真值回读一致性 C1–C5）；提交链 `ed7fc40` → `cad4f0c` → `173fa99` → `7a60779` → `cdd4624` → `00618e5`，HEAD 与 origin/main 同步，CI 6/6 绿。
+- **`plan_acceptance` 保持 `pending`**：验收判据未被消费、Composer handoff 仍 `eligible=false`。把节点全打勾改写成 `passed` 等于用过程态结论冒充验收通过，故不这样做；是否消费验收判据须 zj 单独拍板。
+- **授权链补记（2026-11-15 09:14，zj 选「追认三步」）**：Step 3/4 依 zj 20:49 原话「Step 3 设计评审 → Step 4 TDD 落码」各补一条「原话佐证」decision（上一轮统一 note 把 3/4 也标成缺口属过度保守，一并更正）；Step 5/6/7 的日志确无逐条指令，由 zj 于 2026-11-15 选择「追认三步」口径**事后追认**执行链有效，各补一条 decision 并标注「事后追认 / 非当时逐条指令 / 原始指令记录仍缺失 / 不补造原话」。至此授权链在记录层补齐（decisions 22 → 27）；**但这是 Human 事后追认，不是 11-14 当时的逐条指令**，该事实如实保留，且不把过程态 completed 当 proof / evidence。原 5 条事后归档 decision 按「只追加不覆盖」纪律保留作历史。

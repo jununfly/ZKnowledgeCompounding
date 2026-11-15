@@ -168,7 +168,18 @@
         "1-3-2",
         "1-3-3"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Step 3 契约与设计评审的 completed 依据（事后归档）",
+          "answer": "设计评审产物 ADR-0012 §9 DI-1..DI-9 九条不变量已锁定；zj 2026-11-14 20:49 指令「Step 3 设计评审 → Step 4 TDD 落码」授权执行链。本条为 agent 事后转录既成事实，非 Human 新增裁决。",
+          "note": "事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        },
+        {
+          "q": "Step 3 的执行授权佐证（原话佐证，20:49）",
+          "answer": "zj 2026-11-14 20:49 指令「Step 3 设计评审 → Step 4 TDD 落码」，工作日志 143–144 行记为「zj 显式授权 Plan Step 3（设计评审）+ Step 4（zj-tdd 红绿落码）执行链」。本条为原话佐证（逐字转录日志），非新裁决。",
+          "note": "Human 原话佐证（20:49 指令，逐字转录日志）；非新裁决；更正上一轮把 Step 3/4 一并标为「授权记录不完整」的过度保守标注；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        }
+      ],
       "notes": "role: 评审语义变更对外生锚 A、L3 AIMD、标注率闸门与埋点口径的连带影响，并锁定人工侧改走终局动作后 AIMD 自适应环路人工输入归零的架构级结论。reason: 验收要求先证明改动不污染已结案的 1-26 CALIBRATED 口径，证据来自现有 ADR 与风险册。inputs: 规格、docs/zj-adr/、docs/risks.md、src/zkc/scheduling.py:548-599。dependencies: Step 1, Step 2。excluded: zj-wait-what、zj-domain-modeling。prerequisites: 规格已成文且 Human 已确认决定项；源码改动仍须 Human 单独授权。\n[2026-11-14 收口] Step 3 设计评审已完成：ADR-0012 §9 锁定 DI-1..DI-9 九条不变量（外生锚A归零/终局动作分发/内容-分支Human-only门禁/四类reason互异/无物理删除/阈值正交/历史不回填/签名向后兼容/不触发distill）。已证明改动不污染 1-26 CALIBRATED 口径（verdict 不再调 S.adapt_interval，AIMD 自适应环路人工输入归零，tuning.py 阈值常量未动）。",
       "layer": "plan",
       "exit_criteria": [
@@ -193,7 +204,18 @@
         "1-4-4",
         "1-4-5"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Step 4 TDD 落码的 completed 依据（事后归档）",
+          "answer": "commit cad4f0c：src/zkc/web/review.py 终局动作分发 + REVIEW_REASON 常量、src/zkc/cli.py --content/--stale-branch 门禁、tests/test_verdict_v2.py 12 项 + tests/test_web_review.py 22 项；全量 626 tests OK、authority 0 leaks / mcp-gate 6 OK / invariant 0 violations。本条为 agent 事后转录既成事实，非 Human 新增裁决。",
+          "note": "事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        },
+        {
+          "q": "Step 4 的执行授权佐证（原话佐证，20:49）",
+          "answer": "同一条 zj 2026-11-14 20:49 指令「Step 3 设计评审 → Step 4 TDD 落码」显式授权 Step 4（zj-tdd 红绿落码）；落码产物 commit cad4f0c（626 tests OK）。本条为原话佐证（逐字转录日志），非新裁决。",
+          "note": "Human 原话佐证（20:49 指令，逐字转录日志）；非新裁决；更正上一轮把 Step 3/4 一并标为「授权记录不完整」的过度保守标注；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        }
+      ],
       "notes": "role: 以红绿重构实现语义矩阵 v2、changed 与 stale 覆盖的必填内容载荷及 nodes.save 双时态新版本、L1 基线重置、stale 清除归档退出、分支选择人工门禁、四类审计 reason 区分、以及 CLI 契约。reason: 验收要求每条语义都有失败在先的测试证据。inputs: 规格、不变量清单、tests/test_web_review.py 与 tests/test_p1_review_fixes.py。outputs: 新增与更新的用例、最小实现、全量测试输出证据、2026-11-14 语义口径切换点记录。constraints: 不得静默改动阈值参数；源码改动须 Human 单独授权（Plan §side_effect_authorization）。dependencies: Step 2, Step 3。excluded: zj-prototype、zj-implement。\n[2026-11-14 收口] Step 4 TDD 落码已完成：tests/test_verdict_v2.py（12 项）+ tests/test_web_review.py（22 项，含改写）全绿；全量 626 tests OK（基线 613）。改动面：src/zkc/web/review.py（decide_review 终局动作分支 + REVIEW_REASON 常量 + route/JS）、src/zkc/cli.py（--content / --stale-branch + ValueError→exit 2）。门禁：authority 0 leaks / mcp-gate 6 OK / invariant 0 violations。未改 scheduling.adapt_interval、tuning.py、阈值常量。",
       "layer": "plan",
       "exit_criteria": [
@@ -216,7 +238,18 @@
         "1-5-1",
         "1-5-2"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Step 5 代码审查与证据复核的 completed 依据（事后归档）",
+          "answer": "结论 PASS（DI-1..DI-9 三方对齐 + 真值回读 + choices 一致性核对）；DI-8 规格漂移已于 20:59 校正 ADR-0012 文字；证据 docs/evidence/verdict-v2-consistency-2026-11-14.md C1–C5。本条为 agent 事后转录既成事实，非 Human 新增裁决。",
+          "note": "事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        },
+        {
+          "q": "Step 5 的执行授权（zj 2026-11-15 事后追认）",
+          "answer": "zj 2026-11-15 09:14 选择「追认三步」口径，确认 Step 5/6/7 的执行链有效（选项原文口径：事后追认、非 11-14 当时的逐条指令、不补造原话）。本条转录该真实交互，属事后追认，不补造 zj 原话。独立证据：Step 5 审查结论 PASS（DI-1..DI-9 三方对齐 + 真值回读 + choices 一致性核对），见 docs/evidence/verdict-v2-consistency-2026-11-14.md C1–C5。",
+          "note": "Human 授权（事后追认 2026-11-15，非 11-14 当时的逐条指令）；原始逐条指令记录仍缺失、已由 zj 追认补齐；不补造原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        }
+      ],
       "notes": "role: 复核改动、测试证据与不变量是否仍成立。reason: Plan acceptance 需要独立的证据复核。inputs: 上一环节产物、zkc decide --list --json 真值回读、OUTCOME_VERDICT 与 CLI choices 一致性。outputs: 审查结论（通过或退回）与证据清单。prerequisites: 上一环节全量测试通过。dependencies: Step 4。excluded: zj-review-findings、zj-neat-freak。审查退回即停。\n[2026-11-14 收口] Step 5 代码审查与证据复核：结论 PASS（通过），1 处非阻塞规格漂移（DI-8 签名文字与实现不一致——实现 decide_review(store,node_id,outcome,now=None,content=None,stale_branch=None)：now 为 4th 位置参、content/stale_branch 为 5th/6th，可位置可关键字；ADR-0012 DI-8 误写为 keyword-only(* 后)+now 置末。此偏差为兼容旧调用点 decide_review(store,id,'still_valid',NOW) 的合理取舍，非代码缺陷，建议 Step 6 校正 ADR 文字）。\nDI-1..DI-9 逐条核对：外生锚A归零(decide_review 零调用 adapt_interval，spy 断言=0)、终局动作分发正确(changed/stale+cover→save+set_baseline+mark_reviewed 不退出；stale+purge→archive 退出；still_valid/browse→仅 mark_reviewed)、Human-only 门禁(缺失即 ValueError 绝不默认 purge)、四类 reason 集中互异(REVIEW_REASON)、无物理删除(archive 软归档 archived_at 置位)、阈值正交(tuning.py 未动)、历史不回填(无 retroactive，test 断言 4.9d legacy 不变)、不触发 distill(仅 nodes.save 内容替换)。\n真值回读：zkc decide --list --json 实跑(空 store→due_count:0/today_observation:null，与真值一致)+ 进程内 seed 真实状态(2 due + 今日观测 completed=3/labeled=2)均正确返回真实值。\nOUTCOME_VERDICT 已删、CLI VERDICTS 四档无 too_early、--content/--stale-branch(cover|purge) 与 REVIEW_REASON 分支一一对应、route decide_api 透传且 ValueError→400。\n测试：相关三模块 40 OK；全量 626 OK；门禁 authority 0 leaks / mcp-gate 6 / invariant 0 violations。\n[2026-11-14 收口·DI-8 漂移解决] ADR-0012 §9 DI-8 文字已校正为与实现一致：decide_review(store,node_id,outcome,now=None,content=None,stale_branch=None)，now 第4位置参、content/stale_branch 第5/6 位，三者可位置可关键字（非 keyword-only）；并补注取舍原因（兼容旧调用 decide_review(store,id,'still_valid',NOW) 位置参传 NOW）。全仓再 grep keyword-only/旧签名模式无残留。漂移已消除，DI-1..DI-9 全部与实现对齐。",
       "layer": "plan",
       "exit_criteria": [
@@ -237,7 +270,18 @@
         "1-6-2",
         "1-6-3"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Step 6 长期文档收口的 completed 依据（事后归档）",
+          "answer": "commit 7a60779：docs/evidence/verdict-v2-consistency-2026-11-14.md + 真值回读 JSON、docs/risks.md R15 状态改为「已落码守住」、ADR-0011 补「实现跟进」段。本条为 agent 事后转录既成事实，非 Human 新增裁决。",
+          "note": "事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        },
+        {
+          "q": "Step 6 的执行授权（zj 2026-11-15 事后追认）",
+          "answer": "zj 2026-11-15 09:14 选择「追认三步」口径，确认 Step 5/6/7 的执行链有效（选项原文口径：事后追认、非 11-14 当时的逐条指令、不补造原话）。本条转录该真实交互，属事后追认，不补造 zj 原话。独立证据：commit 7a60779：docs/evidence 真值回读一致性记录 + 回读 JSON、docs/risks.md R15 状态改为「已落码守住」、ADR-0011 补「实现跟进」段。",
+          "note": "Human 授权（事后追认 2026-11-15，非 11-14 当时的逐条指令）；原始逐条指令记录仍缺失、已由 zj 追认补齐；不补造原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        }
+      ],
       "notes": "role: 把语义矩阵 v2 定案、changed 与 stale 覆盖的内容更新通道、stale 两分支与 D2 的审计 reason 区分、外生锚 A 由乘因子改终局动作后的存续结论与已知取舍（不新增 too_early）沉淀到 ADR 与风险册。reason: 项目护栏要求过程结论提炼到长期文档，验收要求语义定案与已结案 1-26 CALIBRATED 口径互不污染。inputs: 裁决记录、规格、审查结论、docs/zj-adr/、docs/risks.md。outputs: ADR 与风险册更新、语义口径切换点记录、一致性检查记录。prerequisites: Step 5 审查结论为通过且 Human 已审批语义定案。dependencies: Step 5。excluded: zj-docs-architecture、zj-edit-article。提炼路径见根节点决策。",
       "layer": "plan",
       "exit_criteria": [
@@ -258,7 +302,18 @@
         "1-7-1",
         "1-7-2"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Step 7 注释方向偏差独立收口的 completed 依据（事后归档）",
+          "answer": "commit 173fa99：src/zkc/tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向订正（diff 已复核），doc-only 独立提交、不并入语义实现批次。本条为 agent 事后转录既成事实，非 Human 新增裁决。",
+          "note": "事后归档（agent 转录，非 Human 新裁决）；Step 3–7 的逐条 zj 授权记录不完整，待 zj 确认；不补造 zj 原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        },
+        {
+          "q": "Step 7 的执行授权（zj 2026-11-15 事后追认）",
+          "answer": "zj 2026-11-15 09:14 选择「追认三步」口径，确认 Step 5/6/7 的执行链有效（选项原文口径：事后追认、非 11-14 当时的逐条指令、不补造原话）。本条转录该真实交互，属事后追认，不补造 zj 原话。独立证据：commit 173fa99：src/zkc/tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向订正，doc-only 独立提交、不并入语义实现批次。",
+          "note": "Human 授权（事后追认 2026-11-15，非 11-14 当时的逐条指令）；原始逐条指令记录仍缺失、已由 zj 追认补齐；不补造原话；不作 proof/evidence（ADR-0008 / 护栏 #9）"
+        }
+      ],
       "notes": "role: 独立 doc-only 切片，只修订 src/zkc/tuning.py:120-121 的 AIMD_UP / AIMD_DOWN 中文注释方向，不改运行逻辑与阈值常量，单独提交。reason: Human 裁决④要求注释偏差独立成片，验收要求注释与实现一致且不与语义实现混在同一变更批次。inputs: src/zkc/tuning.py:119-121 注释、scheduling.py:220 的 _aimd_factor 因子分支、Step 5 审查结论。outputs: doc-only 注释修订与一致性检查记录，独立提交，不并入语义实现批次。prerequisites: Step 5 审查结论为通过，且 Human 已确认该切片独立提交。dependencies: Step 5。excluded: zj-refactor（会触碰运行逻辑）、zj-neat-freak（只整理不校验一致性）。failure_exit: 注释切片混入非 doc-only 改动即停。",
       "layer": "plan",
       "exit_criteria": [
@@ -590,7 +645,7 @@
   },
   "metadata": {
     "created": "2026-11-14 19:10:13",
-    "updated": "2026-11-14 21:37:38",
+    "updated": "2026-11-15 09:23:33",
     "md_file": "2026-11-14-zkc-verdict-semantics-ROADMAP.md",
     "last_updated": "2026-11-14",
     "step3_step4_status": "completed",

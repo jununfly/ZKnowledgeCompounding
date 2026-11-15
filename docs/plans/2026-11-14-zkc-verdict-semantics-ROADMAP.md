@@ -7,7 +7,7 @@ durable-citation: forbidden
 promote-via: ADR|design|contract|runtime-evidence
 -->
 
-> 数据文件: `2026-11-14-zkc-verdict-semantics-roadmap.json` | 最后更新: 2026-11-14 21:37:38
+> 数据文件: `2026-11-14-zkc-verdict-semantics-roadmap.json` | 最后更新: 2026-11-15 09:23:33
 
 [x][Y+] 1. ZKC 复审标注四档语义缺口收敛 · Plan 过程态 roadmap
 ├── [x][Y+] 1-1. Step 1 语义裁决：收敛四档语义的 Human 逐项拍板（zj-grilling）
