@@ -123,6 +123,7 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
 - **遗留（非 Windows 实机复核 scope，待独立 fix）**：`zkc.migrate` 的 `cmd_upgrade` 在全新库上漏调 `bootstrap(db)`，
   致首次 `upgrade` 报 `relation "schema_migration" does not exist`；绕过法为先跑一次 `status`/`verify`
   （其内部 `bootstrap`）再 `upgrade`。此为 migrate 工具自身 bug，不动 `zkc` CLI 语义，不计入 Windows 实机复核验收。
+  - **〔2026-11-16 销账〕** 上段为 2026-11-07 当时的历史陈述，保留原文。该 fix 已于同日 `0bb42f4` 落地（`cmd_upgrade` 在 `ensure_database(db)` 后补 `bootstrap(db)`），绕过法不再必要。当时只改 1 行代码、未带测试，且 `tests/test_migrate.py` 的 `setUpModule` 先 `bootstrap` 再 `upgrade` 恰好绕开该生产路径——2026-11-16 补回归锁 `TestFreshDatabaseUpgrade.test_upgrade_on_fresh_database_records_migrations`：独立新库不预 bootstrap、直接 `cmd_upgrade` 应成功；临时回退该行实测红（`relation "schema_migration" does not exist`），恢复后绿（`test_migrate.py` 12 tests OK）。生产代码零改动。
 
 ### 2. zj-zkc-daily skill 纳管（zj 显式推翻跨项目既有约定）
 - 原状：该 skill 只有 `~/.workbuddy/skills/zj-zkc-daily/SKILL.md` 一份，不在 git、无备份。

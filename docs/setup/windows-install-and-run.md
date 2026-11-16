@@ -212,6 +212,8 @@ ERROR:  relation "schema_migration" does not exist
 
 > 这是 `migrate` 工具自身 bug，**不改动源码**（符合 Windows 实机复核 scope gate）。后续可在独立 fix 里给 `cmd_upgrade` 在 `ensure_database(db)` 后补一行 `bootstrap(db)`。
 
+> **〔2026-11-16 销账〕** 上段为当时历史陈述、保留原文：该 fix 已于 2026-11-07 `0bb42f4` 落地，**绕过法不再必要**，可在全新库上直接 `upgrade`。回归锁见 `tests/test_migrate.py::TestFreshDatabaseUpgrade`（真库红→绿已验证）。
+
 ---
 
 ## 5. Part D — 运行 E1 每日驱动并验证真值收口
@@ -271,7 +273,7 @@ wsl -u root -e bash -c "service postgresql start; sleep 2; cd <REPO_WSL> && expo
 | `wsl: 检测到 localhost 代理配置…NAT 模式不支持 localhost 代理` + `python3: command not found` | 继承代理 + PATH 缺系统目录 | `unset` 代理；`export PATH=.../usr/bin:/bin:$PATH` |
 | `FileNotFoundError: [Errno 2] No such file or directory: 'docker'` | `zkc.migrate` 调 docker，但 WSL 无 docker | 用 `.wsl-bin/docker` 垫片（Part C.1），并把该目录放 PATH 最前 |
 | `Connection refused ... 127.0.0.1:55433` | WSL 重启后 PG 没自起 | `wsl -u root -e bash -c "service postgresql start"` |
-| `relation "schema_migration" does not exist` | `cmd_upgrade` 漏 bootstrap | 先 `zkc.migrate status` 再 `upgrade` |
+| `relation "schema_migration" does not exist` | `cmd_upgrade` 漏 bootstrap〔2026-11-16 销账：已于 `0bb42f4` 修复，无需绕过〕 | 先 `zkc.migrate status` 再 `upgrade`（历史绕过法；现已可直接 `upgrade`） |
 | Windows 侧 `Test-NetConnection localhost 55433` → `TcpTestSucceeded: False` | Windows↔WSL localhost 转发未生效 | 迁移/驱动改在 WSL 内执行；勿从 Windows 侧直连 |
 | `psql: command not found`（WSL 内 migrate 时） | PATH 未含 PG bin | `export PATH=/usr/lib/postgresql/16/bin:$PATH` |
 | `pip` 从 `files.pythonhosted.org` 超时 | 网络到官方源不稳 | 换镜像 `-i https://pypi.tuna.tsinghua.edu.cn/simple` |
