@@ -145,5 +145,28 @@ class TestReplay(unittest.TestCase):
         self.assertEqual(migrate.applied(DB), before)
 
 
+class TestFreshDatabaseUpgrade(unittest.TestCase):
+    """回归锁：全新库首次 upgrade 必须自动建出 schema_migration（0bb42f4 修复）。
+
+    使用独立库、不预 bootstrap —— 本文件 setUpModule 先 bootstrap 再 upgrade，
+    恰好绕开这条生产路径；此处的注入方式专门封住该盲区。
+    """
+
+    FRESH_DB = "zkc_migrate_fresh_test"
+
+    def setUp(self) -> None:
+        if not _pg_enabled():
+            self.skipTest("ZKC_RUN_PG_TESTS != 1: 跳过 PG migrate 集成测试")
+        migrate.psql("postgres", f'DROP DATABASE IF EXISTS "{self.FRESH_DB}";')
+
+    def tearDown(self) -> None:
+        migrate.psql("postgres", f'DROP DATABASE IF EXISTS "{self.FRESH_DB}";')
+
+    def test_upgrade_on_fresh_database_records_migrations(self):
+        """全新库不预建版本表，直接 upgrade 应成功并留下 0001 应用记录。"""
+        migrate.cmd_upgrade(self.FRESH_DB, to=None)
+        self.assertIn("0001", migrate.applied(self.FRESH_DB))
+
+
 if __name__ == "__main__":
     unittest.main()
