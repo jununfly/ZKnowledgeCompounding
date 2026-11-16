@@ -130,17 +130,21 @@ class PgArchiveExitTest(unittest.TestCase):
 
 
 # ---------------------------------------------------------------- P3 机械谓词
+# fixture 表达「同时满足 P3(归档) 与 P4(墓碑) 的好实现」——P4 于 S2 加入，
+# 新旧好实现都须过滤 deleted_at；_BAD_PG 仍只缺 archived 过滤以保持单一变量。
 _GOOD_PG = '''class Pg:
     def list_due_for_review(self, as_of):
-        return query("SELECT * FROM node WHERE decay_score >= 0.6 AND archived_at IS NULL")
+        return query("SELECT * FROM node WHERE decay_score >= 0.6 AND archived_at IS NULL AND deleted_at IS NULL")
 '''
 _BAD_PG = '''class Pg:
     def list_due_for_review(self, as_of):
-        return query("SELECT * FROM node WHERE decay_score >= 0.6")
+        return query("SELECT * FROM node WHERE decay_score >= 0.6 AND deleted_at IS NULL")
 '''
 _GOOD_MEM = '''class Mem:
     def list_due_for_review(self, as_of):
         for n in rows:
+            if n.deleted_at is not None:
+                continue
             if n.archived_at is not None:
                 continue
 '''

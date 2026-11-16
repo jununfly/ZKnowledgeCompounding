@@ -95,11 +95,11 @@ class PgNodeRepository(NodeRepository):
             INSERT INTO public.node_history
                 (id, track, routing_confidence, title, content, valid_from, valid_to,
                  tx_from, decay_score, review_interval, last_reviewed_at,
-                 attention_signal, created_at, embedding, archived_at,
+                 attention_signal, created_at, embedding, archived_at, deleted_at,
                  baseline_interval, interval_source, tx_to, version_seq)
             SELECT id, track, routing_confidence, title, content, valid_from, valid_to,
                    tx_from, decay_score, review_interval, last_reviewed_at,
-                   attention_signal, created_at, embedding, archived_at,
+                   attention_signal, created_at, embedding, archived_at, deleted_at,
                    baseline_interval, interval_source, clock_timestamp(), version_seq
             FROM public.node WHERE id=%(id)s
             """,
@@ -115,10 +115,11 @@ class PgNodeRepository(NodeRepository):
                 INSERT INTO public.node
                     (track, routing_confidence, title, content, valid_from, valid_to,
                      decay_score, review_interval, last_reviewed_at, attention_signal,
-                     embedding, embedding_4096, archived_at, baseline_interval, interval_source)
+                     embedding, embedding_4096, archived_at, deleted_at,
+                     baseline_interval, interval_source)
                 VALUES (%(track)s, %(rc)s, %(title)s, %(content)s, %(vf)s, %(vt)s,
                         %(decay)s, %(ri)s, %(lr)s, %(att)s, %(emb)s::vector,
-                        %(emb4096)s::vector, %(arch)s, %(bi)s, %(isrc)s)
+                        %(emb4096)s::vector, %(arch)s, %(deleted)s, %(bi)s, %(isrc)s)
                 RETURNING id, created_at, tx_from, version_seq
                 """,
                 dict(
@@ -127,7 +128,8 @@ class PgNodeRepository(NodeRepository):
                     decay=node.decay_score, ri=node.review_interval, lr=node.last_reviewed_at,
                     att=node.attention_signal, emb=_vec_to_sql(node.embedding),
                     emb4096=_vec_to_sql(node.embedding_4096),
-                    arch=node.archived_at, bi=node.baseline_interval, isrc=node.interval_source,
+                    arch=node.archived_at, deleted=node.deleted_at,
+                    bi=node.baseline_interval, isrc=node.interval_source,
                 ),
             )
             r = cur.fetchone()
@@ -140,7 +142,8 @@ class PgNodeRepository(NodeRepository):
                 decay=node.decay_score, ri=node.review_interval, lr=node.last_reviewed_at,
                 att=node.attention_signal, emb=_vec_to_sql(node.embedding),
                 emb4096=_vec_to_sql(node.embedding_4096),
-                arch=node.archived_at, bi=node.baseline_interval, isrc=node.interval_source,
+                arch=node.archived_at, deleted=node.deleted_at,
+                bi=node.baseline_interval, isrc=node.interval_source,
             )
             # append-only 版本链 + OCC：单事务内「FOR UPDATE 锁行 → 快照 → 更新当前行」。
             # 并发安全由悲观行锁 FOR UPDATE 保证（串行化，last-writer-wins 不变，不破坏单写者语义）。
@@ -159,7 +162,7 @@ class PgNodeRepository(NodeRepository):
                     decay_score=%(decay)s, review_interval=%(ri)s,
                     last_reviewed_at=%(lr)s, attention_signal=%(att)s,
                     embedding=%(emb)s::vector, embedding_4096=%(emb4096)s::vector,
-                    archived_at=%(arch)s,
+                    archived_at=%(arch)s, deleted_at=%(deleted)s,
                     baseline_interval=%(bi)s, interval_source=%(isrc)s,
                     version_seq = version_seq + 1,
                     tx_from=clock_timestamp()
@@ -187,7 +190,7 @@ class PgNodeRepository(NodeRepository):
         # 新增派生列时同样只加在 node、不改本清单。
         cols = ("id, track, routing_confidence, title, content, valid_from, valid_to, "
                 "tx_from, decay_score, review_interval, last_reviewed_at, "
-                "attention_signal, created_at, embedding, archived_at, "
+                "attention_signal, created_at, embedding, archived_at, deleted_at, "
                 "baseline_interval, interval_source, tx_to, version_seq")
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute(
@@ -227,6 +230,8 @@ class PgNodeRepository(NodeRepository):
             raise ValueError(f"invalid order: {order}")
         where = []
         params: dict = dict(limit=max(1, int(limit)))
+        # 墓碑全功能不可见（Q9）：不受 include_archived 控制。
+        where.append("deleted_at IS NULL")
         if not include_archived:
             where.append("archived_at IS NULL")
         if track is not None:
@@ -258,13 +263,14 @@ class PgNodeRepository(NodeRepository):
     ) -> list[tuple[Node, float]]:
         if column not in EMBEDDING_COLUMNS:
             raise ValueError(f"invalid embedding column: {column!r}")
+        # 墓碑不可见不受 include_archived 控制；归档仅默认不可见。
         where = "AND archived_at IS NULL" if not include_archived else ""
         cur = self._conn.cursor(row_factory=dict_row)
         cur.execute(
             f"""
             SELECT *, 1 - ({column} <=> %(v)s::vector) AS sim
             FROM public.node
-            WHERE {column} IS NOT NULL {where}
+            WHERE {column} IS NOT NULL AND deleted_at IS NULL {where}
             ORDER BY {column} <=> %(v)s::vector
             LIMIT %(k)s
             """,
@@ -307,6 +313,7 @@ class PgNodeRepository(NodeRepository):
               AND last_reviewed_at IS NOT NULL
               AND (last_reviewed_at + review_interval) <= %(as_of)s
               AND archived_at IS NULL
+              AND deleted_at IS NULL
             """,
             dict(surface=surface, as_of=as_of),
         )
@@ -450,6 +457,41 @@ class PgNodeRepository(NodeRepository):
         )
         self._conn.commit()
 
+    def tombstone(self, node_id: UUID, at: datetime) -> None:
+        """墓碑软删：经 save 完整版本链路径写历史快照 + bump version_seq（非轻量路径）。
+        幂等：对已墓碑节点保持原墓碑时刻。"""
+        node = self.get(node_id)
+        if node is None or node.deleted_at is not None:
+            return
+        node.deleted_at = at
+        self.save(node)
+
+    def restore(self, node_id: UUID) -> None:
+        """墓碑恢复：清 deleted_at，经 save 写历史快照。幂等：未墓碑节点 no-op。"""
+        node = self.get(node_id)
+        if node is None or node.deleted_at is None:
+            return
+        node.deleted_at = None
+        self.save(node)
+
+    def list_tombstones_before(self, cutoff: datetime) -> list[Node]:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.node "
+            "WHERE deleted_at IS NOT NULL AND deleted_at <= %(cutoff)s",
+            dict(cutoff=cutoff),
+        )
+        return [self._row_to_node(r) for r in cur.fetchall()]
+
+    def hard_delete(self, node_id: UUID) -> None:
+        """真删：删 node 行，关联表由 FK ON DELETE CASCADE 清。
+        引用闸门/审计由上层 sweep 负责（S4/S5），本方法不检查、不写审计。"""
+        cur = self._conn.cursor()
+        if self._lock_hook is not None:
+            self._lock_hook()
+        cur.execute("DELETE FROM public.node WHERE id=%(id)s", dict(id=node_id))
+        self._conn.commit()
+
     @staticmethod
     def _row_to_node(row) -> Node:
         d = dict(row)
@@ -464,6 +506,7 @@ class PgNodeRepository(NodeRepository):
             embedding=_sql_to_vec(d.get("embedding")),
             embedding_4096=_sql_to_vec(d.get("embedding_4096")),
             archived_at=d.get("archived_at"),
+            deleted_at=d.get("deleted_at"),
             baseline_interval=d.get("baseline_interval"),
             interval_source=d.get("interval_source", "auto"),
             version_seq=d.get("version_seq", 1),
@@ -1158,6 +1201,7 @@ class PgStorage(Storage):
                  WHERE cm.node_id = n.id AND c.scope = 'higher_dim') AS higher_dim_count
             FROM public.node n
             WHERE n.track = 'dynamic' AND n.archived_at IS NULL
+              AND n.deleted_at IS NULL
             """
         )
         out = []
@@ -1270,6 +1314,7 @@ class PgStorage(Storage):
                  (SELECT {col} FROM public.node WHERE id=%(sid)s::uuid) q
             WHERE n.id <> %(sid)s::uuid AND n.{col} IS NOT NULL
               AND q.{col} IS NOT NULL
+              AND n.archived_at IS NULL AND n.deleted_at IS NULL
             ORDER BY n.{col} <=> q.{col}
             LIMIT %(k)s
             """,
@@ -1286,13 +1331,71 @@ class PgStorage(Storage):
         )
         return {r["cited_claim_id"]: int(r["n"]) for r in cur.fetchall()}
 
+    def append_deletion_audit(self, event) -> object:
+        from .models import DeletionAudit
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "INSERT INTO public.node_deletion_audit "
+            "(node_id, title, tombstoned_at, event_kind, deleted_at, ttl_days, operator, reason) "
+            "VALUES (%(nid)s, %(title)s, %(ts)s, %(kind)s, %(deleted)s, %(ttl)s, %(op)s, %(reason)s) "
+            "RETURNING id, created_at",
+            dict(nid=event.node_id, title=event.title, ts=event.tombstoned_at,
+                 kind=event.event_kind, deleted=event.deleted_at, ttl=event.ttl_days,
+                 op=event.operator, reason=event.reason),
+        )
+        r = cur.fetchone()
+        self._conn.commit()
+        return DeletionAudit(
+            id=r["id"], node_id=event.node_id, title=event.title,
+            tombstoned_at=event.tombstoned_at, event_kind=event.event_kind,
+            deleted_at=event.deleted_at, ttl_days=event.ttl_days,
+            operator=event.operator, reason=event.reason, created_at=r["created_at"],
+        )
+
+    def node_citation_count(self, node_id) -> int:
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT count(*) AS n FROM public.citation WHERE citing_node_id=%(nid)s",
+            dict(nid=node_id),
+        )
+        return int(cur.fetchone()["n"])
+
+    def last_purge_at(self):
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT max(deleted_at) AS t FROM public.node_deletion_audit "
+            "WHERE event_kind='purge'"
+        )
+        return cur.fetchone()["t"]
+
+    def purge_node(self, node_id) -> None:
+        # FK ON DELETE CASCADE 自动清 node_history/edge/context_member/citation/
+        # interval_adjustment/proposal_log/review_queue；attention_observation 按天聚合不动。
+        self.nodes.hard_delete(node_id)
+
+    def list_deletion_audit(self, node_id) -> list:
+        from .models import DeletionAudit
+        cur = self._conn.cursor(row_factory=dict_row)
+        cur.execute(
+            "SELECT * FROM public.node_deletion_audit WHERE node_id=%(nid)s ORDER BY created_at",
+            dict(nid=node_id),
+        )
+        return [
+            DeletionAudit(
+                id=r["id"], node_id=r["node_id"], title=r["title"],
+                tombstoned_at=r["tombstoned_at"], event_kind=r["event_kind"],
+                deleted_at=r["deleted_at"], ttl_days=r["ttl_days"],
+                operator=r["operator"], reason=r["reason"], created_at=r["created_at"],
+            ) for r in cur.fetchall()
+        ]
+
     def clear_all(self) -> None:
         """测试用：清空所有领域表（保留 schema）。"""
         cur = self._conn.cursor(row_factory=dict_row)
-        for t in ("llm_call_score", "attention_observation", "review_queue",
-                  "task_queue", "context_member", "context", "edge", "citation",
-                  "modeling_artifact", "meta_claim", "node_history", "node",
-                  "transform"):
+        for t in ("node_deletion_audit", "llm_call_score", "attention_observation",
+                  "review_queue", "task_queue", "context_member", "context", "edge",
+                  "citation", "modeling_artifact", "meta_claim", "node_history",
+                  "node", "transform"):
             cur.execute(f"DELETE FROM public.{t}")
         self._conn.commit()
 

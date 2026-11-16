@@ -116,6 +116,9 @@ class MemoryNodeRepository(NodeRepository):
         ql = q.lower() if q else None
         out = []
         for n in self._rows.values():
+            # 墓碑节点全功能不可见（Q9）：不受 include_archived 控制。
+            if n.deleted_at is not None:
+                continue
             if not include_archived and n.archived_at is not None:
                 continue
             if track is not None and n.track != track:
@@ -163,6 +166,8 @@ class MemoryNodeRepository(NodeRepository):
 
         hits = []
         for n in self._rows.values():
+            if n.deleted_at is not None:  # 墓碑不可见，不受 include_archived 控制
+                continue
             if not include_archived and n.archived_at is not None:
                 continue
             vec = getattr(n, column)
@@ -188,6 +193,8 @@ class MemoryNodeRepository(NodeRepository):
         surface = tuning.get("SURFACE_THRESHOLD")
         out: list[Node] = []
         for n in self._rows.values():
+            if n.deleted_at is not None:  # 墓碑退出 due 回路
+                continue
             if n.archived_at is not None:
                 # D2：已归档节点退出调度回路（导入语料清理后不得再出现在 due 队列）
                 continue
@@ -274,6 +281,42 @@ class MemoryNodeRepository(NodeRepository):
         cur = self._rows[node_id]
         cur.archived_at = at
         cur.version_seq += 1
+
+    def _bump_with_snapshot(self, node_id: UUID) -> Node:
+        """墓碑/恢复共用：写一行历史快照（闭合旧版 tx_to）+ bump version_seq。"""
+        old = self._rows[node_id]
+        snap = replace(old)
+        snap.tx_to = datetime.now()
+        self._versions.setdefault(node_id, []).append(snap)
+        cur = self._rows[node_id]
+        cur.tx_from = datetime.now()
+        cur.tx_to = None
+        cur.version_seq += 1
+        return cur
+
+    def tombstone(self, node_id: UUID, at: datetime) -> None:
+        # 幂等：已墓碑节点保持原墓碑时刻，不重复写历史、不重复 bump。
+        if self._rows[node_id].deleted_at is not None:
+            return
+        cur = self._bump_with_snapshot(node_id)
+        cur.deleted_at = at
+
+    def restore(self, node_id: UUID) -> None:
+        if self._rows[node_id].deleted_at is None:
+            return
+        cur = self._bump_with_snapshot(node_id)
+        cur.deleted_at = None
+
+    def list_tombstones_before(self, cutoff: datetime) -> list[Node]:
+        return [
+            replace(n) for n in self._rows.values()
+            if n.deleted_at is not None and n.deleted_at <= cutoff
+        ]
+
+    def hard_delete(self, node_id: UUID) -> None:
+        # 对齐 PG FK CASCADE 的等价效果：删当前行 + 全部历史版本。
+        self._rows.pop(node_id, None)
+        self._versions.pop(node_id, None)
 
 
 class MemoryClaimRepository(ClaimRepository):
@@ -575,6 +618,7 @@ class MemoryStorage(Storage):
         self.scores = MemoryScoreRepository()
         self.tasks = MemoryTaskQueueRepository()
         self._transform_seq = 0
+        self._deletion_audit: list = []  # ADR-0013 Q8 墓碑生命周期审计（内存等价）
 
     def record_transform(self, kind: str, params: dict) -> UUID:
         self._transform_seq += 1
@@ -585,6 +629,8 @@ class MemoryStorage(Storage):
         out = []
         for node in self.nodes._rows.values():
             if node.track != "dynamic" or node.archived_at is not None:
+                continue
+            if node.deleted_at is not None:  # 墓碑退出调度信号快照
                 continue
             nid = node.id
             captured = any(nid in c.evidence_refs for c in self.claims._rows.values()) or any(
@@ -684,6 +730,9 @@ class MemoryStorage(Storage):
         for node in self.nodes._rows.values():
             if node.id == seed_node_id:
                 continue
+            # 阶段一查实的运行时污染入口：近邻召回必须排除归档与墓碑节点。
+            if node.archived_at is not None or node.deleted_at is not None:
+                continue
             vec = getattr(node, column, None)
             if not vec or len(vec) != len(seed_vec):
                 continue
@@ -696,3 +745,44 @@ class MemoryStorage(Storage):
     def citation_counts(self) -> dict:
         # 内存 fake 无 citation 行（与 load_metric_inputs 的 citations=[] 同口径）
         return {}
+
+    def append_deletion_audit(self, event) -> object:
+        from uuid import uuid4
+        from .models import DeletionAudit
+        rec = DeletionAudit(
+            id=event.id or uuid4(), node_id=event.node_id, title=event.title,
+            tombstoned_at=event.tombstoned_at, event_kind=event.event_kind,
+            deleted_at=event.deleted_at, ttl_days=event.ttl_days,
+            operator=event.operator, reason=event.reason,
+            created_at=event.created_at or datetime.now(),
+        )
+        self._deletion_audit.append(rec)
+        return rec
+
+    def list_deletion_audit(self, node_id) -> list:
+        return [a for a in self._deletion_audit if a.node_id == node_id]
+
+    def node_citation_count(self, node_id) -> int:
+        # memory fake 无 citation 写入接口，恒 0（与 citation_counts 同口径）。
+        return 0
+
+    def last_purge_at(self):
+        purges = [a.deleted_at for a in self._deletion_audit
+                  if a.event_kind == "purge" and a.deleted_at is not None]
+        return max(purges) if purges else None
+
+    def purge_node(self, node_id) -> None:
+        """真删的 memory 等价：清 node（+历史）+ edge/context_member/review_queue。
+        对齐 PG 的 FK ON DELETE CASCADE 范围；attention 按天聚合不动。"""
+        self.nodes.hard_delete(node_id)
+        for eid, e in list(self.edges._rows.items()):
+            if e.src == node_id or e.dst == node_id:
+                self.edges._rows.pop(eid, None)
+        for cid, members in list(self.contexts._members.items()):
+            if node_id in members:
+                del members[node_id]
+        for rid, item in list(self.review_queue._rows.items()):
+            if item.node_id == node_id:
+                self.review_queue._rows.pop(rid, None)
+                if rid in self.review_queue._seq:
+                    self.review_queue._seq.remove(rid)

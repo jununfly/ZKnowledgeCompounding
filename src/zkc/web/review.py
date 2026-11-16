@@ -21,7 +21,7 @@
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -507,6 +507,12 @@ REVIEW_HTML = """<!doctype html>
 
 <div id="list"><div class="empty">加载中…</div></div>
 
+<div id="tombPanel">
+  <h2 style="font-size:1.1rem;margin-top:1.6rem;">墓碑区（软删除 · 可恢复）</h2>
+  <p class="hint">墓碑节点对全部功能不可见，7 天后按月扫描真删；真删前可在此恢复（仅 zj 本人，人环）。</p>
+  <div id="tombList"><div class="empty">加载中…</div></div>
+</div>
+
 <form class="close" id="closeForm">
   <b style="font-size:.8rem;color:#888;">每日收口</b><br>
   <label>今日推送(pushed)</label><input id="pushed" type="number" min="0" value="0">
@@ -563,6 +569,7 @@ REVIEW_HTML = """<!doctype html>
         <button class="changed" onclick="decide('${it.id}','changed')">已变</button>
         <button class="stale"   onclick="decide('${it.id}','stale')">已腐</button>
         <button class="browse"  onclick="decide('${it.id}','browse')">仅浏览</button>
+        <button class="stale"   onclick="tombMark('${it.id}')">删除(墓碑)</button>
       </div>`).join('');
   }
   async function decide(id, outcome) {
@@ -591,6 +598,38 @@ REVIEW_HTML = """<!doctype html>
     if (el) { el.style.opacity = .5; el.querySelector('.title').insertAdjacentHTML('beforeend',
       ` <span style="font-size:.75rem;color:#16a34a;">✓ ${j.verdict || '浏览'}</span>`); }
     await load();
+  }
+  async function tombMark(id) {
+    if (!confirm('置墓碑：该节点将对所有功能不可见，7 天后按月扫描真删。确认？')) return;
+    const op = prompt('人环确认：输入操作者标识（zj 本人）：');
+    if (op === null) return;
+    const r = await fetch('/review/api/tombstone/mark', {
+      method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'node_id=' + encodeURIComponent(id) + '&operator=' + encodeURIComponent(op) });
+    if (!r.ok) { alert('墓碑操作被拒：' + (await r.json()).detail); return; }
+    await load(); await loadTombstones();
+  }
+  async function tombRestore(id) {
+    if (!confirm('恢复该墓碑节点（is_delete=0）？')) return;
+    const op = prompt('人环确认：输入操作者标识（zj 本人）：');
+    if (op === null) return;
+    const r = await fetch('/review/api/tombstone/restore', {
+      method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'},
+      body: 'node_id=' + encodeURIComponent(id) + '&operator=' + encodeURIComponent(op) });
+    if (!r.ok) { alert('恢复操作被拒：' + (await r.json()).detail); return; }
+    await load(); await loadTombstones();
+  }
+  async function loadTombstones() {
+    const r = await fetch('/review/api/tombstones');
+    const j = await r.json();
+    const box = $('tombList');
+    if (!j.items.length) { box.innerHTML = '<div class="empty">无墓碑节点</div>'; return; }
+    box.innerHTML = j.items.map(n => `
+      <div class="item">
+        <div class="title">${escapeHtml(n.title)}</div>
+        <div class="meta">墓碑于 ${n.tombstoned_at} · 7 天后可真删</div>
+        <button class="valid" onclick="tombRestore('${n.id}')">恢复</button>
+      </div>`).join('');
   }
   $('closeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -629,6 +668,7 @@ REVIEW_HTML = """<!doctype html>
     await loadTasks();
   }
   load();
+  loadTombstones();
   loadTasks();
 
   async function loadClassify() {
@@ -756,6 +796,45 @@ def register_review_routes(app, store: Storage) -> None:
         except ValueError as e:
             from fastapi import HTTPException
             raise HTTPException(status_code=400, detail=str(e))
+
+    @router.post("/review/api/tombstone/mark")
+    def tombstone_mark_api(
+        node_id: str = Form(...),
+        operator: str = Form(...),
+        reason: Optional[str] = Form(None),
+    ) -> dict:
+        """墓碑标记（人环 Q7）：operator 必填即 zj 本人授权；二次确认在 UI 层。"""
+        from zkc.tombstone import mark_tombstone
+        try:
+            return mark_tombstone(store, node_id, operator=operator, reason=reason)
+        except (ValueError, KeyError) as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @router.post("/review/api/tombstone/restore")
+    def tombstone_restore_api(
+        node_id: str = Form(...),
+        operator: str = Form(...),
+        reason: Optional[str] = Form(None),
+    ) -> dict:
+        """墓碑恢复（人环 Q7）：operator 必填即 zj 本人授权。"""
+        from zkc.tombstone import restore_node
+        try:
+            return restore_node(store, node_id, operator=operator, reason=reason)
+        except (ValueError, KeyError) as e:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail=str(e))
+
+    @router.get("/review/api/tombstones")
+    def tombstones_api() -> dict:
+        """墓碑列表（供 UI 恢复区）：列已墓碑且未真删的节点。"""
+        from datetime import datetime, timezone
+        nodes = store.nodes.list_tombstones_before(datetime.now(timezone.utc))
+        return {
+            "count": len(nodes),
+            "items": [{"id": str(n.id), "title": n.title,
+                       "tombstoned_at": n.deleted_at} for n in nodes],
+        }
 
     @router.post("/review/api/observe")
     def observe_api(pushed: int = Form(0), queue_remaining: int = Form(0)) -> dict:

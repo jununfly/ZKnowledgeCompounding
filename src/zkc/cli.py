@@ -88,6 +88,28 @@ def _make_parser() -> argparse.ArgumentParser:
     p_archive.add_argument("--dry-run", action="store_true", help="只预览命中，不写库")
     p_archive.add_argument("--json", action="store_true", help="输出 JSON")
 
+    p_tomb = sub.add_parser(
+        "tombstone", help="墓碑软删除人环操作（ADR-0013：mark/restore 仅 zj 本人）")
+    tomb_sub = p_tomb.add_subparsers(dest="tombstone_action", required=True)
+    for action, help_text in (
+        ("mark", "置墓碑 is_delete=1（人环，operator 必填）"),
+        ("restore", "墓碑恢复 is_delete=0（人环，operator 必填）"),
+    ):
+        p = tomb_sub.add_parser(action, help=help_text)
+        p.add_argument("--id", required=True, help="节点 id")
+        p.add_argument("--operator", default=None,
+                       help="人环操作者标识（必填；即 zj 本人授权，不得缺省）")
+        p.add_argument("--reason", default=None, help="操作理由（可选，记入审计）")
+        p.add_argument("--storage", default="pg", help="pg（默认）或 memory")
+        p.add_argument("--json", action="store_true", help="输出 JSON")
+    p_sweep = tomb_sub.add_parser(
+        "sweep", help="月扫真删（月度门闩 + TTL 7d；只处理既有墓碑，不自动标记）")
+    p_sweep.add_argument("--operator", default="daily-automation",
+                         help="操作者标识（默认 daily-automation；真删动作非人环标记）")
+    p_sweep.add_argument("--dry-run", action="store_true", help="只统计候选，零写入")
+    p_sweep.add_argument("--storage", default="pg", help="pg（默认）或 memory")
+    p_sweep.add_argument("--json", action="store_true", help="输出 JSON")
+
     p_embed = sub.add_parser(
         "embed", help="补齐节点 embedding 双列（全轨、幂等、空正文用标题兜底）")
     p_embed.add_argument("--storage", default="pg", help="pg（默认）或 memory")
@@ -110,6 +132,17 @@ def dispatch(args: argparse.Namespace, store=None, encoders=None) -> int:
         print(f"=== ZKC daily（真值收口）@ {datetime.now(timezone.utc).isoformat()} ===")
         print(f"  pushed={obs.get('pushed')} queue_remaining={obs.get('queue_remaining')} "
               f"completed={obs.get('completed')} labeled={obs.get('labeled_completed')}")
+        # S6 月扫非侵入挂载：本任务即每日触发入口，不注册系统级调度。
+        # sweep 内部月度门闩幂等；失败不阻塞真值收口（吞异常，仅提示）。
+        try:
+            from zkc.sweep import sweep_tombstones
+            sweep_res = sweep_tombstones(
+                store, now=datetime.now(timezone.utc), operator="daily-automation")
+            if sweep_res["purged"]:
+                print(f"  月扫真删: purged={sweep_res['purged']} "
+                      f"blocked={sweep_res['blocked']}")
+        except Exception as e:  # noqa: BLE001 — 非侵入：月扫失败不影响真值收口
+            print(f"  [warn] 月扫跳过: {e}", file=sys.stderr)
         return 0
 
     if args.command == "meter":
@@ -182,6 +215,40 @@ def dispatch(args: argparse.Namespace, store=None, encoders=None) -> int:
                   f"dry_run={result['dry_run']}")
             print(f"  labeled_touched={result['labeled_touched']} "
                   f"review_queue_resolved={result['review_queue_resolved']}")
+        return 0
+
+    if args.command == "tombstone":
+        from zkc.tombstone import mark_tombstone, restore_node
+        action = args.tombstone_action
+        if action == "sweep":
+            from zkc.sweep import sweep_tombstones
+            res = sweep_tombstones(
+                store, now=datetime.now(timezone.utc), operator=args.operator,
+                dry_run=args.dry_run)
+            if args.json:
+                print(json.dumps(res, ensure_ascii=False, indent=2, default=str))
+            else:
+                print(f"=== ZKC tombstone sweep（dry_run={res['dry_run']}）===")
+                print(f"  scanned={res['scanned']} eligible={res['eligible']} "
+                      f"purged={res['purged']} blocked={res['blocked']} "
+                      f"month_gate_noop={res['noop_month_gate']}")
+            return 0
+        fn = mark_tombstone if action == "mark" else restore_node
+        if not args.operator:
+            print("ERROR: --operator 必填：墓碑标记/恢复是 zj 本人的人环操作，不得缺省",
+                  file=sys.stderr)
+            return 2
+        try:
+            res = fn(store, args.id, operator=args.operator, reason=args.reason)
+        except (ValueError, KeyError) as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return 2
+        if args.json:
+            print(json.dumps(res, ensure_ascii=False, indent=2, default=str))
+        else:
+            print(f"=== ZKC tombstone {action} {args.id} ===")
+            print(f"  applied={res['applied']} operator={res['operator']} "
+                  f"event_kind={res['event_kind']}")
         return 0
 
     if args.command == "embed":

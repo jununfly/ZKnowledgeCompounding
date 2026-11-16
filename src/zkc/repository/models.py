@@ -12,6 +12,24 @@ from enum import Enum
 from uuid import UUID, uuid4
 
 
+@dataclass
+class DeletionAudit:
+    """节点墓碑/恢复/真删的独立审计事件（ADR-0013 Q8）。
+
+    node_id 刻意无 FK（真删后审计行仍独立存在）；不记 content，只记 title 快照。
+    """
+    id: UUID | None = None
+    node_id: UUID | None = None
+    title: str = ""
+    tombstoned_at: datetime | None = None
+    event_kind: str = "tombstone"       # tombstone | restore | purge
+    deleted_at: datetime | None = None
+    ttl_days: int | None = None
+    operator: str = ""
+    reason: str | None = None
+    created_at: datetime | None = None
+
+
 class Track(str, Enum):
     STATIC = "static"
     DYNAMIC = "dynamic"
@@ -49,6 +67,9 @@ class Node:
     # 派生数据：nomic 768 列保留（双列共存）；不入 node_history（非事实）。
     embedding_4096: list[float] | None = None
     archived_at: datetime | None = None
+    # 墓碑软删除（ADR-0013 / S1）：NULL=未墓碑；非 NULL=墓碑时刻兼 TTL 起算点。
+    # 与 archived_at 正交：归档=退出调度回路仍可查阅，墓碑=全功能不可见且到期真删。
+    deleted_at: datetime | None = None
     # D6：基线 interval + 来源（human 不被自动化改写）
     baseline_interval: timedelta | None = None
     interval_source: str = "auto"

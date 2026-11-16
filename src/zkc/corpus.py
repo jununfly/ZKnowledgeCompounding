@@ -21,7 +21,7 @@ def select_corpus_nodes(store, *, track: str = "dynamic") -> list:
     """按派生特征列出仍是活跃状态的导入语料。"""
     out = []
     for node in store.nodes.list_by_track(track):
-        if node.archived_at is not None:
+        if node.archived_at is not None or node.deleted_at is not None:
             continue
         if (node.decay_score or 0.0) < 1.0:
             continue

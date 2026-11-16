@@ -13,6 +13,7 @@ from .models import (
     AttentionObservation,
     Claim,
     Context,
+    DeletionAudit,
     Edge,
     LLMCallScore,
     MetricInputs,
@@ -108,6 +109,30 @@ class NodeRepository(ABC):
         同 update_decay —— 不写历史版本快照、不 bump tx_from（archived_at 是派生状态），
         仅置列并自增 version_seq 保活 OCC。
         """
+
+    @abstractmethod
+    def tombstone(self, node_id: UUID, at: datetime) -> None:
+        """墓碑软删除（ADR-0013 / S1）：置 deleted_at=at（=TTL 起算点）。
+
+        与 archive 不同，这是双时态事实变更 —— 写一行历史快照并 bump version_seq，
+        供墓碑期在版本链可追溯。幂等：对已墓碑节点重复调用保持原墓碑时刻。
+        真删时该历史随 node FK CASCADE 清掉，删除痕迹由独立审计表承载。
+        """
+
+    @abstractmethod
+    def restore(self, node_id: UUID) -> None:
+        """墓碑期恢复（is_delete=0，Q7 人环）：清 deleted_at，写历史快照 + bump version_seq。
+        幂等：对未墓碑节点调用为 no-op。"""
+
+    @abstractmethod
+    def list_tombstones_before(self, cutoff: datetime) -> list[Node]:
+        """月扫候选（Q5）：返回 deleted_at IS NOT NULL AND deleted_at <= cutoff 的节点。
+        只读；是否真删由调用方（sweep）过引用闸门后决定。"""
+
+    @abstractmethod
+    def hard_delete(self, node_id: UUID) -> None:
+        """真删（Q6/Q8）：删 node 行，关联表由 FK ON DELETE CASCADE 清除。
+        调用方须先过引用闸门（S4）；本方法不检查引用、不写审计（由 sweep 负责）。"""
 
     @abstractmethod
     def search(
@@ -391,3 +416,25 @@ class Storage(ABC):
     @abstractmethod
     def citation_counts(self) -> dict[UUID, int]:
         """P5.1 产物浏览：claim_id -> 被后续条目引用次数（citation 表聚合；内存 fake 恒空）。"""
+
+    @abstractmethod
+    def append_deletion_audit(self, event: "DeletionAudit") -> "DeletionAudit":
+        """写一行墓碑生命周期审计事件（ADR-0013 Q8）。node_id 无 FK，不记 content。"""
+
+    @abstractmethod
+    def list_deletion_audit(self, node_id: UUID) -> list["DeletionAudit"]:
+        """按 node_id 列审计事件（按 created_at 升序）；供人环核对与 sweep 去重。"""
+
+    @abstractmethod
+    def node_citation_count(self, node_id: UUID) -> int:
+        """S4 引用闸门：citing_node_id=该节点的 citation 行数（node 主动引用 claim）。
+        memory fake 无 citation 写入接口，恒 0（与 citation_counts 同口径）。"""
+
+    @abstractmethod
+    def purge_node(self, node_id: UUID) -> None:
+        """S5 真删：删 node 行 + 全部关联（PG 靠 FK CASCADE；memory 显式清各仓储）。
+        调用方须先过 S4 引用闸门。attention_observation 按天聚合，不随节点回退。"""
+
+    @abstractmethod
+    def last_purge_at(self) -> datetime | None:
+        """S6 月度门闩：最近一次 purge 审计事件时间（无则 None）。只读。"""

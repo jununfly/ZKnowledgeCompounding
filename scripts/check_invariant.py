@@ -6,6 +6,8 @@
   P2 任何 feature 不得提供关闭 decay / attention 的全局开关；
   P3 归档节点必须退出整个调度回路（D2：due 实现过滤 archived_at +
      refresh_decay 跳过归档），防未来新后端 / 重构把过滤删掉。
+  P4 墓碑节点对全部默认读取路径不可见（ADR-0013 / Q9：search / embedding /
+     due / schedulable / discover / corpus 均过滤 deleted_at）。
 
 只判「不变式有没有被破坏」，不判产品行为正确性；缺陷逐条打印
 `E_INVARIANT_* path:line`，任何一条都非零退出。
@@ -150,12 +152,65 @@ def _check_kill_switches(root: Path, lines: list[str]) -> int:
     return violations
 
 
+def _check_tombstone_visibility(root: Path, lines: list[str]) -> int:
+    """P4（ADR-0013 / S2）：墓碑节点对全部默认读取路径不可见。
+
+    扫 repository/*.py 的指定函数体，要求含 deleted_at 谓词。目标函数不存在
+    时跳过（窄 fixture 无这些函数），便于与 P1/P2/P3 的 fixture 测试共存。
+    这是「全功能不可见」的机械守门——防未来新后端/重构漏加谓词（Q9）。
+    """
+    violations = 0
+    checked = 0
+    # (glob 模式, 函数名) —— 墓碑必须过滤的读取入口（方案 §2 矩阵）
+    targets = [
+        ("repository/*.py", "search"),
+        ("repository/*.py", "search_by_embedding"),
+        ("repository/*.py", "list_due_for_review"),
+        ("repository/*.py", "load_schedulable"),
+        ("repository/*.py", "discover_higher_dim"),
+        ("corpus.py", "select_corpus_nodes"),
+    ]
+    src = root / "src" / "zkc"
+    visited: set[tuple[str, str]] = set()
+    for pattern, fn in targets:
+        paths = sorted(src.glob(pattern)) if pattern.endswith("*.py") else [src / pattern]
+        for path in paths:
+            if not path.is_file():
+                continue
+            # protocols.py 是抽象接口（仅签名 + docstring），无谓词实现可查。
+            if path.name == "protocols.py":
+                continue
+            text = path.read_text(encoding="utf-8")
+            if f"def {fn}" not in text:
+                continue
+            key = (path.as_posix(), fn)
+            if key in visited:
+                continue
+            visited.add(key)
+            checked += 1
+            body = _slice_function(text, fn) or ""
+            if "deleted_at" not in body:
+                violations += 1
+                rel = path.relative_to(root).as_posix()
+                lines.append(
+                    f"E_INVARIANT_TOMBSTONE_VISIBILITY {rel}: "
+                    f"{fn} 未排除 deleted_at 墓碑节点（全功能不可见被破坏）"
+                )
+    if violations == 0:
+        lines.append(
+            f"[P4] tombstoned nodes invisible to all read paths: OK "
+            f"(checked {checked} implementations)"
+        )
+    return violations
+
+
 def evaluate(root: Path) -> tuple[list[str], int]:
     """返回 (逐行输出, 不变式违规数)。"""
     lines = [f"ZKC invariant-check root={root}"]
     violations = _check_provenance(root, lines)
     violations += _check_kill_switches(root, lines)
     violations += _check_archive_exit(root, lines)
+    violations += _check_tombstone_visibility(root, lines)
     lines.append(f"summary: {violations} invariant violations")
     return lines, violations
 
