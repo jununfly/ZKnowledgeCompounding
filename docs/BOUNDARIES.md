@@ -2,7 +2,7 @@
 
 > 生效：2026-11-02（zj 拍板「内容解耦，不动目录」）
 > 配套：roadmap 解耦原则（见 ADR-0008）。
-> **roadmap 驱动跟踪已于 2026-11-13 结束**：早期 `docs/plans/roadmap.json` + `ROADMAP.md` 已于 2026-11-03 删除（观察期目标为唯一未结项，已迁入 PRD §9 TODO 续跟）；后续曾以 `docs/roadmap/roadmap.json` 作为过程态 carrier，已于 2026-11-13 与本仓解耦移除（见 ADR-0008 §2026-11-13）。ADR 0010 的「roadmap.json 留在 docs/plans/」条款随之失效。本文件保留为**通用解耦约定**，code 注释不再引用 roadmap 节点 id（历史溯源锚已移除，见规则 2）。
+> **roadmap 驱动跟踪已于 2026-11-13 结束**：早期 `docs/plans/roadmap.json` + `ROADMAP.md` 已于 2026-11-03 删除（观察期目标为唯一未结项，已迁入 PRD §9「下一步」续跟，该观察期目标已于 2026-11-07 实证收口）；后续曾以 `docs/roadmap/roadmap.json` 作为过程态 carrier，已于 2026-11-13 与本仓解耦移除（见 ADR-0008 §2026-11-13）。ADR 0010 的「roadmap.json 留在 docs/plans/」条款随之失效。本文件保留为**通用解耦约定**，code 注释不再引用 roadmap 节点 id（历史溯源锚已移除，见规则 2）。
 
 ## 为什么需要这份约定
 
@@ -12,7 +12,7 @@
   `src/zkc/`，路径引用当场失效；
 - 同一 label 硬编码实时计数 `REGISTRY 49`，而该计数在 29 → 48 → 49 之间反复漂移
   （历史 decide 留痕可见），roadmap 成了代码状态的失真镜像；
-- `task_queue.py` / `review.py` 仍引用**已删除**的 `TODO.md`（任务队列 Q4 已删），属 dead reference；
+- `task_queue.py` / `review.py` 曾引用**已删除**的 `TODO.md`（任务队列 Q4 已删），属 dead reference；**该引用已于本次清理从源码移除（2026-11-02，见 §本次已清理的耦合），此处仅作历史论据保留**；
 - `UI-BRIEF.md`（已于 2026-11-02 文档治理中删除，系任务队列临时 intake brief）此前同样引用已删除的 `TODO.md`。
 
 解耦目标：**三类产物各自拥有清晰的真相域，互引只走稳定标识符，不把对方当实时镜像。**
@@ -40,7 +40,7 @@
 5. **单一真相源**：
    - 参数 → `tuning.REGISTRY` + `GET /tuning`
    - 代码路径 / 结构 → 代码树本身
-   - 进度状态 → （roadmap 已结束）现以 PRD §9 TODO / 代码运行时为准
+   - 进度状态 → （roadmap 已结束）现以 PRD §9「下一步」/ 代码运行时为准
    - 决策依据 → ADR / decision
 
 ## 编辑工作流
@@ -61,4 +61,4 @@
 - `docs/archive/plans/ZKC-implementation-plan.md`（原 ≈59KB，2026-11-02 已归档）→ 该归档目录已整体退役删除；其结论性内容（风险表 R1–R19 闭合项、§8 硬约束）已分别沉淀至 `docs/risks.md` 与 `docs/constraints.md`，与 roadmap 双头真相已解除。
 - 大量 `decide` 记录含历史代码路径 / 计数（29/48/49、391/403/407/409、commit hash） →
   这些是**审计留痕**，保留；理解时以代码 / 运行时为准，不以其中数字为当前真理。
-- `tuning` 多数参数仍为 `PLACEHOLDER`（校准门禁），属设计内，待 PRD §9 观察期目标（原观察期目标）攒够埋点后 `calibrate()`。
+- `tuning` 多数参数仍为 `PLACEHOLDER`（校准门禁），属设计内，待攒够埋点后 `calibrate()`。（2026-11-16 校注：PRD §9 观察期目标已于 2026-11-07 实证收口，但 `calibration_readiness` 门禁本身仍在——最近读数埋点 12 天 < 14 天、`ready=false`；「攒够埋点」指此门禁，非已收口的观察期目标。另 `METRIC_W_*` + `MIN_INTERVAL_DAYS` 已于 2026-11-11 由 zj 显式覆盖标 CALIBRATED，属永久 caveat，不经过 `calibrate()` 门禁。）

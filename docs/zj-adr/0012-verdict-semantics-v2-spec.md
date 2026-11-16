@@ -7,12 +7,15 @@
 
 Status: spec-frozen（2026-11-14，由 zj「A 授权落码(Step 2 规格链)」显式授权产出）
 
+> **DI-5 superseded（2026-11-16）**：本文中 DI-5「无物理删除」相关条款（§1 硬约束、§2 NodeRepository 行、§7 格式「无物理删除」、§9 DI-5）已被 zj 2026-11-16 显式推翻，见 `docs/zj-adr/0013-node-tombstone-soft-delete.md`。**裁决仅生效于语义层**——墓碑软删/TTL 真删的代码尚未实现（ADR-0013 阶段二/三未启动）。本次推翻**仅限** DI-5；ADR-0012 其余不变量 DI-1..DI-4、DI-6..DI-9 继续有效。下方历史原文逐字保留不涂改。
+
 ## 1. 范围与输入
 
 - **输入**：ADR-0011 §语义矩阵 v2、§决策（①–④ / S0 / S1 a–d / S2）、§外生锚 A 架构级结论；当前代码事实（见 §2）。
 - **输出（本文件）**：语义矩阵 v2 的可测规格、CLI 契约变更清单、OUTCOME_VERDICT 与终局动作两表断言更新、L1 基线重置与 archive 退出调度回路断言、四类审计 reason 口径、口径切换点记录格式、回归用例清单。
 - **不在本文件范围**：Step 4 的实际代码/测试实现、Step 3 设计评审、Step 5 审查、Step 6/7 文档与注释切片。落码属 Step 4，未在本步执行。
 - **硬约束（来自 ADR-0011 / Plan §Intent.constraints）**：verdict 与内容载荷、stale 分支选择**只能由 Human 本人逐条给**；历史 3 条 changed **不回填、不重标记、不撤销 interval 调整**；不得静默改动阈值常量；不得引入节点物理删除；清除只映射 `archive` 软归档。
+  > ⚠️ 2026-11-16 更新：「不得引入节点物理删除」已被 zj 显式推翻（ADR-0013），仅此一条失效；其余硬约束继续有效。清除在本规格范围内仍只映射 `archive`，新增的墓碑/真删属独立语义（ADR-0013），不改变本规格的 stale 清除行为。
 
 ## 2. 代码事实（当前基线，实现时以测试守住）
 
@@ -23,7 +26,7 @@ Status: spec-frozen（2026-11-14，由 zj「A 授权落码(Step 2 规格链)」�
 | `src/zkc/cli.py:47` `VERDICTS` | `("still_valid","changed","stale","browse")` | 集合不变；新增必填参数（见 §3） |
 | `src/zkc/cli.py:73-74` `--verdict` | 仅 `--id`/`--verdict` | 新增 `--content`（changed / stale 覆盖必填）、`--stale-branch`（stale 必填：`cover`/`purge`） |
 | `src/zkc/repository/protocols.py:30` `NodeRepository.save` | 支持 `nodes.save` 双时态新版本（OCC + 历史快照，`repository/memory.py:52-88`） | `changed`/`stale 覆盖` 经 `save` 写节点双时态新版本 |
-| `src/zkc/repository/protocols.py:103` `NodeRepository.archive` | 软归档（`archived_at=now`），无 `delete` 节点接口 | `stale 清除` 只映射 `archive`；**不得**新增物理删除 |
+| `src/zkc/repository/protocols.py:103` `NodeRepository.archive` | 软归档（`archived_at=now`），无 `delete` 节点接口 | `stale 清除` 只映射 `archive`；**不得**新增物理删除（此条 2026-11-16 被 ADR-0013 推翻，仅语义裁决、代码未动） |
 | `src/zkc/expiry.py:35-37` 动作枚举 | `distill`/`archive`/`abstain` | 不变；`stale 清除` 复用 `archive`，审计 reason 与 D2 区分 |
 | `tests/test_web_review.py:79-86` `test_decide_changed_shrinks_interval` | 断言 `changed → too_late → AIMD_DOWN(0.7) → 缩短` | **必须改写**：`changed` 不再缩短，改为内容新版本 + interval 重置 L1 基线 |
 | `tests/test_web_review.py:108` `test_record_daily_observation_preserves_counts` | `decide_review(...,"stale",...)` | stale 需带 `--stale-branch`，旧调用形式须更新或拆分 |
@@ -121,7 +124,7 @@ zkc decide --id <uuid> --verdict browse                      # 无载荷
 - 新映射: 见 ADR-0012 §4 表 A（终局动作替代 AIMD 乘因子）
 - 受影响: 今日已写入 changed 3 条 = 保留旧语义产物，不回填/不重标记/不撤销 interval 调整
 - 外生锚 A: decide_review 不再调用 adapt_interval（人工输入归零），仅 mark_reviewed + 标注埋点
-- 未决: stale 分支选择/内容载荷由 zj 逐条给；清除只映射 archive，无物理删除
+- 未决: stale 分支选择/内容载荷由 zj 逐条给；清除只映射 archive，无物理删除（注：此「无物理删除」于 2026-11-16 被 ADR-0013 推翻；本格式记录的 11-14 当时状态逐字保留）
 ```
 
 ## 8. 与既有不变量/风险册的衔接
@@ -147,7 +150,7 @@ zkc decide --id <uuid> --verdict browse                      # 无载荷
   映射层 `OUTCOME_VERDICT` 旧 AIMD 映射**删除**，改由 `REVIEW_REASON` 常量承载审计 reason。
 - **DI-4 · 四类 reason 集中常量互异**：`REVIEW_REASON = {still_valid, changed, stale_overwrite, stale_purged, browsed_without_label}`，
   禁止字符串散落；与 `D2`（expiry archive reason）无关、不混同。测试 `test_four_audit_reasons_distinct` 断言 5 值两两不同。
-- **DI-5 · 无物理删除**：`stale+purge` 只映射 `archive` 软归档（`archived_at` 置位），**不新增/不调用任何节点物理删除接口**。
+- **DI-5 · 无物理删除**（**2026-11-16 superseded by ADR-0013**：zj 明确推翻此条，引入墓碑软删 + TTL 真删语义；裁决已生效、代码未实现，见 `0013-node-tombstone-soft-delete.md`。此处历史原文逐字保留，不涂改）：`stale+purge` 只映射 `archive` 软归档（`archived_at` 置位），**不新增/不调用任何节点物理删除接口**。
 - **DI-6 · 阈值正交**：实现**不改** `tuning.py` 任何常量（`AIMD_UP`/`AIMD_DOWN`/`MIN_INTERVAL_DAYS`/`METRIC_W_*`），**不写回** `REGISTRY`；与 1-26 CALIBRATED 口径无关。`adapt_interval` 函数本身保留（仍被 `classify`/其他路径或回归测试引用），仅 `decide_review` 不再调用。
 - **DI-7 · 历史不回填**：v2 只改变**新一次** `decide_review` 调用的行为，**无任何 retroactive 改写路径**；已落库的 3 条旧 `changed`（too_late×0.7）保持其 interval 不变。测试 `test_historical_changed_not_refilled`。
 - **DI-8 · 签名向后兼容扩展**：`decide_review(store, node_id, outcome, now=None, content=None, stale_branch=None)`；

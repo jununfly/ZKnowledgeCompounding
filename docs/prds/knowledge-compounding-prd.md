@@ -73,6 +73,8 @@
 
 **双时态**（calibration 新增，仅服务静态轨事实演进与溯源）：`valid_from/valid_to` + `tx_from/tx_to`。**双时态 ≠ 双轨**——只覆盖"静态事实可更新/溯源"，不覆盖动态轨腐化与注意力稀缺（§2.0）。权威 schema 见架构 §5。
 
+**节点生命周期三态**（2026-11-16，ADR-0013 推翻 DI-5 后新增）：`active`（正常）→ `tombstoned`（`deleted_at` 非 NULL，墓碑软删，**对所有功能不可见**，退出调度/检索/近邻/corpus）→ `purged`（真删，行与历史随 FK CASCADE 清除，仅留独立审计事件）。墓碑是**人环操作**（`zkc tombstone mark/restore`，operator 必填，与 verdict 同级）；真删由月扫在 TTL 7d 后执行，删前必过引用闸门（`evidence_refs` 无 FK 须手扫 + `citation.citing_node_id`），被引用则拒删并告警。**墓碑 ≠ 归档**：归档只是退出调度回路仍可查阅，墓碑是全功能不可见且到期真删。三态语义权威见 ADR-0013；实现切片与测试见其 §实施跟进。
+
 ```mermaid
 classDiagram
     class StaticNode { +title +content +source +timeline +confidence +version }

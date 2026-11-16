@@ -451,3 +451,22 @@ Schema 增量 **D6**（`baseline_interval` + `interval_source`）与 **D7**（`i
 > 以上均为"已识别未决"，非"被静默接受"。任何一方推进后同步回填两文档。
 
 > 本文件的选型均可被 spike 结果推翻；被推翻处应记录偏差，不得静默接受。
+
+---
+
+## 11. Addendum · 节点墓碑软删 + TTL 真删（2026-11-16，ADR-0013）
+
+> 本节追加于架构 v1.2 定稿后，记录 DI-5「无物理删除」被 zj 显式推翻后的数据生命周期设计；§5 schema 原文不涂改，以本节为准。语义权威 = ADR-0013。
+
+**三态模型**：`active` → `tombstoned`（`node.deleted_at` 非 NULL）→ `purged`（行删除）。与 `archived_at` **正交**：归档 = 退出调度回路但仍可查阅；墓碑 = 全功能不可见且到期真删。
+
+| 关注点 | 设计 | 实现落点 |
+|---|---|---|
+| schema | `node` + `node_history` 双列 `deleted_at timestamptz`（history UNION 列清单同步）；部分索引 `WHERE deleted_at IS NOT NULL`；审计表 `node_deletion_audit`（`node_id` 无 FK，不记 content） | `migrations/0011_node_tombstone` |
+| 可见性 seam | 所有默认读取路径（search / search_by_embedding / list_due / load_schedulable / discover_higher_dim / corpus / memory 对应处）加 `deleted_at IS NULL`，且不受 `include_archived` 控制；P4 静态守门 | `repository/{pg,memory}.py`、`check_invariant.py` |
+| 人环入口 | `tombstone mark/restore`（operator 必填，与 verdict 同级门禁）；web review 墓碑区二次确认 | `zkc/tombstone.py`、`web/review.py` |
+| 引用闸门 | 删前扫 `meta_claim.evidence_refs` / `modeling_artifact.evidence_refs`（uuid[] 无 FK 手扫 `@>`）+ `citation.citing_node_id`；命中拒删 + task_queue 告警 | `zkc/purge_gate.py` |
+| 真删 | PG FK `ON DELETE CASCADE` 清 node_history/edge/context_member/citation/interval_adjustment/proposal_log/review_queue；`attention_observation` 按天聚合不回退 | `zkc/purge.py` |
+| 月扫 | TTL 7d 墓碑起算，月度门闩幂等，挂现有每日 automation 非侵入调用；不注册系统级调度；实际真删窗口 7~37 天 | `zkc/sweep.py`、`cli.py daily` |
+
+**不变式影响**：P1（evidence_refs NOT NULL）/ P2（无全局 kill-switch）/ P3（归档退出调度）保持不动；新增 **P4**（墓碑对所有读取路径不可见）。阈值常量（`tuning.py` REGISTRY）未改，SURFACE/ROT/PRESSURE_DEFER 仍 SIMULATION，与墓碑可见性解耦。
