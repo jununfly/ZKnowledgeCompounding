@@ -13,6 +13,7 @@ from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from zkc import scheduling as S
+from zkc import tuning
 from zkc.decay import refresh_decay
 from zkc.repository import get_storage
 from zkc.repository.models import AttentionObservation, Node
@@ -76,6 +77,31 @@ class VerdictV2PureTest(unittest.TestCase):
         self.assertIsNone(changed.archived_at)
         self.assertTrue(
             any(n.id == self.ids[0] for n in self.store.load_schedulable()))
+
+    def test_changed_recomputes_l1_baseline_when_missing(self):
+        """ADR-0012 §4 表 A 兜底：L1 基线缺失时按结构信号重算，不抛异常、不留空。
+
+        Regression：_reset_to_l1_baseline 的兜底分支用了 timedelta 却未导入，
+        baseline_interval=None 的历史节点会在写完内容后崩溃且基线未重置。
+        """
+        nid = self.ids[0]
+        # 历史数据 / 迁移残留：经公共仓储 API 置空 L1 基线，不改私有字段
+        self.store.nodes.set_baseline_interval(
+            nid, None, "auto", "test fixture: L1 baseline missing")
+        self.assertIsNone(self.store.nodes.get(nid).baseline_interval)
+        # 独立真值：孤儿动态条目的 L1 基线取 tuning.REGISTRY（架构 §6.5）
+        expected_days = tuning.get("BASELINE_ORPHAN_DAYS")
+
+        res = decide_review(self.store, nid, "changed",
+                            content="兜底重算后写入的内容", now=NOW)
+
+        new = self.store.nodes.get(nid)
+        self.assertEqual(new.content, "兜底重算后写入的内容")
+        self.assertIsNotNone(new.review_interval)
+        self.assertAlmostEqual(_iv_days(new), float(expected_days), delta=0.01)
+        self.assertAlmostEqual(res["new_interval_days"], float(expected_days), delta=0.01)
+        self.assertEqual(res["reason"], REVIEW_REASON["changed"])
+        self.assertIsNone(new.archived_at)      # 覆盖不退出调度回路
 
     # ---- C. stale → cover ----
     def test_stale_cover_requires_branch_and_content(self):
