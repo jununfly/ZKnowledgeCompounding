@@ -56,9 +56,9 @@
 - code：移除 `src/zkc/task_queue.py` 与 `src/zkc/web/review.py` 对已删除 `TODO.md` 的引用。
 - `UI-BRIEF.md`：已于 2026-11-02 文档治理中**删除**（临时 intake brief，信息已无残留引用）。
 
-## 仍需关注的残留（建议，本次未自动改）
+## 仍需关注的残留（长期事实，非待办）
 
 - `docs/archive/plans/ZKC-implementation-plan.md`（原 ≈59KB，2026-11-02 已归档）→ 该归档目录已整体退役删除；其结论性内容（风险表 R1–R19 闭合项、§8 硬约束）已分别沉淀至 `docs/risks.md` 与 `docs/constraints.md`，与 roadmap 双头真相已解除。
 - 大量 `decide` 记录含历史代码路径 / 计数（29/48/49、391/403/407/409、commit hash） →
   这些是**审计留痕**，保留；理解时以代码 / 运行时为准，不以其中数字为当前真理。
-- `tuning` 多数参数仍为 `PLACEHOLDER`（校准门禁），属设计内，待攒够埋点后 `calibrate()`。（2026-11-16 校注：PRD §9 观察期目标已于 2026-11-07 实证收口，但 `calibration_readiness` 门禁本身仍在——最近读数埋点 12 天 < 14 天、`ready=false`；「攒够埋点」指此门禁，非已收口的观察期目标。另 `METRIC_W_*` + `MIN_INTERVAL_DAYS` 已于 2026-11-11 由 zj 显式覆盖标 CALIBRATED，属永久 caveat，不经过 `calibrate()` 门禁。）
+- `tuning` 多数参数仍为 `PLACEHOLDER`（校准门禁），属设计内，待攒够埋点后 `calibrate()`；`METRIC_W_*` + `MIN_INTERVAL_DAYS` 已于 2026-11-11 由 zj 显式覆盖标 CALIBRATED（`CALIB_OVERRIDE_AT` 永久 caveat，不经 `calibrate()` 门禁）。PRD §9 观察期目标已于 2026-11-07 实证收口，但 `calibration_readiness` 门禁本身仍在（最近读数埋点 12 天 < 14 天、`ready=false`）——「攒够埋点」指此门禁，非已收口的观察期目标。

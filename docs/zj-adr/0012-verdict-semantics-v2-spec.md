@@ -60,7 +60,9 @@ zkc decide --id <uuid> --verdict browse                      # 无载荷
 | `stale` + `purge` | `archive` 软归档 | —（已退出） | **退出**（due 队列消失） | 无（仅分支必填） | `stale_purged` |
 | `browse` | 时钟复位 + `completed++` | 维持 | 维持 | 无 | `browsed_without_label` |
 
-**表 B · 四类审计 reason 口径（互不相同，含与 D2 区分）**
+**表 B · 审计 reason 口径（verdict 五值互异 + D2 单列区分）**
+
+> 口径说明：F1/DI-4 的「四类互异」指 `changed`/`stale_overwrite`/`stale_purged`/`browsed_without_label` 四类终局动作 reason；连同 `still_valid` 共五个 verdict reason，代码 `REVIEW_REASON` 五值两两不同；D2（expiry archive reason）单列、不与 `stale_purged` 混同。测试 `test_four_audit_reasons_distinct` 断言五值互异。
 
 | reason 值 | 触发 | 与 D2 关系 |
 |---|---|---|

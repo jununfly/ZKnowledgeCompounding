@@ -115,7 +115,7 @@ flowchart LR
 - **流 B · 蒸馏**：条目 → 提炼元认知 claim + 关联 topic + 反向连接已有节点（溯源可查）。
 - **流 C · 每日复审队列（MVP 必选，两外生锚唯一载体）**：
   - 每天一份队列：列 `decay_score ≥ 0.6` 的动态条目（按 decay 降序）。
-  - 每条被处理必须带结果标注：`still_valid / changed / stale` → 驱动 L3 interval 反馈修正。
+  - 每条被处理必须带结果标注：`still_valid / changed / stale` → 触发终局动作（**verdict v2，ADR-0011/0012**：changed/stale 走双时态新版本或 archive，**不再**驱动 L3 interval 反馈修正、不调 `adapt_interval`）。
   - 每天收口必须写埋点：`pushed / completed / queue_remaining` → 驱动 `budget_per_day` 统计估计。
   - **验收门槛（缺一即未交付）**：
     1. 每个自然日**恰好 0 或 1 条** `attention_observation`（`day` 唯一）；0 条仅允许"当天无条目进入注意力"。
@@ -160,7 +160,7 @@ flowchart LR
   - Spike 06 context 拓扑装配（10 tests）→ §5 D1/D2
   - Spike 07 复利度量口径+引用埋点（9 tests）→ §5 D3/D4、§7
   - Spike 08 到期分流规则（9 tests）→ §5 D5 `review_queue`
-  - Spike 09 `review_interval` 自动设定（44 tests）→ §5 D6–D8、架构 §6.5/§6.5.1；三层：L1 个体基线（self_loop 压过已捕获）/ L2 全局预算归一 / L3 复审反馈 AIMD（×1.5/×0.7）；**decay-only 反馈恒 no-op**（必须带标注），收敛目标 `H/0.6` 非真值 H
+  - Spike 09 `review_interval` 自动设定（44 tests）→ §5 D6–D8、架构 §6.5/§6.5.1；三层：L1 个体基线（self_loop 压过已捕获）/ L2 全局预算归一 / L3 复审反馈 AIMD（×1.5/×0.7）。**v2 修订（ADR-0011/0012）**：复审标注不再经 AIMD 乘因子改 interval（外生锚 A 人工输入归零），AIMD 作为数学机制保留但不再由 verdict 驱动；decay-only 恒 no-op、收敛目标 `H/0.6` 非真值 H 两条结论不变。
   - Spike 10 强模型质量复测+质量口径（8 tests）→ §7
   - Spike 11 跨源强制算子（9 tests + 真实采样）→ 4B 跨源 3/3 稳定
   - Spike 12/13/13b 幻觉判定闸门（14 tests）→ 分解式 LLM-as-judge 可行，但本机 4B/9B 不可用；MVP 定 human-in-the-loop + 字面 rubric 预过滤，`judge.py` 零改动可启用

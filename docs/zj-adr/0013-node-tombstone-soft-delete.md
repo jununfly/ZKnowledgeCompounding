@@ -9,7 +9,7 @@ Status: accepted（2026-11-16，zj 于 16:10–16:24 逐条裁决 Q1–Q9；同�
 - **实现状态 = 未设计、未实现、未授权落码**：墓碑标记 `is_delete`、全功能不可见谓词、TTL 月扫真删、引用检查、恢复入口、独立审计事件——均**尚未进入源码**。技术方案属本轮过程态 roadmap 的阶段二（in_progress），实施属阶段三（pending，待方案批准）；过程态路径不在此具名（ADR-0008 护栏，见 §验证证据）。任何「系统已支持物理删除」的表述均属误读。
   - **〔2026-11-16 阶段三末时点更新〕**：上句为方案批准前的历史状态陈述，保留原文；S1–S7 已落码（详见 §实施跟进）——代码能力已就绪，但**尚未对任何具体节点执行 mark/purge**（删除意图仍须 zj 逐条给）。两者不矛盾：上句记「决策当时未实现」，本注记记「阶段三末已实现能力、未施加意图」。
 - **本 ADR 是决策定案，不是规格链、不是 TDD 证据**：无红绿输出、无 `make test` 增量、无真值回读对照。规格与测试须在阶段二/三另立。
-- **权威依据**：所有裁决来自 zj 本人逐条拍板，原始记录在工作日志 `.workbuddy/memory/2026-11-16.md`（16:10 / 16:24 段）与 roadmap carrier 的 `1-1` 下 Q1–Q9 decisions。**roadmap carrier 是过程态投影、非权威 proof**（ADR-0008 / 护栏 #9）；本 ADR 才是持久权威。
+- **权威依据**：所有裁决来自 zj 本人逐条拍板，逐字记录已沉淀至 `docs/evidence/physical-delete-decisions-2026-11-16.md`（原 roadmap carrier `1-1` 下 Q1–Q9 decisions 的过程态副本已随文档治理移除），原始工作日志 `.workbuddy/memory/2026-11-16.md`（16:10 / 16:24 段）。**逐字归档是历史记录、非权威 proof**（ADR-0008 / 护栏 #9）；本 ADR 才是持久权威。
 - **不冒充 CALIBRATED、不污染 1-26 口径**：本 ADR 不改 `tuning.py` 任何阈值常量，不写回 `REGISTRY`。SURFACE=0.6 / ROT=0.9 / PRESSURE_DEFER=0.8 仍是 SIMULATION。
 - **与历史 ADR 的关系**：DI-5「无物理删除」（ADR-0012 §9 DI-5，及 ADR-0011 定案语境、cutover §4/§7、risks.md R15 的对应陈述）在 2026-11-14 是当时的硬约束，**其历史原文一字不改**；本 ADR 记录 zj 2026-11-16 的显式推翻，旧文档仅追加 superseded 指针。
 
@@ -106,7 +106,7 @@ zj 原话（Q5 内）：「软删除已经可以保证 动机 1（污染）+ 2�
 
 ## 验证证据
 
-- **决策溯源（过程态，非权威 proof）**：本轮 roadmap carrier（三阶段：需求对齐 → 方案设计 → 实施，路径按 ADR-0008 不在此具名）`1-1` 下 Q1–Q9 共 9 条 decisions，逐字含 zj 原话；工作日志 2026-11-16 日（14:55 建图 / 15:03 Q1 / 15:48 Q2-Q3 / 16:10 Q5-Q9 / 16:24 收口）。二者仅作溯源，不作 proof。
+- **决策溯源（历史记录，非权威 proof）**：本轮 Q1–Q9 共 9 条 zj 原话的逐字副本已沉淀至 `docs/evidence/physical-delete-decisions-2026-11-16.md`（原 roadmap carrier 三阶段过程态副本已随文档治理移除）；工作日志 2026-11-16 日（14:55 建图 / 15:03 Q1 / 15:48 Q2-Q3 / 16:10 Q5-Q9 / 16:24 收口）。二者仅作溯源，不作 proof。
 - **代码现状（可核对）**：`pg.py:298` 到期判定、`pg.py:1255-1278` discover 无归档过滤、`pg.py:252-273` search_by_embedding 有归档过滤、migrations/0001 的 `evidence_refs uuid[]` 无 FK、`check_invariant.py:27,115` 的 P1 口径——均为本仓库当前事实。
 - **TDD 证据 = N/A**：实现未启动，无红绿输出、无门禁增量。本 ADR 不声称任何运行时验证。
 - **门禁**：本轮为 doc-only 变更，未触碰源码/阈值/迁移；`make mcp-gate` / `make invariant` / authority check 的复跑留待阶段三落码后。

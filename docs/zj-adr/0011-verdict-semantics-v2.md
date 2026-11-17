@@ -9,7 +9,7 @@ Status: accepted（2026-11-14，zj 于 15:46 逐项裁决 ①–④、16:08 语�
 - **实现状态 = 未做、未授权**：本仓库当前代码仍实现的是 v1 旧语义（`src/zkc/web/review.py:40-44` 的 `OUTCOME_VERDICT` 把 `changed`/`stale` 同映射为 `too_late`）。将本定案落到代码属于 Plan `2026-11-14-zkc-verdict-semantics-plan.md` 的 Step 2–5（TDD 执行链），**尚未启动、需 Human 单独授权**。
 - **本 ADR 是 Step 1（语义裁决）产物的长期归档**，同时是 roadmap 节点 `1-1` 的 `completed` 证据源。Step 6 的完整交付（含规格/契约回归测试/风险册联动）依赖 Step 5 审查通过，本文件只覆盖其中「决策定案」这一项。
 - **不冒充 CALIBRATED、不污染 1-26 口径**：本 ADR 不改任何阈值常量（`tuning.py` 的 `AIMD_UP`/`AIMD_DOWN`/`MIN_INTERVAL_DAYS`/`METRIC_W_*`），不写回 `tuning.REGISTRY`。1-26 校准的是 metric weights，与 verdict 反馈路径正交。
-- **权威边界（ADR-0008 / 护栏 #9）**：决策溯源引用 Plan `2026-11-14-zkc-verdict-semantics-plan.md` 仅作**过程态溯源**，非权威 proof；本 ADR 的权威依据是所有裁决均来自 zj 本人逐项拍板（原始记录在 `.workbuddy/memory/2026-11-14.md` 工作日志与 roadmap carrier 的 `1-1` decisions），代码引用指向**当前可核对文件**。
+- **权威边界（ADR-0008 / 护栏 #9）**：决策溯源的逐字记录已沉淀至 `docs/evidence/verdict-semantics-decisions-2026-11-14.md`（原过程态 Plan / roadmap carrier 已随文档治理移除），仅作**历史溯源**，非权威 proof；本 ADR 的权威依据是所有裁决均来自 zj 本人逐项拍板（逐字副本见上述 evidence，原始工作日志 `.workbuddy/memory/2026-11-14.md`），代码引用指向**当前可核对文件**。
 
 ## 背景与发现
 
@@ -100,7 +100,7 @@ S0 中 `stale` 的 enrich / refresh 覆盖分支与清除分支**并列纳入本
 
 ## 验证证据
 
-- **决策溯源（过程态，非权威 proof）**：Plan `2026-11-14-zkc-verdict-semantics-plan.md` §Human checkpoints 逐字收录 ①–④ / S0 / S1 / S2；原始拍板在工作日志 `.workbuddy/memory/2026-11-14.md`（15:46 / 16:08 / 16:25 / 16:33 段）；roadmap carrier `1-1` decisions 同步落盘。
+- **决策溯源（历史记录，非权威 proof）**：①–④ / S0 / S1 / S2 的逐字记录已沉淀至 `docs/evidence/verdict-semantics-decisions-2026-11-14.md`（原 Plan §Human checkpoints 与 roadmap carrier `1-1` decisions 的过程态副本已随文档治理移除）；原始拍板在工作日志 `.workbuddy/memory/2026-11-14.md`（15:46 / 16:08 / 16:25 / 16:33 段）。
 - **代码现状（可核对）**：`web/review.py:40-44`、`cli.py:47`、`scheduling.py:220-221`、`tuning.py:120-121`、`expiry.py` 动作枚举、`repository/protocols.py` NodeRepository 接口，均为本仓库当前事实。
 - **TDD 证据 = N/A**：实现（Step 2–5）未启动，无红绿输出、`make test` 增量、`zkc decide --list --json` 真值回读对照。本 ADR 不声称任何运行时验证。
 - **roadmap 联动**：节点 `1-1`（Step 1 语义裁决）依 zj 2026-11-14 19:31 选项 A（「保持 in_progress，等 Step 6 把语义矩阵 v2 提炼到 ADR 后再谈 completed」），在本 ADR 落盘后转为 `completed`；下游 `1-2`–`1-7` 仍 `pending`，受 `blocks` 边阻塞，未授权执行。
