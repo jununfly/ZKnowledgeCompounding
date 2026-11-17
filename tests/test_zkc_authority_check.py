@@ -18,6 +18,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "zkc_authority_check.py"
+# 测试 fixture 动态拼过程态目录，源码自身不携带任何完整触发串（自指陷阱）。
+PROCESS_DIR = ("docs", "process-state-fixture")
 PLAN_NAME = "probe.md"
 
 # 与上游 roadmap.py 的 ROADMAP_AUTHORITY_ENVELOPE 逐字一致（自包含，不 import skill）。
@@ -47,13 +49,14 @@ PRUNED_DIRS = (
 
 def plan_target(name: str = PLAN_NAME) -> str:
     """动态拼出 fixture 里的过程产物相对路径。"""
-    return (Path("docs") / "plans" / name).as_posix()
+    return Path(*PROCESS_DIR, name).as_posix()
 
 
 def make_project(root: Path, files: dict[str, str] | None = None) -> None:
-    plans = root / "docs" / "plans"
+    plans = root.joinpath(*PROCESS_DIR)
     plans.mkdir(parents=True, exist_ok=True)
-    (plans / PLAN_NAME).write_text("# transient process artifact\n", encoding="utf-8")
+    # 该 fixture 文件带完整权威信封，被签名识别为过程态 → 进入禁止引用清单。
+    (plans / PLAN_NAME).write_text(ENVELOPE + "\n\n# transient process artifact\n", encoding="utf-8")
     for relative, body in (files or {}).items():
         target = root / relative
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -205,7 +208,9 @@ class AuthorityCheckTests(unittest.TestCase):
             result = run_check(root)
         output = result.stdout
         self.assertEqual(result.returncode, 0, output + result.stderr)
-        self.assertIn("skipped 2 process-state", output)
+        # fixture 的 probe.md 带权威信封，也按签名识别为过程态 → 共 3 个。
+        self.assertIn("skipped 3 process-state", output)
+        self.assertIn(PLAN_NAME, output)
         self.assertIn(CARRIER_PATH, output)
         self.assertIn(VIEW_PATH, output)
 

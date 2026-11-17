@@ -7,11 +7,15 @@
 从扫描范围里识别出去（对齐上游 issue #239 / PR #240 的修复）：
 
 1. 过程态目录整类剪枝：``.git`` / ``.workbuddy`` / ``__pycache__`` /
-   ``node_modules`` / ``tmp``；过程产物目录自身也不遍历。
+   ``node_modules`` / ``tmp``。**不硬编码任何过程产物目录名**——哪些文件是
+   过程态按内容签名判定，与所在路径无关（解耦：项目不再知道旧目录名）。
 2. 单文件 roadmap carrier 按**结构签名**识别（title / version / nodes /
    metadata 齐备且每个节点带 status），普通 ``nodes.json`` 不能借机逃逸。
 3. ``render`` / ``section`` 产出的 Markdown 视图按开头完整的
    ``zj-roadmap-authority/v1`` 权威信封识别。
+4. 被签名识别为过程态的文件，其相对路径动态加入禁止引用清单；durable
+   源码引用其中任一条即报泄漏。清单为空时（如过程产物已全部移除）判定
+   规则不变，只是没有可命中的目标。
 
 本脚本**不 import 用户级 skill** —— CI runner 上没有 ``~/.workbuddy/skills``，
 任何依赖该路径的接法在 CI 里都不可执行。旧版 6 条枚举式白名单已删除：每新增
@@ -30,14 +34,7 @@ import re
 import sys
 
 
-# 过程产物目录拆成段拼接：源码本身不得携带任何完整的 target 触发串，
-# 否则「写检查器」这个动作会自引入一条新的泄漏（自指陷阱）。
-PROCESS_DIR_PARTS = ("docs", "plans")
-
 MARKDOWN_LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
-ALLOW_RE = re.compile(
-    r"roadmap-authority-allow:\s*governance-example(?:\s|-->|$)"
-)
 ROADMAP_COMPLETION_CLAIM_RE = re.compile(
     r"(?:\b(?:proof|evidence)\s*:\s*roadmap\s+node\s+\d+(?:-\d+)*\s+"
     r"(?:is\s+)?(?:completed?|done)\b|"
@@ -106,15 +103,13 @@ def _is_process_state_file(source: Path, text: str) -> bool:
     return False
 
 
-def _iter_sources(root: Path, plans: Path):
-    """遍历 durable 候选文件，进入目录前先剪掉过程态树。"""
+def _iter_sources(root: Path):
+    """遍历候选文件，进入目录前只剪掉通用过程态树（与具体目录名无关）。"""
     for dirpath, dirnames, filenames in os.walk(root):
         current = Path(dirpath)
         relative_dir = current.relative_to(root)
         dirnames[:] = [
-            name
-            for name in dirnames
-            if name not in EXCLUDED_DIR_PARTS and (current / name) != plans
+            name for name in dirnames if name not in EXCLUDED_DIR_PARTS
         ]
         for name in filenames:
             source = current / name
@@ -123,30 +118,34 @@ def _iter_sources(root: Path, plans: Path):
 
 
 def find_leaks(root: Path) -> tuple[list[Leak], frozenset[str], ScanStats]:
-    """返回 (泄漏清单, 过程产物相对路径集合, 扫描统计)。"""
+    """返回 (泄漏清单, 过程产物相对路径集合, 扫描统计)。
+
+    过程态产物按内容签名识别，与所在路径无关：第一遍收集被签名识别的
+    文件相对路径作禁止引用清单，第二遍在 durable 源码中查引用。清单为空
+    时（过程产物已全部移除）判定规则不变，只是没有可命中的目标。
+    """
     root = root.resolve()
-    plans = root.joinpath(*PROCESS_DIR_PARTS)
+    candidates = [
+        (source, relative_path, source.read_text(encoding="utf-8", errors="replace"))
+        for source, relative_path in _iter_sources(root)
+        if source.suffix.lower() in DURABLE_SUFFIXES
+    ]
     process_targets = frozenset(
-        path.relative_to(root).as_posix()
-        for path in plans.rglob("*")
-        if path.is_file()
-    ) if plans.is_dir() else frozenset()
+        relative_path.as_posix()
+        for source, relative_path, text in candidates
+        if _is_process_state_file(source, text)
+    )
 
     leaks: list[Leak] = []
     skipped: list[str] = []
     scanned = 0
-    for source, relative_path in _iter_sources(root, plans):
-        if source.suffix.lower() not in DURABLE_SUFFIXES:
-            continue
-        text = source.read_text(encoding="utf-8", errors="replace")
+    for source, relative_path, text in candidates:
         relative_source = relative_path.as_posix()
         if _is_process_state_file(source, text):
             skipped.append(relative_source)
             continue
         scanned += 1
         for lineno, line in enumerate(text.splitlines(), start=1):
-            if ALLOW_RE.search(line):
-                continue
             matched: set[str] = set()
             if ROADMAP_COMPLETION_CLAIM_RE.search(line):
                 matched.add(COMPLETION_TARGET)
