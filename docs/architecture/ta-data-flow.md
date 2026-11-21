@@ -79,7 +79,7 @@ authority-id: architecture.flow.data-flow
 - [implemented] `llm_call_score` 表 + `interval_adjustment` 表 + `node_history`：支撑调用成败、区间调整、版本演进三类回放。
 - [implemented] `data/r14_telemetry.jsonl`（`r14_telemetry.py` 产出）+ `scripts/r14_status.py`：R14 延迟裁决读数。
 - [implemented] `data/lexical_corpus.json`：LexicalRouter 标注语料，反映分流学习闭环的当前状态。
-- [evidence] verdict v2 真值回读（`docs/evidence/verdict-v2-truth-readback-2026-11-14.json`）是单时刻快照，仅作时点取证，不作持续 proof；持续回归依赖 `make mcp-gate` + `make invariant` + `scripts/zkc_authority_check.py`。
+- [evidence] verdict v2 真值回读一致性核对（结论见 `../zj-adr/0011-verdict-semantics-v2.md` §实现跟进）源自单时刻快照，仅作时点取证，不作持续 proof；持续回归依赖 `make mcp-gate` + `make invariant` + `scripts/zkc_authority_check.py`。
 
 ## Source map
 

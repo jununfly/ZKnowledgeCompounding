@@ -50,7 +50,7 @@
 
 ## Ontology model（L4 · 单一模型）
 
-`docs/ontology/model.json` 是本仓 docs system 的**唯一本体模型实例**（schema: `ontology-model/v1`，skill 侧 meta-schema: `ontology-meta-schema/v1`）。它把全仓长期文档按**实体 / 属性 / 关系 / 规则**拆解，每页一条 decomposition receipt；语义冲突以各权威页为准，本模型不新增产品语义。页面可用 `model-elements` frontmatter 锚点镜像其 receipt（receipt 为真源）。退役派生视图的逐字归档见 `docs/evidence/ontology-v1-derived-views-archived-2026-11-21.md`（历史溯源，非语义来源）。
+`docs/ontology/model.json` 是本仓 docs system 的**唯一本体模型实例**（schema: `ontology-model/v1`，skill 侧 meta-schema: `ontology-meta-schema/v1`）。它把全仓长期文档按**实体 / 属性 / 关系 / 规则**拆解，每页一条 decomposition receipt；语义冲突以各权威页为准，本模型不新增产品语义。页面可用 `model-elements` frontmatter 锚点镜像其 receipt（receipt 为真源）。
 
 ## Root entries
 
@@ -61,7 +61,7 @@
 
 以下为目录入口（导航说明，非 page entry）。evidence 是一次性取证与逐字归档，**不参与产品语义权威判定**；setup 是安装与运行指引（target-defined）。
 
-- evidence 目录：`docs/evidence/`（架构 v1.2 逐字归档、verdict 决策归档、physical-delete 决策归档、verdict v2 真值回读均在此，不作 proof）
+- evidence 目录：`docs/evidence/`（架构 v1.2 逐字归档、verdict 决策归档、physical-delete 决策归档均在此，不作 proof）
 - setup 目录：`docs/setup/`
 
 - [Windows 安装与运行](setup/windows-install-and-run.md)

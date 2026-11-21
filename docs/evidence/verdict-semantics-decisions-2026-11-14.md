@@ -2,7 +2,8 @@
 
 > 本页是**过程态决策的逐字归档**，不是权威文档。
 > 来源：verdict-semantics roadmap carrier（过程态，已随本轮文档治理移除）。所有 `Q` / `A` / `Note` 字段从 carrier JSON 原样复制，**未补位、未改写、未补全任何 SHA/ID**。
-> 权威语义以 [ADR-0011](../../zj-adr/0011-verdict-semantics-v2.md) / [ADR-0012](../../zj-adr/0012-verdict-semantics-v2-spec.md) / [cutover](../../zj-adr/2026-11-14-verdict-semantics-cutover.md) 为准；本页只作历史溯源，不作 proof / evidence（见 [ADR-0008](../../zj-adr/0008-process-authority-boundary.md)）。
+> 权威语义以 [ADR-0011](../zj-adr/0011-verdict-semantics-v2.md) / [ADR-0012](../zj-adr/0012-verdict-semantics-v2-spec.md) / [cutover](../zj-adr/2026-11-14-verdict-semantics-cutover.md) 为准；本页只作历史溯源，不作 proof / evidence（见 [ADR-0008](../zj-adr/0008-process-authority-boundary.md)）。
+> **引用退役注记（2026-11-21）**：下方逐字 A 栏中的 `verdict-v2-consistency-2026-11-14.md` 为当时引用的证据文件名（逐字转录、不改历史原话）；该快照文件及其配套真值回读 JSON 已于 2026-11-21 退役删除，其 C1–C5 一致性结论已沉淀至 [ADR-0011 §实现跟进](../zj-adr/0011-verdict-semantics-v2.md)。这些提及是 code 块内的历史文字、非活链接，不构成断链。
 
 ## 节点 `1`
 

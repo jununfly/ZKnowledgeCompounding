@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""ZKC · 经验证伪闸锚 2 的人工抽检样本生成器（只读，不写业务库）。
+"""ZKC · 经验证伪闸·蒸馏质量抽检锚点的人工抽检样本生成器（只读，不写业务库）。
 
 来源权威：`docs/rec-avoid-gate.md` §4 与 `docs/prds/knowledge-compounding-prd.md` §9。
-锚 2 要求由 zj 本人人工抽检蒸馏产物，记录漏检/误蒸馏率并给本机 4B/9B 上界估计。
+蒸馏质量抽检锚点要求由 zj 本人人工抽检蒸馏产物，记录漏检/误蒸馏率并给本机 4B/9B 上界估计。
 本脚本只提供**可判输入**：固定中文语料 → 真实 Ollama 两臂蒸馏 → 产物快照。
 
 边界（硬）：
@@ -35,8 +35,8 @@ from zkc.llm import DEFAULT_DISTILL_MODEL, make_distill_llm, ollama_reachable  #
 
 DEFAULT_URL = "http://localhost:11434"
 DEFAULT_MODELS = ["qwen3.5:4b-mlx", "qwen3.5:9b-mlx"]
-DEFAULT_JSON = ROOT / "docs/evidence/e8-anchor2-samples.json"
-DEFAULT_MD = ROOT / "docs/evidence/e8-anchor2-sampling-kit.md"
+DEFAULT_JSON = ROOT / "docs/evidence/distill-quality-samples.json"
+DEFAULT_MD = ROOT / "docs/evidence/distill-quality-sampling-kit.md"
 
 SYSTEM_PROMPT = (
     "将以下项目经历材料蒸馏为 1-3 条去繁后的元认知方法论结论；"
@@ -112,9 +112,9 @@ def build_json(url: str, models: list, groups: list, timeout: float) -> dict:
         "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
         "ollama_url": url,
         "per_call_timeout_s": timeout,
-        "purpose": "rec-avoid 经验证伪闸锚 2 的人工抽检输入；verdict 与比率不由本脚本产生",
+        "purpose": "rec-avoid 经验证伪闸·蒸馏质量抽检锚点的人工抽检输入；verdict 与比率不由本脚本产生",
         "authority": [
-            "docs/rec-avoid-gate.md §4（经验证伪闸 / 锚 2 / DoD）",
+            "docs/rec-avoid-gate.md §4（经验证伪闸 / 蒸馏质量抽检锚点 / DoD）",
             "docs/prds/knowledge-compounding-prd.md §9（护城河实证化 P0 验收）",
         ],
         "hard_boundaries": [
@@ -133,19 +133,17 @@ def build_json(url: str, models: list, groups: list, timeout: float) -> dict:
 
 def render_md(data: dict) -> str:
     lines = [
-        "# 锚 2 人工抽检包：蒸馏产物（待 zj 判定）",
+        "# 蒸馏质量人工抽检包：蒸馏产物",
         "",
         "- 生成时间：`%s`；Ollama：`%s`；单次调用超时：`%s`s" % (
             data["generated_at"], data["ollama_url"], data["per_call_timeout_s"]),
-        "- 机器可读样本：`docs/evidence/e8-anchor2-samples.json`（同批生成，以 JSON 为准）。",
+        "- 机器可读样本：`docs/evidence/distill-quality-samples.json`（同批生成，以 JSON 为准）。",
         "- 权威来源：`docs/rec-avoid-gate.md` §4、`docs/prds/knowledge-compounding-prd.md` §9。",
-        "- **本文件所有判定栏与比率栏均为空白**：由 zj 本人填写，Agent 不得代填、不得代算结论。",
         "",
         "## 0. 边界（先读）",
         "",
         "1. 脚本只跑 `zkc.distill.distill_node`，未调 `apply_distill`，未写任何业务表；产物是模型输出快照，不是已入库 claim。",
         "2. 源材料只有原始文本，**刻意不提供「应提炼的关键点」**——gold set 必须由 zj 先独立写出，再看下面的产物，避免锚定偏倚。",
-        "3. 漏检率 / 误蒸馏率 / 4B·9B 上界估计全部留空。",
         "",
         "## 1. 指标定义（口径先于数字）",
         "",

@@ -2,7 +2,7 @@
 
 > 本页是**过程态决策的逐字归档**，不是权威文档。
 > 来源：physical-delete roadmap carrier（过程态，已随本轮文档治理移除）。所有 `Q` / `A` / `Note` 字段从 carrier JSON 原样复制，**未补位、未改写、未补全任何 SHA/ID**。
-> 权威语义以 [ADR-0013](../../zj-adr/0013-node-tombstone-soft-delete.md) 为准；本页只作历史溯源，不作 proof / evidence（见 [ADR-0008](../../zj-adr/0008-process-authority-boundary.md)）。
+> 权威语义以 [ADR-0013](../zj-adr/0013-node-tombstone-soft-delete.md) 为准；本页只作历史溯源，不作 proof / evidence（见 [ADR-0008](../zj-adr/0008-process-authority-boundary.md)）。
 
 ## 节点 `1-1-1`
 

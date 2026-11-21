@@ -2,7 +2,7 @@
 """ZKC · spike07 复利度量权重 / method_target 的受控仿真（SIMULATION 依据，可复跑）。
 
 只读：读一次真实存储度量快照；**不写业务库、不写 tuning.REGISTRY**。
-产出 ``docs/evidence/metric-weights-simulation.{json,md}``。
+产出可复跑仿真读数（默认写 docs/evidence/*.{json,md}）；属可重建快照，文档治理后不随仓库留存，需要时用本脚本重跑。
 
 这份证据只支撑 ``source=SIMULATION``，即「给既有占位值补上可复核的设计依据」：
 - 权重是「什么是好的复利」的**价值判断**，不是可从无标注数据估计的统计量；
@@ -345,8 +345,7 @@ def render_markdown(r: dict, storage_kind: str, samples: int, seed: int) -> str:
         f"归一化分量 x = {ident['x_real_normalized']}；非零分量数 = "
         f"{ident['nonzero_component_count']}（仅 {', '.join(ident['identifiable_weights'])} 可辨识）。"
         f" 当前 CF={real['compounding_factor']} 完全由归档型 decay_controllability 撑起："
-        "该分量在本次快照中来自「到期节点已归档」（见 "
-        "`docs/evidence/d2-corpus-cleanup-2026-11-05.md`，24 条归档后 due 归零），"
+        "该分量在本次快照中来自「到期节点已归档」（24 条归档后 due 归零），"
         "不是蒸馏/结合的复利产物。"
         "**四分量结构性为 0 时，合成值 CF 不可当作复利健康度解读，必须同时看分量。**",
         "",

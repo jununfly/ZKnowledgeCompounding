@@ -119,4 +119,5 @@ S0 中 `stale` 的 enrich / refresh 覆盖分支与清除分支**并列纳入本
 - **门禁与健康度**（见 cutover §6）：全量 **626 tests OK**（基线 613，+13）、authority 0 leaks、mcp-gate 6 OK、invariant 0 violations。
 - **不变量已落实**：外生锚 A 人工输入归零（DI-1，A3）、覆盖不退出·清除退出（DI-4，B2/D2）、四类 reason 互异（DI-2，F1）均被测试守住。
 - **口径未污染**：阈值常量（`AIMD_UP`/`AIMD_DOWN`/`MIN_INTERVAL_DAYS`/`METRIC_W_*`）未动、不写回 `REGISTRY`，与 1-26 CALIBRATED 正交（DI-6）。
+- **真值回读一致性核对（2026-11-14，结论留存，2026-11-21 归档收口）**：`zkc decide --list --json` 于 2026-11-14 回读一次，与 ADR-0011/0012/R15 五条判据逐条核对全部通过——C1 标注率闸门 intact（`rate=1.0` ≥ 阈值 `0.7`，gate=open）、C2 decay-only 恒 no-op 未受影响（闸门仍由 labeled 埋点驱动）、C3 无 due 项是「stale 清除退出调度回路」的 DI-4 预期行为而非口径失灵、C4 改动面未波及闸门/预算阈值、C5 未污染 1-26 CALIBRATED。未发现 verdict v2 落地导致标注率闸门、预算机制或 CALIBRATED 口径漂移。该回读属**单时刻快照、非持续 proof**（时点读数 `items=[]`、`due_count=0`、`budget.estimate=3.0` 仅作取证），原快照文件 `verdict-v2-consistency-2026-11-14.md` + `verdict-v2-truth-readback-2026-11-14.json` 已于 2026-11-21 退役删除，本条为其一致性结论的长期 home；持续回归依赖 `make mcp-gate` + `make invariant` + `scripts/zkc_authority_check.py`（见 cutover §6）。
 - **本文档定位不变**：仍是 Step 1 语义裁决的长期归档；上方决策正文（①–④ / S0 / S1 / S2 / 外生锚 A 结论 / 语义矩阵 v2）一字未改，仅补充实现跟进，不涂改原决策。

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""R18 / D4：4096 列余弦相似度分布（阈值重校准的可核实依据）。
+"""高维检索评测 / 相似度阈值：4096 列余弦相似度分布（阈值重校准的可核实依据）。
 
 复用 r18_recall_eval.py 的语料加载与编码函数，产出两类真实分布：
   1. node ↔ node：60 条 4096 维向量两两余弦，对应 discover_higher_dim 的近邻尺度；
@@ -116,12 +116,12 @@ def main(argv: list[str] | None = None) -> int:
 
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    json_path = out_dir / "r18-4096-sim-distribution.json"
+    json_path = out_dir / "embedding-4096-sim-distribution.json"
     json_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n",
                          encoding="utf-8")
 
     lines = [
-        "# R18 4096 列余弦相似度分布（D4 阈值重校准依据）",
+        "# 4096 列余弦相似度分布（相似度阈值重校准依据）",
         "",
         f"- 采集时刻：{result['as_of']}",
         f"- 命令：`python scripts/r18_sim_distribution.py`",

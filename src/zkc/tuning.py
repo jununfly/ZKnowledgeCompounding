@@ -191,7 +191,7 @@ REGISTRY: dict[str, Parameter] = {
            "冷启动词法无训练数据时一切走人工(安全欠覆盖，非危险)，随人工定轨积累逐渐自动化"),
         # ---- P5.2 复利度量面板（spike-07 口径；2026-11-06 由 PLACEHOLDER 升 SIMULATION）
         # 校准依据（可复跑）：scripts/metric_weights_sim.py →
-        # docs/evidence/metric-weights-simulation.{json,md}。
+        # 仿真产物可复跑（scripts/metric_weights_sim.py），文档治理后不随仓库留存。
         # ① 真实 PG 快照 cd/rr/mo=0、dc=1.0（CF=0.25 全由归档分量撑起）→
         #    三个权重在真实数据上完全不可辨识，**数值一律不改、只补依据**；
         # ② 无外生偏好时真权重 ~ Dirichlet(1,1,1,1)，最小化期望平方误差的
@@ -207,7 +207,7 @@ REGISTRY: dict[str, Parameter] = {
         #    若日后要走正式自动门禁，仍需 ≥14d 埋点 + ≥3 饱和日 + zj 四分量价值排序；
         #    E8 锚2 蒸馏质量抽检是另一套度量，不得冒充本体系的校准证据。
         _p("METRIC_W_DENSITY", 0.25, CALIBRATED,
-           "复利系数·连接密度权重；SIMULATION 依据见 metric-weights-simulation.md（均匀先验 Bayes 最优等权）。"
+           "复利系数·连接密度权重；SIMULATION 依据见 scripts/metric_weights_sim.py（可复跑；均匀先验 Bayes 最优等权）。"
            "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
            calibrated_at=CALIB_OVERRIDE_AT),
         _p("METRIC_W_REUSE", 0.25, CALIBRATED,
@@ -224,7 +224,7 @@ REGISTRY: dict[str, Parameter] = {
            calibrated_at=CALIB_OVERRIDE_AT),
         _p("METRIC_METHOD_TARGET", 10.0, CALIBRATED,
            "方法论产出归一化目标：达到该产出数即记满分 1.0。SIMULATION 依据：14d×1.0/d 可达上界 14 的 71% 量级 + "
-           "target 饱和/区分度网格；真实 mo=0 时所有 target 等价、不可辨识，见 metric-weights-simulation.md。"
+           "target 饱和/区分度网格；真实 mo=0 时所有 target 等价、不可辨识，见 scripts/metric_weights_sim.py。"
            "2026-11-11 zj 显式拍板覆盖门禁升 CALIBRATED",
            calibrated_at=CALIB_OVERRIDE_AT),
         # ---- T4.1 更高维 context 命名 + 触发闸门（P3.4 收尾切片）
@@ -232,7 +232,7 @@ REGISTRY: dict[str, Parameter] = {
            "discover k-NN 近邻被纳入更高维聚合的最低余弦相似度（sim=1-余弦距离，1=完全相同）。"
            "D4 按 2026-11-05 的 4096d 真实余弦分布重校准：node↔node 1770 对 p50=0.579 / p90=0.702，"
            "旧值 0.7 落在 p89.6（query 正例召回仅 0.1875）；0.65 落在 p≈77%，query precision=0.737 / recall=0.438。"
-           "证据见 docs/evidence/r18-4096-sim-distribution.md。source=SIMULATION（受控离线分布），"
+           "证据见 docs/evidence/embedding-4096-sim-distribution.json。source=SIMULATION（受控离线分布），"
            "**非 CALIBRATED**：校准门禁需 ≥14 天埋点 + ≥3 饱和日，最终创建仍过人审闸门"),
         _p("CONTEXT_HIGHER_DIM_MIN_MEMBERS", 2, PLACEHOLDER,
            "触发提议所需的最小近邻数（不含种子自身）；低于此数不构成「聚合」价值"),

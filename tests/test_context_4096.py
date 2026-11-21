@@ -76,7 +76,7 @@ class ThresholdRecalibrationTest(unittest.TestCase):
 
     def test_distribution_evidence_exists_and_supports_threshold(self):
         data = json.loads(
-            (ROOT / "docs" / "evidence" / "r18-4096-sim-distribution.json").read_text()
+            (ROOT / "docs" / "evidence" / "embedding-4096-sim-distribution.json").read_text()
         )
         self.assertEqual(data["column"], "embedding_4096")
         self.assertEqual(data["node_node"]["n"], 1770)

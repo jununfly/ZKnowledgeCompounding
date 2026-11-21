@@ -3,9 +3,9 @@
   "generated_at": "2026-11-06T01:30:44+08:00",
   "ollama_url": "http://localhost:11434",
   "per_call_timeout_s": 180.0,
-  "purpose": "rec-avoid 经验证伪闸锚 2 的人工抽检输入；verdict 与比率不由本脚本产生",
+  "purpose": "rec-avoid 经验证伪闸·蒸馏质量抽检锚点的人工抽检输入；verdict 与比率不由本脚本产生",
   "authority": [
-    "docs/rec-avoid-gate.md §4（经验证伪闸 / 锚 2 / DoD）",
+    "docs/rec-avoid-gate.md §4（经验证伪闸 / 蒸馏质量抽检锚点 / DoD）",
     "docs/prds/knowledge-compounding-prd.md §9（护城河实证化 P0 验收）"
   ],
   "hard_boundaries": [

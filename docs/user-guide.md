@@ -57,7 +57,7 @@ python -m zkc.web         # FastAPI + SSR，localhost:8000
 | 已腐 | 内容腐坏、基本无参考价值 | 再由你选**覆盖**（新版本 + L1 基线重置、不退出）或**清除**（`archive` 软归档、退出 due）；两者审计 reason 与 D2 归档区分 |
 | 仅浏览 | 看了但暂不标注 | 时钟复位 + `completed++`，`verdict=None`，不写区间调整 |
 
-> 关键（v2）：外生锚 A 的**人工输入已归零**——复审标注不再驱动 L3 interval 反馈修正（`decide_review` 不调 `adapt_interval`）。标注率（近 7 天 `labeled_completed / completed` ≥ **70%**、样本 ≥ **10**）只作**审计/仪表读数**，不再改写节奏；`<10` 不判定、`<70%` 闸门关，均不改变 interval。完整契约见 [ADR-0012 §4 表 A](../zj-adr/0012-verdict-semantics-v2-spec.md)。
+> 关键（v2）：外生锚 A 的**人工输入已归零**——复审标注不再驱动 L3 interval 反馈修正（`decide_review` 不调 `adapt_interval`）。标注率（近 7 天 `labeled_completed / completed` ≥ **70%**、样本 ≥ **10**）只作**审计/仪表读数**，不再改写节奏；`<10` 不判定、`<70%` 闸门关，均不改变 interval。完整契约见 [ADR-0012 §4 表 A](zj-adr/0012-verdict-semantics-v2-spec.md)。
 
 ### 锚 B · 每日收口（驱动注意力预算估计）
 每天收工前，在底部「每日收口」填两项并点记录：
