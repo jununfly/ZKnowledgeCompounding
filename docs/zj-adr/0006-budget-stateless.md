@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.attention-budget]
+---
 # 预算语义定标：采用无状态估计（含义②）为唯一预算口径
 
 Status: accepted (2026-11-04, zj 拍板，经 zj-grill-with-docs 对「现在的预算是什么」的质疑收敛)

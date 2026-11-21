@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.dual-track, entity.risk]
+---
 # ADR-0010 · R4 终判：以「缩动态集」为默认处置（D2 归档退出调度回路）
 
 Status: accepted (2026-11-06, zj 拍板 R14 Q2=B)

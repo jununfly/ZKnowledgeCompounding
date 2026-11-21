@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.verdict, rule.verdict-v2-terminal]
+---
 # ADR-0012 · 复审标注四档语义矩阵 v2 · 规格与验收判据（Step 2 规格链产出）
 
 > 配套：`docs/zj-adr/0011-verdict-semantics-v2.md`（决策定案，本文件是其 Step 2 规格链产出）。

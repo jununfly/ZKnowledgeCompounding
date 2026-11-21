@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.decay]
+---
 # decay_score 刷新不写双时态版本链（派生量，非事实）
 
 Status: accepted (2026-10-31, zj 拍板 A-1a + A-3a)

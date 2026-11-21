@@ -1,10 +1,16 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.review-interval, rule.rate-gate]
+---
 # ADR-0009 · L3 AIMD 下界由 1d 降为 0.25d（不做日内调度）
 
 Status: accepted (2026-11-06, zj 拍板：新下界 `0.25d`；每日驱动保持每天一次)
 
 ## 背景与发现
 
-架构 §6.5 / spike 09 把 `review_interval` 定为三层规则（L1 个体基线 / L2 预算归一化 /
+[架构 §6.5·调度与预算](../evidence/architecture-v1.2-source-2026-11-19.md) / spike 09 把 `review_interval` 定为三层规则（L1 个体基线 / L2 预算归一化 /
 L3 复审反馈 AIMD），L3 钳制区间写作 `[1d,180d]`。真实运行暴露一个**静默失效**：
 
 - `src/zkc/tuning.py` 的 `MIN_INTERVAL_DAYS=1.0`；`src/zkc/scheduling.py` 的
@@ -18,7 +24,7 @@ L3 复审反馈 AIMD），L3 钳制区间写作 `[1d,180d]`。真实运行暴露
   `interval_adjustment` 61 行全部为 `kind='baseline'`，`feedback` 行 **0** ——
   生产库中 L3 从未产生过一次有效 interval 变更。
 - 下界来源核查：1.0 是 spike 09 仿真定下的 `SIMULATION` 阈值，**不是硬不变量**；
-  架构 §6.5 与 spike 09 README 的 `[1d,180d]` 是研究时点结论，仓库内并无任何 ADR
+  [架构 §6.5·调度与预算](../evidence/architecture-v1.2-source-2026-11-19.md) 与 spike 09 README 的 `[1d,180d]` 是研究时点结论，仓库内并无任何 ADR
   声明 1d 不可变。真正的反向约束来自 ADR-0007：每日驱动每天只做一次真值收口 +
   人工 `decide`，故 1d 实际是调度的最小粒度。
 
@@ -33,9 +39,9 @@ L3 复审反馈 AIMD），L3 钳制区间写作 `[1d,180d]`。真实运行暴露
    `list_due_for_review` 与收口仍按天发生，0.7d 的节点在下一次日扫描时到期。
 3. L1 时间锚解析器不加小时级规则：当前没有文本锚能产生 `<1d` 基线，
    `<1d` 只能由 L3 AIMD 收缩产生。
-4. 架构 §6.5 与 spike 09 README 标注为「2026-11-06 后续修订」；
+4. [架构 §6.5·调度与预算](../evidence/architecture-v1.2-source-2026-11-19.md) 与 spike 09 README 标注为「2026-11-06 后续修订」；
    `spikes/spike-09-review-interval/` 的代码常量与既有 44 tests 口径保持原样，
-   不静默覆盖研究时点结论。生产口径以本 ADR 与架构 §6.5 为准。
+   不静默覆盖研究时点结论。生产口径以本 ADR 与[架构 §6.5·调度与预算](../evidence/architecture-v1.2-source-2026-11-19.md) 为准。
 
 ## Considered Options
 
@@ -44,7 +50,7 @@ L3 复审反馈 AIMD），L3 钳制区间写作 `[1d,180d]`。真实运行暴露
 - **允许 <1d 且同步改成日内多次扫描**（未采纳）：需改调度器、每日驱动、埋点口径与
   活跃日语义，范围过大；当前也没有真实外生锚证明需要日内复审。
 - **触底节点改走其它反馈路径**（未采纳）：如触底后转归档 / 蒸馏 / 一次性 HITL 裁决，
-  语义最干净，但要改架构 §6.5 的 L3 定义并新增契约与测试，超出本次切片。
+  语义最干净，但要改[架构 §6.5·调度与预算](../evidence/architecture-v1.2-source-2026-11-19.md) 的 L3 定义并新增契约与测试，超出本次切片。
 
 ## Consequences · 必须同时记住的边界
 

@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.verdict, rule.verdict-v2-terminal, rule.external-anchor-only]
+---
 # ADR-0011 · 复审标注四档语义矩阵 v2 定案（changed/stale 拆分 + 终局动作替代 AIMD 乘因子）
 
 Status: accepted（2026-11-14，zj 于 15:46 逐项裁决 ①–④、16:08 语义定案 S0、16:25 a–d 结论 S1、16:33 覆盖分支裁决 S2）

@@ -1,8 +1,14 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.single-ticket, rule.single-ticket]
+---
 # 已捕获条目 = 单程票（28d 观察 → 到期即归档，永不回蒸馏）
 
 Status: accepted (2026-10-31, zj 拍板)
 
-spike 08 判定「已捕获 → ARCHIVE」，spike 09 判定「已捕获 → 28d」，两条被架构 §8 记为未决冲突。实为**两个不同问题被写成了同一句**：09 答「到期**前**多久看一次」（价值已沉淀 → 28d，把到期推到 0.9×28≈25.2 天），08 答「**已**到期怎么办」（价值已在元认知层 → 直接归档，不再蒸馏）。统一为：**已捕获 = 一张单程票：拉长观察（28d）→ 到期即 ARCHIVE，永不回到 DISTILL。**
+spike 08 判定「已捕获 → ARCHIVE」，spike 09 判定「已捕获 → 28d」，两条被[架构 §8·选型风险](../evidence/architecture-v1.2-source-2026-11-19.md) 记为未决冲突。实为**两个不同问题被写成了同一句**：09 答「到期**前**多久看一次」（价值已沉淀 → 28d，把到期推到 0.9×28≈25.2 天），08 答「**已**到期怎么办」（价值已在元认知层 → 直接归档，不再蒸馏）。统一为：**已捕获 = 一张单程票：拉长观察（28d）→ 到期即 ARCHIVE，永不回到 DISTILL。**
 
 ## Considered Options
 

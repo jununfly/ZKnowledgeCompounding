@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.gate]
+---
 # rec-avoid 守门落成机械闸（去模型化测试 + check_invariant.py + 图库主存储 EXCLUDED）
 
 Status: accepted (2026-11-03, zj 拍板，经 zj-discuss 多角色收敛 + zj-grill-with-docs Round 1)
@@ -13,6 +19,6 @@ Status: accepted (2026-11-03, zj 拍板，经 zj-discuss 多角色收敛 + zj-gr
 - 三件套（采纳）：去模型化测试管「该不该做」，check_invariant 管「做完没破不变式」，EXCLUDED 管「存储基底不漂移」。
 
 ## Consequences
-- 架构 §7 图库主存储「延后」→「EXCLUDED」+ 拒绝理由行；新增 rec-avoid 守门说明。
+- [架构 §7·选型风险](../evidence/architecture-v1.2-source-2026-11-19.md) 图库主存储「延后」→「EXCLUDED」+ 拒绝理由行；新增 rec-avoid 守门说明。
 - 仓库新增 `check_invariant.py`（或并入 check_subdoc 同族），PR 门禁。
 - 任何新增功能 PR 须附去模型化测试结论，否则 review 阶段即被拒。

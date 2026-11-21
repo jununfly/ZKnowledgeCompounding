@@ -19,7 +19,7 @@ PR 须附「去模型化结论」：功能 → 判据 → 结论（稀释 / 非�
 
 | # | 功能（ZKC 实现锚点） | 去模型化判据（移除 LLM 后剩什么） | 可证伪结论 | SilverBullet / logseq 等价性判据（架构推演，待实测复核） | 依据 |
 |---|---|---|---|---|---|
-| F1 | 双轨分流（DecisionRouter，encoder-agnostic） | 静态 / 动态分类 + 各自生命周期元数据 | **非稀释** | SB/logseq 无原生双轨；二者统一对待笔记，无「衰减率 / 注意力成本」维度；复用需自研分类器 + 双生命周期 | PRD §2.0 / 架构 §5 `track` 枚举 |
+| F1 | 双轨分流（DecisionRouter，encoder-agnostic） | 静态 / 动态分类 + 各自生命周期元数据 | **非稀释** | SB/logseq 无原生双轨；二者统一对待笔记，无「衰减率 / 注意力成本」维度；复用需自研分类器 + 双生命周期 | PRD §2.0 / [架构 §5·数据模型](evidence/architecture-v1.2-source-2026-11-19.md) `track` 枚举 |
 | F2 | 衰减 decay_score(0..1) + review_interval | 动态节点带衰减分与到期 | **非稀释** | SB/logseq 无衰减语义；仅时间戳 / 到期提醒，无线性衰减 SURFACE/ROT 与「腐化」概念 | PRD §2.0 / `src/zkc/decay.py` |
 | F3 | 双时态投影（valid + transaction time） | 静态事实演进 + 溯源审计 | **非稀释** | SB/logseq 无 bitemporal；仅有单向版本 / 历史；「静态事实可更新 + 溯源」≠ 双轨腐化 | PRD §2.0 / ADR-0005 修订（双时态≠双轨） |
 | F4 | 注意力预算（动态数/(0.6×interval) + AIMD） | 资源感知调度：该关注 / 可衰减 | **非稀释** | SB/logseq 无稀缺资源调度；无「注意力预算不足 → infeasible」报告 | PRD §2.0 / `src/zkc/calibration.py` |
@@ -97,16 +97,16 @@ P1 扫 `migrations/*.up.sql` 的 `meta_claim` 建表块；P2 扫 `src/**/*.py`�
 ## 3. 图数据库主存储 EXCLUDED
 **决定**：图数据库（Kuzu / TerminusDB）作**主存储**显式拒绝（EXCLUDED）；仅允许 Kuzu **只读投影**。
 **理由**：仓库切换成本 + 偏离 pgvector 基底；递归 CTE 已够用；保持 repository seam 可切。
-**依据**：ADR-0005；架构 §7 该行「延后」→「EXCLUDED」。
+**依据**：ADR-0005；[架构 §7·选型风险](evidence/architecture-v1.2-source-2026-11-19.md) 该行「延后」→「EXCLUDED」。
 
 ## 4. 经验证伪闸（护城河实证化，呼应 sub-02 C2）
 任何新增功能须证明**不降低**「衰减+预算可观测性」，否则触发 rec-avoid③。护城河须由系统外信号证伪：
 - **锚1**：复审标注率闸门持续 ≥70%（外生锚载体）。
 - **锚2**：zj 人工抽检蒸馏产物，记录漏检/误蒸馏率，给本机 4B/9B 上界估计（系统外信号 vs 系统自算「复利系数」）。
-- **DoD（部分达成，2026-11-06）**：rec-avoid-gate §4 锚2 要求的**蒸馏质量度量口径**（漏检率/误蒸馏率）已落架构 §8 已定 E8 锚2，抽检结果（9 gold / 17 claim，两率 0%）与上界结论已落 `docs/evidence/e8-anchor2-sampling-kit.md` §6，该度量（蒸馏质量抽检）已进本闸（见锚2）。**注：§8 的 spike07 复利度量「最终口径」已按设计口径定为 `source=SIMULATION`（等权 0.25×4 + `method_target=10`，依据受控仿真），但升 `CALIBRATED` 仍 open（需 ≥14d 埋点 + ≥3 饱和日 + 外生价值排序），不因本次锚2 抽检而视为达成；两套度量严格区分。锚2 抽检证据弱、待真实长文档复测，不替代 spike 12/13 的 MVP 忠实度闸门 HITL 定案。**
+- **DoD（部分达成，2026-11-06）**：rec-avoid-gate §4 锚2 要求的**蒸馏质量度量口径**（漏检率/误蒸馏率）已落[架构 §8·选型风险](evidence/architecture-v1.2-source-2026-11-19.md) 已定 E8 锚2，抽检结果（9 gold / 17 claim，两率 0%）与上界结论已落 `docs/evidence/e8-anchor2-sampling-kit.md` §6，该度量（蒸馏质量抽检）已进本闸（见锚2）。**注：§8 的 spike07 复利度量「最终口径」已按设计口径定为 `source=SIMULATION`（等权 0.25×4 + `method_target=10`，依据受控仿真），但升 `CALIBRATED` 仍 open（需 ≥14d 埋点 + ≥3 饱和日 + 外生价值排序），不因本次锚2 抽检而视为达成；两套度量严格区分。锚2 抽检证据弱、待真实长文档复测，不替代 spike 12/13 的 MVP 忠实度闸门 HITL 定案。**
 
 ## 关联
 - ADR-0004（MCP 接口契约边界）：MCP 须过去模型化测试。
 - ADR-0005（rec-avoid 机械闸）：本文件的来源决策。
-- 架构 §7：图库主存储 EXCLUDED 行。
+- [架构 §7·选型风险](evidence/architecture-v1.2-source-2026-11-19.md)：图库主存储 EXCLUDED 行。
 - PRD §9：下版本优先级与 MCP 集成决策清单。

@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.process-material, rule.process-not-proof]
+---
 # 过程权威边界：仓库内自包含门禁 + 上游对齐的结构性过程态判据
 
 Status: accepted（2026-11-05，zj 拍板启动）；2026-11-05 修订（zj 以「a」拍板收敛 6 条白名单）

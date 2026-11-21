@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.tombstone, rule.no-physical-delete]
+---
 # ADR-0013 · 节点墓碑软删除 + TTL 真删语义（DI-5「无物理删除」被推翻）
 
 Status: accepted（2026-11-16，zj 于 16:10–16:24 逐条裁决 Q1–Q9；同轮明确推翻 DI-5）
@@ -146,6 +152,6 @@ zj 原话（Q5 内）：「软删除已经可以保证 动机 1（污染）+ 2�
 上文「尚未由 zj 对两条目标节点执行 `mark`」与「未对任何具体节点执行 mark/purge」均为 **S1–S7 阶段末的时点陈述**，按历史原文保留、不涂改。17:20 之后状态如下（**截至 2026-11-16 17:37 的只读快照**）：
 
 - **已施加**：zj 显式授权「逐条执行」后，`zkc tombstone mark --operator zj --json` 分别作用于 `a5de32cd-a53b-4b8b-88e0-6aa0dccfd76e`（BestPractices）与 `3f324c13-105d-4798-a054-e9ce28641ae5`（ClaudeAPIDocs），各一次 applied=true；审计链按 `tombstone → restore → tombstone` 追加（时区校正所致），不涂改历史。未填 reason（不伪造外生锚）。
-- **时区校正**：S3 遗留的 `datetime.now()` naive 默认值使首标时刻未来化 8h；独立 TDD 切片已改为 `datetime.now(timezone.utc)`（3 条新测试），两条墓碑经 restore→re-mark 把 `deleted_at` 校正为真实 UTC。证据：`docs/evidence/tombstone-timezone-fix-2026-11-16.md`。
+- **时区校正**：S3 遗留的 `datetime.now()` naive 默认值使首标时刻未来化 8h；独立 TDD 切片已改为 `datetime.now(timezone.utc)`（3 条新测试），两条墓碑经 restore→re-mark 把 `deleted_at` 校正为真实 UTC。
 - **当前态**：两条仍处墓碑态、未 purge。只读 `zkc tombstone sweep --dry-run --json` 读数（17:37）：`scanned=2 / eligible=0 / purged=0 / blocked=0 / ttl_days=7`。满 7d 后由月扫自动真删；若引用闸门命中则拒删并写 `task_queue` 的 `tombstone_purge_blocked`，需 zj 人工裁决。
 - **边界不变**：`mark` 仍是 zj 逐条人环授权、非系统自动；本注记不改语义、不改阈值、不写 REGISTRY，`corpus-derived ≠ CALIBRATED` 口径不动。TDD 证据段（667 tests OK）记的是 S1–S7 阶段末，17:20 后的修复证据见上述 evidence 文件与工作日志（过程态，非 proof）。

@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.cli, entity.review]
+---
 # 每日驱动与活跃日语义（fork 1 + 2 + 3）
 
 Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill-with-docs 对"手动 UI vs launchd 每日驱动"的对比收敛)
@@ -150,7 +156,7 @@ Status: accepted (2026-11-04, zj 拍板「fork 1 + 2 + 3」全选，经 zj-grill
   2. 呈现队列：`zkc decide --list --json`，把 due 条目逐条呈现给人；
   3. 人环复审：**verdict 必须由人给出**（still_valid / changed / stale / browse），
      逐条 `zkc decide --id <id> --verdict <v>`；适配器绝不自行编造或默认填值 ——
-     自动标注 = 伪造外生锚 A，废掉 L3 反馈闭环（架构 §6.5.1）；
+     自动标注 = 伪造外生锚 A，废掉 L3 反馈闭环（[架构 §6.5.1·调度与预算](../evidence/architecture-v1.2-source-2026-11-19.md)）；
   4. 进度仪表：`zkc meter --json` 读 E1 三判据。
   硬约束另有：预算语义 A 无状态（ADR-0006）不改、E1 判据只喂数据不改、
   `daily` 只写 `attention_observation` 不碰业务表。

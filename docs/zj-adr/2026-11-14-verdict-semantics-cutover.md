@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.verdict]
+---
 # 2026-11-14 复审标注语义口径切换点
 
 > 配套：ADR-0011（决策定案）、ADR-0012（规格 + §9 设计评审不变量 DI-1..DI-9）。

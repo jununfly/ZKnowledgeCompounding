@@ -1,3 +1,9 @@
+---
+doc-kind: adr
+authority: historical
+status: accepted
+model-elements: [entity.mcp]
+---
 # MCP 接口契约边界（单边 server + transport seam + 暴露面白黑名单）
 
 Status: accepted (2026-11-03, zj 拍板，经 zj-discuss 多角色收敛 + zj-grill-with-docs Round 1–2)
