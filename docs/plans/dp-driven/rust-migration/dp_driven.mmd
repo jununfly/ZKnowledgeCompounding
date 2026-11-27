@@ -1,0 +1,120 @@
+flowchart TD
+  classDef open fill:#f6f8fa,stroke:#656d76,color:#0f172a
+  classDef done fill:#dafbe1,stroke:#1a7f37,color:#0f172a
+  classDef abandoned fill:#f6f8fa,stroke:#656d76,stroke-dasharray:3 3,color:#57606a
+  classDef blocked fill:#fff8c5,stroke:#9a6704,color:#0f172a
+  classDef overlap fill:#ffebe9,stroke:#cf222e,color:#cf222e
+  classDef plan_inflight stroke:#1a7f37,stroke-width:2px
+  classDef plan_paused stroke:#8250df,stroke-width:2px,stroke-dasharray:5 5
+  classDef plan_settlement stroke:#656d76,stroke-dasharray:2 2
+
+  %% destination: ZKC 纯 Rust 实现：rust-anything app replay 100% + gate 通过，原 Python 仅作参照
+  subgraph T0["task0 决策门禁与基线固定 (未完成)"]
+    direction TB
+    f0_T0["f0 未完成 ⟲"]:::overlap
+    f1_T0["f1 未完成 ⟲"]:::overlap
+    tk0_T0["tk0 已完成"]:::done
+    tk1_T0["tk1 已完成"]:::done
+    tk2_T0["tk2 已完成"]:::done
+    tk3_T0["tk3 已完成"]:::done
+    tk5_T0["tk5 已完成"]:::done
+    class T0 plan_paused
+  end
+  subgraph T1["task1 首个低风险单元 port 证明 (未完成)"]
+    direction TB
+    f0_T1["f0 未完成 ⟲"]:::overlap
+    f1_T1["f1 未完成 ⟲"]:::overlap
+    f2_T1["f2 未完成 ⟲"]:::overlap
+    f4_T1["f4 未完成 ⟲"]:::overlap
+    f5_T1["f5 未完成 ⟲"]:::overlap
+    tk4_T1["tk4 已完成"]:::done
+    tk6_T1["tk6 已完成"]:::done
+    class T1 plan_paused
+  end
+  subgraph T2["task2 核心 domain 与 repository 迁移 (未完成)"]
+    direction TB
+    f1_T2["f1 未完成 ⟲"]:::overlap
+    f2_T2["f2 未完成 ⟲"]:::overlap
+    f4_T2["f4 未完成 ⟲"]:::overlap
+    f5_T2["f5 未完成 ⟲"]:::overlap
+    f6_T2["f6 未完成"]:::open
+    f7_T2["f7 未完成"]:::open
+    f8_T2["f8 未完成"]:::open
+    f9_T2["f9 未完成"]:::open
+    tk7_T2["tk7 已完成"]:::done
+    tk8_T2["tk8 未完成"]:::open
+    tk14_T2["tk14 已完成"]:::done
+    tk15_T2["tk15 未完成"]:::open
+    tk16_T2["tk16 已完成"]:::done
+    tk17_T2["tk17 已完成"]:::done
+    tk18_T2["tk18 已完成"]:::done
+    tk19_T2["tk19 已完成"]:::done
+    tk20_T2["tk20 已完成"]:::done
+    class T2 plan_paused
+  end
+  subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (被阻塞)"]
+    direction TB
+    f1_T3["f1 未完成 ⟲"]:::overlap
+    f2_T3["f2 未完成 ⟲"]:::overlap
+    tk9_T3["tk9 被阻塞"]:::blocked
+    class T3 plan_paused
+  end
+  subgraph T4["task4 app lift 与纯 Rust 收口 (被阻塞)"]
+    direction TB
+    f2_T4["f2 未完成 ⟲"]:::overlap
+    tk10_T4["tk10 被阻塞"]:::blocked
+    tk11_T4["tk11 被阻塞"]:::blocked
+    tk12_T4["tk12 被阻塞"]:::blocked
+    class T4 plan_paused
+  end
+  subgraph T5["task5 scripts/ 运维脚本迁移（含动态代码 blocker） (被阻塞)"]
+    direction TB
+    tk13_T5["tk13 被阻塞"]:::blocked
+    class T5 plan_paused
+  end
+  subgraph ORPHANS["Orphan findings / 未收纳 items (R4)"]
+    direction TB
+    f3_ORPHAN["f3 已完成"]:::done
+  end
+  tk0_T0 -->|blocks| tk6_T1
+  tk3_T0 -->|blocks| tk6_T1
+  tk4_T1 -->|blocks| tk6_T1
+  tk5_T0 -->|blocks| tk6_T1
+  tk2_T0 -->|blocks| tk5_T0
+  tk0_T0 -->|blocks| tk7_T2
+  tk6_T1 -->|blocks| tk8_T2
+  tk7_T2 -->|blocks| tk8_T2
+  tk1_T0 -->|blocks| tk9_T3
+  tk8_T2 -->|blocks| tk9_T3
+  tk5_T0 -->|blocks| tk10_T4
+  tk8_T2 -->|blocks| tk10_T4
+  tk9_T3 -->|blocks| tk11_T4
+  tk10_T4 -->|blocks| tk11_T4
+  tk11_T4 -->|blocks| tk12_T4
+  tk8_T2 -->|blocks| tk13_T5
+  tk17_T2 -->|blocks| tk16_T2
+  tk18_T2 -->|blocks| tk16_T2
+  tk19_T2 -->|blocks| tk16_T2
+  tk16_T2 -->|blocks| tk8_T2
+  tk17_T2 -->|blocks| tk20_T2
+  tk18_T2 -->|blocks| tk20_T2
+  tk19_T2 -->|blocks| tk20_T2
+  tk8_T2 -->|parent| tk16_T2
+  tk16_T2 -->|parent| tk17_T2
+  tk16_T2 -->|parent| tk18_T2
+  tk16_T2 -->|parent| tk19_T2
+  tk16_T2 -->|parent| tk20_T2
+  f9_T2 -.->|derived_from| tk16_T2
+  f9_T2 -.->|derived_from| tk17_T2
+  f9_T2 -.->|derived_from| tk18_T2
+  f9_T2 -.->|derived_from| tk19_T2
+  f9_T2 -.->|derived_from| tk20_T2
+  T0 -->|plan-dep| T1
+  T0 -->|plan-dep| T2
+  T0 -->|plan-dep| T3
+  T0 -->|plan-dep| T4
+  T1 -->|plan-dep| T2
+  T2 -->|plan-dep| T3
+  T2 -->|plan-dep| T4
+  T2 -->|plan-dep| T5
+  T3 -->|plan-dep| T4
