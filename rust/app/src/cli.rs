@@ -7,7 +7,12 @@ pub const ROOT: &str = "metrics-snapshot";
 
 /// Library units are exposed as isolated front-door commands. `main` checks these
 /// before the recorded `metrics-snapshot` command line, so `app replay` is unchanged.
-pub const UNIT_COMMANDS: &[&str] = &["unit-transport", "unit-context", "unit-expiry"];
+pub const UNIT_COMMANDS: &[&str] = &[
+    "unit-transport",
+    "unit-context",
+    "unit-expiry",
+    "unit-scheduling",
+];
 
 fn rest() -> Arg {
     Arg::new("args")

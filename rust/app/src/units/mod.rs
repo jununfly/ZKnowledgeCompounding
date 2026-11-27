@@ -1,9 +1,9 @@
-//! Wiring for the `metrics-snapshot` front door plus three library-unit commands.
+//! Wiring for the `metrics-snapshot` front door plus four library-unit commands.
 //!
 //! Hand-merged after `rust-anything app wire`: the generated `mod.rs` is rewritten
-//! on every wire and drops `metrics_report`, so the three wire-generated glue
-//! modules are kept here together with the hand-written metrics route. The wire
-//! command was still run for each unit; it supplied the Cargo dependencies,
+//! on every wire and drops `metrics_report`, so the wire-generated glue modules
+//! are kept here together with the hand-written metrics route. The wire command
+//! was still run for each unit; it supplied the Cargo dependencies,
 //! `rust-anything.json` unit records and the kill-switch names.
 //!
 //! Kill switch: `RUST_ANYTHING_UNIT_<UNIT>=original` sends a unit to the Python
@@ -19,6 +19,7 @@ use serde_json::{Value, json};
 mod metrics_report;
 mod zkc_context_pure;
 mod zkc_expiry_pure;
+mod zkc_scheduling_interval;
 mod zkc_transport;
 
 fn sent_to_original(unit: &str) -> bool {
@@ -156,6 +157,17 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("expiry", &name, &raw))
             } else {
                 Some(zkc_expiry_pure::run(&name, &args))
+            }
+        }
+        "unit-scheduling" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("ZKC_SCHEDULING_INTERVAL") {
+                Some(original_unit("scheduling", &name, &raw))
+            } else {
+                Some(zkc_scheduling_interval::run(&name, &args))
             }
         }
         crate::cli::ROOT => {

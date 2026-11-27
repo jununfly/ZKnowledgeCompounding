@@ -38,6 +38,10 @@ EXPIRY_ALIAS = load_alias(
     REPO / "spikes" / "spike-08-expiry-routing" / "pure_bridge.py",
     "zkc_expiry_pure_oracle",
 )
+SCHEDULING_ALIAS = load_alias(
+    REPO / "spikes" / "spike-09-review-interval" / "pure_bridge.py",
+    "zkc_scheduling_interval_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -58,10 +62,19 @@ CONTEXT = {
 EXPIRY = {
     "route_decision": (EXPIRY_ALIAS, "route_decision"),
 }
+SCHEDULING = {
+    "extract_horizon_days": (SCHEDULING_ALIAS, "extract_horizon_days"),
+    "clamp_days": (SCHEDULING_ALIAS, "clamp_days"),
+    "baseline_for_signals": (SCHEDULING_ALIAS, "baseline_for_signals"),
+    "classify_review": (SCHEDULING_ALIAS, "classify_review"),
+    "adapt_interval_math": (SCHEDULING_ALIAS, "adapt_interval_math"),
+    "l2_target": (SCHEDULING_ALIAS, "l2_target"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
     "expiry": EXPIRY,
+    "scheduling": SCHEDULING,
 }
 
 
@@ -75,7 +88,13 @@ def main() -> int:
             if isinstance(module, str)
             else getattr(module, name)
         )
-        value = target(*args)
+        # spike-09 keeps `human` keyword-only; the CLI sends it as the third
+        # positional slot, so restore the original call shape here.
+        kwargs = {}
+        if unit == "scheduling" and fn == "adapt_interval_math":
+            kwargs = {"human": args[2]}
+            args = args[:2]
+        value = target(*args, **kwargs)
         print(json.dumps({"ok": value}, ensure_ascii=False, separators=(",", ":")))
     except Exception as exc:  # the original exception text is part of the oracle
         print(json.dumps({"error": f"{type(exc).__name__}: {exc}"}, ensure_ascii=False, separators=(",", ":")))

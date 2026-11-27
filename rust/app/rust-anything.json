@@ -4,7 +4,8 @@
   "commands": [
     "unit-transport",
     "unit-context",
-    "unit-expiry"
+    "unit-expiry",
+    "unit-scheduling"
   ],
   "units": [
     {
@@ -33,6 +34,15 @@
         "unit-expiry"
       ],
       "switch": "RUST_ANYTHING_UNIT_ZKC_EXPIRY_PURE"
+    },
+    {
+      "name": "zkc-scheduling-interval",
+      "crate": "zkc-scheduling-interval-rs",
+      "path": "../scheduling-interval-rs",
+      "commands": [
+        "unit-scheduling"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ZKC_SCHEDULING_INTERVAL"
     }
   ]
 }

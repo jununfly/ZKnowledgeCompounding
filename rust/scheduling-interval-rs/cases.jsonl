@@ -1,0 +1,208 @@
+{"fn": "extract_horizon_days", "args": [null], "ok": null}
+{"fn": "extract_horizon_days", "args": [""], "ok": null}
+{"fn": "extract_horizon_days", "args": ["   "], "ok": null}
+{"fn": "extract_horizon_days", "args": ["今天提交"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["tonight meeting"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["明天"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["tomorrow"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["后天"], "ok": {"$float": "2.0"}}
+{"fn": "extract_horizon_days", "args": ["本周"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["this week"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["下周"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["next week"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["3天"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["3天内"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["3天后"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["in 3 days"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["2周"], "ok": {"$float": "14.0"}}
+{"fn": "extract_horizon_days", "args": ["in 2 weeks"], "ok": {"$float": "14.0"}}
+{"fn": "extract_horizon_days", "args": ["1个月"], "ok": {"$float": "30.0"}}
+{"fn": "extract_horizon_days", "args": ["in 1 months"], "ok": {"$float": "30.0"}}
+{"fn": "extract_horizon_days", "args": ["本月"], "ok": {"$float": "30.0"}}
+{"fn": "extract_horizon_days", "args": ["this month"], "ok": {"$float": "30.0"}}
+{"fn": "extract_horizon_days", "args": ["下月"], "ok": {"$float": "30.0"}}
+{"fn": "extract_horizon_days", "args": ["next month"], "ok": {"$float": "30.0"}}
+{"fn": "extract_horizon_days", "args": ["本季度"], "ok": {"$float": "90.0"}}
+{"fn": "extract_horizon_days", "args": ["Q3"], "ok": {"$float": "90.0"}}
+{"fn": "extract_horizon_days", "args": ["月底"], "ok": {"$float": "14.0"}}
+{"fn": "extract_horizon_days", "args": ["end of month"], "ok": {"$float": "14.0"}}
+{"fn": "extract_horizon_days", "args": ["截止"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["deadline"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["ddl"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["due"], "ok": {"$float": "7.0"}}
+{"fn": "extract_horizon_days", "args": ["今天 3天 1周"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["0天"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["999天"], "ok": {"$float": "999.0"}}
+{"fn": "extract_horizon_days", "args": ["-3天"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["abc"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["无时间"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["3 天 后"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["3日后"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["第3天"], "ok": {"$float": "3.0"}}
+{"fn": "extract_horizon_days", "args": ["in 0 days"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["in 12 days"], "ok": {"$float": "12.0"}}
+{"fn": "extract_horizon_days", "args": ["12 weeks"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["12 months"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["Q4 tomorrow"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["今天 Q1"], "ok": {"$float": "1.0"}}
+{"fn": "extract_horizon_days", "args": ["NULL"], "ok": null}
+{"fn": "extract_horizon_days", "args": ["今天。本周。3天"], "ok": {"$float": "1.0"}}
+{"fn": "clamp_days", "args": [-100.0], "ok": 0.25}
+{"fn": "clamp_days", "args": [-1.0], "ok": 0.25}
+{"fn": "clamp_days", "args": [0.0], "ok": 0.25}
+{"fn": "clamp_days", "args": [0.1], "ok": 0.25}
+{"fn": "clamp_days", "args": [0.249999], "ok": 0.25}
+{"fn": "clamp_days", "args": [0.25], "ok": 0.25}
+{"fn": "clamp_days", "args": [0.3], "ok": 0.3}
+{"fn": "clamp_days", "args": [1.0], "ok": {"$float": "1.0"}}
+{"fn": "clamp_days", "args": [7.0], "ok": {"$float": "7.0"}}
+{"fn": "clamp_days", "args": [28.0], "ok": {"$float": "28.0"}}
+{"fn": "clamp_days", "args": [180.0], "ok": {"$float": "180.0"}}
+{"fn": "clamp_days", "args": [180.0001], "ok": {"$float": "180.0"}}
+{"fn": "clamp_days", "args": [1000000.0], "ok": {"$float": "180.0"}}
+{"fn": "clamp_days", "args": [-0.0], "ok": 0.25}
+{"fn": "baseline_for_signals", "args": ["static", false, "", null, false, 0, 0, 0], "ok": {"days": null, "reason": "static track does not decay", "tier": "n/a"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", true, "今天", null, false, 0, 0, 0], "ok": {"days": null, "reason": "already archived", "tier": "n/a"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "今天交", null, false, 0, 0, 0], "ok": {"days": {"$float": "1.0"}, "reason": "explicit temporal anchor -> 1d horizon", "tier": "horizon"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", "in 3 days", false, 0, 0, 0], "ok": {"days": {"$float": "3.0"}, "reason": "explicit temporal anchor -> 3d horizon", "tier": "horizon"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", "999天", false, 0, 0, 0], "ok": {"days": {"$float": "180.0"}, "reason": "explicit temporal anchor -> 999d horizon", "tier": "horizon"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", "0天", false, 0, 0, 0], "ok": {"days": {"$float": "7.0"}, "reason": "orphan dynamic item -> default cadence", "tier": "orphan"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, true, 1, 0, 0], "ok": {"days": {"$float": "3.0"}, "reason": "self-loop context (active project) -> fastest rot", "tier": "self_loop"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, true, 1, 1, 5], "ok": {"days": {"$float": "3.0"}, "reason": "self-loop context (active project) -> fastest rot", "tier": "self_loop"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, true, 0, 0, 0], "ok": {"days": {"$float": "28.0"}, "reason": "value lifted to meta layer -> raw needs less attention", "tier": "captured"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, false, 1, 0, 0], "ok": {"days": {"$float": "3.0"}, "reason": "self-loop context (active project) -> fastest rot", "tier": "self_loop"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, false, 0, 1, 0], "ok": {"days": {"$float": "14.0"}, "reason": "connected / shared higher-dim context -> medium rot", "tier": "connected"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, false, 0, 0, 1], "ok": {"days": {"$float": "14.0"}, "reason": "connected / shared higher-dim context -> medium rot", "tier": "connected"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", null, false, -1, -1, -1], "ok": {"days": {"$float": "7.0"}, "reason": "orphan dynamic item -> default cadence", "tier": "orphan"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "", "", false, 0, 0, 0], "ok": {"days": {"$float": "7.0"}, "reason": "orphan dynamic item -> default cadence", "tier": "orphan"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "本周", "Q3", false, 0, 0, 0], "ok": {"days": {"$float": "7.0"}, "reason": "explicit temporal anchor -> 7d horizon", "tier": "horizon"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "deadline", null, false, 0, 0, 0], "ok": {"days": {"$float": "7.0"}, "reason": "explicit temporal anchor -> 7d horizon", "tier": "horizon"}}
+{"fn": "baseline_for_signals", "args": ["dynamic", false, "明早", "end of month", false, 0, 0, 0], "ok": {"days": {"$float": "1.0"}, "reason": "explicit temporal anchor -> 1d horizon", "tier": "horizon"}}
+{"fn": "baseline_for_signals", "args": ["STATIC", false, "", null, false, 0, 0, 0], "ok": {"days": null, "reason": "static track does not decay", "tier": "n/a"}}
+{"fn": "baseline_for_signals", "args": ["", false, "", null, false, 0, 0, 0], "ok": {"days": null, "reason": "static track does not decay", "tier": "n/a"}}
+{"fn": "classify_review", "args": [0.0], "ok": "too_early"}
+{"fn": "classify_review", "args": [0.1], "ok": "too_early"}
+{"fn": "classify_review", "args": [0.2999], "ok": "too_early"}
+{"fn": "classify_review", "args": [0.3], "ok": "on_time"}
+{"fn": "classify_review", "args": [0.3001], "ok": "on_time"}
+{"fn": "classify_review", "args": [0.5], "ok": "on_time"}
+{"fn": "classify_review", "args": [0.8999], "ok": "on_time"}
+{"fn": "classify_review", "args": [0.9], "ok": "too_late"}
+{"fn": "classify_review", "args": [0.9001], "ok": "too_late"}
+{"fn": "classify_review", "args": [1.0], "ok": "too_late"}
+{"fn": "classify_review", "args": [2.0], "ok": "too_late"}
+{"fn": "classify_review", "args": [-1.0], "ok": "too_early"}
+{"fn": "adapt_interval_math", "args": [0.25, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.25, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.3, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [1.0, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [7.0, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [180.0, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [0.0, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "too_early", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "too_early", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "on_time", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "on_time", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "too_late", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "too_late", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "bogus", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "bogus", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "TOO_LATE", false], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "adapt_interval_math", "args": [-1.0, "TOO_LATE", true], "error": "TypeError: adapt_interval_math() takes 2 positional arguments but 3 were given"}
+{"fn": "l2_target", "args": [null, "none"], "ok": null}
+{"fn": "l2_target", "args": [null, "lower_bound"], "ok": null}
+{"fn": "l2_target", "args": [null, "provisional"], "ok": null}
+{"fn": "l2_target", "args": [null, "confirmed"], "ok": null}
+{"fn": "l2_target", "args": [null, ""], "ok": null}
+{"fn": "l2_target", "args": [null, "high"], "ok": null}
+{"fn": "l2_target", "args": [0.0, "none"], "ok": {"$float": "0.0"}}
+{"fn": "l2_target", "args": [0.0, "lower_bound"], "ok": {"$float": "0.0"}}
+{"fn": "l2_target", "args": [0.0, "provisional"], "ok": {"$float": "0.0"}}
+{"fn": "l2_target", "args": [0.0, "confirmed"], "ok": {"$float": "0.0"}}
+{"fn": "l2_target", "args": [0.0, ""], "ok": {"$float": "0.0"}}
+{"fn": "l2_target", "args": [0.0, "high"], "ok": {"$float": "0.0"}}
+{"fn": "l2_target", "args": [1.0, "none"], "ok": 1.5}
+{"fn": "l2_target", "args": [1.0, "lower_bound"], "ok": 1.5}
+{"fn": "l2_target", "args": [1.0, "provisional"], "ok": 1.5}
+{"fn": "l2_target", "args": [1.0, "confirmed"], "ok": {"$float": "1.0"}}
+{"fn": "l2_target", "args": [1.0, ""], "ok": {"$float": "1.0"}}
+{"fn": "l2_target", "args": [1.0, "high"], "ok": {"$float": "1.0"}}
+{"fn": "l2_target", "args": [10.5, "none"], "ok": 15.75}
+{"fn": "l2_target", "args": [10.5, "lower_bound"], "ok": 15.75}
+{"fn": "l2_target", "args": [10.5, "provisional"], "ok": 15.75}
+{"fn": "l2_target", "args": [10.5, "confirmed"], "ok": 10.5}
+{"fn": "l2_target", "args": [10.5, ""], "ok": 10.5}
+{"fn": "l2_target", "args": [10.5, "high"], "ok": 10.5}
+{"fn": "l2_target", "args": [-5.0, "none"], "ok": -7.5}
+{"fn": "l2_target", "args": [-5.0, "lower_bound"], "ok": -7.5}
+{"fn": "l2_target", "args": [-5.0, "provisional"], "ok": -7.5}
+{"fn": "l2_target", "args": [-5.0, "confirmed"], "ok": {"$float": "-5.0"}}
+{"fn": "l2_target", "args": [-5.0, ""], "ok": {"$float": "-5.0"}}
+{"fn": "l2_target", "args": [-5.0, "high"], "ok": {"$float": "-5.0"}}

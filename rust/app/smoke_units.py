@@ -1,4 +1,4 @@
-"""Compare the three wired unit commands against the Python process oracle.
+"""Compare the four wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -59,6 +59,24 @@ CASES = [
             0.2,
         ],
     ),
+    ("scheduling", "extract_horizon_days", ["明天交"]),
+    ("scheduling", "extract_horizon_days", [None]),
+    ("scheduling", "clamp_days", [500.0]),
+    ("scheduling", "classify_review", [0.85]),
+    (
+        "scheduling",
+        "baseline_for_signals",
+        ["dynamic", False, "完成任务", None, False, 1, 0, 0],
+    ),
+    (
+        "scheduling",
+        "baseline_for_signals",
+        ["static", False, "x", None, False, 0, 0, 0],
+    ),
+    ("scheduling", "adapt_interval_math", [3.0, "too_late", False]),
+    ("scheduling", "adapt_interval_math", [3.0, "on_time", True]),
+    ("scheduling", "l2_target", [4.0, "none"]),
+    ("scheduling", "l2_target", [None, "none"]),
 ]
 
 

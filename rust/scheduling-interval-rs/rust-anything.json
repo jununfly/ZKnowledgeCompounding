@@ -1,0 +1,182 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-09-review-interval/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-scheduling-interval-rs",
+  "exports": [
+    {
+      "name": "extract_horizon_days",
+      "file": "spikes/spike-09-review-interval/pure_bridge.py",
+      "line": 24,
+      "params": [
+        {
+          "name": "text",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "clamp_days",
+      "file": "spikes/spike-09-review-interval/pure_bridge.py",
+      "line": 28,
+      "params": [
+        {
+          "name": "days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "baseline_for_signals",
+      "file": "spikes/spike-09-review-interval/pure_bridge.py",
+      "line": 32,
+      "params": [
+        {
+          "name": "track",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "archived",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "title",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "content",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "captured",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "self_loop_count",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "higher_dim_count",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "conn_count",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "classify_review",
+      "file": "spikes/spike-09-review-interval/pure_bridge.py",
+      "line": 57,
+      "params": [
+        {
+          "name": "decay_at_review",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "adapt_interval_math",
+      "file": "spikes/spike-09-review-interval/pure_bridge.py",
+      "line": 61,
+      "params": [
+        {
+          "name": "old_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "verdict",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "human",
+          "ts_type": "boolean",
+          "optional": true,
+          "rest": false,
+          "default": "False",
+          "keyword_only": true
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "l2_target",
+      "file": "spikes/spike-09-review-interval/pure_bridge.py",
+      "line": 65,
+      "params": [
+        {
+          "name": "budget",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "confidence",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}
