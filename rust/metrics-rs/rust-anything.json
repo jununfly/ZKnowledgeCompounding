@@ -1,0 +1,227 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "src/zkc/metrics.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-metrics-rs",
+  "exports": [
+    {
+      "name": "connection_density",
+      "file": "src/zkc/metrics.py",
+      "line": 25,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "reuse_rate",
+      "file": "src/zkc/metrics.py",
+      "line": 40,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "tuple",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "methodology_output",
+      "file": "src/zkc/metrics.py",
+      "line": 54,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "int",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "decay_controllability",
+      "file": "src/zkc/metrics.py",
+      "line": 59,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "rot_threshold",
+          "ts_type": "number | undefined",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "rot_rate",
+      "file": "src/zkc/metrics.py",
+      "line": 83,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "rot_threshold",
+          "ts_type": "number | undefined",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "compounding_factor",
+      "file": "src/zkc/metrics.py",
+      "line": 99,
+      "params": [
+        {
+          "name": "cd",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "rr",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "mo",
+          "ts_type": "int",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "dc",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "weights",
+          "ts_type": "tuple | undefined",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        },
+        {
+          "name": "method_target",
+          "ts_type": "number | undefined",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "build_report",
+      "file": "src/zkc/metrics.py",
+      "line": 132,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "MetricReport",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "build_report_dict",
+      "file": "src/zkc/metrics.py",
+      "line": 141,
+      "params": [
+        {
+          "name": "inp",
+          "ts_type": "MetricInputs",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "dict",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "metrics_report",
+      "file": "src/zkc/metrics.py",
+      "line": 155,
+      "params": [
+        {
+          "name": "store",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "dict",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": [
+    {
+      "name": "MetricReport",
+      "file": "src/zkc/metrics.py",
+      "line": 123,
+      "reason": "class: decorated with `@dataclass`, public class attribute `citations_per_claim`, public class attribute `compounding_factor`, public class attribute `connection_density`, public class attribute `decay_controllability`, public class attribute `methodology_output`, public class attribute `reuse_rate`"
+    }
+  ]
+}

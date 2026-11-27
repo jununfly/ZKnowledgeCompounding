@@ -1,0 +1,218 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "src/zkc/decay.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-decay-rs",
+  "exports": [
+    {
+      "name": "decay_linear",
+      "file": "src/zkc/decay.py",
+      "line": 26,
+      "params": [
+        {
+          "name": "elapsed_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "interval_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "decay_exponential",
+      "file": "src/zkc/decay.py",
+      "line": 37,
+      "params": [
+        {
+          "name": "elapsed_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "half_life_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "decay_step",
+      "file": "src/zkc/decay.py",
+      "line": 44,
+      "params": [
+        {
+          "name": "elapsed_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "interval_days",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "elapsed_days",
+      "file": "src/zkc/decay.py",
+      "line": 84,
+      "params": [
+        {
+          "name": "node",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "now",
+          "ts_type": "datetime",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "compute_decay_score",
+      "file": "src/zkc/decay.py",
+      "line": 92,
+      "params": [
+        {
+          "name": "node",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "now",
+          "ts_type": "datetime",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "number",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "surface",
+      "file": "src/zkc/decay.py",
+      "line": 111,
+      "params": [
+        {
+          "name": "items",
+          "ts_type": "unknown[]",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "now",
+          "ts_type": "datetime",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "threshold",
+          "ts_type": "number | undefined",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        },
+        {
+          "name": "budget",
+          "ts_type": "int | undefined",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        }
+      ],
+      "returns": "unknown[]",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "review_reset",
+      "file": "src/zkc/decay.py",
+      "line": 132,
+      "params": [
+        {
+          "name": "node",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "now",
+          "ts_type": "datetime",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "dict",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "refresh_decay",
+      "file": "src/zkc/decay.py",
+      "line": 146,
+      "params": [
+        {
+          "name": "repo",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "now",
+          "ts_type": "datetime",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "int",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

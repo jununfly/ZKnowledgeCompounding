@@ -1,0 +1,38 @@
+{
+  "schema": "rust-anything/front-door@1",
+  "name": "metrics-snapshot",
+  "commands": [
+    "unit-transport",
+    "unit-context",
+    "unit-expiry"
+  ],
+  "units": [
+    {
+      "name": "zkc-transport",
+      "crate": "zkc-transport-rs",
+      "path": "../transport-rs",
+      "commands": [
+        "unit-transport"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ZKC_TRANSPORT"
+    },
+    {
+      "name": "zkc-context-pure",
+      "crate": "zkc-context-pure-rs",
+      "path": "../context-pure-rs",
+      "commands": [
+        "unit-context"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ZKC_CONTEXT_PURE"
+    },
+    {
+      "name": "zkc-expiry-pure",
+      "crate": "zkc-expiry-pure-rs",
+      "path": "../expiry-pure-rs",
+      "commands": [
+        "unit-expiry"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ZKC_EXPIRY_PURE"
+    }
+  ]
+}

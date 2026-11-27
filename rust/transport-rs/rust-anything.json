@@ -1,0 +1,259 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "src/zkc/transport/",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-transport-rs",
+  "exports": [
+    {
+      "name": "contract_snapshot",
+      "file": "src/zkc/transport/contract.py",
+      "line": 48,
+      "params": [],
+      "returns": "Record<string, unknown>",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "tool_schema",
+      "file": "src/zkc/transport/contract.py",
+      "line": 53,
+      "params": [
+        {
+          "name": "name",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "Record<string, unknown> | undefined",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "is_blacklisted",
+      "file": "src/zkc/transport/contract.py",
+      "line": 58,
+      "params": [
+        {
+          "name": "name",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "boolean",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "is_allowlisted",
+      "file": "src/zkc/transport/contract.py",
+      "line": 68,
+      "params": [
+        {
+          "name": "name",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "boolean",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "validate_arguments",
+      "file": "src/zkc/transport/mcp_server.py",
+      "line": 83,
+      "params": [
+        {
+          "name": "schema",
+          "ts_type": "Record<string, unknown>",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "arguments",
+          "ts_type": "Record<string, unknown>",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "string | undefined",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "decode_message",
+      "file": "src/zkc/transport/protocol.py",
+      "line": 37,
+      "params": [
+        {
+          "name": "raw",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "Record<string, unknown>",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "encode_message",
+      "file": "src/zkc/transport/protocol.py",
+      "line": 52,
+      "params": [
+        {
+          "name": "obj",
+          "ts_type": "Record<string, unknown>",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "string",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "is_notification",
+      "file": "src/zkc/transport/protocol.py",
+      "line": 57,
+      "params": [
+        {
+          "name": "message",
+          "ts_type": "Record<string, unknown>",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "boolean",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "result_response",
+      "file": "src/zkc/transport/protocol.py",
+      "line": 62,
+      "params": [
+        {
+          "name": "request_id",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "result",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "Record<string, unknown>",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "error_response",
+      "file": "src/zkc/transport/protocol.py",
+      "line": 66,
+      "params": [
+        {
+          "name": "request_id",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "code",
+          "ts_type": "int",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "message",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "data",
+          "ts_type": "unknown",
+          "optional": true,
+          "rest": false,
+          "default": "None"
+        }
+      ],
+      "returns": "Record<string, unknown>",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": [
+    {
+      "name": "main",
+      "file": "src/zkc/transport/__main__.py",
+      "line": 16,
+      "reason": "a command-line entry point: it stays in Python, and `app front-door` takes the command line over when the whole app moves"
+    },
+    {
+      "name": "build_server",
+      "file": "src/zkc/transport/mcp_server.py",
+      "line": 248,
+      "reason": "takes or returns a function"
+    },
+    {
+      "name": "ToolSpec",
+      "file": "src/zkc/transport/mcp_server.py",
+      "line": 38,
+      "reason": "class: decorated with `@dataclass`, public class attribute `description`, public class attribute `handler`, public class attribute `input_schema`, public class attribute `name`"
+    },
+    {
+      "name": "ResourceSpec",
+      "file": "src/zkc/transport/mcp_server.py",
+      "line": 46,
+      "reason": "class: decorated with `@dataclass`, public class attribute `description`, public class attribute `handler`, public class attribute `mime_type`, public class attribute `name`, public class attribute `uri`"
+    },
+    {
+      "name": "McpServer",
+      "file": "src/zkc/transport/mcp_server.py",
+      "line": 99,
+      "reason": "class: `@property` method `tool_names`"
+    },
+    {
+      "name": "JsonRpcError",
+      "file": "src/zkc/transport/protocol.py",
+      "line": 21,
+      "reason": "class: inherits from Exception, public attribute `code`, public attribute `data`, public attribute `message`"
+    },
+    {
+      "name": "serve_stdio",
+      "file": "src/zkc/transport/stdio.py",
+      "line": 15,
+      "reason": "stdio loop is I/O, not a pure function; no deterministic recorded oracle"
+    }
+  ]
+}

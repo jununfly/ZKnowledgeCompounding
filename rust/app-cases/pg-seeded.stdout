@@ -1,0 +1,8 @@
+{
+  "connection_density": 0.75,
+  "reuse_rate": 1.0,
+  "citations_per_claim": 1.5,
+  "methodology_output": 1,
+  "decay_controllability": 0.6667,
+  "compounding_factor": 0.6292
+}

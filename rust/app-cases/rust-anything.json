@@ -1,0 +1,26 @@
+{
+  "schema": "rust-anything/app-cases@1",
+  "name": "metrics-snapshot",
+  "run": [
+    "python3",
+    "scripts/metrics_snapshot.py"
+  ],
+  "timeout_secs": 30,
+  "effects": {
+    "db_reset": "python3 rust/metric-app/seed.py",
+    "db_dump": "sh rust/metric-app/dump.sh"
+  },
+  "recorded": [
+    "pg-seeded",
+    "pg-empty",
+    "pg-static-only",
+    "pg-no-edges",
+    "pg-all-connected",
+    "pg-expired-unhandled",
+    "pg-all-handled",
+    "pg-method-saturated",
+    "pg-citation-heavy",
+    "pg-decay-boundary",
+    "memory-empty"
+  ]
+}

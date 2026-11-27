@@ -1,0 +1,131 @@
+{"fn": "clean_title", "args": [".leading"], "ok": ".leading"}
+{"fn": "clean_title", "args": ["{name} has {count} items"], "ok": "{name} has {count} items"}
+{"fn": "clean_title", "args": ["emoji 👍🏽 mix"], "ok": "emoji 👍🏽 mix"}
+{"fn": "clean_title", "args": [":"], "ok": ":"}
+{"fn": "clean_title", "args": ["ünïcödé{name} has {count} items"], "ok": "ünïcödé{name} has {count} items"}
+{"fn": "clean_title", "args": ["abc"], "ok": "abc"}
+{"fn": "clean_title", "args": ["a..b"], "ok": "a..b"}
+{"fn": "clean_title", "args": ["src/a/b.ts"], "ok": "src/a/b.ts"}
+{"fn": "clean_title", "args": ["HELLO"], "ok": "HELLO"}
+{"fn": "clean_title", "args": ["HELLO{name} has {count} items"], "ok": "HELLO{name} has {count} items"}
+{"fn": "clean_title", "args": ["a.b.c"], "ok": "a.b.c"}
+{"fn": "clean_title", "args": ["trailing."], "ok": "trailing."}
+{"fn": "clean_title", "args": ["hello"], "ok": "hello"}
+{"fn": "clean_title", "args": ["HELLOİstanbul"], "ok": "HELLOİstanbul"}
+{"fn": "clean_title", "args": ["straßea:b:c"], "ok": "straßea:b:c"}
+{"fn": "clean_title", "args": ["straße"], "ok": "straße"}
+{"fn": "clean_title", "args": ["Hello World{name} has {count} items"], "ok": "Hello World{name} has {count} it"}
+{"fn": "clean_title", "args": ["straßeHELLO"], "ok": "straßeHELLO"}
+{"fn": "clean_title", "args": [""], "ok": ""}
+{"fn": "clean_title", "args": ["a😀b😀c"], "ok": "a😀b😀c"}
+{"fn": "clean_title", "args": ["ΣΊΣΥΦΟΣ  padded  "], "ok": "ΣΊΣΥΦΟΣ  padded"}
+{"fn": "clean_title", "args": ["ababc"], "ok": "ababc"}
+{"fn": "clean_title", "args": ["日本語のテキスト"], "ok": "日本語のテキスト"}
+{"fn": "clean_title", "args": ["a"], "ok": "a"}
+{"fn": "clean_title", "args": ["ns:key.path"], "ok": "ns:key.path"}
+{"fn": "clean_title", "args": ["ab"], "ok": "ab"}
+{"fn": "clean_title", "args": ["./x/**/*.json"], "ok": "./x/**/*.json"}
+{"fn": "clean_title", "args": ["﻿bom"], "ok": "﻿bom"}
+{"fn": "clean_title", "args": ["a:b:c"], "ok": "a:b:c"}
+{"fn": "clean_title", "args": ["  padded  "], "ok": "padded"}
+{"fn": "clean_title", "args": ["a.b.chello world"], "ok": "a.b.chello world"}
+{"fn": "clean_title", "args": ["hello world./x/**/*.json"], "ok": "hello world./x/**/*.json"}
+{"fn": "clean_title", "args": ["ΣΊΣΥΦΟΣİstanbul"], "ok": "ΣΊΣΥΦΟΣİstanbul"}
+{"fn": "clean_title", "args": ["é"], "ok": "é"}
+{"fn": "clean_title", "args": ["日本語のテキストİstanbul"], "ok": "日本語のテキストİstanbul"}
+{"fn": "clean_title", "args": ["ΣΊΣΥΦΟΣ"], "ok": "ΣΊΣΥΦΟΣ"}
+{"fn": "clean_title", "args": ["key_name-1"], "ok": "key_name-1"}
+{"fn": "clean_title", "args": ["straßeline1\nline2"], "ok": "straßeline1"}
+{"fn": "clean_title", "args": ["helloünïcödé"], "ok": "helloünïcödé"}
+{"fn": "clean_title", "args": ["İstanbul"], "ok": "İstanbul"}
+{"fn": "clean_title", "args": ["héllo wörld"], "ok": "héllo wörld"}
+{"fn": "clean_title", "args": ["👍🏽 thumbs"], "ok": "👍🏽 thumbs"}
+{"fn": "clean_title", "args": ["日本語"], "ok": "日本語"}
+{"fn": "clean_title", "args": ["ılık ırmak"], "ok": "ılık ırmak"}
+{"fn": "clean_title", "args": ["👨‍👩‍👧 family"], "ok": "👨‍👩‍👧 family"}
+{"fn": "clean_title", "args": ["a b"], "ok": "a b"}
+{"fn": "clean_title", "args": ["a😀b"], "ok": "a😀b"}
+{"fn": "clean_title", "args": ["a²b x½ y①"], "ok": "a²b x½ y①"}
+{"fn": "clean_title", "args": ["aⅠb Ⅻ"], "ok": "aⅠb Ⅻ"}
+{"fn": "clean_title", "args": ["a𐐀b 𝐀bc"], "ok": "a𐐀b 𝐀bc"}
+{"fn": "clean_title", "args": ["कि ٣٤"], "ok": "कि ٣٤"}
+{"fn": "fallback_name", "args": [["hello"], 0], "ok": "聚合：hello（0条）"}
+{"fn": "fallback_name", "args": [[], 9223372036854775807], "ok": "未命名聚合（9223372036854775807条）"}
+{"fn": "fallback_name", "args": [["a:b:c", "ünïcödé", "a😀b😀c"], 1], "ok": "未命名聚合（1条）"}
+{"fn": "fallback_name", "args": [[".leading  padded  ", "é", ":"], 1], "ok": "聚合：leading/padded（1条）"}
+{"fn": "fallback_name", "args": [[""], 0], "ok": "未命名聚合（0条）"}
+{"fn": "fallback_name", "args": [[], 7], "ok": "未命名聚合（7条）"}
+{"fn": "fallback_name", "args": [[], 42], "ok": "未命名聚合（42条）"}
+{"fn": "fallback_name", "args": [[".leading{name} has {count} items", "ns:key.path", "tab\tseparated"], 255], "ok": "聚合：count/has（255条）"}
+{"fn": "fallback_name", "args": [["a😀b😀c", "key_name-1", "Hello World"], 100], "ok": "聚合：hello/key（100条）"}
+{"fn": "fallback_name", "args": [["{name} has {count} items"], 100], "ok": "聚合：count/has（100条）"}
+{"fn": "fallback_name", "args": [["emoji 👍🏽 mixa"], 2147483647], "ok": "聚合：emoji/mixa（2147483647条）"}
+{"fn": "fallback_name", "args": [["./x/**/*.json", "key_name-1"], -1], "ok": "聚合：json/key（-1条）"}
+{"fn": "fallback_name", "args": [["Hello World:", "hello world"], 255], "ok": "聚合：hello/world（255条）"}
+{"fn": "fallback_name", "args": [["ΣΊΣΥΦΟΣ"], 2147483647], "ok": "未命名聚合（2147483647条）"}
+{"fn": "fallback_name", "args": [["emoji 👍🏽 mix"], -100], "ok": "聚合：emoji/mix（-100条）"}
+{"fn": "fallback_name", "args": [["日本語のテキスト", "straße", ":"], 9223372036854775807], "ok": "聚合：stra/日（9223372036854775807条）"}
+{"fn": "fallback_name", "args": [["tab\tseparated", "ab", "İstanbul"], 2147483647], "ok": "聚合：ab/separated（2147483647条）"}
+{"fn": "fallback_name", "args": [[], -2147483648], "ok": "未命名聚合（-2147483648条）"}
+{"fn": "fallback_name", "args": [["hello", "ns:key.path", "ünïcödé"], -2147483648], "ok": "聚合：hello/key（-2147483648条）"}
+{"fn": "fallback_name", "args": [["a"], -2147483648], "ok": "未命名聚合（-2147483648条）"}
+{"fn": "fallback_name", "args": [["line1\nline2line1\nline2", ":", ""], 9223372036854775807], "ok": "聚合：line1/line2（9223372036854775807条）"}
+{"fn": "fallback_name", "args": [["emoji 👍🏽 mix"], 1], "ok": "聚合：emoji/mix（1条）"}
+{"fn": "fallback_name", "args": [["é"], 255], "ok": "未命名聚合（255条）"}
+{"fn": "fallback_name", "args": [["key_name-1a.b.c"], 1], "ok": "聚合：1a/key（1条）"}
+{"fn": "fallback_name", "args": [[], -1], "ok": "未命名聚合（-1条）"}
+{"fn": "fallback_name", "args": [["a.b.c", ":"], 2], "ok": "未命名聚合（2条）"}
+{"fn": "fallback_name", "args": [["line1\nline2", "HELLO", "İstanbul"], 42], "ok": "聚合：hello/line1（42条）"}
+{"fn": "fallback_name", "args": [["a.b.c.leading", "abc"], -2147483648], "ok": "聚合：abc/leading（-2147483648条）"}
+{"fn": "fallback_name", "args": [[".leadingsrc/a/b.ts", "emoji 👍🏽 mixΣΊΣΥΦΟΣ", "tab\tseparated日本語のテキスト"], 7], "ok": "聚合：emoji/leadingsrc（7条）"}
+{"fn": "fallback_name", "args": [["HELLO", "./x/**/*.json"], 255], "ok": "聚合：hello/json（255条）"}
+{"fn": "fallback_name", "args": [["ns:key.pathabc", "  padded  ", "﻿bom"], -1], "ok": "聚合：bom/key（-1条）"}
+{"fn": "fallback_name", "args": [["😀a..b"], -1], "ok": "未命名聚合（-1条）"}
+{"fn": "fallback_name", "args": [["İstanbul", "HELLO"], -1], "ok": "聚合：hello/stanbul（-1条）"}
+{"fn": "fallback_name", "args": [["hello world", "hello"], 9223372036854775807], "ok": "聚合：hello/world（9223372036854775807条）"}
+{"fn": "fallback_name", "args": [[], 255], "ok": "未命名聚合（255条）"}
+{"fn": "fallback_name", "args": [["emoji 👍🏽 mix"], -2147483648], "ok": "聚合：emoji/mix（-2147483648条）"}
+{"fn": "fallback_name", "args": [[], 0], "ok": "未命名聚合（0条）"}
+{"fn": "fallback_name", "args": [["a", "tab\tseparated", ":"], 42], "ok": "聚合：separated/tab（42条）"}
+{"fn": "fallback_name", "args": [["{name} has {count} itemsa.b.c", "ns:key.path", "straße"], 0], "ok": "聚合：count/has（0条）"}
+{"fn": "fallback_name", "args": [["İstanbulemoji 👍🏽 mix"], 7], "ok": "聚合：mix/stanbulemoji（7条）"}
+{"fn": "fallback_name", "args": [["b", "a", "B", "é", "10", "9", "a"], 0], "ok": "聚合：10（0条）"}
+{"fn": "fallback_name", "args": [["hello"], -7], "ok": "聚合：hello（-7条）"}
+{"fn": "fallback_name", "args": [["hello"], -1], "ok": "聚合：hello（-1条）"}
+{"fn": "fallback_name", "args": [["hello"], 2147483648], "ok": "聚合：hello（2147483648条）"}
+{"fn": "fallback_name", "args": [["hello"], -2147483649], "ok": "聚合：hello（-2147483649条）"}
+{"fn": "fallback_name", "args": [["hello"], 9007199254740993], "ok": "聚合：hello（9007199254740993条）"}
+{"fn": "fallback_name", "args": [["hello"], 9223372036854775807], "ok": "聚合：hello（9223372036854775807条）"}
+{"fn": "fallback_name", "args": [["hello"], -9223372036854775808], "ok": "聚合：hello（-9223372036854775808条）"}
+{"fn": "clean_title", "args": ["标题"], "ok": "标题"}
+{"fn": "clean_title", "args": ["  标题  "], "ok": "标题"}
+{"fn": "clean_title", "args": ["\n首行\n第二行"], "ok": "首行"}
+{"fn": "clean_title", "args": ["  \n  有效行  \n尾部"], "ok": "有效行"}
+{"fn": "clean_title", "args": ["\"带引号\""], "ok": "带引号"}
+{"fn": "clean_title", "args": ["'单引号'"], "ok": "单引号"}
+{"fn": "clean_title", "args": ["“中文引号”"], "ok": "“中文引号”"}
+{"fn": "clean_title", "args": ["‘单引号’"], "ok": "‘单引号’"}
+{"fn": "clean_title", "args": ["\"‘混合’\""], "ok": "‘混合’"}
+{"fn": "clean_title", "args": [""], "ok": ""}
+{"fn": "clean_title", "args": ["   \n\t  "], "ok": ""}
+{"fn": "clean_title", "args": ["12345678901234567890123456789012末位"], "ok": "12345678901234567890123456789012"}
+{"fn": "clean_title", "args": ["一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十十二"], "ok": "一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十十二"}
+{"fn": "clean_title", "args": ["第一行\r\n第二行"], "ok": "第一行"}
+{"fn": "clean_title", "args": ["😀emoji标题"], "ok": "😀emoji标题"}
+{"fn": "fallback_name", "args": [[], 0], "ok": "未命名聚合（0条）"}
+{"fn": "fallback_name", "args": [[], -3], "ok": "未命名聚合（-3条）"}
+{"fn": "fallback_name", "args": [["的了一是在不有我他这中大为上和是与就都也要会能可去你那它此该等之其为以于对其或"], 7], "ok": "未命名聚合（7条）"}
+{"fn": "fallback_name", "args": [["abc abc abc"], 3], "ok": "聚合：abc（3条）"}
+{"fn": "fallback_name", "args": [["a b c"], 3], "ok": "未命名聚合（3条）"}
+{"fn": "fallback_name", "args": [["中文 中文 中文"], 3], "ok": "聚合：文（3条）"}
+{"fn": "fallback_name", "args": [["中 文 中 文"], 4], "ok": "聚合：文（4条）"}
+{"fn": "fallback_name", "args": [["alpha beta alpha beta gamma"], 5], "ok": "聚合：alpha/beta（5条）"}
+{"fn": "fallback_name", "args": [["Zebra zebra apple apple"], 4], "ok": "聚合：apple/zebra（4条）"}
+{"fn": "fallback_name", "args": [["123 123 456"], 3], "ok": "聚合：123/456（3条）"}
+{"fn": "fallback_name", "args": [["ABC abc AbC"], 3], "ok": "聚合：abc（3条）"}
+{"fn": "fallback_name", "args": [["İstanbul İstanbul"], 2], "ok": "聚合：stanbul（2条）"}
+{"fn": "fallback_name", "args": [["知识复利 知识复利 知识"], 3], "ok": "聚合：知/识（3条）"}
+{"fn": "fallback_name", "args": [["", "", "有效"], 3], "ok": "聚合：效（3条）"}
+{"fn": "fallback_name", "args": [["!!! ??? ..."], 3], "ok": "未命名聚合（3条）"}
+{"fn": "fallback_name", "args": [["a1 b2 a1 c3"], 4], "ok": "聚合：a1/b2（4条）"}
+{"fn": "fallback_name", "args": [["聚合：前缀（3条）"], 3], "ok": "聚合：前/合（3条）"}

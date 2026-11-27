@@ -1,0 +1,54 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-06-context-assembly/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-context-pure-rs",
+  "exports": [
+    {
+      "name": "clean_title",
+      "file": "spikes/spike-06-context-assembly/pure_bridge.py",
+      "line": 10,
+      "params": [
+        {
+          "name": "raw",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "string",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "fallback_name",
+      "file": "spikes/spike-06-context-assembly/pure_bridge.py",
+      "line": 14,
+      "params": [
+        {
+          "name": "member_texts",
+          "ts_type": "string[]",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "n_members",
+          "ts_type": "int",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "string",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

@@ -1,0 +1,544 @@
+{"fn": "decay_linear", "args": [1000.0, 10.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [10.0, 100.0], "ok": 0.1}
+{"fn": "decay_linear", "args": [3.0, 2.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [2147483648, 1000000], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000.0, 2147483648.0], "ok": 4.6566128730773926e-07}
+{"fn": "decay_linear", "args": [3.0, 9007199254740992.0], "ok": 3.3306690738754696e-16}
+{"fn": "decay_linear", "args": [{"$num": "-0"}, 1000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [-2.5, 42], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [2147483648.0, 9007199254740992.0], "ok": 2.384185791015625e-07}
+{"fn": "decay_linear", "args": [{"$num": "-0"}, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [{"$num": "Infinity"}, 10.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [-2.5, 1000], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [{"$num": "NaN"}, 10.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1000000.0, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [42.0, 2.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000000, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1000.0, 0.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000.0, 1000000.0], "ok": 0.001}
+{"fn": "decay_linear", "args": [{"$num": "-Infinity"}, 9007199254740992.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1000, 0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000000.0, 10.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [2147483648.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [{"$num": "NaN"}, 100.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [9007199254740992.0, 2147483648], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000000.0, 1000.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [9007199254740992.0, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000000.0, 2147483648.0], "ok": 0.00046566128730773926}
+{"fn": "decay_linear", "args": [{"$num": "Infinity"}, 100], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [-1.0, 100.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [2147483648.0, 3.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [-1.0, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [2147483648, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000000.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [42.0, 1000.0], "ok": 0.042}
+{"fn": "decay_linear", "args": [3.0, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [{"$num": "NaN"}, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [3.0, 3.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [-2.5, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [0.5, 1.0], "ok": 0.5}
+{"fn": "decay_linear", "args": [-2.5, 1000000], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [-1.0, 2147483648.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1000.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [2, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1.0, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [-2.5, 0.5], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [-1.0, 3.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [{"$num": "-Infinity"}, 1000000], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1.0, 42.0], "ok": 0.023809523809523808}
+{"fn": "decay_linear", "args": [0.5, 1000.0], "ok": 0.0005}
+{"fn": "decay_linear", "args": [{"$num": "-Infinity"}, 1.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [{"$num": "-0"}, 2], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [9007199254740992.0, 10.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000000.0, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [9007199254740992.0, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [0, 0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [100.0, 1000.0], "ok": 0.1}
+{"fn": "decay_linear", "args": [2.0, 2.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [{"$num": "NaN"}, 1000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [-1, 1000], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [-7.5, 10.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [0.1, 10.0], "ok": 0.01}
+{"fn": "decay_linear", "args": [0.30000000000000004, 10.0], "ok": 0.030000000000000006}
+{"fn": "decay_linear", "args": [1e+21, 10], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1e-07, 10.0], "ok": 1e-08}
+{"fn": "decay_linear", "args": [5e-324, 10.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1.7976931348623157e+308, 10.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [{"$num": "-0"}, 10], "ok": {"$float": "0.0"}}
+{"fn": "decay_linear", "args": [1000.0, -7.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000.0, 0.1], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000.0, 0.30000000000000004], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000, 1e+21], "ok": 1e-18}
+{"fn": "decay_linear", "args": [1000.0, 1e-07], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000.0, 5e-324], "ok": {"$float": "1.0"}}
+{"fn": "decay_linear", "args": [1000.0, 1.7976931348623157e+308], "ok": 5.562684646268004e-306}
+{"fn": "decay_linear", "args": [1000, 9007199254740992.0], "ok": 1.1102230246251565e-13}
+{"fn": "decay_linear", "args": [1000.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [0.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [3.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [1.0, 3.0], "ok": 0.2062994740159002}
+{"fn": "decay_exponential", "args": [{"$num": "-Infinity"}, 3], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [-2.5, 42.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "-0"}, 1.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [-2.5, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [9007199254740992.0, 1], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [3.0, 2.0], "ok": 0.6464466094067263}
+{"fn": "decay_exponential", "args": [1.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [2147483648.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [2147483648, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [42.0, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [1.0, 2147483648.0], "ok": 3.227718092801979e-10}
+{"fn": "decay_exponential", "args": [3.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [10, 1], "ok": 0.9990234375}
+{"fn": "decay_exponential", "args": [-2.5, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "-Infinity"}, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [1000000.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [-1, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [-2.5, 2147483648.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [10.0, 9007199254740992.0], "ok": 7.771561172376096e-16}
+{"fn": "decay_exponential", "args": [0.5, 0.5], "ok": 0.5}
+{"fn": "decay_exponential", "args": [{"$num": "-Infinity"}, 42], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.0, 1.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [2.0, 1000.0], "ok": 0.0013853338989711084}
+{"fn": "decay_exponential", "args": [42.0, 1000000.0], "ok": 2.9111757828048646e-05}
+{"fn": "decay_exponential", "args": [42, 1], "ok": 0.9999999999997726}
+{"fn": "decay_exponential", "args": [-1.0, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "NaN"}, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "Infinity"}, 2147483648.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [0.5, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [1000.0, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [10.0, 0.5], "ok": 0.9999990463256836}
+{"fn": "decay_exponential", "args": [1.0, 9007199254740992.0], "ok": 1.1102230246251565e-16}
+{"fn": "decay_exponential", "args": [-1, 1000], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.0, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "Infinity"}, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [-2.5, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [42, 100], "ok": 0.25257537568253075}
+{"fn": "decay_exponential", "args": [{"$num": "Infinity"}, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [1.0, 1000.0], "ok": 0.0006929070095474943}
+{"fn": "decay_exponential", "args": [2147483648.0, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [9007199254740992.0, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "Infinity"}, 42.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [1000000.0, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [-1.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "NaN"}, 0.5], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [2147483648.0, 1000000.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [2147483648.0, 1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [-2.5, 3.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.5, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [3.0, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [10.0, 3.0], "ok": 0.9007874342519875}
+{"fn": "decay_exponential", "args": [{"$num": "NaN"}, 3.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [2, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "-0"}, 100.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [1.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "-0"}, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "NaN"}, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [-7.5, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [0.1, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [0.30000000000000004, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [1e+21, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [1e-07, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [5e-324, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [1.7976931348623157e+308, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [9007199254740992.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [{"$num": "-0"}, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [0.0, -7.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_exponential", "args": [0.0, 0.1], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0, 0.30000000000000004], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.0, 1e+21], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.0, 1e-07], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.0, 5e-324], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0, 1.7976931348623157e+308], "ok": {"$float": "0.0"}}
+{"fn": "decay_exponential", "args": [0.0, 9007199254740992.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1000.0, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [0.5, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0.5, 100.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [3, -1], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1.0, 1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [-1.0, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [2.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [3, 1], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [100.0, 1000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [100.0, 1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "-Infinity"}, 1000000], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [9007199254740992.0, 9007199254740992.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "-0"}, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000000.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, 10], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [-2.5, 10.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [-2.5, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "-0"}, 3.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [10, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [-1.0, 2147483648.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [9007199254740992.0, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [100.0, {"$num": "NaN"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, 2147483648], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "Infinity"}, 0.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [-2.5, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "Infinity"}, 100.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0.5, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, 42.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [42.0, -2.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0.0, 0.5], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "-Infinity"}, 1000], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, 9007199254740992.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [2147483648.0, 100.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "Infinity"}, {"$num": "Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [3.0, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [0.5, 3.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "-Infinity"}, 100.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [100, -1], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1.0, 42.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1.0, -1.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [9007199254740992.0, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0, 9007199254740992.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [3.0, 2.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0.0, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [9007199254740992.0, 2147483648.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000, -1], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [100.0, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [0.5, 42.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [2.0, 1000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "-0"}, 1], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1000.0, 1000.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0.5, {"$num": "Infinity"}], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [3.0, 0.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [0.5, 1000000], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [0.5, 2.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, 3.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [{"$num": "NaN"}, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [3, {"$num": "-Infinity"}], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [-7.5, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [0.1, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [0.30000000000000004, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1e+21, 1000000], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1e-07, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [5e-324, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1.7976931348623157e+308, 1000000.0], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [9007199254740992.0, 1000000], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [{"$num": "-0"}, 1000000.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1000.0, -7.5], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000.0, 0.1], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000, 0.30000000000000004], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000.0, 1e+21], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1000.0, 1e-07], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000.0, 5e-324], "ok": {"$float": "1.0"}}
+{"fn": "decay_step", "args": [1000, 1.7976931348623157e+308], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1000.0, 9007199254740992.0], "ok": {"$float": "0.0"}}
+{"fn": "decay_step", "args": [1000.0, {"$num": "-0"}], "ok": {"$float": "1.0"}}
+{"fn": "elapsed_days", "args": [true, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{}, {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": {"b": "c"}}, null], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", true], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [null, []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [true, []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{}, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [null, {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [null, "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, null], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [null, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{}, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, null], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", null], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": {"b": "c"}}, "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], true], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [["a", 1], []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": {"b": "c"}}, 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{}, []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [true, {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{}, null], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [true, true], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, true], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [true, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, true], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": {"b": "c"}}, []], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": {"b": "c"}}, {}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [null, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": {"b": "c"}}, true], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"a": "b"}, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], null], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{}, "x"], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": ["x", 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[], 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [null, 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [0, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [true, 0], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [{"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "elapsed_days", "args": [[3, 1, 2], {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [["a", 1], "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, 0], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [["a", 1], ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [["a", 1], {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, {}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, null], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], 0], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{}, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, null], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [null, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, {}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{}, []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": "b"}, null], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, {}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, null], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["x", "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["x", true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["x", {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], {}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [0, "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], ["a", 1]], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": "b"}, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["x", 0], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["x", null], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [true, true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [["a", 1], {}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": "b"}, true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{}, "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{}, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["X", "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{}, 0], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": "b"}, "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": ["x", []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, 0], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": "b"}, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[], true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{}, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": "b"}, 0], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"a": {"b": "c"}}, {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [null, {"a": "b"}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [null, "x"], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [["a", 1], {"a": {"b": "c"}}], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [["a", 1], true], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [{"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}, []], "ok": {"$float": "0.0"}}
+{"fn": "compute_decay_score", "args": [[3, 1, 2], []], "ok": {"$float": "0.0"}}
+{"fn": "surface", "args": [["a", 1], [], {"$num": "-Infinity"}], "ok": ["a", 1]}
+{"fn": "surface", "args": [0, null, 1000.0, -100], "error": "TypeError: 'int' object is not iterable"}
+{"fn": "surface", "args": [[], {"a": {"b": "c"}}, {"$num": "NaN"}, 7], "ok": []}
+{"fn": "surface", "args": [[0, {}, {}], 0, {"$num": "-0"}], "ok": [0, {}, {}]}
+{"fn": "surface", "args": [0, null, 0.0, 100], "error": "TypeError: 'int' object is not iterable"}
+{"fn": "surface", "args": [[{}], {}, 0.5, 0], "ok": []}
+{"fn": "surface", "args": [[{"a": "b"}, [], {"a": "b"}], 0, {"$num": "NaN"}, 100], "ok": []}
+{"fn": "surface", "args": ["x", 0, 0.5, 42], "ok": []}
+{"fn": "surface", "args": [{}, true, 1000000.0, 2147483647], "ok": []}
+{"fn": "surface", "args": [{"a": "b"}, {"a": {"b": "c"}}, {"$undefined": true}, 100], "ok": []}
+{"fn": "surface", "args": [[[], "x", true], true, 42.0, 2147483647], "ok": []}
+{"fn": "surface", "args": [[["a", 1]], 0, 1000000.0, -1], "ok": []}
+{"fn": "surface", "args": [[["a", 1], {"a": "b"}], "x", 3.0, 2], "ok": []}
+{"fn": "surface", "args": [["a", 1], [], {"$undefined": true}, 0], "ok": []}
+{"fn": "surface", "args": [[[]], ["a", 1], {"$num": "Infinity"}, 100], "ok": []}
+{"fn": "surface", "args": [["a", 1], true, 3.0], "ok": []}
+{"fn": "surface", "args": [[true], ["a", 1], {"$num": "-0"}, 2], "ok": [true]}
+{"fn": "surface", "args": [[[], "x", ["a", 1]], ["a", 1], {"$undefined": true}, 9223372036854775807], "ok": []}
+{"fn": "surface", "args": [[["a", 1], {"a": "b"}, "x"], 0, 2.0], "ok": []}
+{"fn": "surface", "args": [[], {"a": {"b": "c"}}, 1.0, 42], "ok": []}
+{"fn": "surface", "args": [[0], {"a": {"b": "c"}}, {"$undefined": true}, -2147483648], "ok": []}
+{"fn": "surface", "args": [[null], "x", 2.0, {"$undefined": true}], "ok": []}
+{"fn": "surface", "args": [[[], ["a", 1]], 0, 1000000.0], "ok": []}
+{"fn": "surface", "args": [[["a", 1]], null, -2.5, -2147483648], "ok": []}
+{"fn": "surface", "args": [[null, "x", null], "x", 1000.0, -1], "ok": []}
+{"fn": "surface", "args": [[], true, 1.0, -1], "ok": []}
+{"fn": "surface", "args": [[["a", 1]], {}, {"$num": "-Infinity"}, 1], "ok": [["a", 1]]}
+{"fn": "surface", "args": [[[]], "x", {"$num": "Infinity"}, 42], "ok": []}
+{"fn": "surface", "args": [[true, "x"], true, 2147483648.0, 1], "ok": []}
+{"fn": "surface", "args": [[], [], {"$undefined": true}, 2147483647], "ok": []}
+{"fn": "surface", "args": [[[]], 0, {"$undefined": true}, -100], "ok": []}
+{"fn": "surface", "args": [[true], "x", 3.0, -1], "ok": []}
+{"fn": "surface", "args": [[[]], "x", -2.5, 2], "ok": [[]]}
+{"fn": "surface", "args": [[], 0, 2.0], "ok": []}
+{"fn": "surface", "args": [[], {"a": {"b": "c"}}, 0.5, 2], "ok": []}
+{"fn": "surface", "args": [["x", null], 0, {"$undefined": true}, 0], "ok": []}
+{"fn": "surface", "args": [[0], "x", 0.5, 7], "ok": []}
+{"fn": "surface", "args": [[{"a": {"b": "c"}}], {}, {"$undefined": true}, 2], "ok": []}
+{"fn": "surface", "args": [[{}], {"a": {"b": "c"}}, 100.0], "ok": []}
+{"fn": "surface", "args": [[["a", 1], "x", {}], {"a": "b"}, 0.0], "ok": [["a", 1], "x", {}]}
+{"fn": "surface", "args": [[], {}, 1.0, 0], "ok": []}
+{"fn": "surface", "args": [{"a": {"b": "c"}}, 0, {"$undefined": true}, 100], "ok": []}
+{"fn": "surface", "args": [[], [], 2.0, 7], "ok": []}
+{"fn": "surface", "args": [["x", ["a", 1]], {}, 1000000.0, {"$undefined": true}], "ok": []}
+{"fn": "surface", "args": [[{"a": {"b": "c"}}, 0, {"a": {"b": "c"}}], 0, {"$num": "-0"}, 9223372036854775807], "ok": [{"a": {"b": "c"}}, 0, {"a": {"b": "c"}}]}
+{"fn": "surface", "args": [[], {"a": {"b": "c"}}, 1.0, -2147483648], "ok": []}
+{"fn": "surface", "args": [[true], {"a": "b"}, 0.0, 7], "ok": [true]}
+{"fn": "surface", "args": [[["a", 1], [], {"a": {"b": "c"}}], true, {"$num": "Infinity"}], "ok": []}
+{"fn": "surface", "args": [[{"a": "b"}, null], "x", 42.0, 255], "ok": []}
+{"fn": "surface", "args": [["x", ["a", 1], []], null, 1000000.0, 100], "ok": []}
+{"fn": "surface", "args": [{"a": {"b": "c"}}, ["a", 1]], "ok": []}
+{"fn": "surface", "args": [[], null, {"$num": "Infinity"}, 255], "ok": []}
+{"fn": "surface", "args": [[["a", 1], 0, ["a", 1]], ["a", 1], {"$undefined": true}, -100], "ok": []}
+{"fn": "surface", "args": [[[]], {"a": "b"}, 3.0, 1], "ok": []}
+{"fn": "surface", "args": [[0], {"a": {"b": "c"}}, 1000000.0, 0], "ok": []}
+{"fn": "surface", "args": [[], ["a", 1]], "ok": []}
+{"fn": "surface", "args": [[{"a": "b"}, [], {"a": {"b": "c"}}], {"a": {"b": "c"}}], "ok": []}
+{"fn": "surface", "args": [[true, {}], {}, 2.0, -1], "ok": []}
+{"fn": "surface", "args": [["x"], {"a": "b"}, {"$undefined": true}, {"$undefined": true}], "ok": []}
+{"fn": "surface", "args": [["x"], "x", {"$num": "NaN"}, 9223372036854775807], "ok": []}
+{"fn": "review_reset", "args": [0, "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": {"b": "c"}}, "x"], "ok": {"a": {"b": "c"}, "last_reviewed_at": "x", "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [0, []], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", {"a": {"b": "c"}}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], ["a", 1]], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [true, []], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [0, {"a": {"b": "c"}}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", {}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [null, null], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [true, {"a": "b"}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": "b"}, 0], "ok": {"a": "b", "last_reviewed_at": 0, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [[], null], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{}, {"a": "b"}], "ok": {"last_reviewed_at": {"a": "b"}, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [["a", 1], []], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], {"a": {"b": "c"}}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": "b"}, true], "ok": {"a": "b", "last_reviewed_at": true, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [true, null], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", {"a": "b"}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [null, ["a", 1]], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{}, "x"], "ok": {"last_reviewed_at": "x", "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": ["x", "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": "b"}, "x"], "ok": {"a": "b", "last_reviewed_at": "x", "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [0, {}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], 0], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", 0], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], {}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [true, {}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [null, "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": "b"}, {"a": "b"}], "ok": {"a": "b", "last_reviewed_at": {"a": "b"}, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [[], "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], true], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": {"b": "c"}}, {"a": {"b": "c"}}], "ok": {"a": {"b": "c"}, "last_reviewed_at": {"a": {"b": "c"}}, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [null, {"a": {"b": "c"}}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", null], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{}, {}], "ok": {"last_reviewed_at": {}, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [true, {"a": {"b": "c"}}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [[], {}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [[], 0], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [[], []], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{}, true], "ok": {"last_reviewed_at": true, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [{}, 0], "ok": {"last_reviewed_at": 0, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [true, "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], null], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{}, null], "ok": {"last_reviewed_at": null, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [null, 0], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": "b"}, ["a", 1]], "ok": {"a": "b", "last_reviewed_at": ["a", 1], "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [{"a": "b"}, {"a": {"b": "c"}}], "ok": {"a": "b", "last_reviewed_at": {"a": {"b": "c"}}, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [{"a": {"b": "c"}}, 0], "ok": {"a": {"b": "c"}, "last_reviewed_at": 0, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [["a", 1], "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [null, {"a": "b"}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", "X"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{}, ["a", 1]], "ok": {"last_reviewed_at": ["a", 1], "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [0, 0], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [null, {}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": ["x", true], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"a": "b"}, []], "ok": {"a": "b", "last_reviewed_at": [], "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [{"a": {"b": "c"}}, true], "ok": {"a": {"b": "c"}, "last_reviewed_at": true, "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [[], {"a": "b"}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [["a", 1], {"a": "b"}], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [0, null], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "review_reset", "args": [{"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, "x"], "ok": {"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6, "last_reviewed_at": "x", "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [{"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}, "x"], "ok": {"n": {"$int": "9007199254740993"}, "f": {"$float": "1e+21"}, "t": 0.1, "neg": -7, "last_reviewed_at": "x", "decay_score": {"$float": "0.0"}}}
+{"fn": "review_reset", "args": [[3, 1, 2], "x"], "error": "TypeError: vars() argument must have __dict__ attribute"}
+{"fn": "refresh_decay", "args": [{"a": {"b": "c"}}, "x"], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, ["a", 1]], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, ["a", 1]], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": "b"}, []], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, {"a": {"b": "c"}}], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, {}], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, true], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": {"b": "c"}}, []], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, "x"], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [["a", 1], {"a": "b"}], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, []], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", true], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, true], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, 0], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [["a", 1], ["a", 1]], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [["a", 1], {}], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", []], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, true], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, []], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], ["a", 1]], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, null], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": "b"}, {"a": {"b": "c"}}], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, "x"], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, {"a": {"b": "c"}}], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], {}], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], 0], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", "x"], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": {"b": "c"}}, {"a": {"b": "c"}}], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": {"b": "c"}}, 0], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": "b"}, "x"], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, {}], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], true], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", null], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, "x"], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, {"a": {"b": "c"}}], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, null], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], []], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": {"b": "c"}}, {}], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": "b"}, null], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, true], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"a": {"b": "c"}}, true], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, ["a", 1]], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, "x"], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [["a", 1], []], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], null], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, {}], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{}, {"a": "b"}], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", ["a", 1]], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [["a", 1], true], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", {"a": {"b": "c"}}], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", {}], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, 0], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": ["x", {"a": "b"}], "error": "AttributeError: 'str' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [null, {"a": "b"}], "error": "AttributeError: 'NoneType' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [["a", 1], "x"], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, null], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, {}], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [0, []], "error": "AttributeError: 'int' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[], {"a": {"b": "c"}}], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [true, {"a": "b"}], "error": "AttributeError: 'bool' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, "x"], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [{"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}, "x"], "error": "AttributeError: 'dict' object has no attribute 'list_by_track'"}
+{"fn": "refresh_decay", "args": [[3, 1, 2], "x"], "error": "AttributeError: 'list' object has no attribute 'list_by_track'"}

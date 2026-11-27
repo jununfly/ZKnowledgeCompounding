@@ -1,0 +1,42 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-08-expiry-routing/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-expiry-pure-rs",
+  "exports": [
+    {
+      "name": "route_decision",
+      "file": "spikes/spike-08-expiry-routing/pure_bridge.py",
+      "line": 49,
+      "params": [
+        {
+          "name": "node_id",
+          "ts_type": "string",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "rows",
+          "ts_type": "dict[]",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "attention_pressure",
+          "ts_type": "number",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "dict",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

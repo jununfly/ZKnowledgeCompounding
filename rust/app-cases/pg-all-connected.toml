@@ -1,0 +1,7 @@
+bin.name = "metrics-snapshot"
+args = ["--storage", "pg"]
+env.add.ZKC_PG_DSN = "postgresql://postgres:zkc@localhost:55433/zkc_metric_record"
+env.add.ZKC_SEED_VARIANT = "all-connected"
+status.code = 0
+fs.sandbox = true
+fs.base = "pg-all-connected.in"

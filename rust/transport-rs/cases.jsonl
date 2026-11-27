@@ -1,0 +1,429 @@
+{"fn": "contract_snapshot", "args": [], "ok": {"version": "zkc-mcp-contract/v1", "protocolVersion": "2024-11-05", "transport": "stdio", "egress": [], "trustBoundary": "默认 stdio 零网络面、无需 token；外部 agent 一律零信任；写白名单 + 私人 claim 默认脱敏；跨机 HTTP/SSE 须端到端加密隧道，否则不变式⑤（本地优先/隐私）自动否决", "capabilities": {"tools": {"listChanged": false}, "resources": {"subscribe": false, "listChanged": false}}, "serverInfo": {"name": "zkc", "version": "0.1.0"}, "tools": [{"name": "zkc_capture", "description": "agent 显式 push 文档进 ZKC；必须过 DecisionRouter + 双信号弃权 + review_queue 人审分流闸，禁直通道；capture profile 默认开启（只加源节点，不写 interval、不触发 distill、不直写 meta_claim）", "inputSchema": {"type": "object", "properties": {"documents": {"type": "array", "maxItems": 1000, "items": {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}}, "required": ["title"]}}}, "required": ["documents"]}}, {"name": "zkc_query", "description": "只读检索，响应强制带 evidence_refs 溯源；私人 claim 默认脱敏，须显式 scope 授权方可带隐私字段", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 50}, "scope": {"type": "string", "enum": ["public", "private_claims"]}}, "required": ["query"]}}, {"name": "zkc_review_queue_list", "description": "只读列出待复审条目（可按 action 过滤）；repository 只暴露 open 项，不暴露 resolved 历史", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 200}, "action": {"type": "string", "enum": ["distill", "archive", "abstain", "classify"]}}}}, {"name": "zkc_review_queue_resolve", "description": "仅把复审条目标记为 resolved 并记录 HITL 归因；绝不写 interval、不触发 distill、不写 meta_claim", "inputSchema": {"type": "object", "properties": {"item_id": {"type": "string"}, "attribution": {"type": "string"}}, "required": ["item_id", "attribution"]}}, {"name": "zkc_scheduler_due", "description": "只读该关注清单：decay 到期、需投入注意力的 node（注意力语义的首个 resource）", "inputSchema": {"type": "object", "properties": {"as_of": {"type": "string", "description": "ISO 8601 datetime，缺省取当前时间"}, "limit": {"type": "integer", "minimum": 1, "maximum": 200}}}}], "resources": [{"uri": "zkc://scheduler/due", "name": "该关注清单", "description": "注意力语义的首个 resource：decay 到期、需投入注意力的 node 清单", "mimeType": "application/json"}], "blacklist": ["distill/trigger", "interval_adjustment", "meta_claim", "history/delete", "history/update"]}}
+{"fn": "tool_schema", "args": ["😀"], "ok": null}
+{"fn": "tool_schema", "args": [""], "ok": null}
+{"fn": "tool_schema", "args": ["﻿bom"], "ok": null}
+{"fn": "tool_schema", "args": ["abc"], "ok": null}
+{"fn": "tool_schema", "args": ["a:b:c"], "ok": null}
+{"fn": "tool_schema", "args": ["  padded  a..b"], "ok": null}
+{"fn": "tool_schema", "args": ["ünïcödé"], "ok": null}
+{"fn": "tool_schema", "args": ["straße"], "ok": null}
+{"fn": "tool_schema", "args": ["😀.leading"], "ok": null}
+{"fn": "tool_schema", "args": ["  padded  "], "ok": null}
+{"fn": "tool_schema", "args": ["{name} has {count} items"], "ok": null}
+{"fn": "tool_schema", "args": [":"], "ok": null}
+{"fn": "tool_schema", "args": ["{name} has {count} itemsHELLO"], "ok": null}
+{"fn": "tool_schema", "args": ["a"], "ok": null}
+{"fn": "tool_schema", "args": ["hello world"], "ok": null}
+{"fn": "tool_schema", "args": ["./x/**/*.json"], "ok": null}
+{"fn": "tool_schema", "args": ["ab"], "ok": null}
+{"fn": "tool_schema", "args": ["hello"], "ok": null}
+{"fn": "tool_schema", "args": ["trailing."], "ok": null}
+{"fn": "tool_schema", "args": ["日本語のテキスト"], "ok": null}
+{"fn": "tool_schema", "args": ["tab\tseparated"], "ok": null}
+{"fn": "tool_schema", "args": ["HELLO"], "ok": null}
+{"fn": "tool_schema", "args": ["Hello World"], "ok": null}
+{"fn": "tool_schema", "args": [".leading"], "ok": null}
+{"fn": "tool_schema", "args": ["key_name-1"], "ok": null}
+{"fn": "tool_schema", "args": ["a.b.c"], "ok": null}
+{"fn": "tool_schema", "args": ["ΣΊΣΥΦΟΣ"], "ok": null}
+{"fn": "tool_schema", "args": ["a😀b😀c"], "ok": null}
+{"fn": "tool_schema", "args": ["ns:key.path"], "ok": null}
+{"fn": "tool_schema", "args": ["{name} has {count} itemsΣΊΣΥΦΟΣ"], "ok": null}
+{"fn": "tool_schema", "args": ["héllo wörld"], "ok": null}
+{"fn": "tool_schema", "args": ["👍🏽 thumbs"], "ok": null}
+{"fn": "tool_schema", "args": ["日本語"], "ok": null}
+{"fn": "tool_schema", "args": ["é"], "ok": null}
+{"fn": "tool_schema", "args": ["İstanbul"], "ok": null}
+{"fn": "tool_schema", "args": ["ılık ırmak"], "ok": null}
+{"fn": "tool_schema", "args": ["👨‍👩‍👧 family"], "ok": null}
+{"fn": "tool_schema", "args": ["a b"], "ok": null}
+{"fn": "tool_schema", "args": ["a😀b"], "ok": null}
+{"fn": "tool_schema", "args": ["a²b x½ y①"], "ok": null}
+{"fn": "tool_schema", "args": ["aⅠb Ⅻ"], "ok": null}
+{"fn": "tool_schema", "args": ["a𐐀b 𝐀bc"], "ok": null}
+{"fn": "tool_schema", "args": ["कि ٣٤"], "ok": null}
+{"fn": "is_blacklisted", "args": ["a:b:c"], "ok": false}
+{"fn": "is_blacklisted", "args": ["{name} has {count} items"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a.b.c"], "ok": false}
+{"fn": "is_blacklisted", "args": ["emoji 👍🏽 mix"], "ok": false}
+{"fn": "is_blacklisted", "args": ["trailing."], "ok": false}
+{"fn": "is_blacklisted", "args": ["hello worldhello"], "ok": false}
+{"fn": "is_blacklisted", "args": ["abc"], "ok": false}
+{"fn": "is_blacklisted", "args": ["HELLO"], "ok": false}
+{"fn": "is_blacklisted", "args": ["line1\nline2"], "ok": false}
+{"fn": "is_blacklisted", "args": ["é"], "ok": false}
+{"fn": "is_blacklisted", "args": ["  padded  "], "ok": false}
+{"fn": "is_blacklisted", "args": ["Hello World"], "ok": false}
+{"fn": "is_blacklisted", "args": ["hello"], "ok": false}
+{"fn": "is_blacklisted", "args": ["./x/**/*.json"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a..b"], "ok": false}
+{"fn": "is_blacklisted", "args": [""], "ok": false}
+{"fn": "is_blacklisted", "args": ["a"], "ok": false}
+{"fn": "is_blacklisted", "args": ["﻿bom"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a..btab\tseparated"], "ok": false}
+{"fn": "is_blacklisted", "args": ["日本語のテキスト"], "ok": false}
+{"fn": "is_blacklisted", "args": ["tab\tseparated{name} has {count} items"], "ok": false}
+{"fn": "is_blacklisted", "args": ["trailing.a:b:c"], "ok": false}
+{"fn": "is_blacklisted", "args": ["ünïcödé"], "ok": false}
+{"fn": "is_blacklisted", "args": ["src/a/b.ts"], "ok": false}
+{"fn": "is_blacklisted", "args": ["tab\tseparated"], "ok": false}
+{"fn": "is_blacklisted", "args": ["Hello Worlda:b:c"], "ok": false}
+{"fn": "is_blacklisted", "args": ["key_name-1hello world"], "ok": false}
+{"fn": "is_blacklisted", "args": ["hello world"], "ok": false}
+{"fn": "is_blacklisted", "args": ["😀"], "ok": false}
+{"fn": "is_blacklisted", "args": [".leading"], "ok": false}
+{"fn": "is_blacklisted", "args": ["héllo wörld"], "ok": false}
+{"fn": "is_blacklisted", "args": ["👍🏽 thumbs"], "ok": false}
+{"fn": "is_blacklisted", "args": ["日本語"], "ok": false}
+{"fn": "is_blacklisted", "args": ["İstanbul"], "ok": false}
+{"fn": "is_blacklisted", "args": ["straße"], "ok": false}
+{"fn": "is_blacklisted", "args": ["ılık ırmak"], "ok": false}
+{"fn": "is_blacklisted", "args": ["👨‍👩‍👧 family"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a b"], "ok": false}
+{"fn": "is_blacklisted", "args": ["ΣΊΣΥΦΟΣ"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a😀b"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a²b x½ y①"], "ok": false}
+{"fn": "is_blacklisted", "args": ["aⅠb Ⅻ"], "ok": false}
+{"fn": "is_blacklisted", "args": ["a𐐀b 𝐀bc"], "ok": false}
+{"fn": "is_blacklisted", "args": ["कि ٣٤"], "ok": false}
+{"fn": "is_allowlisted", "args": ["İstanbul"], "ok": false}
+{"fn": "is_allowlisted", "args": [""], "ok": false}
+{"fn": "is_allowlisted", "args": ["trailing."], "ok": false}
+{"fn": "is_allowlisted", "args": ["hello world"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a:b:c"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a😀b😀c"], "ok": false}
+{"fn": "is_allowlisted", "args": ["./x/**/*.json"], "ok": false}
+{"fn": "is_allowlisted", "args": ["﻿bom"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a.b.csrc/a/b.ts"], "ok": false}
+{"fn": "is_allowlisted", "args": ["key_name-1"], "ok": false}
+{"fn": "is_allowlisted", "args": ["straße"], "ok": false}
+{"fn": "is_allowlisted", "args": ["ünïcödé"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a..b"], "ok": false}
+{"fn": "is_allowlisted", "args": [".leading"], "ok": false}
+{"fn": "is_allowlisted", "args": ["Hello World"], "ok": false}
+{"fn": "is_allowlisted", "args": ["😀"], "ok": false}
+{"fn": "is_allowlisted", "args": ["ab"], "ok": false}
+{"fn": "is_allowlisted", "args": ["src/a/b.ts"], "ok": false}
+{"fn": "is_allowlisted", "args": ["{name} has {count} itemssrc/a/b.ts"], "ok": false}
+{"fn": "is_allowlisted", "args": ["abc"], "ok": false}
+{"fn": "is_allowlisted", "args": ["helloline1\nline2"], "ok": false}
+{"fn": "is_allowlisted", "args": ["hello"], "ok": false}
+{"fn": "is_allowlisted", "args": ["HELLO"], "ok": false}
+{"fn": "is_allowlisted", "args": ["  padded  a:b:c"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a"], "ok": false}
+{"fn": "is_allowlisted", "args": ["é"], "ok": false}
+{"fn": "is_allowlisted", "args": ["trailing.abc"], "ok": false}
+{"fn": "is_allowlisted", "args": ["straßetrailing."], "ok": false}
+{"fn": "is_allowlisted", "args": ["line1\nline2"], "ok": false}
+{"fn": "is_allowlisted", "args": ["ΣΊΣΥΦΟΣ"], "ok": false}
+{"fn": "is_allowlisted", "args": ["héllo wörld"], "ok": false}
+{"fn": "is_allowlisted", "args": ["👍🏽 thumbs"], "ok": false}
+{"fn": "is_allowlisted", "args": ["日本語"], "ok": false}
+{"fn": "is_allowlisted", "args": ["ılık ırmak"], "ok": false}
+{"fn": "is_allowlisted", "args": ["👨‍👩‍👧 family"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a b"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a😀b"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a²b x½ y①"], "ok": false}
+{"fn": "is_allowlisted", "args": ["aⅠb Ⅻ"], "ok": false}
+{"fn": "is_allowlisted", "args": ["a𐐀b 𝐀bc"], "ok": false}
+{"fn": "is_allowlisted", "args": ["कि ٣٤"], "ok": false}
+{"fn": "validate_arguments", "args": [{"😀": true}, {}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a": {"b": "c"}}, {}], "ok": null}
+{"fn": "validate_arguments", "args": [{"2": "x", "ünï": {"a": {"b": "c"}}}, {"nav": {"a": "b"}, "home": {"a": {"b": "c"}}}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, {}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, {"home": "x", "😀": ["a", 1]}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a.b": {"a": {"b": "c"}}}, {"home": [], "nav": 0}], "ok": null}
+{"fn": "validate_arguments", "args": [{"ünï": [], "😀": null}, {"10": "x", "ünï": true}], "ok": null}
+{"fn": "validate_arguments", "args": [{"home": 0}, {"nav": {"a": "b"}}], "ok": null}
+{"fn": "validate_arguments", "args": [{"nav": {}, "a": {"a": {"b": "c"}}, "home": {"a": {"b": "c"}}}, {"10": "x", "a.b": ["a", 1]}], "ok": null}
+{"fn": "validate_arguments", "args": [{"home": null}, {"b": {"a": "b"}}], "ok": null}
+{"fn": "validate_arguments", "args": [{"title": "x"}, {"b": {"a": {"b": "c"}}, "a.b": ["a", 1], "nav": 0}], "ok": null}
+{"fn": "validate_arguments", "args": [{"10": ["a", 1], "home": []}, {"ünï": true, "a.b": null, "10": {"a": "b"}}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a.b": true}, {}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, {"b": ["a", 1]}], "ok": null}
+{"fn": "validate_arguments", "args": [{"ünï": true}, {"10": null, "b": true, "title": {"a": "b"}}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, {"a.b": "x"}], "ok": null}
+{"fn": "validate_arguments", "args": [{"2": true, "title": {"a": "b"}}, {"10": 0, "😀": 0}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, {"home": true, "😀": {"a": "b"}}], "ok": null}
+{"fn": "validate_arguments", "args": [{"nav": true, "title": {}, "ünï": {"a": "b"}}, {"nav": {}, "2": true}], "ok": null}
+{"fn": "validate_arguments", "args": [{"b": [], "a.b": {"a": {"b": "c"}}, "home": null}, {"a.b": {"a": {"b": "c"}}, "10": true, "a": {}}], "ok": null}
+{"fn": "validate_arguments", "args": [{"title": ["a", 1]}, {"a.b": ["a", 1], "2": "x"}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, {"nav": ["a", 1]}], "ok": null}
+{"fn": "validate_arguments", "args": [{"10": 0, "home": {}}, {"title": {"a": "b"}, "a": {"a": {"b": "c"}}}], "ok": null}
+{"fn": "validate_arguments", "args": [null, {"home": [], "b": {"a": "b"}}], "error": "AttributeError: 'NoneType' object has no attribute 'get'"}
+{"fn": "validate_arguments", "args": [{"title": "x", "😀": {}}, {"b": true}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a.b": true, "10": ["a", 1], "title": null}, {"😀": null, "10": {"a": "b"}, "title": []}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a.b": {"a": {"b": "c"}}, "😀": "x"}, {"home": {}, "2": []}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a": [], "title": "x"}, {}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a": ["a", 1]}, {"😀": null}], "ok": null}
+{"fn": "validate_arguments", "args": [{"a.b": null}, {"2": true, "home": true, "b": ["a", 1]}], "ok": null}
+{"fn": "decode_message", "args": [""], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a.b.ckey_name-1"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["  padded  "], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["İstanbul"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["HELLO"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["é"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["./x/**/*.json"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["ab{name} has {count} items"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["Hello WorldHELLO"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a:b:cline1\nline2"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["hello worldtrailing."], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["abc"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["key_name-1"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["ünïcödé"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["straße.leading"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["straße  padded  "], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": [":hello"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["trailing."], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["abΣΊΣΥΦΟΣ"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": [":"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["  padded  a😀b😀c"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a..b"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["helloa.b.c"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["emoji 👍🏽 mix"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["hello world"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a.b.c"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["﻿bom"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a:b:cabc"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a😀b😀c"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["{name} has {count} items"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["héllo wörld"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["👍🏽 thumbs"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["日本語"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["straße"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["ılık ırmak"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["👨‍👩‍👧 family"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a b"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["ΣΊΣΥΦΟΣ"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a😀b"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a²b x½ y①"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["aⅠb Ⅻ"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["a𐐀b 𝐀bc"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["कि ٣٤"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "encode_message", "args": [{"title": ["a", 1], "home": []}], "ok": "{\"title\":[\"a\",1],\"home\":[]}"}
+{"fn": "encode_message", "args": [{"10": {"a": {"b": "c"}}, "nav": ["a", 1]}], "ok": "{\"10\":{\"a\":{\"b\":\"c\"}},\"nav\":[\"a\",1]}"}
+{"fn": "encode_message", "args": [{}], "ok": "{}"}
+{"fn": "encode_message", "args": [0], "ok": "0"}
+{"fn": "encode_message", "args": [{"a": {"a": {"b": "c"}}, "b": {"a": {"b": "c"}}, "ünï": true}], "ok": "{\"a\":{\"a\":{\"b\":\"c\"}},\"b\":{\"a\":{\"b\":\"c\"}},\"ünï\":true}"}
+{"fn": "encode_message", "args": [{"10": true, "ünï": {"a": {"b": "c"}}}], "ok": "{\"10\":true,\"ünï\":{\"a\":{\"b\":\"c\"}}}"}
+{"fn": "encode_message", "args": [{"10": {"a": {"b": "c"}}, "a.b": {}}], "ok": "{\"10\":{\"a\":{\"b\":\"c\"}},\"a.b\":{}}"}
+{"fn": "encode_message", "args": [{"b": {}, "😀": 0}], "ok": "{\"b\":{},\"😀\":0}"}
+{"fn": "encode_message", "args": [true], "ok": "true"}
+{"fn": "encode_message", "args": [[]], "ok": "[]"}
+{"fn": "encode_message", "args": [{"home": null, "nav": {"a": {"b": "c"}}}], "ok": "{\"home\":null,\"nav\":{\"a\":{\"b\":\"c\"}}}"}
+{"fn": "encode_message", "args": [{"home": ["a", 1]}], "ok": "{\"home\":[\"a\",1]}"}
+{"fn": "encode_message", "args": [{"2": [], "10": 0}], "ok": "{\"2\":[],\"10\":0}"}
+{"fn": "encode_message", "args": [{"ünï": ["a", 1]}], "ok": "{\"ünï\":[\"a\",1]}"}
+{"fn": "encode_message", "args": ["x"], "ok": "\"x\""}
+{"fn": "encode_message", "args": [{"title": 0, "ünï": true}], "ok": "{\"title\":0,\"ünï\":true}"}
+{"fn": "encode_message", "args": [{"nav": 0, "a.b": []}], "ok": "{\"nav\":0,\"a.b\":[]}"}
+{"fn": "encode_message", "args": [{"😀": 0, "b": 0, "2": 0}], "ok": "{\"😀\":0,\"b\":0,\"2\":0}"}
+{"fn": "encode_message", "args": [{"2": {}, "title": "x", "nav": ["a", 1]}], "ok": "{\"2\":{},\"title\":\"x\",\"nav\":[\"a\",1]}"}
+{"fn": "encode_message", "args": [{"2": null}], "ok": "{\"2\":null}"}
+{"fn": "encode_message", "args": [{"a.b": {"a": {"b": "c"}}}], "ok": "{\"a.b\":{\"a\":{\"b\":\"c\"}}}"}
+{"fn": "encode_message", "args": [{"b": true, "😀": null, "a.b": null}], "ok": "{\"b\":true,\"😀\":null,\"a.b\":null}"}
+{"fn": "encode_message", "args": [{"home": "x"}], "ok": "{\"home\":\"x\"}"}
+{"fn": "encode_message", "args": [{"title": {}}], "ok": "{\"title\":{}}"}
+{"fn": "encode_message", "args": [{"nav": []}], "ok": "{\"nav\":[]}"}
+{"fn": "encode_message", "args": [{"home": true, "a": [], "a.b": {"a": {"b": "c"}}}], "ok": "{\"home\":true,\"a\":[],\"a.b\":{\"a\":{\"b\":\"c\"}}}"}
+{"fn": "encode_message", "args": [{"a": {}, "home": null}], "ok": "{\"a\":{},\"home\":null}"}
+{"fn": "encode_message", "args": [{"b": {}, "ünï": {"a": "b"}, "10": true}], "ok": "{\"b\":{},\"ünï\":{\"a\":\"b\"},\"10\":true}"}
+{"fn": "encode_message", "args": [{"home": 0, "a": true, "10": {"a": {"b": "c"}}}], "ok": "{\"home\":0,\"a\":true,\"10\":{\"a\":{\"b\":\"c\"}}}"}
+{"fn": "encode_message", "args": [{"😀": null, "a.b": {"a": {"b": "c"}}}], "ok": "{\"😀\":null,\"a.b\":{\"a\":{\"b\":\"c\"}}}"}
+{"fn": "is_notification", "args": [{"2": true, "ünï": true}], "ok": true}
+{"fn": "is_notification", "args": [{"home": {"a": {"b": "c"}}}], "ok": true}
+{"fn": "is_notification", "args": [{"ünï": 0, "10": 0, "title": true}], "ok": true}
+{"fn": "is_notification", "args": ["x"], "ok": true}
+{"fn": "is_notification", "args": [{"b": true, "2": []}], "ok": true}
+{"fn": "is_notification", "args": [{"title": true, "a": "x"}], "ok": true}
+{"fn": "is_notification", "args": [{"a.b": {"a": {"b": "c"}}, "nav": {"a": "b"}, "a": {"a": "b"}}], "ok": true}
+{"fn": "is_notification", "args": [{}], "ok": true}
+{"fn": "is_notification", "args": [{"b": "x"}], "ok": true}
+{"fn": "is_notification", "args": [{"home": {"a": {"b": "c"}}, "a.b": {"a": {"b": "c"}}, "a": {"a": "b"}}], "ok": true}
+{"fn": "is_notification", "args": [{"a": {"a": {"b": "c"}}, "ünï": {}}], "ok": true}
+{"fn": "is_notification", "args": [{"b": 0}], "ok": true}
+{"fn": "is_notification", "args": [{"a.b": {"a": {"b": "c"}}, "2": null}], "ok": true}
+{"fn": "is_notification", "args": [{"2": 0}], "ok": true}
+{"fn": "is_notification", "args": [{"b": true, "a": {}}], "ok": true}
+{"fn": "is_notification", "args": [null], "error": "TypeError: argument of type 'NoneType' is not iterable"}
+{"fn": "is_notification", "args": [{"2": {"a": {"b": "c"}}}], "ok": true}
+{"fn": "is_notification", "args": [{"a": ["a", 1], "nav": []}], "ok": true}
+{"fn": "is_notification", "args": [{"ünï": {}, "a.b": 0}], "ok": true}
+{"fn": "is_notification", "args": [{"a": "x", "😀": {"a": "b"}}], "ok": true}
+{"fn": "is_notification", "args": [{"😀": []}], "ok": true}
+{"fn": "is_notification", "args": [{"home": 0, "b": {"a": "b"}}], "ok": true}
+{"fn": "is_notification", "args": [{"home": null}], "ok": true}
+{"fn": "is_notification", "args": [{"b": {"a": "b"}}], "ok": true}
+{"fn": "is_notification", "args": [true], "error": "TypeError: argument of type 'bool' is not iterable"}
+{"fn": "is_notification", "args": [{"home": {"a": "b"}, "10": {}}], "ok": true}
+{"fn": "is_notification", "args": [{"a.b": "x"}], "ok": true}
+{"fn": "is_notification", "args": [{"a": {}}], "ok": true}
+{"fn": "is_notification", "args": [{"a": "b"}], "ok": true}
+{"fn": "is_notification", "args": [{"a": ["a", 1]}], "ok": true}
+{"fn": "result_response", "args": [0, 0], "ok": {"jsonrpc": "2.0", "id": 0, "result": 0}}
+{"fn": "result_response", "args": [{"a": {"b": "c"}}, true], "ok": {"jsonrpc": "2.0", "id": {"a": {"b": "c"}}, "result": true}}
+{"fn": "result_response", "args": [true, null], "ok": {"jsonrpc": "2.0", "id": true, "result": null}}
+{"fn": "result_response", "args": [["a", 1], "x"], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "result": "x"}}
+{"fn": "result_response", "args": [{}, {}], "ok": {"jsonrpc": "2.0", "id": {}, "result": {}}}
+{"fn": "result_response", "args": ["x", {"a": "b"}], "ok": {"jsonrpc": "2.0", "id": "x", "result": {"a": "b"}}}
+{"fn": "result_response", "args": [true, 0], "ok": {"jsonrpc": "2.0", "id": true, "result": 0}}
+{"fn": "result_response", "args": [{"a": "b"}, true], "ok": {"jsonrpc": "2.0", "id": {"a": "b"}, "result": true}}
+{"fn": "result_response", "args": [true, {"a": "b"}], "ok": {"jsonrpc": "2.0", "id": true, "result": {"a": "b"}}}
+{"fn": "result_response", "args": [["a", 1], null], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "result": null}}
+{"fn": "result_response", "args": ["x", {"a": {"b": "c"}}], "ok": {"jsonrpc": "2.0", "id": "x", "result": {"a": {"b": "c"}}}}
+{"fn": "result_response", "args": [true, []], "ok": {"jsonrpc": "2.0", "id": true, "result": []}}
+{"fn": "result_response", "args": [{}, ["a", 1]], "ok": {"jsonrpc": "2.0", "id": {}, "result": ["a", 1]}}
+{"fn": "result_response", "args": [null, "x"], "ok": {"jsonrpc": "2.0", "id": null, "result": "x"}}
+{"fn": "result_response", "args": [true, true], "ok": {"jsonrpc": "2.0", "id": true, "result": true}}
+{"fn": "result_response", "args": [{}, true], "ok": {"jsonrpc": "2.0", "id": {}, "result": true}}
+{"fn": "result_response", "args": [0, true], "ok": {"jsonrpc": "2.0", "id": 0, "result": true}}
+{"fn": "result_response", "args": [{"a": {"b": "c"}}, ["a", 1]], "ok": {"jsonrpc": "2.0", "id": {"a": {"b": "c"}}, "result": ["a", 1]}}
+{"fn": "result_response", "args": [{"a": "b"}, {}], "ok": {"jsonrpc": "2.0", "id": {"a": "b"}, "result": {}}}
+{"fn": "result_response", "args": [{}, "x"], "ok": {"jsonrpc": "2.0", "id": {}, "result": "x"}}
+{"fn": "result_response", "args": [true, {}], "ok": {"jsonrpc": "2.0", "id": true, "result": {}}}
+{"fn": "result_response", "args": [{"a": "b"}, "x"], "ok": {"jsonrpc": "2.0", "id": {"a": "b"}, "result": "x"}}
+{"fn": "result_response", "args": [["a", 1], []], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "result": []}}
+{"fn": "result_response", "args": ["x", ["a", 1]], "ok": {"jsonrpc": "2.0", "id": "x", "result": ["a", 1]}}
+{"fn": "result_response", "args": [{}, {"a": {"b": "c"}}], "ok": {"jsonrpc": "2.0", "id": {}, "result": {"a": {"b": "c"}}}}
+{"fn": "result_response", "args": ["x", "x"], "ok": {"jsonrpc": "2.0", "id": "x", "result": "x"}}
+{"fn": "result_response", "args": [0, "x"], "ok": {"jsonrpc": "2.0", "id": 0, "result": "x"}}
+{"fn": "result_response", "args": [["a", 1], {"a": {"b": "c"}}], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "result": {"a": {"b": "c"}}}}
+{"fn": "result_response", "args": [[], true], "ok": {"jsonrpc": "2.0", "id": [], "result": true}}
+{"fn": "result_response", "args": ["x", true], "ok": {"jsonrpc": "2.0", "id": "x", "result": true}}
+{"fn": "result_response", "args": [{"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, 0], "ok": {"jsonrpc": "2.0", "id": {"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, "result": 0}}
+{"fn": "result_response", "args": [{"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}, 0], "ok": {"jsonrpc": "2.0", "id": {"n": {"$int": "9007199254740993"}, "f": {"$float": "1e+21"}, "t": 0.1, "neg": -7}, "result": 0}}
+{"fn": "result_response", "args": [[3, 1, 2], 0], "ok": {"jsonrpc": "2.0", "id": [3, 1, 2], "result": 0}}
+{"fn": "result_response", "args": [{}, 0], "ok": {"jsonrpc": "2.0", "id": {}, "result": 0}}
+{"fn": "result_response", "args": [0, {"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}], "ok": {"jsonrpc": "2.0", "id": 0, "result": {"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}}}
+{"fn": "result_response", "args": [0, {"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}], "ok": {"jsonrpc": "2.0", "id": 0, "result": {"n": {"$int": "9007199254740993"}, "f": {"$float": "1e+21"}, "t": 0.1, "neg": -7}}}
+{"fn": "result_response", "args": [0, [3, 1, 2]], "ok": {"jsonrpc": "2.0", "id": 0, "result": [3, 1, 2]}}
+{"fn": "result_response", "args": [0, {}], "ok": {"jsonrpc": "2.0", "id": 0, "result": {}}}
+{"fn": "error_response", "args": [[], -1, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [{"a": "b"}, -2147483648, "hello world", 0], "ok": {"jsonrpc": "2.0", "id": {"a": "b"}, "error": {"code": -2147483648, "message": "hello world", "data": 0}}}
+{"fn": "error_response", "args": [{"a": {"b": "c"}}, -2147483648, "a😀b😀c😀", ["a", 1]], "ok": {"jsonrpc": "2.0", "id": {"a": {"b": "c"}}, "error": {"code": -2147483648, "message": "a😀b😀c😀", "data": ["a", 1]}}}
+{"fn": "error_response", "args": [["a", 1], 9223372036854775807, "a😀b😀c", null], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "error": {"code": {"$int": "9223372036854775807"}, "message": "a😀b😀c"}}}
+{"fn": "error_response", "args": [null, 7, "hello world", true], "ok": {"jsonrpc": "2.0", "id": null, "error": {"code": 7, "message": "hello world", "data": true}}}
+{"fn": "error_response", "args": [true, -2147483648, "hello world", null], "ok": {"jsonrpc": "2.0", "id": true, "error": {"code": -2147483648, "message": "hello world"}}}
+{"fn": "error_response", "args": ["x", 9223372036854775807, "a..b", []], "ok": {"jsonrpc": "2.0", "id": "x", "error": {"code": {"$int": "9223372036854775807"}, "message": "a..b", "data": []}}}
+{"fn": "error_response", "args": [{}, -1, "😀src/a/b.ts", null], "ok": {"jsonrpc": "2.0", "id": {}, "error": {"code": -1, "message": "😀src/a/b.ts"}}}
+{"fn": "error_response", "args": [{}, -100, "é", ["a", 1]], "ok": {"jsonrpc": "2.0", "id": {}, "error": {"code": -100, "message": "é", "data": ["a", 1]}}}
+{"fn": "error_response", "args": [[], 2147483647, "a", ["a", 1]], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": 2147483647, "message": "a", "data": ["a", 1]}}}
+{"fn": "error_response", "args": ["x", 9223372036854775807, "  padded  ", {"$undefined": true}], "ok": {"jsonrpc": "2.0", "id": "x", "error": {"code": {"$int": "9223372036854775807"}, "message": "  padded  "}}}
+{"fn": "error_response", "args": [{"a": "b"}, -1, "hello world", 0], "ok": {"jsonrpc": "2.0", "id": {"a": "b"}, "error": {"code": -1, "message": "hello world", "data": 0}}}
+{"fn": "error_response", "args": [null, -1, "ΣΊΣΥΦΟΣ", {"$undefined": true}], "ok": {"jsonrpc": "2.0", "id": null, "error": {"code": -1, "message": "ΣΊΣΥΦΟΣ"}}}
+{"fn": "error_response", "args": [{"a": {"b": "c"}}, 2147483647, "éa", null], "ok": {"jsonrpc": "2.0", "id": {"a": {"b": "c"}}, "error": {"code": 2147483647, "message": "éa"}}}
+{"fn": "error_response", "args": [["a", 1], 2, "日本語のテキスト", null], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "error": {"code": 2, "message": "日本語のテキスト"}}}
+{"fn": "error_response", "args": [["a", 1], 7, "Hello Worldabc"], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "error": {"code": 7, "message": "Hello Worldabc"}}}
+{"fn": "error_response", "args": [[], 255, "tab\tseparated", true], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": 255, "message": "tab\tseparated", "data": true}}}
+{"fn": "error_response", "args": [{}, 42, "tab\tseparatedemoji 👍🏽 mix", null], "ok": {"jsonrpc": "2.0", "id": {}, "error": {"code": 42, "message": "tab\tseparatedemoji 👍🏽 mix"}}}
+{"fn": "error_response", "args": [{}, -1, "emoji 👍🏽 mix", "x"], "ok": {"jsonrpc": "2.0", "id": {}, "error": {"code": -1, "message": "emoji 👍🏽 mix", "data": "x"}}}
+{"fn": "error_response", "args": [0, 255, "HELLOline1\nline2", {}], "ok": {"jsonrpc": "2.0", "id": 0, "error": {"code": 255, "message": "HELLOline1\nline2", "data": {}}}}
+{"fn": "error_response", "args": [null, 2, "a:b:c{name} has {count} items", true], "ok": {"jsonrpc": "2.0", "id": null, "error": {"code": 2, "message": "a:b:c{name} has {count} items", "data": true}}}
+{"fn": "error_response", "args": ["ng", 100, "trailing.", ["a", 1]], "ok": {"jsonrpc": "2.0", "id": "ng", "error": {"code": 100, "message": "trailing.", "data": ["a", 1]}}}
+{"fn": "error_response", "args": [true, -1, "a.b.c", {}], "ok": {"jsonrpc": "2.0", "id": true, "error": {"code": -1, "message": "a.b.c", "data": {}}}}
+{"fn": "error_response", "args": [null, 42, "line1\nline2.leading", null], "ok": {"jsonrpc": "2.0", "id": null, "error": {"code": 42, "message": "line1\nline2.leading"}}}
+{"fn": "error_response", "args": [["a", 1], 0, "a:b:c"], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "error": {"code": 0, "message": "a:b:c"}}}
+{"fn": "error_response", "args": [{"a": {"b": "c"}}, 100, "﻿bom", true], "ok": {"jsonrpc": "2.0", "id": {"a": {"b": "c"}}, "error": {"code": 100, "message": "﻿bom", "data": true}}}
+{"fn": "error_response", "args": [{}, 255, "İstanbul", true], "ok": {"jsonrpc": "2.0", "id": {}, "error": {"code": 255, "message": "İstanbul", "data": true}}}
+{"fn": "error_response", "args": [[], -2147483648, "trailing.", {"a": "b"}], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -2147483648, "message": "trailing.", "data": {"a": "b"}}}}
+{"fn": "error_response", "args": [["a", 1], -2147483648, "İstanbul", null], "ok": {"jsonrpc": "2.0", "id": ["a", 1], "error": {"code": -2147483648, "message": "İstanbul"}}}
+{"fn": "error_response", "args": [[], 7, "hellohello", "l"], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": 7, "message": "hellohello", "data": "l"}}}
+{"fn": "error_response", "args": [{"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, -1, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": {"zebra": 1, "apple": 2, "10": 3, "2": 4, "é": 5, "Apple": 6}, "error": {"code": -1, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [{"n": 9007199254740993, "f": 1e+21, "t": 0.1, "neg": -7}, -1, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": {"n": {"$int": "9007199254740993"}, "f": {"$float": "1e+21"}, "t": 0.1, "neg": -7}, "error": {"code": -1, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[3, 1, 2], -1, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [3, 1, 2], "error": {"code": -1, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [{}, -1, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": {}, "error": {"code": -1, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], -7, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -7, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], 0, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": 0, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], 2147483648, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": 2147483648, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], -2147483649, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -2147483649, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], 9007199254740993, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": {"$int": "9007199254740993"}, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], 9223372036854775807, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": {"$int": "9223372036854775807"}, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], -9223372036854775808, "{name} has {count} items", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": {"$int": "-9223372036854775808"}, "message": "{name} has {count} items", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "héllo wörld", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "héllo wörld", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "👍🏽 thumbs", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "👍🏽 thumbs", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "日本語", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "日本語", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "é", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "é", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "İstanbul", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "İstanbul", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "straße", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "straße", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "ılık ırmak", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "ılık ırmak", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "👨‍👩‍👧 family", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "👨‍👩‍👧 family", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "a b", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "a b", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "ΣΊΣΥΦΟΣ", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "ΣΊΣΥΦΟΣ", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "a😀b", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "a😀b", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "﻿bom", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "﻿bom", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "a²b x½ y①", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "a²b x½ y①", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "aⅠb Ⅻ", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "aⅠb Ⅻ", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "a𐐀b 𝐀bc", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "a𐐀b 𝐀bc", "data": []}}}
+{"fn": "error_response", "args": [[], -1, "कि ٣٤", []], "ok": {"jsonrpc": "2.0", "id": [], "error": {"code": -1, "message": "कि ٣٤", "data": []}}}
+{"fn": "contract_snapshot", "args": [], "ok": {"version": "zkc-mcp-contract/v1", "protocolVersion": "2024-11-05", "transport": "stdio", "egress": [], "trustBoundary": "默认 stdio 零网络面、无需 token；外部 agent 一律零信任；写白名单 + 私人 claim 默认脱敏；跨机 HTTP/SSE 须端到端加密隧道，否则不变式⑤（本地优先/隐私）自动否决", "capabilities": {"tools": {"listChanged": false}, "resources": {"subscribe": false, "listChanged": false}}, "serverInfo": {"name": "zkc", "version": "0.1.0"}, "tools": [{"name": "zkc_capture", "description": "agent 显式 push 文档进 ZKC；必须过 DecisionRouter + 双信号弃权 + review_queue 人审分流闸，禁直通道；capture profile 默认开启（只加源节点，不写 interval、不触发 distill、不直写 meta_claim）", "inputSchema": {"type": "object", "properties": {"documents": {"type": "array", "maxItems": 1000, "items": {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}}, "required": ["title"]}}}, "required": ["documents"]}}, {"name": "zkc_query", "description": "只读检索，响应强制带 evidence_refs 溯源；私人 claim 默认脱敏，须显式 scope 授权方可带隐私字段", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 50}, "scope": {"type": "string", "enum": ["public", "private_claims"]}}, "required": ["query"]}}, {"name": "zkc_review_queue_list", "description": "只读列出待复审条目（可按 action 过滤）；repository 只暴露 open 项，不暴露 resolved 历史", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 200}, "action": {"type": "string", "enum": ["distill", "archive", "abstain", "classify"]}}}}, {"name": "zkc_review_queue_resolve", "description": "仅把复审条目标记为 resolved 并记录 HITL 归因；绝不写 interval、不触发 distill、不写 meta_claim", "inputSchema": {"type": "object", "properties": {"item_id": {"type": "string"}, "attribution": {"type": "string"}}, "required": ["item_id", "attribution"]}}, {"name": "zkc_scheduler_due", "description": "只读该关注清单：decay 到期、需投入注意力的 node（注意力语义的首个 resource）", "inputSchema": {"type": "object", "properties": {"as_of": {"type": "string", "description": "ISO 8601 datetime，缺省取当前时间"}, "limit": {"type": "integer", "minimum": 1, "maximum": 200}}}}], "resources": [{"uri": "zkc://scheduler/due", "name": "该关注清单", "description": "注意力语义的首个 resource：decay 到期、需投入注意力的 node 清单", "mimeType": "application/json"}], "blacklist": ["distill/trigger", "interval_adjustment", "meta_claim", "history/delete", "history/update"]}}
+{"fn": "tool_schema", "args": ["zkc_capture"], "ok": {"name": "zkc_capture", "description": "agent 显式 push 文档进 ZKC；必须过 DecisionRouter + 双信号弃权 + review_queue 人审分流闸，禁直通道；capture profile 默认开启（只加源节点，不写 interval、不触发 distill、不直写 meta_claim）", "inputSchema": {"type": "object", "properties": {"documents": {"type": "array", "maxItems": 1000, "items": {"type": "object", "properties": {"title": {"type": "string"}, "content": {"type": "string"}}, "required": ["title"]}}}, "required": ["documents"]}}}
+{"fn": "tool_schema", "args": ["zkc_query"], "ok": {"name": "zkc_query", "description": "只读检索，响应强制带 evidence_refs 溯源；私人 claim 默认脱敏，须显式 scope 授权方可带隐私字段", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 50}, "scope": {"type": "string", "enum": ["public", "private_claims"]}}, "required": ["query"]}}}
+{"fn": "tool_schema", "args": ["zkc_review_queue_list"], "ok": {"name": "zkc_review_queue_list", "description": "只读列出待复审条目（可按 action 过滤）；repository 只暴露 open 项，不暴露 resolved 历史", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 200}, "action": {"type": "string", "enum": ["distill", "archive", "abstain", "classify"]}}}}}
+{"fn": "tool_schema", "args": ["zkc_review_queue_resolve"], "ok": {"name": "zkc_review_queue_resolve", "description": "仅把复审条目标记为 resolved 并记录 HITL 归因；绝不写 interval、不触发 distill、不写 meta_claim", "inputSchema": {"type": "object", "properties": {"item_id": {"type": "string"}, "attribution": {"type": "string"}}, "required": ["item_id", "attribution"]}}}
+{"fn": "tool_schema", "args": ["zkc_scheduler_due"], "ok": {"name": "zkc_scheduler_due", "description": "只读该关注清单：decay 到期、需投入注意力的 node（注意力语义的首个 resource）", "inputSchema": {"type": "object", "properties": {"as_of": {"type": "string", "description": "ISO 8601 datetime，缺省取当前时间"}, "limit": {"type": "integer", "minimum": 1, "maximum": 200}}}}}
+{"fn": "tool_schema", "args": ["distill/trigger"], "ok": null}
+{"fn": "tool_schema", "args": [""], "ok": null}
+{"fn": "is_blacklisted", "args": ["distill/trigger"], "ok": true}
+{"fn": "is_blacklisted", "args": ["interval_adjustment"], "ok": true}
+{"fn": "is_blacklisted", "args": ["meta_claim"], "ok": true}
+{"fn": "is_blacklisted", "args": ["history/delete"], "ok": true}
+{"fn": "is_blacklisted", "args": ["history/update"], "ok": true}
+{"fn": "is_blacklisted", "args": ["HISTORY_DELETE"], "ok": true}
+{"fn": "is_blacklisted", "args": ["meta.claim"], "ok": true}
+{"fn": "is_blacklisted", "args": ["delete_history"], "ok": true}
+{"fn": "is_blacklisted", "args": ["Distill"], "ok": true}
+{"fn": "is_blacklisted", "args": ["  interval_adjustment  "], "ok": true}
+{"fn": "is_blacklisted", "args": ["zkc_capture"], "ok": false}
+{"fn": "is_blacklisted", "args": [""], "ok": false}
+{"fn": "is_allowlisted", "args": ["zkc_capture"], "ok": true}
+{"fn": "is_allowlisted", "args": ["zkc_query"], "ok": true}
+{"fn": "is_allowlisted", "args": ["zkc_scheduler_due"], "ok": true}
+{"fn": "is_allowlisted", "args": ["ZKC_QUERY"], "ok": false}
+{"fn": "is_allowlisted", "args": ["distill/trigger"], "ok": false}
+{"fn": "is_allowlisted", "args": [""], "ok": false}
+{"fn": "validate_arguments", "args": [{"required": ["query"], "properties": {"query": {"type": "string"}, "limit": {"type": "integer"}, "scope": {"type": "string"}}}, {"query": "abc"}], "ok": null}
+{"fn": "validate_arguments", "args": [{"required": ["query"], "properties": {"query": {"type": "string"}}}, {}], "ok": "缺少必需参数 query"}
+{"fn": "validate_arguments", "args": [{"required": ["query"], "properties": {"query": {"type": "string"}}}, {"query": 1}], "ok": "参数 query 类型应为 string"}
+{"fn": "validate_arguments", "args": [{"required": ["query"], "properties": {"query": {"type": "string"}}}, {"query": true}], "ok": "参数 query 类型应为 string"}
+{"fn": "validate_arguments", "args": [{"properties": {"limit": {"type": "integer"}, "rate": {"type": "number"}, "ok": {"type": "boolean"}, "items": {"type": "array"}, "obj": {"type": "object"}}}, {"limit": 2, "rate": 1.5, "ok": false, "items": [], "obj": {}}], "ok": null}
+{"fn": "validate_arguments", "args": [{"properties": {"limit": {"type": "integer"}}}, {"limit": true}], "ok": "参数 limit 类型应为 integer"}
+{"fn": "validate_arguments", "args": [{"properties": {"rate": {"type": "number"}}}, {"rate": true}], "ok": "参数 rate 类型应为 number"}
+{"fn": "validate_arguments", "args": [{"properties": {"ok": {"type": "boolean"}}}, {"ok": 1}], "ok": "参数 ok 类型应为 boolean"}
+{"fn": "validate_arguments", "args": [{"properties": {"items": {"type": "array"}}}, {"items": {"a": 1}}], "ok": "参数 items 类型应为 array"}
+{"fn": "validate_arguments", "args": [{"properties": {"obj": {"type": "object"}}}, {"obj": [1, 2]}], "ok": "参数 obj 类型应为 object"}
+{"fn": "validate_arguments", "args": [{"properties": {"x": {"type": "unknown"}}}, {"x": null}], "ok": null}
+{"fn": "validate_arguments", "args": [{}, ["not", "an", "object"]], "ok": "arguments 必须是 object"}
+{"fn": "validate_arguments", "args": [{}, "not-an-object"], "ok": "arguments 必须是 object"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}"], "ok": {"jsonrpc": "2.0", "id": 1, "method": "ping"}}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}"], "ok": {"jsonrpc": "2.0", "method": "notifications/initialized"}}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":\"a\",\"method\":\"tools/list\",\"params\":{}}"], "ok": {"jsonrpc": "2.0", "id": "a", "method": "tools/list", "params": {}}}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":null,\"method\":\"tools/call\",\"params\":{\"name\":\"zkc_query\"}}"], "ok": {"jsonrpc": "2.0", "id": null, "method": "tools/call", "params": {"name": "zkc_query"}}}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"中文方法\",\"params\":{\"note\":\"你好\"}}"], "ok": {"jsonrpc": "2.0", "id": 1, "method": "中文方法", "params": {"note": "你好"}}}
+{"fn": "decode_message", "args": ["not json"], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": [""], "error": "JsonRpcError: Parse error: invalid JSON"}
+{"fn": "decode_message", "args": ["[]"], "error": "JsonRpcError: Invalid Request: expected a JSON object"}
+{"fn": "decode_message", "args": ["42"], "error": "JsonRpcError: Invalid Request: expected a JSON object"}
+{"fn": "decode_message", "args": ["null"], "error": "JsonRpcError: Invalid Request: expected a JSON object"}
+{"fn": "decode_message", "args": ["{}"], "error": "JsonRpcError: Invalid Request: jsonrpc must be '2.0'"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"1.0\",\"id\":1,\"method\":\"ping\"}"], "error": "JsonRpcError: Invalid Request: jsonrpc must be '2.0'"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1}"], "error": "JsonRpcError: Invalid Request: method is required"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"\"}"], "error": "JsonRpcError: Invalid Request: method is required"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"   \"}"], "error": "JsonRpcError: Invalid Request: method is required"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":3}"], "error": "JsonRpcError: Invalid Request: method is required"}
+{"fn": "decode_message", "args": ["{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n"], "ok": {"jsonrpc": "2.0", "id": 1, "method": "ping"}}
+{"fn": "encode_message", "args": [{"jsonrpc": "2.0", "id": 1, "result": {"ok": true, "text": "你好"}}], "ok": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"ok\":true,\"text\":\"你好\"}}"}
+{"fn": "encode_message", "args": [{"jsonrpc": "2.0", "id": null, "error": {"code": -32601, "message": "Method not found"}}], "ok": "{\"jsonrpc\":\"2.0\",\"id\":null,\"error\":{\"code\":-32601,\"message\":\"Method not found\"}}"}
+{"fn": "encode_message", "args": [{"z": 1, "a": 2, "m": {"b": 3, "a": 4}}], "ok": "{\"z\":1,\"a\":2,\"m\":{\"b\":3,\"a\":4}}"}
+{"fn": "encode_message", "args": [{"text": "line1\nline2", "quote": "\"`、`"}], "ok": "{\"text\":\"line1\\nline2\",\"quote\":\"\\\"`、`\"}"}
+{"fn": "encode_message", "args": [{"n": null, "t": true, "f": false, "arr": [1, 2.5, "三"]}], "ok": "{\"n\":null,\"t\":true,\"f\":false,\"arr\":[1,2.5,\"三\"]}"}
+{"fn": "is_notification", "args": [{"jsonrpc": "2.0", "method": "ping"}], "ok": true}
+{"fn": "is_notification", "args": [{"jsonrpc": "2.0", "id": 0, "method": "ping"}], "ok": false}
+{"fn": "is_notification", "args": [{"jsonrpc": "2.0", "id": null, "method": "ping"}], "ok": false}
+{"fn": "is_notification", "args": [{}], "ok": true}
+{"fn": "result_response", "args": [1, {"ok": true}], "ok": {"jsonrpc": "2.0", "id": 1, "result": {"ok": true}}}
+{"fn": "result_response", "args": [null, null], "ok": {"jsonrpc": "2.0", "id": null, "result": null}}
+{"fn": "result_response", "args": [{"k": "v"}, [1, 2, 3]], "ok": {"jsonrpc": "2.0", "id": {"k": "v"}, "result": [1, 2, 3]}}
+{"fn": "error_response", "args": [1, -32700, "Parse error: invalid JSON"], "ok": {"jsonrpc": "2.0", "id": 1, "error": {"code": -32700, "message": "Parse error: invalid JSON"}}}
+{"fn": "error_response", "args": [null, -32602, "Invalid params", {"field": "query"}], "ok": {"jsonrpc": "2.0", "id": null, "error": {"code": -32602, "message": "Invalid params", "data": {"field": "query"}}}}
+{"fn": "error_response", "args": ["req-1", -32603, "内部错误", null], "ok": {"jsonrpc": "2.0", "id": "req-1", "error": {"code": -32603, "message": "内部错误"}}}
