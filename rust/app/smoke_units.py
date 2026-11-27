@@ -1,4 +1,4 @@
-"""Compare the eight wired unit commands against the Python process oracle.
+"""Compare the nine wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -213,6 +213,119 @@ CASES = [
         [{"claims": [{"text": "it's fine", "topic": "t", "citations": [], "reverse_links": []}], "notes": "", "attempts": 1}],
     ),
     ("distill", "validate_result", [{"claims": [], "notes": "", "attempts": 1}]),
+    # R14 judgment: 8 of the 20 recorded cases, covering all reason branches,
+    # median parity, min_runs edges and the empty-input floor.
+    ("r14", "judge_r14", [[], 0]),  # no_completion_fired (empty runs, min_runs 0)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+            ],
+            10,
+        ],
+    ),  # insufficient_data (3 < min_runs 10)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+            ],
+            2,
+        ],
+    ),  # trigger_rate_and_latency_exceed_budget (min_runs 2)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 50.0, "completion_latency_ms": 100.0},
+            ],
+            1,
+        ],
+    ),  # exceed on a single fired run (min_runs 1)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 300.0},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+            ],
+            10,
+        ],
+    ),  # trigger_rate_within_budget (0.4)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 120.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 120.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 120.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 120.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 120.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 120.0},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+            ],
+            10,
+        ],
+    ),  # completion_latency_within_budget (0.6 rate, 1.2x)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0},
+                {"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None},
+            ],
+            10,
+        ],
+    ),  # trigger_rate_and_latency_exceed_budget (0.6 rate, 2.0x)
+    (
+        "r14",
+        "judge_r14",
+        [
+            [
+                {"completion_fired": True, "main_latency_ms": 80.0, "completion_latency_ms": 100.0},
+                {"completion_fired": True, "main_latency_ms": 80.0, "completion_latency_ms": 200.0},
+                {"completion_fired": True, "main_latency_ms": 80.0, "completion_latency_ms": 300.0},
+                {"completion_fired": True, "main_latency_ms": 80.0, "completion_latency_ms": 400.0},
+                {"completion_fired": False, "main_latency_ms": 80.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 80.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 80.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 80.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 80.0, "completion_latency_ms": None},
+                {"completion_fired": False, "main_latency_ms": 80.0, "completion_latency_ms": None},
+            ],
+            10,
+        ],
+    ),  # trigger_rate_within_budget with even-median completion latency
 ]
 
 

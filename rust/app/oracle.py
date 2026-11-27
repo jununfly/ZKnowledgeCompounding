@@ -1,4 +1,4 @@
-"""Process-only oracle for the eight library-unit front doors.
+"""Process-only oracle for the nine library-unit front doors.
 
 This is NOT production code and NOT a migration target. It exists so the
 `RUST_ANYTHING_UNIT_<UNIT>=original` kill switch has the same meaning for the
@@ -58,6 +58,10 @@ DISTILL_ALIAS = load_alias(
     REPO / "spikes" / "spike-17-distill-parse" / "pure_bridge.py",
     "zkc_distill_oracle",
 )
+R14_ALIAS = load_alias(
+    REPO / "spikes" / "spike-18-r14-judgment" / "pure_bridge.py",
+    "zkc_r14_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -110,6 +114,9 @@ DISTILL = {
     "parse_llm_output": (DISTILL_ALIAS, "parse_llm_output"),
     "validate_result": (DISTILL_ALIAS, "validate_result"),
 }
+R14 = {
+    "judge_r14": (R14_ALIAS, "judge_r14"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -119,6 +126,7 @@ TABLES = {
     "routing": ROUTING,
     "cross-source": CROSS_SOURCE,
     "distill": DISTILL,
+    "r14": R14,
 }
 
 

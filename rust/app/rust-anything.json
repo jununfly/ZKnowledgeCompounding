@@ -9,7 +9,8 @@
     "unit-faithfulness",
     "unit-routing",
     "unit-cross-source",
-    "unit-distill"
+    "unit-distill",
+    "unit-r14"
   ],
   "units": [
     {
@@ -83,6 +84,15 @@
         "unit-distill"
       ],
       "switch": "RUST_ANYTHING_UNIT_DISTILL_PARSE"
+    },
+    {
+      "name": "r14-judgment",
+      "crate": "r14-judgment-rs",
+      "path": "../r14-judgment-rs",
+      "commands": [
+        "unit-r14"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_R14_JUDGMENT"
     }
   ]
 }

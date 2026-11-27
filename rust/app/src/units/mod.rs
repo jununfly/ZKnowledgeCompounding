@@ -1,4 +1,4 @@
-//! Wiring for the `metrics-snapshot` front door plus eight library-unit commands.
+//! Wiring for the `metrics-snapshot` front door plus nine library-unit commands.
 //!
 //! Hand-merged after `rust-anything app wire`: the generated `mod.rs` is rewritten
 //! on every wire and drops `metrics_report`, so the wire-generated glue modules
@@ -19,6 +19,7 @@ use serde_json::{Value, json};
 mod cross_source;
 mod distill_parse;
 mod metrics_report;
+mod r14_judgment;
 mod zkc_context_pure;
 mod zkc_expiry_pure;
 mod zkc_faithfulness_rubric;
@@ -216,6 +217,17 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("distill", &name, &raw))
             } else {
                 Some(distill_parse::run(&name, &args))
+            }
+        }
+        "unit-r14" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("R14_JUDGMENT") {
+                Some(original_unit("r14", &name, &raw))
+            } else {
+                Some(r14_judgment::run(&name, &args))
             }
         }
         crate::cli::ROOT => {
