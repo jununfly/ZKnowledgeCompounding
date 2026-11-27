@@ -5,7 +5,8 @@
     "unit-transport",
     "unit-context",
     "unit-expiry",
-    "unit-scheduling"
+    "unit-scheduling",
+    "unit-faithfulness"
   ],
   "units": [
     {
@@ -43,6 +44,15 @@
         "unit-scheduling"
       ],
       "switch": "RUST_ANYTHING_UNIT_ZKC_SCHEDULING_INTERVAL"
+    },
+    {
+      "name": "zkc-faithfulness-rubric",
+      "crate": "zkc-faithfulness-rubric-rs",
+      "path": "../faithfulness-rubric-rs",
+      "commands": [
+        "unit-faithfulness"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ZKC_FAITHFULNESS_RUBRIC"
     }
   ]
 }

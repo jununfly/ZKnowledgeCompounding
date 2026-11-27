@@ -1,0 +1,74 @@
+{"fn": "normalize", "args": [""], "ok": ""}
+{"fn": "normalize", "args": ["   "], "ok": ""}
+{"fn": "normalize", "args": ["中文，。；：、！？“”‘’（）【】—-文本"], "ok": "中文文本"}
+{"fn": "normalize", "args": ["ascii ,.;:!?'\"()- text"], "ok": "asciitext"}
+{"fn": "normalize", "args": ["mixed 中文, text。 and “quotes”"], "ok": "mixed中文textandquotes"}
+{"fn": "normalize", "args": ["emoji 😀🚀 text"], "ok": "emoji😀🚀text"}
+{"fn": "normalize", "args": ["no-punctuation 中文abc123"], "ok": "nopunctuation中文abc123"}
+{"fn": "normalize", "args": ["tab\tnewline\ntext"], "ok": "tabnewlinetext"}
+{"fn": "normalize", "args": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"], "ok": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+{"fn": "normalize", "args": ["‘single’ “double” 【bracket】 (paren) — dash"], "ok": "singledoublebracketparendash"}
+{"fn": "ngrams", "args": ["", 3], "ok": []}
+{"fn": "ngrams", "args": ["abc", 3], "ok": ["abc"]}
+{"fn": "ngrams", "args": ["abc", 1], "ok": ["a", "b", "c"]}
+{"fn": "ngrams", "args": ["abc", 5], "ok": ["abc"]}
+{"fn": "ngrams", "args": ["中文文本", 2], "ok": ["中文", "文文", "文本"]}
+{"fn": "ngrams", "args": ["aaaa", 3], "ok": ["aaa"]}
+{"fn": "ngrams", "args": ["a b,c。d", 3], "ok": ["abc", "bcd"]}
+{"fn": "ngrams", "args": ["emoji😀x", 3], "ok": ["emo", "i😀x", "ji😀", "moj", "oji"]}
+{"fn": "ngrams", "args": ["xxxxxxxxxxxxxxxxxxxx", 3], "ok": ["xxx"]}
+{"fn": "ngrams", "args": ["安全评审要求权限判断必须在服务端完成", 3], "ok": ["全评审", "判断必", "务端完", "在服务", "安全评", "审要求", "必须在", "断必须", "服务端", "权限判", "求权限", "端完成", "要求权", "评审要", "限判断", "须在服"]}
+{"fn": "ngrams", "args": ["short", 0], "ok": [""]}
+{"fn": "ngrams", "args": ["short", -1], "ok": ["", "shor"]}
+{"fn": "lcs_length", "args": ["abcde", "abcde"], "ok": 5}
+{"fn": "lcs_length", "args": ["abcde", "bcd"], "ok": 3}
+{"fn": "lcs_length", "args": ["abcde", "xyz"], "ok": 0}
+{"fn": "lcs_length", "args": ["", "abc"], "ok": 0}
+{"fn": "lcs_length", "args": ["abc", ""], "ok": 0}
+{"fn": "lcs_length", "args": ["", ""], "ok": 0}
+{"fn": "lcs_length", "args": ["安全评审要求在服务端完成", "权限判断必须在服务端完成"], "ok": 6}
+{"fn": "lcs_length", "args": ["AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtail", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"], "ok": 600}
+{"fn": "lcs_length", "args": ["a,b。c", "abc"], "ok": 3}
+{"fn": "lcs_length", "args": ["CASE", "case"], "ok": 0}
+{"fn": "lcs_length", "args": ["😀hello😀", "hello"], "ok": 5}
+{"fn": "lcs_length", "args": ["prefix中文suffix", "中文"], "ok": 2}
+{"fn": "verbatim_rate", "args": ["", ["x"]], "ok": {"$float": "0.0"}}
+{"fn": "verbatim_rate", "args": ["没有来源匹配的内容哦", ["完全无关"]], "ok": {"$float": "0.0"}}
+{"fn": "verbatim_rate", "args": ["abcde", ["abcde"]], "ok": {"$float": "1.0"}}
+{"fn": "verbatim_rate", "args": ["abcde", ["ab"]], "ok": 0.4}
+{"fn": "verbatim_rate", "args": ["abcde", ["abcde", "xyz"]], "ok": {"$float": "1.0"}}
+{"fn": "verbatim_rate", "args": ["安全评审要求权限判断必须在服务端完成", ["安全评审要求权限判断必须在服务端完成，返工两周"]], "ok": {"$float": "1.0"}}
+{"fn": "verbatim_rate", "args": ["评审把鉴权职责收敛到了后端侧", ["安全评审要求权限判断必须在服务端完成"]], "ok": 0.14285714285714285}
+{"fn": "verbatim_rate", "args": ["中文，。文本", ["中文文本"]], "ok": {"$float": "1.0"}}
+{"fn": "verbatim_rate", "args": ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ["xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"]], "ok": 0.9230769230769231}
+{"fn": "verbatim_rate", "args": ["abcde", []], "ok": {"$float": "0.0"}}
+{"fn": "overlap", "args": ["", ["x"]], "ok": {"$float": "0.0"}}
+{"fn": "overlap", "args": ["abcdefghij", ["abcdefghij"]], "ok": {"$float": "1.0"}}
+{"fn": "overlap", "args": ["abcdefghij", ["abc"]], "ok": 0.125}
+{"fn": "overlap", "args": ["abcdefghij", ["def", "hij"]], "ok": 0.25}
+{"fn": "overlap", "args": ["中文文本内容", ["中文文本"]], "ok": 0.5}
+{"fn": "overlap", "args": ["a,b。c", ["abc"]], "ok": {"$float": "1.0"}}
+{"fn": "overlap", "args": ["safe review text", ["safe review text and more"]], "ok": {"$float": "1.0"}}
+{"fn": "overlap", "args": ["short", []], "ok": {"$float": "0.0"}}
+{"fn": "overlap", "args": ["😀abc", ["abc"]], "ok": 0.5}
+{"fn": "rubric_flags", "args": ["任意结论", ["  "]], "ok": ["rubric_no_source_text"]}
+{"fn": "rubric_flags", "args": ["任意结论", []], "ok": ["rubric_no_source_text"]}
+{"fn": "rubric_flags", "args": ["任意结论", [null]], "ok": ["rubric_no_source_text"]}
+{"fn": "rubric_flags", "args": ["abcde", ["abcde"]], "ok": ["rubric_verbatim_1.00", "rubric_overlap_1.00"]}
+{"fn": "rubric_flags", "args": ["abcde", ["ab"]], "ok": []}
+{"fn": "rubric_flags", "args": ["安全评审要求权限判断必须在服务端完成，返工持续了两周", ["安全评审要求权限判断必须在服务端完成，返工持续了两周，台账记录了三分之一的清理率。"]], "ok": ["rubric_verbatim_1.00", "rubric_overlap_1.00"]}
+{"fn": "rubric_flags", "args": ["评审把鉴权职责收敛到了后端侧，这也让联调返工的时间box更可控", ["安全评审要求权限判断必须在服务端完成，返工持续了两周，台账记录了三分之一的清理率。"]], "ok": []}
+{"fn": "rubric_flags", "args": ["abcdefghij", ["abcdefghij"]], "ok": ["rubric_verbatim_1.00", "rubric_overlap_1.00"]}
+{"fn": "rubric_flags", "args": ["abcdefghij", ["abc"]], "ok": []}
+{"fn": "rubric_flags", "args": ["", ["abc"]], "ok": []}
+{"fn": "rubric_flags", "args": ["abc", ["  ", "abc"]], "ok": ["rubric_verbatim_1.00", "rubric_overlap_1.00"]}
+{"fn": "rubric_flags", "args": ["中文文本重叠率测试", ["中文文本重叠率测试"]], "ok": ["rubric_verbatim_1.00", "rubric_overlap_1.00"]}
+{"fn": "is_forced", "args": [null], "ok": false}
+{"fn": "is_forced", "args": [""], "ok": false}
+{"fn": "is_forced", "args": ["forced"], "ok": true}
+{"fn": "is_forced", "args": ["forced_empty_atomic"], "ok": true}
+{"fn": "is_forced", "args": ["human_only"], "ok": true}
+{"fn": "is_forced", "args": ["periodic_audit"], "ok": false}
+{"fn": "is_forced", "args": ["sampled_unsupported"], "ok": false}
+{"fn": "is_forced", "args": ["FORCED_x"], "ok": false}
+{"fn": "is_forced", "args": ["human_only_x"], "ok": false}

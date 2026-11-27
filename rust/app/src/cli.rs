@@ -12,6 +12,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-context",
     "unit-expiry",
     "unit-scheduling",
+    "unit-faithfulness",
 ];
 
 fn rest() -> Arg {

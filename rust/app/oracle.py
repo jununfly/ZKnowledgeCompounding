@@ -1,4 +1,4 @@
-"""Process-only oracle for the three library-unit front doors.
+"""Process-only oracle for the five library-unit front doors.
 
 This is NOT production code and NOT a migration target. It exists so the
 `RUST_ANYTHING_UNIT_<UNIT>=original` kill switch has the same meaning for the
@@ -42,6 +42,10 @@ SCHEDULING_ALIAS = load_alias(
     REPO / "spikes" / "spike-09-review-interval" / "pure_bridge.py",
     "zkc_scheduling_interval_oracle",
 )
+FAITH_ALIAS = load_alias(
+    REPO / "spikes" / "spike-10-model-quality" / "pure_bridge.py",
+    "zkc_faithfulness_rubric_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -70,11 +74,21 @@ SCHEDULING = {
     "adapt_interval_math": (SCHEDULING_ALIAS, "adapt_interval_math"),
     "l2_target": (SCHEDULING_ALIAS, "l2_target"),
 }
+FAITHFULNESS = {
+    "normalize": (FAITH_ALIAS, "normalize"),
+    "ngrams": (FAITH_ALIAS, "ngrams"),
+    "lcs_length": (FAITH_ALIAS, "lcs_length"),
+    "verbatim_rate": (FAITH_ALIAS, "verbatim_rate"),
+    "overlap": (FAITH_ALIAS, "overlap"),
+    "rubric_flags": (FAITH_ALIAS, "rubric_flags"),
+    "is_forced": (FAITH_ALIAS, "is_forced"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
     "expiry": EXPIRY,
     "scheduling": SCHEDULING,
+    "faithfulness": FAITHFULNESS,
 }
 
 

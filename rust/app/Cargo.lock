@@ -625,6 +625,7 @@ dependencies = [
  "tokio",
  "zkc-context-pure-rs",
  "zkc-expiry-pure-rs",
+ "zkc-faithfulness-rubric-rs",
  "zkc-scheduling-interval-rs",
  "zkc-transport-rs",
 ]
@@ -1549,6 +1550,15 @@ dependencies = [
 
 [[package]]
 name = "zkc-expiry-pure-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "zkc-faithfulness-rubric-rs"
 version = "0.1.0"
 dependencies = [
  "pyo3",

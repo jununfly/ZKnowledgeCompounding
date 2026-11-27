@@ -1,4 +1,4 @@
-"""Compare the four wired unit commands against the Python process oracle.
+"""Compare the five wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -77,6 +77,22 @@ CASES = [
     ("scheduling", "adapt_interval_math", [3.0, "on_time", True]),
     ("scheduling", "l2_target", [4.0, "none"]),
     ("scheduling", "l2_target", [None, "none"]),
+    ("faithfulness", "normalize", ["中文，。；：、！？“”‘’（）【】—-文本"]),
+    ("faithfulness", "normalize", ["ascii ,.;:!?'\"()- text"]),
+    ("faithfulness", "ngrams", ["abc", 1]),
+    ("faithfulness", "ngrams", ["中文文本", 2]),
+    ("faithfulness", "lcs_length", ["abcdef", "abcf"]),
+    ("faithfulness", "verbatim_rate", ["abc abc", ["abc"]]),
+    (
+        "faithfulness",
+        "overlap",
+        ["安全评审要求权限判断必须在服务端完成", ["安全评审要求权限判断必须在服务端完成"]],
+    ),
+    ("faithfulness", "rubric_flags", ["abc", []]),
+    ("faithfulness", "rubric_flags", ["完全一样的 claim", ["完全一样的 claim"]]),
+    ("faithfulness", "is_forced", [None]),
+    ("faithfulness", "is_forced", ["forced_x"]),
+    ("faithfulness", "is_forced", ["human_only"]),
 ]
 
 

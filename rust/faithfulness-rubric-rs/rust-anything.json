@@ -1,0 +1,169 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-10-model-quality/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-faithfulness-rubric-rs",
+  "exports": [
+    {
+      "name": "normalize",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 76,
+      "params": [
+        {
+          "name": "text",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "ngrams",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 80,
+      "params": [
+        {
+          "name": "text",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "n",
+          "ts_type": "int",
+          "optional": true,
+          "rest": false,
+          "default": "3"
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "lcs_length",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 84,
+      "params": [
+        {
+          "name": "a",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "b",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "verbatim_rate",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 88,
+      "params": [
+        {
+          "name": "claim",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "source_texts",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "overlap",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 92,
+      "params": [
+        {
+          "name": "claim",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "source_texts",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "rubric_flags",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 96,
+      "params": [
+        {
+          "name": "claim_text",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "source_texts",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "is_forced",
+      "file": "spikes/spike-10-model-quality/pure_bridge.py",
+      "line": 100,
+      "params": [
+        {
+          "name": "route",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}
