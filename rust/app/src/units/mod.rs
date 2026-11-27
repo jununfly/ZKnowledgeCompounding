@@ -1,4 +1,4 @@
-//! Wiring for the `metrics-snapshot` front door plus six library-unit commands.
+//! Wiring for the `metrics-snapshot` front door plus seven library-unit commands.
 //!
 //! Hand-merged after `rust-anything app wire`: the generated `mod.rs` is rewritten
 //! on every wire and drops `metrics_report`, so the wire-generated glue modules
@@ -16,6 +16,7 @@ use std::process::{Command, ExitCode};
 use clap::ArgMatches;
 use serde_json::{Value, json};
 
+mod cross_source;
 mod metrics_report;
 mod zkc_context_pure;
 mod zkc_expiry_pure;
@@ -192,6 +193,17 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("routing", &name, &raw))
             } else {
                 Some(zkc_routing_tfidf::run(&name, &args))
+            }
+        }
+        "unit-cross-source" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("CROSS_SOURCE") {
+                Some(original_unit("cross-source", &name, &raw))
+            } else {
+                Some(cross_source::run(&name, &args))
             }
         }
         crate::cli::ROOT => {

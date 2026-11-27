@@ -7,7 +7,8 @@
     "unit-expiry",
     "unit-scheduling",
     "unit-faithfulness",
-    "unit-routing"
+    "unit-routing",
+    "unit-cross-source"
   ],
   "units": [
     {
@@ -63,6 +64,15 @@
         "unit-routing"
       ],
       "switch": "RUST_ANYTHING_UNIT_ZKC_ROUTING_TFIDF"
+    },
+    {
+      "name": "cross-source",
+      "crate": "cross-source-rs",
+      "path": "../cross-source-rs",
+      "commands": [
+        "unit-cross-source"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_CROSS_SOURCE"
     }
   ]
 }

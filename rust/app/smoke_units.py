@@ -1,4 +1,4 @@
-"""Compare the six wired unit commands against the Python process oracle.
+"""Compare the seven wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -107,6 +107,68 @@ CASES = [
             {"alpha": 0.1, "beta": 0.2, "gamma": 0.3, "delta": 0.4},
             {"gamma": 0.5, "alpha": 0.6, "delta": 0.7, "beta": 0.8},
         ],
+    ),
+    ("cross-source", "count_cross_source", [[{"evidence_ids": ["s1", "s1"]}]]),
+    (
+        "cross-source",
+        "count_cross_source",
+        [[{"evidence_ids": ["s1", "s2"]}, {"evidence_ids": ["s3"]}]],
+    ),
+    ("cross-source", "count_cross_source", [[{"evidence_ids": ["来源甲", "来源乙"]}]]),
+    (
+        "cross-source",
+        "enforce_citations",
+        [
+            {
+                "title": "T",
+                "kind": "methodology",
+                "claims": [
+                    {
+                        "statement": "x",
+                        "level": "pattern",
+                        "confidence": 0.5,
+                        "evidence_ids": ["s1", "ghost", "s2"],
+                    },
+                    {
+                        "statement": "y",
+                        "level": "pattern",
+                        "confidence": 0.8,
+                        "evidence_ids": ["ghost"],
+                    },
+                ],
+                "local": [],
+                "global": [],
+            },
+            ["s1", "s2", "s3"],
+        ],
+    ),
+    (
+        "cross-source",
+        "enforce_citations",
+        [{"claims": [{"evidence_ids": ["s1", "s1", "s2", "s1"]}]}, ["s2", "s1", "s2"]],
+    ),
+    (
+        "cross-source",
+        "enforce_citations",
+        [{"claims": [{"evidence_ids": ["β", "a", "A", "中"]}]}, ["A", "中", "β", "a", "ghost"]],
+    ),
+    (
+        "cross-source",
+        "enforce_citations",
+        [
+            {
+                "claims": [{"evidence_ids": ["s1"]}],
+                "evidence_refs": ["old"],
+                "_dropped_claims": 99,
+                "title": "T",
+            },
+            ["s1"],
+        ],
+    ),
+    (
+        "cross-source",
+        "enforce_citations",
+        [{"claims": [{"evidence_ids": ["ghost"]}]}, ["s1"]],
     ),
 ]
 
