@@ -1,4 +1,4 @@
-"""Compare the five wired unit commands against the Python process oracle.
+"""Compare the six wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -93,6 +93,21 @@ CASES = [
     ("faithfulness", "is_forced", [None]),
     ("faithfulness", "is_forced", ["forced_x"]),
     ("faithfulness", "is_forced", ["human_only"]),
+    ("routing", "tokenize", ["İstanbul STRASSE ß"]),
+    ("routing", "tokenize", ["mixed 中文, text。 and “quotes”"]),
+    ("routing", "tokenize", [""]),
+    ("routing", "tfidf_vector", [["b", "a", "b", "c"], {"c": 1.0, "b": 0.25, "a": 3.0}]),
+    ("routing", "tfidf_vector", [["missing"], {}]),
+    ("routing", "cosine", [{"a": 1.0}, {"b": 1.0}]),
+    ("routing", "cosine", [{"a": 1.0, "b": 2.0}, {"b": 3.0, "a": 4.0}]),
+    (
+        "routing",
+        "cosine",
+        [
+            {"alpha": 0.1, "beta": 0.2, "gamma": 0.3, "delta": 0.4},
+            {"gamma": 0.5, "alpha": 0.6, "delta": 0.7, "beta": 0.8},
+        ],
+    ),
 ]
 
 

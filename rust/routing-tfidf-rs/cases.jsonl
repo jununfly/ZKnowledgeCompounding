@@ -1,0 +1,25 @@
+{"fn": "tokenize", "args": [""], "ok": []}
+{"fn": "tokenize", "args": ["   \t\n"], "ok": []}
+{"fn": "tokenize", "args": ["Hello WORLD 123"], "ok": ["hello", "world", "123"]}
+{"fn": "tokenize", "args": ["中文，。；：、！？文本"], "ok": ["中", "文", "文", "本"]}
+{"fn": "tokenize", "args": ["mixed 中文, text。 and “quotes”"], "ok": ["mixed", "中", "文", "text", "and", "quotes"]}
+{"fn": "tokenize", "args": ["emoji 😀🚀 ABC"], "ok": ["emoji", "abc"]}
+{"fn": "tokenize", "args": ["İstanbul STRASSE ß"], "ok": ["i", "stanbul", "strasse"]}
+{"fn": "tokenize", "args": ["a-b_c/d.e:f"], "ok": ["a", "b", "c", "d", "e", "f"]}
+{"fn": "tokenize", "args": ["安全评审要求权限判断必须在服务端完成"], "ok": ["安", "全", "评", "审", "要", "求", "权", "限", "判", "断", "必", "须", "在", "服", "务", "端", "完", "成"]}
+{"fn": "tokenize", "args": ["UPPER lower MiXeD 42abc"], "ok": ["upper", "lower", "mixed", "42abc"]}
+{"fn": "tfidf_vector", "args": [[], {"a": 1.0}], "ok": {}}
+{"fn": "tfidf_vector", "args": [["a"], {"a": 2.0, "b": 3.0}], "ok": {"a": {"$float": "2.0"}}}
+{"fn": "tfidf_vector", "args": [["a", "a", "b"], {"a": 1.5}], "ok": {"a": {"$float": "1.0"}, "b": {"$float": "0.0"}}}
+{"fn": "tfidf_vector", "args": [["z", "y", "x"], {"z": 0.0, "y": -1.0, "x": 4.0}], "ok": {"z": {"$float": "0.0"}, "y": -0.3333333333333333, "x": 1.3333333333333333}}
+{"fn": "tfidf_vector", "args": [["中文", "中文", "文本"], {"中文": 0.5, "文本": 2.0}], "ok": {"中文": 0.3333333333333333, "文本": 0.6666666666666666}}
+{"fn": "tfidf_vector", "args": [["missing"], {}], "ok": {"missing": {"$float": "0.0"}}}
+{"fn": "tfidf_vector", "args": [["b", "a", "b", "c"], {"c": 1.0, "b": 0.25, "a": 3.0}], "ok": {"b": 0.125, "a": 0.75, "c": 0.25}}
+{"fn": "cosine", "args": [{}, {}], "ok": {"$float": "0.0"}}
+{"fn": "cosine", "args": [{"a": 1.0}, {"b": 1.0}], "ok": {"$float": "0.0"}}
+{"fn": "cosine", "args": [{"a": 1.0}, {"a": 0.0}], "ok": {"$float": "0.0"}}
+{"fn": "cosine", "args": [{"a": 0.0, "b": 2.0}, {"a": 3.0, "b": 0.0}], "ok": {"$float": "0.0"}}
+{"fn": "cosine", "args": [{"a": 1.0, "b": 2.0}, {"b": 3.0, "a": 4.0}], "ok": 0.8944271909999159}
+{"fn": "cosine", "args": [{"alpha": 0.1, "beta": 0.2, "gamma": 0.3, "delta": 0.4}, {"gamma": 0.5, "alpha": 0.6, "delta": 0.7, "beta": 0.8}], "ok": 0.899659365082183}
+{"fn": "cosine", "args": [{"z": 0.7, "y": -0.2, "x": 1.3, "w": 0.4}, {"x": 0.11, "w": -0.9, "z": 2.1, "y": 0.33}], "ok": 0.33292848264707947}
+{"fn": "cosine", "args": [{"中文": 1.0, "文本": 2.0, "安全": 3.0}, {"文本": 0.5, "安全": 1.5, "中文": 2.5}], "ok": 0.7228063223242011}

@@ -6,7 +6,8 @@
     "unit-context",
     "unit-expiry",
     "unit-scheduling",
-    "unit-faithfulness"
+    "unit-faithfulness",
+    "unit-routing"
   ],
   "units": [
     {
@@ -53,6 +54,15 @@
         "unit-faithfulness"
       ],
       "switch": "RUST_ANYTHING_UNIT_ZKC_FAITHFULNESS_RUBRIC"
+    },
+    {
+      "name": "zkc-routing-tfidf",
+      "crate": "zkc-routing-tfidf-rs",
+      "path": "../routing-tfidf-rs",
+      "commands": [
+        "unit-routing"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ZKC_ROUTING_TFIDF"
     }
   ]
 }

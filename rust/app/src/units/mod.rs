@@ -1,4 +1,4 @@
-//! Wiring for the `metrics-snapshot` front door plus five library-unit commands.
+//! Wiring for the `metrics-snapshot` front door plus six library-unit commands.
 //!
 //! Hand-merged after `rust-anything app wire`: the generated `mod.rs` is rewritten
 //! on every wire and drops `metrics_report`, so the wire-generated glue modules
@@ -20,6 +20,7 @@ mod metrics_report;
 mod zkc_context_pure;
 mod zkc_expiry_pure;
 mod zkc_faithfulness_rubric;
+mod zkc_routing_tfidf;
 mod zkc_scheduling_interval;
 mod zkc_transport;
 
@@ -180,6 +181,17 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("faithfulness", &name, &raw))
             } else {
                 Some(zkc_faithfulness_rubric::run(&name, &args))
+            }
+        }
+        "unit-routing" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("ZKC_ROUTING_TFIDF") {
+                Some(original_unit("routing", &name, &raw))
+            } else {
+                Some(zkc_routing_tfidf::run(&name, &args))
             }
         }
         crate::cli::ROOT => {

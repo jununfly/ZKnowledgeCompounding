@@ -1,0 +1,78 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-15-routing-tfidf/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "zkc-routing-tfidf-rs",
+  "exports": [
+    {
+      "name": "tokenize",
+      "file": "spikes/spike-15-routing-tfidf/pure_bridge.py",
+      "line": 72,
+      "params": [
+        {
+          "name": "text",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "tfidf_vector",
+      "file": "spikes/spike-15-routing-tfidf/pure_bridge.py",
+      "line": 76,
+      "params": [
+        {
+          "name": "tokens",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "idf",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "cosine",
+      "file": "spikes/spike-15-routing-tfidf/pure_bridge.py",
+      "line": 80,
+      "params": [
+        {
+          "name": "a",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "b",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

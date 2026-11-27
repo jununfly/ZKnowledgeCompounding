@@ -19,5 +19,6 @@ zkc-context-pure-rs = { path = "../context-pure-rs" }
 zkc-expiry-pure-rs = { path = "../expiry-pure-rs" }
 zkc-scheduling-interval-rs = { path = "../scheduling-interval-rs" }
 zkc-faithfulness-rubric-rs = { path = "../faithfulness-rubric-rs" }
+zkc-routing-tfidf-rs = { path = "../routing-tfidf-rs" }
 
 [workspace]
