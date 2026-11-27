@@ -1,0 +1,54 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-16-cross-source-enforcement/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "cross-source-rs",
+  "exports": [
+    {
+      "name": "count_cross_source",
+      "file": "spikes/spike-16-cross-source-enforcement/pure_bridge.py",
+      "line": 67,
+      "params": [
+        {
+          "name": "claims",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "enforce_citations",
+      "file": "spikes/spike-16-cross-source-enforcement/pure_bridge.py",
+      "line": 71,
+      "params": [
+        {
+          "name": "artifact",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "source_ids",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

@@ -1,0 +1,26 @@
+{"fn": "count_cross_source", "args": [[]], "ok": 0}
+{"fn": "count_cross_source", "args": [[{}]], "ok": 0}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": []}]], "ok": 0}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1"]}]], "ok": 0}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1", "s1"]}]], "ok": 0}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1", "s2"]}]], "ok": 1}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1", "s2", "s2"]}]], "ok": 1}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1", "s2"]}, {"evidence_ids": ["s3"]}]], "ok": 1}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1", "s2"]}, {"evidence_ids": ["s3", "s4"]}]], "ok": 2}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["来源甲", "来源乙"]}]], "ok": 1}
+{"fn": "count_cross_source", "args": [[{"evidence_ids": ["s1", "s1", "s2", "s2"]}, {"evidence_ids": []}]], "ok": 1}
+{"fn": "count_cross_source", "args": [[{"statement": "x", "level": "pattern", "confidence": 0.5, "evidence_ids": ["a", "b"]}, {"statement": "y", "level": "tradeoff", "confidence": 0.9, "evidence_ids": ["b"]}]], "ok": 1}
+{"fn": "enforce_citations", "args": [{"title": "T", "kind": "methodology", "claims": [{"statement": "x", "level": "pattern", "confidence": 0.5, "evidence_ids": ["s1", "ghost", "s2"]}, {"statement": "y", "level": "pattern", "confidence": 0.8, "evidence_ids": ["ghost"]}], "local": [], "global": []}, ["s1", "s2", "s3"]], "ok": {"title": "T", "kind": "methodology", "claims": [{"statement": "x", "level": "pattern", "confidence": 0.5, "evidence_ids": ["s1", "s2"]}], "local": [], "global": [], "evidence_refs": ["s1", "s2"], "_dropped_claims": 1}}
+{"fn": "enforce_citations", "args": [{"claims": [{"statement": "x", "evidence_ids": ["ghost"]}]}, ["s1"]], "error": "ValueError: artifact rejected: all 1 claims lost their citations (hallucinated provenance)"}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["ghost"]}, {"evidence_ids": []}, {"statement": "z"}]}, ["s1"]], "error": "ValueError: artifact rejected: all 3 claims lost their citations (hallucinated provenance)"}
+{"fn": "enforce_citations", "args": [{"claims": []}, ["s1"]], "error": "ValueError: artifact rejected: all 0 claims lost their citations (hallucinated provenance)"}
+{"fn": "enforce_citations", "args": [{"claims": [{"statement": "x"}]}, ["s1"]], "error": "ValueError: artifact rejected: all 1 claims lost their citations (hallucinated provenance)"}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["s1", "s1", "s2", "s1"]}]}, ["s2", "s1", "s2"]], "ok": {"claims": [{"evidence_ids": ["s1", "s1", "s2", "s1"]}], "evidence_refs": ["s1", "s2"], "_dropped_claims": 0}}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["β", "a", "A", "中"]}]}, ["A", "中", "β", "a", "ghost"]], "ok": {"claims": [{"evidence_ids": ["β", "a", "A", "中"]}], "evidence_refs": ["A", "a", "β", "中"], "_dropped_claims": 0}}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["s1"]}], "evidence_refs": ["old"], "_dropped_claims": 99, "title": "T"}, ["s1"]], "ok": {"claims": [{"evidence_ids": ["s1"]}], "evidence_refs": ["s1"], "_dropped_claims": 0, "title": "T"}}
+{"fn": "enforce_citations", "args": [{"methodology_steps": ["step"], "global": ["g"], "claims": [{"statement": "x", "evidence_ids": ["s1"]}], "kind": "tradeoff_map", "title": "T", "local": ["l"]}, ["s1"]], "ok": {"methodology_steps": ["step"], "global": ["g"], "claims": [{"statement": "x", "evidence_ids": ["s1"]}], "kind": "tradeoff_map", "title": "T", "local": ["l"], "evidence_refs": ["s1"], "_dropped_claims": 0}}
+{"fn": "enforce_citations", "args": [{"claims": [{"confidence": 0.5, "evidence_ids": ["ghost", "s2", "s1"], "statement": "x", "level": "pattern"}]}, ["s1", "s2"]], "ok": {"claims": [{"confidence": 0.5, "evidence_ids": ["s2", "s1"], "statement": "x", "level": "pattern"}], "evidence_refs": ["s1", "s2"], "_dropped_claims": 0}}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["s1", "s3"]}, {"evidence_ids": ["s1", "s2"]}]}, ["s1"]], "ok": {"claims": [{"evidence_ids": ["s1"]}, {"evidence_ids": ["s1"]}], "evidence_refs": ["s1"], "_dropped_claims": 0}}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["s1"]}]}, []], "error": "ValueError: artifact rejected: all 1 claims lost their citations (hallucinated provenance)"}
+{"fn": "enforce_citations", "args": [{"claims": [{"evidence_ids": ["s1"]}, {"evidence_ids": ["s2", "s1"]}]}, ["s1", "s2"]], "ok": {"claims": [{"evidence_ids": ["s1"]}, {"evidence_ids": ["s2", "s1"]}], "evidence_refs": ["s1", "s2"], "_dropped_claims": 0}}
+{"fn": "enforce_citations", "args": [{"title": "T", "flag": true, "count": 0, "claims": [{"statement": "x", "level": "pattern", "confidence": 0.0, "evidence_ids": ["s1"], "extra": null}]}, ["s1"]], "ok": {"title": "T", "flag": true, "count": 0, "claims": [{"statement": "x", "level": "pattern", "confidence": {"$float": "0.0"}, "evidence_ids": ["s1"], "extra": null}], "evidence_refs": ["s1"], "_dropped_claims": 0}}
