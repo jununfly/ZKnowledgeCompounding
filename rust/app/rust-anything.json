@@ -8,7 +8,8 @@
     "unit-scheduling",
     "unit-faithfulness",
     "unit-routing",
-    "unit-cross-source"
+    "unit-cross-source",
+    "unit-distill"
   ],
   "units": [
     {
@@ -73,6 +74,15 @@
         "unit-cross-source"
       ],
       "switch": "RUST_ANYTHING_UNIT_CROSS_SOURCE"
+    },
+    {
+      "name": "distill-parse",
+      "crate": "distill-parse-rs",
+      "path": "../distill-parse-rs",
+      "commands": [
+        "unit-distill"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_DISTILL_PARSE"
     }
   ]
 }

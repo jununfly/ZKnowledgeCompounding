@@ -235,6 +235,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "distill-parse-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dotenvy"
 version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -630,6 +639,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "cross-source-rs",
+ "distill-parse-rs",
  "serde_json",
  "sqlx",
  "tokio",

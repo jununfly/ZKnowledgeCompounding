@@ -21,5 +21,6 @@ zkc-scheduling-interval-rs = { path = "../scheduling-interval-rs" }
 zkc-faithfulness-rubric-rs = { path = "../faithfulness-rubric-rs" }
 zkc-routing-tfidf-rs = { path = "../routing-tfidf-rs" }
 cross-source-rs = { path = "../cross-source-rs" }
+distill-parse-rs = { path = "../distill-parse-rs" }
 
 [workspace]

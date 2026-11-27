@@ -1,4 +1,4 @@
-"""Compare the seven wired unit commands against the Python process oracle.
+"""Compare the eight wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -16,6 +16,8 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[2]
 APP = REPO / "rust/app/target/debug/metrics-snapshot"
 ORACLE = REPO / "rust/app/oracle.py"
+S1 = "11111111-1111-4111-8111-111111111111"
+S2 = "22222222-2222-4222-8222-222222222222"
 
 CASES = [
     ("transport", "decode_message", ['{"jsonrpc":"2.0","id":1,"method":"ping"}']),
@@ -170,6 +172,47 @@ CASES = [
         "enforce_citations",
         [{"claims": [{"evidence_ids": ["ghost"]}]}, ["s1"]],
     ),
+    ("distill", "extract_json", ['prefix {"claims": [{"text": "结论"}], "x": 1} suffix']),
+    ("distill", "extract_json", ['{"a": 1} trailing {"b": 2}']),
+    (
+        "distill",
+        "parse_json_output",
+        [
+            '{"claims":[{"text":"结论 [[%s]]","topic":"t","citations":["%s","not-a-uuid","%s"]}]}'
+            % (S2.upper(), S1.replace("-", ""), S1),
+            [[S1, "material a"], [S2, "material b"]],
+        ],
+    ),
+    ("distill", "parse_json_output", ['{"claims":[{}]}', [[S1, "a"]]]),
+    (
+        "distill",
+        "parse_llm_output",
+        ["结论 [[%s]] [[%s]] [[%s]] [[bad]]" % (S1, S1, S2), [[S1, "a"], [S2, "b"]]],
+    ),
+    ("distill", "parse_llm_output", ["  ", [[S1, "a"]]]),
+    (
+        "distill",
+        "validate_result",
+        [{
+            "claims": [{
+                "text": "c", "topic": "t",
+                "citations": [{"source_node_id": S1, "snippet": "片段"}],
+                "reverse_links": [S1],
+            }],
+            "notes": "note", "attempts": 7,
+        }],
+    ),
+    (
+        "distill",
+        "validate_result",
+        [{"claims": [{"text": "凭空结论", "topic": "t", "citations": [], "reverse_links": []}], "notes": "", "attempts": 1}],
+    ),
+    (
+        "distill",
+        "validate_result",
+        [{"claims": [{"text": "it's fine", "topic": "t", "citations": [], "reverse_links": []}], "notes": "", "attempts": 1}],
+    ),
+    ("distill", "validate_result", [{"claims": [], "notes": "", "attempts": 1}]),
 ]
 
 
