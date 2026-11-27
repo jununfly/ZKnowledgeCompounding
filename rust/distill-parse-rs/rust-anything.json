@@ -1,0 +1,96 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-17-distill-parse/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "distill-parse-rs",
+  "exports": [
+    {
+      "name": "extract_json",
+      "file": "spikes/spike-17-distill-parse/pure_bridge.py",
+      "line": 102,
+      "params": [
+        {
+          "name": "raw",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "parse_json_output",
+      "file": "spikes/spike-17-distill-parse/pure_bridge.py",
+      "line": 106,
+      "params": [
+        {
+          "name": "raw",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "source_texts",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "parse_llm_output",
+      "file": "spikes/spike-17-distill-parse/pure_bridge.py",
+      "line": 110,
+      "params": [
+        {
+          "name": "raw",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "source_texts",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "validate_result",
+      "file": "spikes/spike-17-distill-parse/pure_bridge.py",
+      "line": 114,
+      "params": [
+        {
+          "name": "result",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}
