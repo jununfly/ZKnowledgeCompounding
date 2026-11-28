@@ -51,6 +51,7 @@ flowchart TD
     f17_T2["f17 未完成"]:::open
     f18_T2["f18 未完成"]:::open
     f19_T2["f19 未完成"]:::open
+    f20_T2["f20 未完成"]:::open
     tk7_T2["tk7 已完成"]:::done
     tk8_T2["tk8 未完成"]:::open
     tk14_T2["tk14 已完成"]:::done
@@ -80,6 +81,8 @@ flowchart TD
     tk38_T2["tk38 已完成"]:::done
     tk39_T2["tk39 已完成"]:::done
     tk40_T2["tk40 已完成"]:::done
+    tk41_T2["tk41 已完成"]:::done
+    tk42_T2["tk42 已完成"]:::done
     class T2 plan_paused
   end
   subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (被阻塞)"]
@@ -173,6 +176,8 @@ flowchart TD
   tk8_T2 -->|parent| tk38_T2
   tk8_T2 -->|parent| tk39_T2
   tk8_T2 -->|parent| tk40_T2
+  tk8_T2 -->|parent| tk41_T2
+  tk8_T2 -->|parent| tk42_T2
   f9_T2 -.->|derived_from| tk16_T2
   f9_T2 -.->|derived_from| tk17_T2
   f9_T2 -.->|derived_from| tk18_T2
@@ -188,6 +193,7 @@ flowchart TD
   f17_T2 -.->|derived_from| tk35_T2
   f18_T2 -.->|derived_from| tk37_T2
   f19_T2 -.->|derived_from| tk39_T2
+  f20_T2 -.->|derived_from| tk41_T2
   T0 -->|plan-dep| T1
   T0 -->|plan-dep| T2
   T0 -->|plan-dep| T3
