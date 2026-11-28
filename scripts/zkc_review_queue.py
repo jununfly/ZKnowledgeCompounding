@@ -23,11 +23,14 @@ from zkc.repository import get_storage
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="ZKC zkc_review_queue_list handler 契约（JSON）")
+    ap = argparse.ArgumentParser(description="ZKC review_queue handler 契约（JSON）")
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--storage", default=None)
+    ap.add_argument("--mode", default="list", choices=["list", "resolve"])
     ap.add_argument("--action", default=None)
     ap.add_argument("--limit", type=int, default=50)
+    ap.add_argument("--item-id", dest="item_id", default=None)
+    ap.add_argument("--attribution", default="")
     args = ap.parse_args()
 
     store = get_storage(args.storage or os.environ.get("ZKC_STORAGE", "pg"))
@@ -36,10 +39,23 @@ def main() -> None:
         routing_provider=lambda: (None, None, True),
         allow_private_claims=False,
     )
-    arguments = {"limit": args.limit}
-    if args.action:
-        arguments["action"] = args.action
-    out = handlers["zkc_review_queue_list"](arguments)
+    if args.mode == "resolve":
+        # resolve-then-list: the write is not captured by dump.sh (review_queue not dumped), so
+        # re-listing open items after resolve makes the persistence observable in stdout for replay.
+        try:
+            result = handlers["zkc_review_queue_resolve"]({
+                "item_id": args.item_id, "attribution": args.attribution,
+            })
+            resolve = {"ok": True, "value": result}
+        except ValueError as exc:
+            resolve = {"ok": False, "error": f"ValueError: {exc}"}
+        open_after = handlers["zkc_review_queue_list"]({"limit": args.limit})
+        out = {"resolve": resolve, "remaining_ids": [it["id"] for it in open_after["items"]]}
+    else:
+        arguments = {"limit": args.limit}
+        if args.action:
+            arguments["action"] = args.action
+        out = handlers["zkc_review_queue_list"](arguments)
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 

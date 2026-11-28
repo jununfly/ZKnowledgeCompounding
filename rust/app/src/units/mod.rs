@@ -395,6 +395,14 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
             let dsn = std::env::var("ZKC_PG_DSN").ok();
             search_sql::run("due", &args, dsn.as_deref())
         }
+        "unit-mcp-resolve" => {
+            let (_name, _raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            let dsn = std::env::var("ZKC_PG_DSN").ok();
+            search_sql::run("resolve", &args, dsn.as_deref())
+        }
         crate::cli::ROOT => {
             if sent_to_original("METRICS_SNAPSHOT") {
                 return None;

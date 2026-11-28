@@ -1,0 +1,18 @@
+{
+  "resolve": {
+    "ok": true,
+    "value": {
+      "resolved": true,
+      "item_id": "00000000-0000-0000-0000-000000000601",
+      "attribution": "zj manual fix",
+      "writes": [
+        "review_queue.resolved"
+      ],
+      "note": "仅标 resolved + HITL 归因；不写 interval、不触发 distill"
+    }
+  },
+  "remaining_ids": [
+    "00000000-0000-0000-0000-000000000602",
+    "00000000-0000-0000-0000-000000000604"
+  ]
+}

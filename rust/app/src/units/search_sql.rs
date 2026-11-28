@@ -318,6 +318,67 @@ async fn run_due(dsn: &str, p: &Value) -> Result<(Vec<Value>, usize), String> {
     Ok((items, due_count))
 }
 
+/// `zkc_review_queue_resolve` write-side payload, composed with a follow-up `list_open` so the
+/// UPDATE is observable in stdout (dump.sh excludes review_queue). Mirrors handlers.py: injection
+/// guard (reusing injection-detection-rs, single truth) → UUID → membership → UPDATE → result dict.
+async fn run_resolve(dsn: &str, p: &Value) -> Result<Value, String> {
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(dsn)
+        .await
+        .map_err(|e| format!("connect: {e}"))?;
+
+    let attribution = p.get("attribution").and_then(Value::as_str).unwrap_or("").to_string();
+    let item_id = p.get("item_id").and_then(Value::as_str).unwrap_or("").to_string();
+
+    let markers = injection_detection_rs::port::detect_injection_markers(json!(attribution.clone()))
+        .unwrap_or_else(|_| json!([]));
+    let marker_list: Vec<String> = markers
+        .as_array()
+        .map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect())
+        .unwrap_or_default();
+
+    let resolve: Value;
+    if !marker_list.is_empty() {
+        let joined = marker_list.join(", ");
+        resolve = json!({"ok": false, "error":
+            format!("ValueError: 检测到注入指令（{joined}）：HITL 归因不得由文档注入伪造")}); // recorded-literal: handlers.py
+    } else {
+        let is_open: Option<String> = sqlx::query_scalar(
+            "SELECT id::text FROM public.review_queue WHERE id = $1::uuid AND resolved=false",
+        )
+        .bind(&item_id)
+        .fetch_optional(&pool)
+        .await
+        .map_err(|e| format!("membership: {e}"))?;
+        if is_open.is_some() {
+            sqlx::query("UPDATE public.review_queue SET resolved=true WHERE id = $1::uuid")
+                .bind(&item_id)
+                .execute(&pool)
+                .await
+                .map_err(|e| format!("update: {e}"))?;
+            resolve = json!({"ok": true, "value": {
+                "resolved": true, "item_id": item_id, "attribution": attribution,
+                "writes": ["review_queue.resolved"],
+                "note": "仅标 resolved + HITL 归因；不写 interval、不触发 distill", // recorded-literal: handlers.py
+            }});
+        } else {
+            resolve = json!({"ok": false, "error":
+                format!("ValueError: 复审条目 {item_id} 不存在或已 resolved")}); // recorded-literal: handlers.py
+        }
+    }
+
+    let rows = sqlx::query_scalar::<_, String>(
+        "SELECT id::text FROM public.review_queue WHERE resolved=false ORDER BY created_at",
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| format!("list: {e}"))?;
+    pool.close().await;
+
+    Ok(json!({ "resolve": resolve, "remaining_ids": rows }))
+}
+
 /// Front-door entry for `unit-search-sql` / `unit-mcp-query`. `None` → no DSN → original answers.
 pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
     let params = args.first().cloned().unwrap_or(Value::Null);
@@ -398,6 +459,13 @@ pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
                 Err(e) => Some(emit_err(e)),
             }
         }
+        "resolve" => match rt.block_on(run_resolve(dsn, &params)) {
+            Ok(out) => {
+                println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
+                Some(ExitCode::SUCCESS)
+            }
+            Err(e) => Some(emit_err(e)),
+        },
         other => Some(emit_err(format!("unknown search-sql fn: {other}"))),
     }
 }

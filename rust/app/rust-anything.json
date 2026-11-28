@@ -25,7 +25,8 @@
     "unit-search-sql",
     "unit-mcp-query",
     "unit-mcp-rqlist",
-    "unit-mcp-schedue"
+    "unit-mcp-schedue",
+    "unit-mcp-resolve"
   ],
   "units": [
     {

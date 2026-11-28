@@ -1,0 +1,11 @@
+{
+  "resolve": {
+    "ok": false,
+    "error": "ValueError: 检测到注入指令（distill/trigger, ignore previous instructions）：HITL 归因不得由文档注入伪造"
+  },
+  "remaining_ids": [
+    "00000000-0000-0000-0000-000000000601",
+    "00000000-0000-0000-0000-000000000602",
+    "00000000-0000-0000-0000-000000000604"
+  ]
+}

@@ -32,6 +32,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-mcp-query",
     "unit-mcp-rqlist",
     "unit-mcp-schedue",
+    "unit-mcp-resolve",
 ];
 
 fn rest() -> Arg {
