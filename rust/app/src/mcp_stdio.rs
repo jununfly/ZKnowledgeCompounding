@@ -315,7 +315,33 @@ fn call_tool(name: &str, arguments: &Value, dsn: Option<&str>) -> Outcome {
             })
         }
         "zkc_review_queue_resolve" => rt.block_on(crate::units::search_sql::resolve_raw(dsn, arguments)),
-        // registered but not A-pathed here (zkc_capture): not exercised by the parity transcript.
+        // zkc_capture: only the PRE-INGEST validations are deterministic (before any uuid4 node id /
+        // now() / Ollama routing / DB write). The successful ingest path is a Q5+write boundary and is
+        // NOT ported / not byte-reproducible; we reproduce exactly what raises before ingest.
+        "zkc_capture" => {
+            const MAX_DOCS: usize = 1000; // recorded-literal: capture.MAX_DOCUMENTS_PER_CALL
+            let docs = arguments.get("documents").and_then(Value::as_array).cloned().unwrap_or_default();
+            if docs.len() > MAX_DOCS {
+                return Outcome::Result(tool_result(
+                    format!("handler 执行失败：ValueError: 单次 capture 文档数上限 {MAX_DOCS}（收到 {}），请分批", docs.len()),
+                    true,
+                ));
+            }
+            for d in &docs {
+                let title = d.get("title").and_then(Value::as_str).unwrap_or("").trim();
+                if title.is_empty() {
+                    return Outcome::Result(tool_result(
+                        "handler 执行失败：ValueError: 每条 document 必须带非空 title".into(),
+                        true,
+                    ));
+                }
+            }
+            // All pre-ingest checks pass → real path needs ingest (uuid4 + now + Ollama) → not ported.
+            return Outcome::Result(tool_result(
+                "handler 执行失败：ValueError: zkc_capture ingest path not ported (uuid4/now/Ollama — Q5 write boundary)".into(),
+                true,
+            ));
+        }
         other => Err(format!("{other} handler not ported")),
     };
     match result {
