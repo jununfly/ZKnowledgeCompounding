@@ -24,7 +24,8 @@
     "unit-search-embedding",
     "unit-search-sql",
     "unit-mcp-query",
-    "unit-mcp-rqlist"
+    "unit-mcp-rqlist",
+    "unit-mcp-schedue"
   ],
   "units": [
     {

@@ -31,6 +31,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-search-sql",
     "unit-mcp-query",
     "unit-mcp-rqlist",
+    "unit-mcp-schedue",
 ];
 
 fn rest() -> Arg {

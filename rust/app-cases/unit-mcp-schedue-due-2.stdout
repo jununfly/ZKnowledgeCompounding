@@ -1,0 +1,15 @@
+{
+  "as_of": "2026-06-15T00:00:00+00:00",
+  "items": [
+    {
+      "node_id": "00000000-0000-0000-0000-000000000001",
+      "title": "seed-1",
+      "track": "dynamic",
+      "decay_score": 0.95,
+      "review_interval_days": 1.0,
+      "interval_source": "auto"
+    }
+  ],
+  "due_count": 2,
+  "semantics": "注意力预算：该关注清单（decay 到期且需投入注意力）"
+}

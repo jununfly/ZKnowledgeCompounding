@@ -141,13 +141,17 @@ def main() -> None:
                 inserted_nodes.add(nid)
                 cur.execute(
                     "INSERT INTO public.node (id, track, title, content, decay_score, "
-                    "archived_at, created_at, embedding, embedding_4096) "
+                    "archived_at, created_at, embedding, embedding_4096, "
+                    "review_interval, last_reviewed_at, interval_source) "
                     "VALUES (%s::uuid, %s::track_kind, %s, %s, %s, %s, %s::timestamptz, "
-                    "%s::vector, %s::vector);",
+                    "%s::vector, %s::vector, %s::interval, %s::timestamptz, %s);",
                     (nid, track, f"seed-{nid[-1]}", f"body {nid[-1]} shared", decay,
                      "2026-01-01T00:00:00Z" if archived else None,
                      f"2026-06-01 00:00:{idx:02d}+00",
-                     vec(768, float(idx + 1)), vec(4096, float(2 * (idx + 1)))),
+                     vec(768, float(idx + 1)), vec(4096, float(2 * (idx + 1))),
+                     # review_interval/last_reviewed_at/interval_source: due-scheduling determinism.
+                     # dump.sh and metrics_report ignore these columns => baseline-invisible.
+                     f"{idx + 1} days", "2026-05-01 00:00:00+00", "auto"),
                 )
             # review_queue: dump-invisible + FK-safe (only rows whose node_id exists are inserted).
             # Gives zkc_review_queue_list A-path deterministic rows: one resolved (must exclude),

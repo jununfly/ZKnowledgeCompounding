@@ -269,6 +269,55 @@ async fn run_rqlist(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     Ok(items)
 }
 
+/// `zkc_scheduler_due` payload: `pg.py::list_due_for_review` predicate (decay>=SURFACE & interval
+/// & last_reviewed & last_reviewed+interval<=as_of & archived/deleted null), canonicalized by
+/// node_id (pg.py has no ORDER BY), then [:limit].
+async fn run_due(dsn: &str, p: &Value) -> Result<(Vec<Value>, usize), String> {
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(dsn)
+        .await
+        .map_err(|e| format!("connect: {e}"))?;
+    let as_of = p.get("as_of").and_then(Value::as_str).unwrap_or_default().to_string();
+    let limit = p.get("limit").and_then(as_num_i64).unwrap_or(50).max(0);
+    let surface = 0.6; // recorded-literal: tuning.SURFACE_THRESHOLD
+
+    let sql = "SELECT id::text AS node_id, title, track::text, \
+         round(COALESCE(decay_score, 0)::numeric, 3)::float8 AS decay, \
+         (EXTRACT(EPOCH FROM review_interval) / 86400.0)::float8 AS interval_days, \
+         interval_source \
+       FROM public.node \
+       WHERE decay_score >= $1 AND review_interval IS NOT NULL AND last_reviewed_at IS NOT NULL \
+         AND (last_reviewed_at + review_interval) <= $2::timestamptz \
+         AND archived_at IS NULL AND deleted_at IS NULL \
+       ORDER BY id";
+    let rows = sqlx::query(sql)
+        .bind(surface)
+        .bind(&as_of)
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| format!("due: {e}"))?;
+    pool.close().await;
+
+    let all = rows
+        .iter()
+        .map(|r| {
+            let mut o = Map::new();
+            o.insert("node_id".into(), json!(r.get::<String, _>("node_id")));
+            o.insert("title".into(), json!(r.get::<Option<String>, _>("title")));
+            o.insert("track".into(), json!(r.get::<Option<String>, _>("track")));
+            o.insert("decay_score".into(), json!(r.get::<f64, _>("decay")));
+            o.insert("review_interval_days".into(), json!(r.get::<f64, _>("interval_days")));
+            o.insert("interval_source".into(), json!(r.get::<Option<String>, _>("interval_source")));
+            Value::Object(o)
+        })
+        .collect::<Vec<_>>();
+    let due_count = all.len();
+    let mut items = all;
+    items.truncate(limit as usize);
+    Ok((items, due_count))
+}
+
 /// Front-door entry for `unit-search-sql` / `unit-mcp-query`. `None` → no DSN → original answers.
 pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
     let params = args.first().cloned().unwrap_or(Value::Null);
@@ -335,6 +384,20 @@ pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
             }
             Err(e) => Some(emit_err(e)),
         },
+        "due" => {
+            let as_of = params.get("as_of").and_then(Value::as_str).unwrap_or("").to_string();
+            match rt.block_on(run_due(dsn, &params)) {
+                Ok((items, due_count)) => {
+                    let out = json!({
+                        "as_of": as_of, "items": items, "due_count": due_count,
+                        "semantics": "注意力预算：该关注清单（decay 到期且需投入注意力）", // recorded-literal: handlers.py
+                    });
+                    println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
+                    Some(ExitCode::SUCCESS)
+                }
+                Err(e) => Some(emit_err(e)),
+            }
+        }
         other => Some(emit_err(format!("unknown search-sql fn: {other}"))),
     }
 }
