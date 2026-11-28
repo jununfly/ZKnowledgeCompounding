@@ -1,0 +1,5 @@
+bin.name = "metrics-snapshot"
+args = ["unit-search-sql", "structured", "[{\"track\":\"dynamic\",\"order\":\"created_asc\",\"limit\":3}]"]
+env.add.ZKC_PG_DSN = "postgresql://postgres:zkc@localhost:55433/zkc_metric_record"
+status.code = 0
+fs.sandbox = true

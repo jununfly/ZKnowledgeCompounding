@@ -1,0 +1,48 @@
+{
+  "hits": [
+    {
+      "id": "00000000-0000-0000-0000-000000000004",
+      "title": "seed-4",
+      "content": "body 4 shared",
+      "track": "dynamic",
+      "decay_score": 0.95,
+      "created_at": "2026-06-01T00:00:03+00:00",
+      "source": "structured",
+      "sim": null
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000003",
+      "title": "seed-3",
+      "content": "body 3 shared",
+      "track": "dynamic",
+      "decay_score": 0.95,
+      "created_at": "2026-06-01T00:00:02+00:00",
+      "source": "structured",
+      "sim": null
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000002",
+      "title": "seed-2",
+      "content": "body 2 shared",
+      "track": "dynamic",
+      "decay_score": 0.5,
+      "created_at": "2026-06-01T00:00:01+00:00",
+      "source": "structured",
+      "sim": null
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000001",
+      "title": "seed-1",
+      "content": "body 1 shared",
+      "track": "dynamic",
+      "decay_score": 0.95,
+      "created_at": "2026-06-01T00:00:00+00:00",
+      "source": "structured",
+      "sim": null
+    }
+  ],
+  "structured_count": 4,
+  "embedding_count": 0,
+  "degraded": false,
+  "degrade_reason": null
+}

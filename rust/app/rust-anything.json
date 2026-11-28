@@ -21,7 +21,8 @@
     "unit-capture-profile",
     "unit-mcp-exposure",
     "unit-search-structured",
-    "unit-search-embedding"
+    "unit-search-embedding",
+    "unit-search-sql"
   ],
   "units": [
     {

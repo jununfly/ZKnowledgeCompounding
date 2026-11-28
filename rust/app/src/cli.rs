@@ -28,6 +28,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-mcp-exposure",
     "unit-search-structured",
     "unit-search-embedding",
+    "unit-search-sql",
 ];
 
 fn rest() -> Arg {

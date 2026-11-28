@@ -129,12 +129,17 @@ def main() -> None:
     with psycopg.connect(DSN, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute("TRUNCATE " + ", ".join(f"public.{t}" for t in TABLES) + " CASCADE;")
-            for nid, track, decay, archived in data["nodes"]:
+            # created_at/content are deterministic and NOT emitted by dump.sh (which selects only
+            # id/track/decay_score/archived) nor read by metrics_report's queries — adding them is
+            # baseline-invisible. They exist so the structured-search A-path (ORDER BY created_at,
+            # ILIKE over title/content) has stable, comparable results across original and Rust.
+            for idx, (nid, track, decay, archived) in enumerate(data["nodes"]):
                 cur.execute(
-                    "INSERT INTO public.node (id, track, title, decay_score, archived_at) "
-                    "VALUES (%s::uuid, %s::track_kind, %s, %s, %s);",
-                    (nid, track, f"seed-{nid[-1]}", decay,
-                     "2026-01-01T00:00:00Z" if archived else None),
+                    "INSERT INTO public.node (id, track, title, content, decay_score, "
+                    "archived_at, created_at) VALUES (%s::uuid, %s::track_kind, %s, %s, %s, %s, %s::timestamptz);",
+                    (nid, track, f"seed-{nid[-1]}", f"body {nid[-1]} shared", decay,
+                     "2026-01-01T00:00:00Z" if archived else None,
+                     f"2026-06-01 00:00:{idx:02d}+00"),
                 )
             for i, (src, dst, kind) in enumerate(data["edges"]):
                 cur.execute(

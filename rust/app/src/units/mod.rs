@@ -29,6 +29,7 @@ mod r14_judgment;
 mod review_gate;
 mod schedule_render;
 mod search_embedding;
+mod search_sql;
 mod search_structured;
 mod telemetry_validation;
 mod zkc_context_pure;
@@ -361,6 +362,14 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
             } else {
                 Some(search_structured::run(&name, &args))
             }
+        }
+        "unit-search-sql" => {
+            let (name, _raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            let dsn = std::env::var("ZKC_PG_DSN").ok();
+            search_sql::run(&name, &args, dsn.as_deref())
         }
         crate::cli::ROOT => {
             if sent_to_original("METRICS_SNAPSHOT") {

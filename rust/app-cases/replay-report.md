@@ -2,8 +2,8 @@
 
 Build: `rust/app/target/debug/metrics-snapshot`
 
-Passed: 170/170
+Passed: 179/179
 
-Fallback rate: 0.0% (0/170 cases answered by the original)
+Fallback rate: 0.0% (0/179 cases answered by the original)
 
 Every case matches.
