@@ -54,7 +54,7 @@ flowchart TD
     f20_T2["f20 未完成"]:::open
     f21_T2["f21 未完成"]:::open
     tk7_T2["tk7 已完成"]:::done
-    tk8_T2["tk8 未完成"]:::open
+    tk8_T2["tk8 已完成"]:::done
     tk14_T2["tk14 已完成"]:::done
     tk15_T2["tk15 未完成"]:::open
     tk16_T2["tk16 已完成"]:::done
@@ -88,24 +88,24 @@ flowchart TD
     tk44_T2["tk44 已完成"]:::done
     class T2 plan_paused
   end
-  subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (被阻塞)"]
+  subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (未完成)"]
     direction TB
     f1_T3["f1 未完成 ⟲"]:::overlap
     f2_T3["f2 未完成 ⟲"]:::overlap
-    tk9_T3["tk9 被阻塞"]:::blocked
+    tk9_T3["tk9 未完成"]:::open
     class T3 plan_paused
   end
   subgraph T4["task4 app lift 与纯 Rust 收口 (被阻塞)"]
     direction TB
     f2_T4["f2 未完成 ⟲"]:::overlap
-    tk10_T4["tk10 被阻塞"]:::blocked
+    tk10_T4["tk10 未完成"]:::open
     tk11_T4["tk11 被阻塞"]:::blocked
     tk12_T4["tk12 被阻塞"]:::blocked
     class T4 plan_paused
   end
-  subgraph T5["task5 scripts/ 运维脚本迁移（含动态代码 blocker） (被阻塞)"]
+  subgraph T5["task5 scripts/ 运维脚本迁移（含动态代码 blocker） (未完成)"]
     direction TB
-    tk13_T5["tk13 被阻塞"]:::blocked
+    tk13_T5["tk13 未完成"]:::open
     class T5 plan_paused
   end
   subgraph ORPHANS["Orphan findings / 未收纳 items (R4)"]
