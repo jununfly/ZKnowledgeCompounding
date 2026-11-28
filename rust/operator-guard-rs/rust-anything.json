@@ -1,0 +1,30 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-22-operator-guard/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "operator-guard-rs",
+  "exports": [
+    {
+      "name": "require_operator",
+      "file": "spikes/spike-22-operator-guard/pure_bridge.py",
+      "line": 31,
+      "params": [
+        {
+          "name": "operator",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

@@ -13,7 +13,8 @@
     "unit-r14",
     "unit-artifact-shaping",
     "unit-injection",
-    "unit-percentile"
+    "unit-percentile",
+    "unit-operator-guard"
   ],
   "units": [
     {
@@ -123,6 +124,15 @@
         "unit-percentile"
       ],
       "switch": "RUST_ANYTHING_UNIT_PERCENTILE"
+    },
+    {
+      "name": "operator-guard",
+      "crate": "operator-guard-rs",
+      "path": "../operator-guard-rs",
+      "commands": [
+        "unit-operator-guard"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_OPERATOR_GUARD"
     }
   ]
 }

@@ -26,5 +26,6 @@ r14-judgment-rs = { path = "../r14-judgment-rs" }
 artifact-shaping-rs = { path = "../artifact-shaping-rs" }
 injection-detection-rs = { path = "../injection-detection-rs" }
 percentile-rs = { path = "../percentile-rs" }
+operator-guard-rs = { path = "../operator-guard-rs" }
 
 [workspace]

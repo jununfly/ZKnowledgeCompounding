@@ -1,0 +1,16 @@
+{"fn": "require_operator", "args": ["zj"], "ok": "zj"}
+{"fn": "require_operator", "args": ["中文操作员"], "ok": "中文操作员"}
+{"fn": "require_operator", "args": ["  zj  "], "ok": "zj"}
+{"fn": "require_operator", "args": [" 中文 "], "ok": "中文"}
+{"fn": "require_operator", "args": [" z j "], "ok": "z j"}
+{"fn": "require_operator", "args": [""], "error": "ValueError: operator 必填且非空：墓碑标记/恢复是 zj 本人的人环操作，不得缺省"}
+{"fn": "require_operator", "args": ["   "], "error": "ValueError: operator 必填且非空：墓碑标记/恢复是 zj 本人的人环操作，不得缺省"}
+{"fn": "require_operator", "args": ["\t\n"], "error": "ValueError: operator 必填且非空：墓碑标记/恢复是 zj 本人的人环操作，不得缺省"}
+{"fn": "require_operator", "args": ["　"], "error": "ValueError: operator 必填且非空：墓碑标记/恢复是 zj 本人的人环操作，不得缺省"}
+{"fn": "require_operator", "args": [null], "error": "ValueError: operator 必填且非空：墓碑标记/恢复是 zj 本人的人环操作，不得缺省"}
+{"fn": "require_operator", "args": ["\u001cZJ\u001c"], "ok": "ZJ"}
+{"fn": "require_operator", "args": ["\u001d\u001e\u001f"], "error": "ValueError: operator 必填且非空：墓碑标记/恢复是 zj 本人的人环操作，不得缺省"}
+{"fn": "require_operator", "args": [" zj "], "ok": "zj"}
+{"fn": "require_operator", "args": ["a\u0000b"], "ok": "a\u0000b"}
+{"fn": "require_operator", "args": ["\t zj \n"], "ok": "zj"}
+{"fn": "require_operator", "args": ["  z j 中文  "], "ok": "z j 中文"}

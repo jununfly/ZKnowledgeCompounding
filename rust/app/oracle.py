@@ -1,4 +1,4 @@
-"""Process-only oracle for the twelve library-unit front doors.
+"""Process-only oracle for the thirteen library-unit front doors.
 
 This is NOT production code and NOT a migration target. It exists so the
 `RUST_ANYTHING_UNIT_<UNIT>=original` kill switch has the same meaning for the
@@ -74,6 +74,10 @@ PERCENTILE_ALIAS = load_alias(
     REPO / "spikes" / "spike-21-percentile" / "pure_bridge.py",
     "zkc_percentile_oracle",
 )
+OPERATOR_GUARD_ALIAS = load_alias(
+    REPO / "spikes" / "spike-22-operator-guard" / "pure_bridge.py",
+    "zkc_operator_guard_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -138,6 +142,9 @@ INJECTION = {
 PERCENTILE = {
     "percentile": (PERCENTILE_ALIAS, "percentile"),
 }
+OPERATOR_GUARD = {
+    "require_operator": (OPERATOR_GUARD_ALIAS, "require_operator"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -151,6 +158,7 @@ TABLES = {
     "artifact-shaping": ARTIFACT_SHAPING,
     "injection": INJECTION,
     "percentile": PERCENTILE,
+    "operator-guard": OPERATOR_GUARD,
 }
 
 

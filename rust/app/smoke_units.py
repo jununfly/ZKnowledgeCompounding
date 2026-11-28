@@ -1,4 +1,4 @@
-"""Compare the twelve wired unit commands against the Python process oracle.
+"""Compare the thirteen wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -403,6 +403,19 @@ CASES = [
     ("percentile", "percentile", [[0.0, 0.0, 10.0], 0.9]),  # duplicate zeros
     ("percentile", "percentile", [[-5.0, 0.0, 5.0], 0.75]),  # negatives
     ("percentile", "percentile", [[], 0.9]),  # empty -> IndexError
+    # operator guard (ADR-0013 human-in-the-loop): 8 of the 16 recorded cases.
+    # Covers plain/Chinese operators, whitespace strip (incl. NBSP and the
+    # Python-isspace-only \x1c-\x1f seam), empty/blank/None ValueError and an
+    # embedded NUL that must survive strip. The non-str TypeError branch was
+    # not recorded, so it is intentionally not a smoke case.
+    ("operator-guard", "require_operator", ["zj"]),  # plain
+    ("operator-guard", "require_operator", ["中文操作员"]),  # unicode operator
+    ("operator-guard", "require_operator", ["  z j 中文  "]),  # strip spaces
+    ("operator-guard", "require_operator", ["\u00a0zj\u00a0"]),  # NBSP is whitespace
+    ("operator-guard", "require_operator", ["\u001cZJ\u001c"]),  # \x1c isspace seam
+    ("operator-guard", "require_operator", ["   "]),  # blank -> ValueError
+    ("operator-guard", "require_operator", [None]),  # None -> ValueError
+    ("operator-guard", "require_operator", ["a\u0000b"]),  # embedded NUL preserved
 ]
 
 
