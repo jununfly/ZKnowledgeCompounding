@@ -41,3 +41,10 @@
   1. ticket 15 保持 hold，触发条件写进 finding：**app record --effects 基建就绪后，只对 `metrics_report` 单独走 A**；
   2. 6 个 `MetricInputs` 纯计算函数：若要迁，须先解决 wrapper `_enc` 的 dataclass 编码（改工具生成代码，refresh 会覆盖，需单独评估），或接受永久留 Python——二者都须在 ADR 定性，不默认；
   3. durable 文档明确写"工具边界暂留，非业务不可迁"。
+
+### Q5 落定（2026-11-28，ticket 15 决议）
+
+zj 拍板选项 A：`metrics_report(store)` 走 A 路径迁移（ticket 45 承载，f7 路径已验证）；
+其余 7 个永久留 Python（ADR-0014 定性「工具编码边界永久留置」）。ticket 15 关闭，
+lift 链解锁。详见 `docs/zj-adr/0014-q5-metrics-boundary-final.md` 与
+`finding-metrics-boundary.md` 最终落定段。

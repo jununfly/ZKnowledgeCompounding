@@ -36,3 +36,14 @@
 ## 与既有边界的关系
 
 与首切片的 `datetime` 过不了 JSON bridge（`finding-port-boundary.md`）同类：都是"结构化值过不了 JSON 桥"。本条把适用面从 datetime 扩展到普通 dataclass 与 Storage 对象；Q5=C 是这条边界在决策层的固化。
+
+## 最终落定（2026-11-28，zj 拍板选项 A，ticket 15 决议）
+
+- `metrics_report(store)`：走 A 路径迁移（依据 finding f7 已验证：front-door + 手写
+  glue + PG 查询层，app replay 2/2、fallback 0%）。工作承载 = **ticket 45**（task 4，
+  derived-from finding 22）。
+- 其余 7 个（6 × MetricInputs 纯计算 + `build_report`）：**永久留 Python**，定性
+  「工具编码边界永久留置」，ADR：`docs/zj-adr/0014-q5-metrics-boundary-final.md`。
+- ticket 15 关闭（决议已做出）。任何后续重提 7 函数迁移须新 ADR，不得默认翻案。
+- 本 finding 的 Q5=C「暂留」定性至此被 ADR-0014 细化：`metrics_report` 由暂留转迁移，
+  7 函数由暂留转永久留置。「暂留」读法即日作废。
