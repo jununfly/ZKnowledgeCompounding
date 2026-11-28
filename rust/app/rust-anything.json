@@ -22,7 +22,8 @@
     "unit-mcp-exposure",
     "unit-search-structured",
     "unit-search-embedding",
-    "unit-search-sql"
+    "unit-search-sql",
+    "unit-mcp-query"
   ],
   "units": [
     {

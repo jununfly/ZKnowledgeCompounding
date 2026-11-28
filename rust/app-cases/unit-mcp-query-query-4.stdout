@@ -1,0 +1,24 @@
+{
+  "items": [
+    {
+      "node_id": "00000000-0000-0000-0000-000000000011",
+      "title": "seed-1",
+      "track": "static",
+      "decay_score": 0.0,
+      "source": "structured",
+      "evidence_refs": []
+    },
+    {
+      "node_id": "00000000-0000-0000-0000-000000000004",
+      "title": "seed-4",
+      "track": "dynamic",
+      "decay_score": 0.95,
+      "source": "structured",
+      "evidence_refs": []
+    }
+  ],
+  "count": 2,
+  "scope": "public",
+  "degraded": false,
+  "privacy": "node.content / meta_claim.statement 不出现在响应体"
+}

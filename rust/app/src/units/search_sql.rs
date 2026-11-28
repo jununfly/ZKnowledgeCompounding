@@ -183,12 +183,65 @@ fn as_num_i64(v: &Value) -> Option<i64> {
     v.as_f64().map(|x| x as i64)
 }
 
-/// Front-door entry for `unit-search-sql`. `None` → no DSN configured → the original answers.
+/// `zkc_query` handler business payload: structured search (`pg.py::search`, encoder-less ⇒
+/// structured-only, created_desc) joined with each node's evidence_refs union (sorted distinct).
+async fn run_mcp_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(dsn)
+        .await
+        .map_err(|e| format!("connect: {e}"))?;
+    let q = p.get("query").and_then(Value::as_str).unwrap_or("").to_string();
+    let limit = p.get("limit").and_then(as_num_i64).unwrap_or(20).max(1);
+
+    let sql = "SELECT n.id::text AS node_id, n.title, n.track::text, \
+       round(COALESCE(n.decay_score, 0)::numeric, 3)::float8 AS decay, \
+       ARRAY(SELECT DISTINCT e FROM (SELECT unnest(mc.evidence_refs::text[]) AS e \
+             FROM public.meta_claim mc WHERE n.id = ANY(mc.evidence_refs)) t ORDER BY e) AS refs \
+       FROM public.node n WHERE n.deleted_at IS NULL AND n.archived_at IS NULL \
+         AND (n.title ILIKE $1 OR n.content ILIKE $1) \
+       ORDER BY n.created_at DESC NULLS LAST LIMIT $2";
+    let rows = sqlx::query(sql)
+        .bind(format!("%{q}%")) // unescaped, matching pg.py's search ILIKE
+        .bind(limit)
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| format!("query: {e}"))?;
+    pool.close().await;
+
+    let items = rows
+        .iter()
+        .map(|r| {
+            let mut o = Map::new();
+            o.insert("node_id".into(), json!(r.get::<String, _>("node_id")));
+            o.insert("title".into(), json!(r.get::<Option<String>, _>("title")));
+            o.insert("track".into(), json!(r.get::<Option<String>, _>("track")));
+            o.insert("decay_score".into(), json!(r.get::<f64, _>("decay")));
+            o.insert("source".into(), json!("structured"));
+            o.insert("evidence_refs".into(), json!(r.get::<Vec<String>, _>("refs")));
+            Value::Object(o)
+        })
+        .collect::<Vec<_>>();
+    Ok(items)
+}
+
+/// Front-door entry for `unit-search-sql` / `unit-mcp-query`. `None` → no DSN → original answers.
 pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
-    let dsn = dsn?;
     let params = args.first().cloned().unwrap_or(Value::Null);
-    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build();
-    let rt = match rt {
+    // private_claims denial needs no DB (allow_private_claims is always false for this entry).
+    if name == "query" {
+        let scope = params.get("scope").and_then(Value::as_str).unwrap_or("public");
+        if scope == "private_claims" {
+            let denied = json!({
+                "denied": true, "items": [], "scope": scope,
+                "reason": "私人 claim 默认脱敏；未获显式授权不返回隐私字段", // recorded-literal: handlers.py
+            });
+            println!("{}", serde_json::to_string_pretty(&denied).unwrap_or_default());
+            return Some(ExitCode::SUCCESS);
+        }
+    }
+    let dsn = dsn?;
+    let rt = match tokio::runtime::Builder::new_current_thread().enable_all().build() {
         Ok(rt) => rt,
         Err(e) => return Some(emit_err(format!("runtime: {e}"))),
     };
@@ -214,6 +267,21 @@ pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
             }
             Err(e) => Some(emit_err(e)),
         },
+        "query" => {
+            let scope = params.get("scope").and_then(Value::as_str).unwrap_or("public").to_string();
+            match rt.block_on(run_mcp_query(dsn, &params)) {
+                Ok(items) => {
+                    let count = items.len();
+                    let out = json!({
+                        "items": items, "count": count, "scope": scope, "degraded": false,
+                        "privacy": "node.content / meta_claim.statement 不出现在响应体", // recorded-literal: handlers.py
+                    });
+                    println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
+                    Some(ExitCode::SUCCESS)
+                }
+                Err(e) => Some(emit_err(e)),
+            }
+        }
         other => Some(emit_err(format!("unknown search-sql fn: {other}"))),
     }
 }

@@ -1,0 +1,6 @@
+{
+  "denied": true,
+  "items": [],
+  "scope": "private_claims",
+  "reason": "私人 claim 默认脱敏；未获显式授权不返回隐私字段"
+}
