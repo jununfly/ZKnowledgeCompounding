@@ -27,5 +27,6 @@ artifact-shaping-rs = { path = "../artifact-shaping-rs" }
 injection-detection-rs = { path = "../injection-detection-rs" }
 percentile-rs = { path = "../percentile-rs" }
 operator-guard-rs = { path = "../operator-guard-rs" }
+telemetry-validation-rs = { path = "../telemetry-validation-rs" }
 
 [workspace]

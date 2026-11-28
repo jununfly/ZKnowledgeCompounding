@@ -1,0 +1,16 @@
+{"fn": "validate_report", "args": [{"completion_fired": true, "main_latency_ms": 100.0, "completion_latency_ms": 200.0}], "ok": null}
+{"fn": "validate_report", "args": [{"completion_fired": false, "main_latency_ms": 100.0, "completion_latency_ms": null}], "ok": null}
+{"fn": "validate_report", "args": [{"completion_fired": true, "main_latency_ms": 100.0, "completion_latency_ms": null, "extra": 1}], "ok": null}
+{"fn": "validate_report", "args": [{}], "error": "ValueError: report missing required field(s): completion_fired, main_latency_ms, completion_latency_ms"}
+{"fn": "validate_report", "args": [{"completion_fired": true}], "error": "ValueError: report missing required field(s): main_latency_ms, completion_latency_ms"}
+{"fn": "validate_report", "args": [{"main_latency_ms": 100.0}], "error": "ValueError: report missing required field(s): completion_fired, completion_latency_ms"}
+{"fn": "validate_report", "args": [{"completion_fired": true, "main_latency_ms": 100.0}], "error": "ValueError: report missing required field(s): completion_latency_ms"}
+{"fn": "validate_report", "args": [{"completion_fired": true, "completion_latency_ms": 200.0}], "error": "ValueError: report missing required field(s): main_latency_ms"}
+{"fn": "validate_report", "args": [{"main_latency_ms": 100.0, "completion_latency_ms": 200.0}], "error": "ValueError: report missing required field(s): completion_fired"}
+{"fn": "validate_report", "args": ["not-a-dict"], "error": "ValueError: report must be a dict"}
+{"fn": "validate_report", "args": [[]], "error": "ValueError: report must be a dict"}
+{"fn": "validate_report", "args": [null], "error": "ValueError: report must be a dict"}
+{"fn": "validate_report", "args": [42], "error": "ValueError: report must be a dict"}
+{"fn": "validate_report", "args": [{"completion_fired": true, "main_latency_ms": 100.0, "completion_latency_ms": 200.0, "nested": {"k": [1, 2, 3]}}], "ok": null}
+{"fn": "validate_report", "args": [{"completion_fired": 0, "main_latency_ms": "x", "completion_latency_ms": false}], "ok": null}
+{"fn": "validate_report", "args": [{"completion_latency_ms": 200.0, "main_latency_ms": 1.0, "completion_fired": true, "a": null, "b": 0}], "ok": null}

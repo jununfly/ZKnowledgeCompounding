@@ -665,6 +665,7 @@ dependencies = [
  "r14-judgment-rs",
  "serde_json",
  "sqlx",
+ "telemetry-validation-rs",
  "tokio",
  "zkc-context-pure-rs",
  "zkc-expiry-pure-rs",
@@ -1228,6 +1229,15 @@ name = "target-lexicon"
 version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c447be3a2abfa84b2d91680c56600bd6b2873866de27b36ec911be705e291da"
+
+[[package]]
+name = "telemetry-validation-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "thiserror"

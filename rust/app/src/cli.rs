@@ -21,6 +21,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-injection",
     "unit-percentile",
     "unit-operator-guard",
+    "unit-telemetry-validation",
 ];
 
 fn rest() -> Arg {

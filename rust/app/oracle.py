@@ -1,4 +1,4 @@
-"""Process-only oracle for the thirteen library-unit front doors.
+"""Process-only oracle for the fourteen library-unit front doors.
 
 This is NOT production code and NOT a migration target. It exists so the
 `RUST_ANYTHING_UNIT_<UNIT>=original` kill switch has the same meaning for the
@@ -78,6 +78,10 @@ OPERATOR_GUARD_ALIAS = load_alias(
     REPO / "spikes" / "spike-22-operator-guard" / "pure_bridge.py",
     "zkc_operator_guard_oracle",
 )
+TELEMETRY_VALIDATION_ALIAS = load_alias(
+    REPO / "spikes" / "spike-23-telemetry-validation" / "pure_bridge.py",
+    "zkc_telemetry_validation_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -145,6 +149,9 @@ PERCENTILE = {
 OPERATOR_GUARD = {
     "require_operator": (OPERATOR_GUARD_ALIAS, "require_operator"),
 }
+TELEMETRY_VALIDATION = {
+    "validate_report": (TELEMETRY_VALIDATION_ALIAS, "validate_report"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -159,6 +166,7 @@ TABLES = {
     "injection": INJECTION,
     "percentile": PERCENTILE,
     "operator-guard": OPERATOR_GUARD,
+    "telemetry-validation": TELEMETRY_VALIDATION,
 }
 
 

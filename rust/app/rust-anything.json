@@ -14,7 +14,8 @@
     "unit-artifact-shaping",
     "unit-injection",
     "unit-percentile",
-    "unit-operator-guard"
+    "unit-operator-guard",
+    "unit-telemetry-validation"
   ],
   "units": [
     {
@@ -133,6 +134,15 @@
         "unit-operator-guard"
       ],
       "switch": "RUST_ANYTHING_UNIT_OPERATOR_GUARD"
+    },
+    {
+      "name": "telemetry-validation",
+      "crate": "telemetry-validation-rs",
+      "path": "../telemetry-validation-rs",
+      "commands": [
+        "unit-telemetry-validation"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_TELEMETRY_VALIDATION"
     }
   ]
 }

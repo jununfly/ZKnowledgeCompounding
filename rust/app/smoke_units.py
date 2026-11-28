@@ -1,4 +1,4 @@
-"""Compare the thirteen wired unit commands against the Python process oracle.
+"""Compare the fourteen wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -416,6 +416,18 @@ CASES = [
     ("operator-guard", "require_operator", ["   "]),  # blank -> ValueError
     ("operator-guard", "require_operator", [None]),  # None -> ValueError
     ("operator-guard", "require_operator", ["a\u0000b"]),  # embedded NUL preserved
+    # telemetry validation (R14 field-presence gate): 8 of the 16 recorded cases.
+    # Covers the valid report, extra/ignored keys, each single missing field,
+    # combined/empty missing, the declaration-order message on out-of-order keys
+    # and the non-dict ValueError. Values are not type-checked by this helper.
+    ("telemetry-validation", "validate_report", [{"completion_fired": True, "main_latency_ms": 100.0, "completion_latency_ms": 200.0}]),  # valid -> null
+    ("telemetry-validation", "validate_report", [{"completion_fired": False, "main_latency_ms": 100.0, "completion_latency_ms": None, "extra": 1}]),  # extra key ignored
+    ("telemetry-validation", "validate_report", [{}]),  # all three missing
+    ("telemetry-validation", "validate_report", [{"completion_fired": True, "main_latency_ms": 100.0}]),  # missing completion_latency_ms
+    ("telemetry-validation", "validate_report", [{"main_latency_ms": 100.0}]),  # two missing (declaration order)
+    ("telemetry-validation", "validate_report", [{"completion_latency_ms": 200.0, "main_latency_ms": 1.0, "completion_fired": True, "z": 0}]),  # out-of-order keys -> declaration order
+    ("telemetry-validation", "validate_report", ["not-a-dict"]),  # non-dict -> ValueError
+    ("telemetry-validation", "validate_report", [{"completion_fired": 0, "main_latency_ms": "x", "completion_latency_ms": False}]),  # values not type-checked
 ]
 
 
