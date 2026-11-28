@@ -22,6 +22,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-percentile",
     "unit-operator-guard",
     "unit-telemetry-validation",
+    "unit-schedule-render",
 ];
 
 fn rest() -> Arg {

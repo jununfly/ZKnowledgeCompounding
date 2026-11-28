@@ -1,4 +1,4 @@
-"""Process-only oracle for the fourteen library-unit front doors.
+"""Process-only oracle for the fifteen library-unit front doors.
 
 This is NOT production code and NOT a migration target. It exists so the
 `RUST_ANYTHING_UNIT_<UNIT>=original` kill switch has the same meaning for the
@@ -82,6 +82,10 @@ TELEMETRY_VALIDATION_ALIAS = load_alias(
     REPO / "spikes" / "spike-23-telemetry-validation" / "pure_bridge.py",
     "zkc_telemetry_validation_oracle",
 )
+SCHEDULE_RENDER_ALIAS = load_alias(
+    REPO / "spikes" / "spike-24-schedule-render" / "pure_bridge.py",
+    "zkc_schedule_render_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -152,6 +156,11 @@ OPERATOR_GUARD = {
 TELEMETRY_VALIDATION = {
     "validate_report": (TELEMETRY_VALIDATION_ALIAS, "validate_report"),
 }
+SCHEDULE_RENDER = {
+    "build_task_action": (SCHEDULE_RENDER_ALIAS, "build_task_action"),
+    "build_register_command": (SCHEDULE_RENDER_ALIAS, "build_register_command"),
+    "build_unregister_command": (SCHEDULE_RENDER_ALIAS, "build_unregister_command"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -167,6 +176,7 @@ TABLES = {
     "percentile": PERCENTILE,
     "operator-guard": OPERATOR_GUARD,
     "telemetry-validation": TELEMETRY_VALIDATION,
+    "schedule-render": SCHEDULE_RENDER,
 }
 
 

@@ -1,0 +1,26 @@
+{"fn": "build_task_action", "args": ["C:\\Scripts\\daily_e1_driver.bat"], "ok": "\"C:\\Scripts\\daily_e1_driver.bat\""}
+{"fn": "build_task_action", "args": ["C:\\Users\\zj\\My Projects\\ZKC\\scripts\\daily_e1_driver.bat"], "ok": "\"C:\\Users\\zj\\My Projects\\ZKC\\scripts\\daily_e1_driver.bat\""}
+{"fn": "build_task_action", "args": [""], "error": "ValueError: 驱动包装路径为空"}
+{"fn": "build_task_action", "args": ["   "], "error": "ValueError: 驱动包装路径为空"}
+{"fn": "build_task_action", "args": ["a__b"], "error": "ValueError: 驱动包装路径仍含占位符: a__b"}
+{"fn": "build_task_action", "args": ["%CD%\\x"], "error": "ValueError: 驱动包装路径仍含占位符: %CD%\\x"}
+{"fn": "build_task_action", "args": ["%~dp0x"], "error": "ValueError: 驱动包装路径仍含占位符: %~dp0x"}
+{"fn": "build_task_action", "args": ["\u001c"], "error": "ValueError: 驱动包装路径为空"}
+{"fn": "build_task_action", "args": [" zj "], "ok": "\" zj \""}
+{"fn": "build_task_action", "args": ["a\u0000b"], "ok": "\"a\u0000b\""}
+{"fn": "build_task_action", "args": ["中文\\路径\\驱动.bat"], "ok": "\"中文\\路径\\驱动.bat\""}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\daily_e1_driver.bat", "ZKC Daily E1", "23:50"], "ok": ["schtasks", "/create", "/tn", "ZKC Daily E1", "/tr", "\"C:\\Scripts\\daily_e1_driver.bat\"", "/sc", "daily", "/st", "23:50", "/f"]}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\daily_e1_driver.bat", "ZKC Custom", "07:15"], "ok": ["schtasks", "/create", "/tn", "ZKC Custom", "/tr", "\"C:\\Scripts\\daily_e1_driver.bat\"", "/sc", "daily", "/st", "07:15", "/f"]}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", "00:00"], "ok": ["schtasks", "/create", "/tn", "ZKC Daily E1", "/tr", "\"C:\\Scripts\\d.bat\"", "/sc", "daily", "/st", "00:00", "/f"]}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", "23:59"], "ok": ["schtasks", "/create", "/tn", "ZKC Daily E1", "/tr", "\"C:\\Scripts\\d.bat\"", "/sc", "daily", "/st", "23:59", "/f"]}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", "23:50\n"], "ok": ["schtasks", "/create", "/tn", "ZKC Daily E1", "/tr", "\"C:\\Scripts\\d.bat\"", "/sc", "daily", "/st", "23:50\n", "/f"]}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", "25:99"], "error": "ValueError: 时间须为 HH:MM（00:00-23:59），收到: 25:99"}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", "23-50"], "error": "ValueError: 时间须为 HH:MM（00:00-23:59），收到: 23-50"}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", "23:5"], "error": "ValueError: 时间须为 HH:MM（00:00-23:59），收到: 23:5"}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "ZKC Daily E1", ""], "error": "ValueError: 时间须为 HH:MM（00:00-23:59），收到: "}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "", "23:50"], "error": "ValueError: 任务名不能为空"}
+{"fn": "build_register_command", "args": ["C:\\Scripts\\d.bat", "   ", "23:50"], "error": "ValueError: 任务名不能为空"}
+{"fn": "build_unregister_command", "args": ["ZKC Daily E1"], "ok": ["schtasks", "/delete", "/tn", "ZKC Daily E1", "/f"]}
+{"fn": "build_unregister_command", "args": ["ZKC Custom"], "ok": ["schtasks", "/delete", "/tn", "ZKC Custom", "/f"]}
+{"fn": "build_unregister_command", "args": [""], "error": "ValueError: 任务名不能为空"}
+{"fn": "build_unregister_command", "args": ["\u001c"], "error": "ValueError: 任务名不能为空"}

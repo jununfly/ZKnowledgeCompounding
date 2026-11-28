@@ -15,7 +15,8 @@
     "unit-injection",
     "unit-percentile",
     "unit-operator-guard",
-    "unit-telemetry-validation"
+    "unit-telemetry-validation",
+    "unit-schedule-render"
   ],
   "units": [
     {
@@ -143,6 +144,15 @@
         "unit-telemetry-validation"
       ],
       "switch": "RUST_ANYTHING_UNIT_TELEMETRY_VALIDATION"
+    },
+    {
+      "name": "schedule-render",
+      "crate": "schedule-render-rs",
+      "path": "../schedule-render-rs",
+      "commands": [
+        "unit-schedule-render"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_SCHEDULE_RENDER"
     }
   ]
 }

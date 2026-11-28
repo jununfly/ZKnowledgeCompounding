@@ -1,4 +1,4 @@
-"""Compare the fourteen wired unit commands against the Python process oracle.
+"""Compare the fifteen wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -428,6 +428,20 @@ CASES = [
     ("telemetry-validation", "validate_report", [{"completion_latency_ms": 200.0, "main_latency_ms": 1.0, "completion_fired": True, "z": 0}]),  # out-of-order keys -> declaration order
     ("telemetry-validation", "validate_report", ["not-a-dict"]),  # non-dict -> ValueError
     ("telemetry-validation", "validate_report", [{"completion_fired": 0, "main_latency_ms": "x", "completion_latency_ms": False}]),  # values not type-checked
+    ("schedule-render", "build_task_action", ["C:\\Scripts\\daily_e1_driver.bat"]),  # plain path -> quoted
+    ("schedule-render", "build_task_action", ["C:\\Users\\zj\\My Projects\\ZKC\\scripts\\daily_e1_driver.bat"]),  # spaces -> quoted
+    ("schedule-render", "build_task_action", [""]),  # empty -> ValueError
+    ("schedule-render", "build_task_action", ["\x1c"]),  # isspace seam (Python strip, Rust py_isspace) -> ValueError
+    ("schedule-render", "build_task_action", ["a__b"]),  # placeholder -> ValueError
+    ("schedule-render", "build_task_action", ["%CD%\\x"]),  # placeholder -> ValueError
+    ("schedule-render", "build_register_command", ["C:\\Scripts\\daily_e1_driver.bat", "ZKC Daily E1", "23:50"]),  # defaults-equivalent contract
+    ("schedule-render", "build_register_command", ["C:\\Scripts\\d.bat", "ZKC Custom", "07:15"]),  # custom name/time
+    ("schedule-render", "build_register_command", ["C:\\Scripts\\d.bat", "ZKC Daily E1", "23:50\n"]),  # re.$ tolerates single trailing newline
+    ("schedule-render", "build_register_command", ["C:\\Scripts\\d.bat", "ZKC Daily E1", "25:99"]),  # invalid hour -> ValueError
+    ("schedule-render", "build_register_command", ["C:\\Scripts\\d.bat", "ZKC Daily E1", "23-50"]),  # invalid format -> ValueError
+    ("schedule-render", "build_register_command", ["C:\\Scripts\\d.bat", "   ", "23:50"]),  # blank task name -> ValueError
+    ("schedule-render", "build_unregister_command", ["ZKC Daily E1"]),  # delete contract
+    ("schedule-render", "build_unregister_command", [""]),  # empty -> ValueError
 ]
 
 

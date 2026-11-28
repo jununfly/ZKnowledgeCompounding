@@ -1,0 +1,78 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-24-schedule-render/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "schedule-render-rs",
+  "exports": [
+    {
+      "name": "build_task_action",
+      "file": "spikes/spike-24-schedule-render/pure_bridge.py",
+      "line": 40,
+      "params": [
+        {
+          "name": "wrapper",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "build_register_command",
+      "file": "spikes/spike-24-schedule-render/pure_bridge.py",
+      "line": 44,
+      "params": [
+        {
+          "name": "wrapper",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "task_name",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "at",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "build_unregister_command",
+      "file": "spikes/spike-24-schedule-render/pure_bridge.py",
+      "line": 48,
+      "params": [
+        {
+          "name": "task_name",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

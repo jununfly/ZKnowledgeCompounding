@@ -28,5 +28,6 @@ injection-detection-rs = { path = "../injection-detection-rs" }
 percentile-rs = { path = "../percentile-rs" }
 operator-guard-rs = { path = "../operator-guard-rs" }
 telemetry-validation-rs = { path = "../telemetry-validation-rs" }
+schedule-render-rs = { path = "../schedule-render-rs" }
 
 [workspace]
