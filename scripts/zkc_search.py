@@ -62,6 +62,18 @@ def run_search(store, *, q, track, decay_min, decay_max, include_archived, order
     }
 
 
+def run_search_embedding(store, *, vector, k, include_archived, column) -> dict:
+    # Direct pg.py `search_by_embedding` (`<=>`) path — bypasses the encoder, which stays the
+    # external-service seam. sim is the cosine (1 - distance) rounded to 4 for stable parity.
+    hits = store.nodes.search_by_embedding(
+        vector, k=k, include_archived=include_archived, column=column,
+    )
+    return {
+        "hits": [{"id": str(n.id), "sim": round(sim, 4)} for n, sim in hits],
+        "count": len(hits),
+    }
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="ZKC 结构化检索（JSON 契约）")
     ap.add_argument("--storage", default=None, help="pg（默认经 get_storage）或 memory")
@@ -73,14 +85,27 @@ def main() -> None:
     ap.add_argument("--include-archived", dest="include_archived", action="store_true")
     ap.add_argument("--order", default="created_desc",
                     choices=["created_desc", "created_asc", "decay_desc"])
+    ap.add_argument("--mode", default="structured", choices=["structured", "embedding"],
+                    help="structured=过滤排序；embedding=pgvector `<=>` 余弦 top-k")
+    ap.add_argument("--vector", default=None, help="embedding 模式查询向量（JSON list[float]）")
+    ap.add_argument("--k", type=int, default=10)
+    ap.add_argument("--column", default="embedding", choices=["embedding", "embedding_4096"])
     ap.add_argument("--limit", type=int, default=50)
     args = ap.parse_args()
 
     store = get_storage(args.storage or os.environ.get("ZKC_STORAGE", "pg"))
-    out = run_search(
-        store, q=args.q, track=args.track, decay_min=args.decay_min, decay_max=args.decay_max,
-        include_archived=args.include_archived, order=args.order, limit=args.limit,
-    )
+    if args.mode == "embedding":
+        if not args.vector:
+            raise SystemExit("--mode embedding requires --vector")
+        out = run_search_embedding(
+            store, vector=json.loads(args.vector), k=args.k,
+            include_archived=args.include_archived, column=args.column,
+        )
+    else:
+        out = run_search(
+            store, q=args.q, track=args.track, decay_min=args.decay_min, decay_max=args.decay_max,
+            include_archived=args.include_archived, order=args.order, limit=args.limit,
+        )
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 

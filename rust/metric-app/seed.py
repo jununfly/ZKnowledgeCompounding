@@ -129,17 +129,23 @@ def main() -> None:
     with psycopg.connect(DSN, autocommit=True) as conn:
         with conn.cursor() as cur:
             cur.execute("TRUNCATE " + ", ".join(f"public.{t}" for t in TABLES) + " CASCADE;")
-            # created_at/content are deterministic and NOT emitted by dump.sh (which selects only
-            # id/track/decay_score/archived) nor read by metrics_report's queries — adding them is
-            # baseline-invisible. They exist so the structured-search A-path (ORDER BY created_at,
-            # ILIKE over title/content) has stable, comparable results across original and Rust.
+            # created_at/content/embedding* are deterministic and NOT emitted by dump.sh (only
+            # id/track/decay_score/archived) nor read by metrics_report — baseline-invisible. They
+            # exist so the search A-paths (structured: ORDER BY created_at/ILIKE; embedding: `<=>`)
+            # have stable, comparable results across the Python original and the Rust port.
+            def vec(dim: int, lead: float) -> str:
+                vals = [lead, 1.0] + [0.0] * (dim - 2)
+                return "[" + ",".join(repr(float(x)) for x in vals) + "]"
             for idx, (nid, track, decay, archived) in enumerate(data["nodes"]):
                 cur.execute(
                     "INSERT INTO public.node (id, track, title, content, decay_score, "
-                    "archived_at, created_at) VALUES (%s::uuid, %s::track_kind, %s, %s, %s, %s, %s::timestamptz);",
+                    "archived_at, created_at, embedding, embedding_4096) "
+                    "VALUES (%s::uuid, %s::track_kind, %s, %s, %s, %s, %s::timestamptz, "
+                    "%s::vector, %s::vector);",
                     (nid, track, f"seed-{nid[-1]}", f"body {nid[-1]} shared", decay,
                      "2026-01-01T00:00:00Z" if archived else None,
-                     f"2026-06-01 00:00:{idx:02d}+00"),
+                     f"2026-06-01 00:00:{idx:02d}+00",
+                     vec(768, float(idx + 1)), vec(4096, float(2 * (idx + 1)))),
                 )
             for i, (src, dst, kind) in enumerate(data["edges"]):
                 cur.execute(

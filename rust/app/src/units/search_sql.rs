@@ -115,31 +115,106 @@ async fn run_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     Ok(hits)
 }
 
+/// pg.py `search_by_embedding`: cosine `<=>` top-k over the whitelisted vector column.
+async fn run_embedding(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(dsn)
+        .await
+        .map_err(|e| format!("connect: {e}"))?;
+
+    // EMBEDDING_COLUMNS whitelist (interpolated into SQL, matching pg.py).
+    let column = match p.get("column").and_then(Value::as_str) {
+        Some(c @ ("embedding" | "embedding_4096")) => c.to_string(), // recorded-literal: pg.py EMBEDDING_COLUMNS
+        _ => {
+            let shown = p.get("column").and_then(Value::as_str).unwrap_or_default();
+            pool.close().await;
+            return Err(format!("invalid embedding column: '{shown}'"));
+        }
+    };
+    let vector = p.get("vector").and_then(Value::as_array).cloned().unwrap_or_default();
+    let vsql = format!(
+        "[{}]",
+        vector.iter().filter_map(as_num).map(|x| x.to_string()).collect::<Vec<_>>().join(",")
+    );
+    let include_archived = p.get("include_archived").and_then(Value::as_bool).unwrap_or(false);
+    let arch = if include_archived { "" } else { "AND archived_at IS NULL" };
+    let k = p.get("k").and_then(as_num_i64).unwrap_or(1).max(1);
+
+    let sql = format!(
+        "SELECT id::text, round((1 - ({column} <=> $1::vector))::numeric, 4)::float8 AS sim \
+         FROM public.node WHERE {column} IS NOT NULL AND deleted_at IS NULL {arch} \
+         ORDER BY {column} <=> $1::vector LIMIT $2"
+    );
+    let rows = sqlx::query(&sql)
+        .bind(vsql)
+        .bind(k)
+        .fetch_all(&pool)
+        .await
+        .map_err(|e| format!("embedding query: {e}"))?;
+    pool.close().await;
+
+    let hits = rows
+        .iter()
+        .map(|r| {
+            let mut o = Map::new();
+            o.insert("id".into(), json!(r.get::<String, _>("id")));
+            o.insert("sim".into(), json!(r.get::<f64, _>("sim")));
+            Value::Object(o)
+        })
+        .collect();
+    Ok(hits)
+}
+
+fn as_num(v: &Value) -> Option<f64> {
+    v.as_f64().or_else(|| match v {
+        Value::Object(o) if o.len() == 1 => {
+            let (k, inner) = o.iter().next()?;
+            if matches!(k.as_str(), "$float" | "$int") {
+                inner.as_str()?.parse::<f64>().ok()
+            } else {
+                None
+            }
+        }
+        _ => None,
+    })
+}
+fn as_num_i64(v: &Value) -> Option<i64> {
+    v.as_f64().map(|x| x as i64)
+}
+
 /// Front-door entry for `unit-search-sql`. `None` → no DSN configured → the original answers.
 pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
-    if name != "structured" {
-        return Some(emit_err(format!("unknown search-sql fn: {name}")));
-    }
     let dsn = dsn?;
     let params = args.first().cloned().unwrap_or(Value::Null);
-    let built = tokio::runtime::Builder::new_current_thread().enable_all().build();
-    match built {
-        Ok(rt) => match rt.block_on(run_query(dsn, &params)) {
+    let rt = tokio::runtime::Builder::new_current_thread().enable_all().build();
+    let rt = match rt {
+        Ok(rt) => rt,
+        Err(e) => return Some(emit_err(format!("runtime: {e}"))),
+    };
+    match name {
+        "structured" => match rt.block_on(run_query(dsn, &params)) {
             Ok(hits) => {
                 let count = hits.len();
                 let out = json!({
-                    "hits": hits,
-                    "structured_count": count,
-                    "embedding_count": 0,
-                    "degraded": false,
-                    "degrade_reason": Value::Null,
+                    "hits": hits, "structured_count": count, "embedding_count": 0,
+                    "degraded": false, "degrade_reason": Value::Null,
                 });
                 println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
                 Some(ExitCode::SUCCESS)
             }
             Err(e) => Some(emit_err(e)),
         },
-        Err(e) => Some(emit_err(format!("runtime: {e}"))),
+        "embedding" => match rt.block_on(run_embedding(dsn, &params)) {
+            Ok(hits) => {
+                let count = hits.len();
+                let out = json!({ "hits": hits, "count": count });
+                println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
+                Some(ExitCode::SUCCESS)
+            }
+            Err(e) => Some(emit_err(e)),
+        },
+        other => Some(emit_err(format!("unknown search-sql fn: {other}"))),
     }
 }
 
