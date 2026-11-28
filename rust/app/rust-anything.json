@@ -12,7 +12,8 @@
     "unit-distill",
     "unit-r14",
     "unit-artifact-shaping",
-    "unit-injection"
+    "unit-injection",
+    "unit-percentile"
   ],
   "units": [
     {
@@ -113,6 +114,15 @@
         "unit-injection"
       ],
       "switch": "RUST_ANYTHING_UNIT_INJECTION_DETECTION"
+    },
+    {
+      "name": "percentile",
+      "crate": "percentile-rs",
+      "path": "../percentile-rs",
+      "commands": [
+        "unit-percentile"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_PERCENTILE"
     }
   ]
 }

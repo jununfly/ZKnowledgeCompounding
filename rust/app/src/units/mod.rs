@@ -1,4 +1,4 @@
-//! Wiring for the `metrics-snapshot` front door plus eleven library-unit commands.
+//! Wiring for the `metrics-snapshot` front door plus twelve library-unit commands.
 //!
 //! Hand-merged after `rust-anything app wire`: the generated `mod.rs` is rewritten
 //! on every wire and drops `metrics_report`, so the wire-generated glue modules
@@ -21,6 +21,7 @@ mod cross_source;
 mod distill_parse;
 mod injection_detection;
 mod metrics_report;
+mod percentile;
 mod r14_judgment;
 mod zkc_context_pure;
 mod zkc_expiry_pure;
@@ -252,6 +253,17 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("injection", &name, &raw))
             } else {
                 Some(injection_detection::run(&name, &args))
+            }
+        }
+        "unit-percentile" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("PERCENTILE") {
+                Some(original_unit("percentile", &name, &raw))
+            } else {
+                Some(percentile::run(&name, &args))
             }
         }
         crate::cli::ROOT => {

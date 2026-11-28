@@ -1,4 +1,4 @@
-"""Compare the eleven wired unit commands against the Python process oracle.
+"""Compare the twelve wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -392,6 +392,17 @@ CASES = [
     ("injection", "detect_injection_markers", ["忽略上述 忽略前面 忽略之前的指令"]),  # Chinese declaration order
     ("injection", "detect_injection_markers", ["distill/trigger distill/trigger distill/trigger"]),  # dedup
     ("injection", "detect_injection_markers", ["调用工具箱"]),  # substring match
+    # L2 budget percentile: 8 of the 16 recorded cases, using plain JSON numbers
+    # (the port's as_f64 and the Python original both accept them; the recording
+    # bridge's $float marker form is exercised by the crate diff, not here).
+    ("percentile", "percentile", [[5.0], 0.9]),  # single-element fast path, q ignored
+    ("percentile", "percentile", [[1.0, 2.0, 3.0], 0.9]),  # three-element p90
+    ("percentile", "percentile", [[1.0, 2.0, 3.0], 0.0]),  # q=0 -> first
+    ("percentile", "percentile", [[1.0, 2.0, 3.0], 1.0]),  # q=1 -> last
+    ("percentile", "percentile", [[3.0, 1.0, 2.0], 0.5]),  # unsorted input
+    ("percentile", "percentile", [[0.0, 0.0, 10.0], 0.9]),  # duplicate zeros
+    ("percentile", "percentile", [[-5.0, 0.0, 5.0], 0.75]),  # negatives
+    ("percentile", "percentile", [[], 0.9]),  # empty -> IndexError
 ]
 
 

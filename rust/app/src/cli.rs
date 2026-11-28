@@ -19,6 +19,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-r14",
     "unit-artifact-shaping",
     "unit-injection",
+    "unit-percentile",
 ];
 
 fn rest() -> Arg {
