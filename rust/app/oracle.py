@@ -1,4 +1,4 @@
-"""Process-only oracle for the ten library-unit front doors.
+"""Process-only oracle for the eleven library-unit front doors.
 
 This is NOT production code and NOT a migration target. It exists so the
 `RUST_ANYTHING_UNIT_<UNIT>=original` kill switch has the same meaning for the
@@ -66,6 +66,10 @@ ARTIFACT_SHAPING_ALIAS = load_alias(
     REPO / "spikes" / "spike-19-artifact-shaping" / "pure_bridge.py",
     "zkc_artifact_shaping_oracle",
 )
+INJECTION_ALIAS = load_alias(
+    REPO / "spikes" / "spike-20-injection-detection" / "pure_bridge.py",
+    "zkc_injection_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -124,6 +128,9 @@ R14 = {
 ARTIFACT_SHAPING = {
     "to_modeling_artifact": (ARTIFACT_SHAPING_ALIAS, "to_modeling_artifact"),
 }
+INJECTION = {
+    "detect_injection_markers": (INJECTION_ALIAS, "detect_injection_markers"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -135,6 +142,7 @@ TABLES = {
     "distill": DISTILL,
     "r14": R14,
     "artifact-shaping": ARTIFACT_SHAPING,
+    "injection": INJECTION,
 }
 
 

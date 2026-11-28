@@ -576,6 +576,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "injection-detection-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "is_terminal_polyfill"
 version = "1.70.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -650,6 +659,7 @@ dependencies = [
  "clap",
  "cross-source-rs",
  "distill-parse-rs",
+ "injection-detection-rs",
  "r14-judgment-rs",
  "serde_json",
  "sqlx",

@@ -11,7 +11,8 @@
     "unit-cross-source",
     "unit-distill",
     "unit-r14",
-    "unit-artifact-shaping"
+    "unit-artifact-shaping",
+    "unit-injection"
   ],
   "units": [
     {
@@ -103,6 +104,15 @@
         "unit-artifact-shaping"
       ],
       "switch": "RUST_ANYTHING_UNIT_ARTIFACT_SHAPING"
+    },
+    {
+      "name": "injection-detection",
+      "crate": "injection-detection-rs",
+      "path": "../injection-detection-rs",
+      "commands": [
+        "unit-injection"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_INJECTION_DETECTION"
     }
   ]
 }

@@ -24,5 +24,6 @@ cross-source-rs = { path = "../cross-source-rs" }
 distill-parse-rs = { path = "../distill-parse-rs" }
 r14-judgment-rs = { path = "../r14-judgment-rs" }
 artifact-shaping-rs = { path = "../artifact-shaping-rs" }
+injection-detection-rs = { path = "../injection-detection-rs" }
 
 [workspace]

@@ -1,4 +1,4 @@
-//! Wiring for the `metrics-snapshot` front door plus ten library-unit commands.
+//! Wiring for the `metrics-snapshot` front door plus eleven library-unit commands.
 //!
 //! Hand-merged after `rust-anything app wire`: the generated `mod.rs` is rewritten
 //! on every wire and drops `metrics_report`, so the wire-generated glue modules
@@ -19,6 +19,7 @@ use serde_json::{Value, json};
 mod artifact_shaping;
 mod cross_source;
 mod distill_parse;
+mod injection_detection;
 mod metrics_report;
 mod r14_judgment;
 mod zkc_context_pure;
@@ -240,6 +241,17 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("artifact-shaping", &name, &raw))
             } else {
                 Some(artifact_shaping::run(&name, &args))
+            }
+        }
+        "unit-injection" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("INJECTION_DETECTION") {
+                Some(original_unit("injection", &name, &raw))
+            } else {
+                Some(injection_detection::run(&name, &args))
             }
         }
         crate::cli::ROOT => {
