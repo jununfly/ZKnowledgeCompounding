@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "id": "00000000-0000-0000-0000-000000000601",
+      "node_id": "00000000-0000-0000-0000-000000000001",
+      "action": "distill",
+      "reason": "seed reason a",
+      "resolved": false,
+      "created_at": "2026-05-01T00:00:00+00:00"
+    },
+    {
+      "id": "00000000-0000-0000-0000-000000000602",
+      "node_id": "00000000-0000-0000-0000-000000000002",
+      "action": "classify",
+      "reason": null,
+      "resolved": false,
+      "created_at": "2026-05-02T00:00:00+00:00"
+    }
+  ],
+  "count": 2,
+  "include_resolved": false
+}

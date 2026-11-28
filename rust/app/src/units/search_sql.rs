@@ -225,6 +225,50 @@ async fn run_mcp_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     Ok(items)
 }
 
+/// `zkc_review_queue_list` payload: `pg.py::list_open` (resolved=false ORDER BY created_at), then
+/// the handler's `action` filter and `[:limit]`. created_at via UTC `to_char` (matches the contract).
+async fn run_rqlist(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(dsn)
+        .await
+        .map_err(|e| format!("connect: {e}"))?;
+    let rows = sqlx::query(
+        "SELECT id::text, node_id::text, action, reason, \
+         to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS') || '+00:00' AS created_at \
+         FROM public.review_queue WHERE resolved=false ORDER BY created_at",
+    )
+    .fetch_all(&pool)
+    .await
+    .map_err(|e| format!("rqlist: {e}"))?;
+    pool.close().await;
+
+    let action = p.get("action").and_then(Value::as_str).map(str::to_string);
+    let limit = p.get("limit").and_then(as_num_i64).unwrap_or(50).max(0) as usize;
+
+    let mut items = Vec::new();
+    for r in rows.iter() {
+        let act: String = r.get("action");
+        if let Some(a) = &action {
+            if &act != a {
+                continue;
+            }
+        }
+        if items.len() >= limit {
+            break;
+        }
+        let mut o = Map::new();
+        o.insert("id".into(), json!(r.get::<String, _>("id")));
+        o.insert("node_id".into(), json!(r.get::<Option<String>, _>("node_id")));
+        o.insert("action".into(), json!(act));
+        o.insert("reason".into(), json!(r.get::<Option<String>, _>("reason")));
+        o.insert("resolved".into(), json!(false));
+        o.insert("created_at".into(), json!(r.get::<Option<String>, _>("created_at")));
+        items.push(Value::Object(o));
+    }
+    Ok(items)
+}
+
 /// Front-door entry for `unit-search-sql` / `unit-mcp-query`. `None` → no DSN → original answers.
 pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
     let params = args.first().cloned().unwrap_or(Value::Null);
@@ -282,6 +326,15 @@ pub fn run(name: &str, args: &[Value], dsn: Option<&str>) -> Option<ExitCode> {
                 Err(e) => Some(emit_err(e)),
             }
         }
+        "list" => match rt.block_on(run_rqlist(dsn, &params)) {
+            Ok(items) => {
+                let count = items.len();
+                let out = json!({ "items": items, "count": count, "include_resolved": false });
+                println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
+                Some(ExitCode::SUCCESS)
+            }
+            Err(e) => Some(emit_err(e)),
+        },
         other => Some(emit_err(format!("unknown search-sql fn: {other}"))),
     }
 }

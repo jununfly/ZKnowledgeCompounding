@@ -136,7 +136,9 @@ def main() -> None:
             def vec(dim: int, lead: float) -> str:
                 vals = [lead, 1.0] + [0.0] * (dim - 2)
                 return "[" + ",".join(repr(float(x)) for x in vals) + "]"
+            inserted_nodes: set[str] = set()
             for idx, (nid, track, decay, archived) in enumerate(data["nodes"]):
+                inserted_nodes.add(nid)
                 cur.execute(
                     "INSERT INTO public.node (id, track, title, content, decay_score, "
                     "archived_at, created_at, embedding, embedding_4096) "
@@ -146,6 +148,22 @@ def main() -> None:
                      "2026-01-01T00:00:00Z" if archived else None,
                      f"2026-06-01 00:00:{idx:02d}+00",
                      vec(768, float(idx + 1)), vec(4096, float(2 * (idx + 1)))),
+                )
+            # review_queue: dump-invisible + FK-safe (only rows whose node_id exists are inserted).
+            # Gives zkc_review_queue_list A-path deterministic rows: one resolved (must exclude),
+            # mixed actions, null/valued reason.
+            for (rid, rnode, raction, rreason, rcreated, rresolved) in [
+                (u(601), u(1), "distill", "seed reason a", "2026-05-01 00:00:00+00", False),
+                (u(602), u(2), "classify", None, "2026-05-02 00:00:00+00", False),
+                (u(603), u(3), "abstain", "seed reason c", "2026-05-03 00:00:00+00", True),
+                (u(604), u(4), "classify", "seed reason d", "2026-05-04 00:00:00+00", False),
+            ]:
+                if rnode not in inserted_nodes:
+                    continue
+                cur.execute(
+                    "INSERT INTO public.review_queue (id, node_id, action, reason, created_at, resolved) "
+                    "VALUES (%s::uuid, %s::uuid, %s, %s, %s::timestamptz, %s);",
+                    (rid, rnode, raction, rreason, rcreated, rresolved),
                 )
             for i, (src, dst, kind) in enumerate(data["edges"]):
                 cur.execute(
