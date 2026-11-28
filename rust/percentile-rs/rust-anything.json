@@ -1,0 +1,36 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-21-percentile/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "percentile-rs",
+  "exports": [
+    {
+      "name": "percentile",
+      "file": "spikes/spike-21-percentile/pure_bridge.py",
+      "line": 34,
+      "params": [
+        {
+          "name": "values",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "q",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

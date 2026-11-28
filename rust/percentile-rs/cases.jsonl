@@ -1,0 +1,16 @@
+{"fn": "percentile", "args": [[], 0.9], "error": "IndexError: list index out of range"}
+{"fn": "percentile", "args": [[5.0], 0.9], "ok": {"$float": "5.0"}}
+{"fn": "percentile", "args": [[5.0], 0.0], "ok": {"$float": "5.0"}}
+{"fn": "percentile", "args": [[1.0, 2.0], 0.9], "ok": 1.9}
+{"fn": "percentile", "args": [[1.0, 2.0, 3.0], 0.9], "ok": 2.8}
+{"fn": "percentile", "args": [[1.0, 2.0, 3.0], 0.0], "ok": {"$float": "1.0"}}
+{"fn": "percentile", "args": [[1.0, 2.0, 3.0], 1.0], "ok": {"$float": "3.0"}}
+{"fn": "percentile", "args": [[1.0, 2.0, 3.0], 0.5], "ok": {"$float": "2.0"}}
+{"fn": "percentile", "args": [[3.0, 1.0, 2.0], 0.5], "ok": {"$float": "2.0"}}
+{"fn": "percentile", "args": [[0.0, 0.0, 10.0], 0.9], "ok": {"$float": "8.0"}}
+{"fn": "percentile", "args": [[1.0, 2.0, 3.0, 4.0, 5.0], 0.9], "ok": 4.6}
+{"fn": "percentile", "args": [[1.5, 2.5, 3.5, 4.5], 0.333], "ok": 2.499}
+{"fn": "percentile", "args": [[-5.0, 0.0, 5.0], 0.75], "ok": 2.5}
+{"fn": "percentile", "args": [[1.0, 2.0], -0.5], "ok": 0.5}
+{"fn": "percentile", "args": [[1.0, 2.0], 1.5], "ok": {"$float": "2.0"}}
+{"fn": "percentile", "args": [[2.0, 4.0, 4.0, 8.0], 0.25], "ok": 3.5}
