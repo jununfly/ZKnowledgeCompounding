@@ -19,7 +19,9 @@
     "unit-schedule-render",
     "unit-review-gate",
     "unit-capture-profile",
-    "unit-mcp-exposure"
+    "unit-mcp-exposure",
+    "unit-search-structured",
+    "unit-search-embedding"
   ],
   "units": [
     {
@@ -183,6 +185,24 @@
         "unit-mcp-exposure"
       ],
       "switch": "RUST_ANYTHING_UNIT_MCP_EXPOSURE"
+    },
+    {
+      "name": "search-structured",
+      "crate": "search-structured-rs",
+      "path": "../search-structured-rs",
+      "commands": [
+        "unit-search-structured"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_SEARCH_STRUCTURED"
+    },
+    {
+      "name": "search-embedding",
+      "crate": "search-embedding-rs",
+      "path": "../search-embedding-rs",
+      "commands": [
+        "unit-search-embedding"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_SEARCH_EMBEDDING"
     }
   ]
 }

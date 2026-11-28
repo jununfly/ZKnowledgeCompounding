@@ -32,5 +32,7 @@ schedule-render-rs = { path = "../schedule-render-rs" }
 review-gate-rs = { path = "../review-gate-rs" }
 capture-profile-rs = { path = "../capture-profile-rs" }
 mcp-exposure-rs = { path = "../mcp-exposure-rs" }
+search-structured-rs = { path = "../search-structured-rs" }
+search-embedding-rs = { path = "../search-embedding-rs" }
 
 [workspace]

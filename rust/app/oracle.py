@@ -103,6 +103,14 @@ MCP_EXPOSURE_ALIAS = load_alias(
     REPO / "spikes" / "spike-25-mcp-exposure" / "pure_bridge.py",
     "zkc_mcp_exposure_oracle",
 )
+SEARCH_STRUCTURED_ALIAS = load_alias(
+    REPO / "spikes" / "spike-30-search-structured" / "pure_bridge.py",
+    "zkc_search_structured_oracle",
+)
+SEARCH_EMBEDDING_ALIAS = load_alias(
+    REPO / "spikes" / "spike-29-search-embedding" / "pure_bridge.py",
+    "zkc_search_embedding_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -188,6 +196,12 @@ MCP_EXPOSURE = {
     "attack_surface_table": (MCP_EXPOSURE_ALIAS, "attack_surface_table"),
     "entry_names": (MCP_EXPOSURE_ALIAS, "entry_names"),
 }
+SEARCH_STRUCTURED = {
+    "filter_sort_nodes": (SEARCH_STRUCTURED_ALIAS, "filter_sort_nodes"),
+}
+SEARCH_EMBEDDING = {
+    "search_embedding_knn": (SEARCH_EMBEDDING_ALIAS, "search_embedding_knn"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -207,6 +221,8 @@ TABLES = {
     "review-gate": REVIEW_GATE,
     "capture-profile": CAPTURE_PROFILE,
     "mcp-exposure": MCP_EXPOSURE,
+    "search-structured": SEARCH_STRUCTURED,
+    "search-embedding": SEARCH_EMBEDDING,
 }
 
 

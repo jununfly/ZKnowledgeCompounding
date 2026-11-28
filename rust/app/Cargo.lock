@@ -685,6 +685,8 @@ dependencies = [
  "r14-judgment-rs",
  "review-gate-rs",
  "schedule-render-rs",
+ "search-embedding-rs",
+ "search-structured-rs",
  "serde_json",
  "sqlx",
  "telemetry-validation-rs",
@@ -1002,6 +1004,24 @@ name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
+
+[[package]]
+name = "search-embedding-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "search-structured-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "serde"

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-search-structured", "filter_sort_nodes", "[[{\"id\":\"11111111-1111-4111-8111-111111111111\",\"title\":\"x\"}],null,null,null,null,false,\"bogus\",10]"]
+status.code = 1
+fs.sandbox = true

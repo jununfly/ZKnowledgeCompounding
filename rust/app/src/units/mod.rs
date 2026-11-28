@@ -28,6 +28,8 @@ mod percentile;
 mod r14_judgment;
 mod review_gate;
 mod schedule_render;
+mod search_embedding;
+mod search_structured;
 mod telemetry_validation;
 mod zkc_context_pure;
 mod zkc_expiry_pure;
@@ -336,6 +338,28 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("mcp-exposure", &name, &raw))
             } else {
                 Some(mcp_exposure::run(&name, &args))
+            }
+        }
+        "unit-search-embedding" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("SEARCH_EMBEDDING") {
+                Some(original_unit("search-embedding", &name, &raw))
+            } else {
+                Some(search_embedding::run(&name, &args))
+            }
+        }
+        "unit-search-structured" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("SEARCH_STRUCTURED") {
+                Some(original_unit("search-structured", &name, &raw))
+            } else {
+                Some(search_structured::run(&name, &args))
             }
         }
         crate::cli::ROOT => {

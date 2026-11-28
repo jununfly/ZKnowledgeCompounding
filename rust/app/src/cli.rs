@@ -26,6 +26,8 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-review-gate",
     "unit-capture-profile",
     "unit-mcp-exposure",
+    "unit-search-structured",
+    "unit-search-embedding",
 ];
 
 fn rest() -> Arg {

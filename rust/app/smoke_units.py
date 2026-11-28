@@ -459,6 +459,34 @@ CASES = [
     # mcp exposure (attack-surface table, ticket 46; zero-arg deterministic).
     ("mcp-exposure", "attack_surface_table", []),
     ("mcp-exposure", "entry_names", []),
+    # search structured filter/sort (memory.search, ticket 50 prereq); valid-UUID ids required.
+    (
+        "search-structured",
+        "filter_sort_nodes",
+        [
+            [
+                {"id": S1, "title": "n1", "created_at": "2026-01-01T00:00:00+00:00"},
+                {"id": S2, "title": "n2", "created_at": "2026-03-01T00:00:00+00:00"},
+            ],
+            None, None, None, None, False, "created_desc", 10,
+        ],
+    ),
+    (
+        "search-structured",
+        "filter_sort_nodes",
+        [
+            [{"id": S1, "title": "x", "decay_score": 0.3}, {"id": S2, "title": "y", "decay_score": 0.8}],
+            None, None, 0.5, None, False, "created_desc", 10,
+        ],
+    ),
+    ("search-structured", "filter_sort_nodes", [[{"id": S1, "title": "x"}], None, None, None, None, False, "bogus", 10]),
+    # search embedding cosine top-k (memory.search_by_embedding, ticket 50 prereq).
+    (
+        "search-embedding",
+        "search_embedding_knn",
+        [[{"id": S1, "embedding": [1.0, 0.0]}, {"id": S2, "embedding": [0.0, 1.0]}], [1.0, 0.0], 5, False, "embedding"],
+    ),
+    ("search-embedding", "search_embedding_knn", [[{"id": S1, "embedding": [1.0, 0.0]}], [1.0, 0.0], 5, False, "bad"]),
 ]
 
 
