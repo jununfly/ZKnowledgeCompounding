@@ -29,7 +29,7 @@ mod r14_judgment;
 mod review_gate;
 mod schedule_render;
 mod search_embedding;
-mod search_sql;
+pub(crate) mod search_sql;
 mod search_structured;
 mod telemetry_validation;
 mod zkc_context_pure;

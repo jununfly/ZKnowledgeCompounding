@@ -33,7 +33,7 @@ fn order_clause(order: &str) -> Option<&'static str> {
     }
 }
 
-async fn run_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+pub(crate) async fn run_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(dsn)
@@ -116,7 +116,7 @@ async fn run_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
 }
 
 /// pg.py `search_by_embedding`: cosine `<=>` top-k over the whitelisted vector column.
-async fn run_embedding(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+pub(crate) async fn run_embedding(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(dsn)
@@ -185,7 +185,7 @@ fn as_num_i64(v: &Value) -> Option<i64> {
 
 /// `zkc_query` handler business payload: structured search (`pg.py::search`, encoder-less ⇒
 /// structured-only, created_desc) joined with each node's evidence_refs union (sorted distinct).
-async fn run_mcp_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+pub(crate) async fn run_mcp_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(dsn)
@@ -227,7 +227,7 @@ async fn run_mcp_query(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
 
 /// `zkc_review_queue_list` payload: `pg.py::list_open` (resolved=false ORDER BY created_at), then
 /// the handler's `action` filter and `[:limit]`. created_at via UTC `to_char` (matches the contract).
-async fn run_rqlist(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
+pub(crate) async fn run_rqlist(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(dsn)
@@ -272,7 +272,7 @@ async fn run_rqlist(dsn: &str, p: &Value) -> Result<Vec<Value>, String> {
 /// `zkc_scheduler_due` payload: `pg.py::list_due_for_review` predicate (decay>=SURFACE & interval
 /// & last_reviewed & last_reviewed+interval<=as_of & archived/deleted null), canonicalized by
 /// node_id (pg.py has no ORDER BY), then [:limit].
-async fn run_due(dsn: &str, p: &Value) -> Result<(Vec<Value>, usize), String> {
+pub(crate) async fn run_due(dsn: &str, p: &Value) -> Result<(Vec<Value>, usize), String> {
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(dsn)
@@ -321,7 +321,7 @@ async fn run_due(dsn: &str, p: &Value) -> Result<(Vec<Value>, usize), String> {
 /// `zkc_review_queue_resolve` write-side payload, composed with a follow-up `list_open` so the
 /// UPDATE is observable in stdout (dump.sh excludes review_queue). Mirrors handlers.py: injection
 /// guard (reusing injection-detection-rs, single truth) → UUID → membership → UPDATE → result dict.
-async fn run_resolve(dsn: &str, p: &Value) -> Result<Value, String> {
+pub(crate) async fn run_resolve(dsn: &str, p: &Value) -> Result<Value, String> {
     let pool = PgPoolOptions::new()
         .max_connections(1)
         .connect(dsn)
@@ -377,6 +377,54 @@ async fn run_resolve(dsn: &str, p: &Value) -> Result<Value, String> {
     pool.close().await;
 
     Ok(json!({ "resolve": resolve, "remaining_ids": rows }))
+}
+
+/// RAW `zkc_review_queue_resolve` handler return (what the MCP server sees), unlike `run_resolve`
+/// (the composite used by unit-mcp-resolve's app-cases). Injection guard → membership → UPDATE →
+/// the handler's own dict. Raises-equivalent paths return `Err(message)` for the server to wrap as
+/// `handler 执行失败：ValueError: <msg>`.
+pub(crate) async fn resolve_raw(dsn: &str, a: &Value) -> Result<Value, String> {
+    let attribution = a.get("attribution").and_then(Value::as_str).unwrap_or("").to_string();
+    let item_id = a.get("item_id").and_then(Value::as_str).unwrap_or("").to_string();
+
+    let markers = injection_detection_rs::port::detect_injection_markers(json!(attribution.clone()))
+        .unwrap_or_else(|_| json!([]));
+    let marker_list: Vec<String> = markers
+        .as_array()
+        .map(|x| x.iter().filter_map(Value::as_str).map(str::to_string).collect())
+        .unwrap_or_default();
+    if !marker_list.is_empty() {
+        return Err(format!("检测到注入指令（{}）：HITL 归因不得由文档注入伪造", marker_list.join(", ")));
+    }
+
+    let pool = PgPoolOptions::new()
+        .max_connections(1)
+        .connect(dsn)
+        .await
+        .map_err(|e| format!("connect: {e}"))?;
+    let is_open: Option<String> = sqlx::query_scalar(
+        "SELECT id::text FROM public.review_queue WHERE id = $1::uuid AND resolved=false",
+    )
+    .bind(&item_id)
+    .fetch_optional(&pool)
+    .await
+    .map_err(|e| format!("membership: {e}"))?;
+    if is_open.is_none() {
+        pool.close().await;
+        return Err(format!("复审条目 {item_id} 不存在或已 resolved"));
+    }
+    sqlx::query("UPDATE public.review_queue SET resolved=true WHERE id = $1::uuid")
+        .bind(&item_id)
+        .execute(&pool)
+        .await
+        .map_err(|e| format!("update: {e}"))?;
+    pool.close().await;
+
+    Ok(json!({
+        "resolved": true, "item_id": item_id, "attribution": attribution,
+        "writes": ["review_queue.resolved"],
+        "note": "仅标 resolved + HITL 归因；不写 interval、不触发 distill",
+    }))
 }
 
 /// Front-door entry for `unit-search-sql` / `unit-mcp-query`. `None` → no DSN → original answers.

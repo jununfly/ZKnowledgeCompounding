@@ -1,4 +1,5 @@
 mod cli;
+mod mcp_stdio;
 mod original;
 mod units;
 
@@ -8,6 +9,10 @@ use std::process::ExitCode;
 fn main() -> ExitCode {
     original::report_fallbacks();
     let argv: Vec<OsString> = std::env::args_os().collect();
+    // MCP stdio front-door: reads newline-delimited JSON-RPC frames from stdin.
+    if argv.get(1).and_then(|w| w.to_str()) == Some("mcp-stdio") {
+        return mcp_stdio::serve();
+    }
     // Unit commands are new front doors for library functions, not recorded CLI
     // cases. Check them first so the parser and routing for `app replay` stay intact.
     if let Some(name) = argv.get(1).and_then(|word| word.to_str())
