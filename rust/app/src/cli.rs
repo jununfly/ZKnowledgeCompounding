@@ -17,6 +17,7 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-cross-source",
     "unit-distill",
     "unit-r14",
+    "unit-artifact-shaping",
 ];
 
 fn rest() -> Arg {

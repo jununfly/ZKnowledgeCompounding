@@ -1,4 +1,4 @@
-"""Compare the nine wired unit commands against the Python process oracle.
+"""Compare the ten wired unit commands against the Python process oracle.
 
 Process-only verification helper (not production code, not a migration target):
 
@@ -326,6 +326,56 @@ CASES = [
             10,
         ],
     ),  # trigger_rate_within_budget with even-median completion latency
+    # artifact shaping: 8 of the 10 recorded cases, covering full-dict shaping,
+    # empty defaults, duplicate/canonicalized refs, nested underscore retention,
+    # unicode, mixed types, invalid-UUID ValueError and verbatim produced_by.
+    (
+        "artifact-shaping",
+        "to_modeling_artifact",
+        [
+            {
+                "title": "技术决策时机方法论",
+                "kind": "methodology",
+                "claims": [{"statement": "c1", "level": "pattern", "confidence": 0.8}],
+                "local": [],
+                "_internal": "drop-me",
+                "evidence_refs": [S2, S1],
+            },
+            "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE",
+        ],
+    ),  # uppercase produced_by + canonical refs + drop top-level _
+    ("artifact-shaping", "to_modeling_artifact", [{"claims": [{"statement": "x"}]}, None]),  # empty defaults
+    ("artifact-shaping", "to_modeling_artifact", [{}, None]),  # empty dict
+    (
+        "artifact-shaping",
+        "to_modeling_artifact",
+        [
+            {"title": "T", "evidence_refs": ["AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE", S1, "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE"]},
+            S2,
+        ],
+    ),  # duplicate + uppercase canonicalization
+    (
+        "artifact-shaping",
+        "to_modeling_artifact",
+        [
+            {
+                "_lead": 1,
+                "title": "Nested",
+                "data": {"_inner": 2, "keep": [1, 2, 3], "evidence_refs": "not-a-column"},
+                "kind": "mental_model",
+                "_tail": 3,
+                "evidence_refs": [S2],
+            },
+            S1,
+        ],
+    ),  # nested underscore + nested evidence_refs kept in body
+    ("artifact-shaping", "to_modeling_artifact", [{"title": "中文标题 🦀", "kind": "methodology", "note": "带 emoji", "evidence_refs": []}, None]),  # unicode
+    (
+        "artifact-shaping",
+        "to_modeling_artifact",
+        [{"title": "types", "kind": "methodology", "i": 1, "f": 0.5, "b": True, "n": None, "l": [1, "x", None], "d": {"k": "v"}, "evidence_refs": [S1]}, None],
+    ),  # mixed value types preserved in body
+    ("artifact-shaping", "to_modeling_artifact", [{"title": "bad", "evidence_refs": ["not-a-uuid"]}, None]),  # invalid UUID -> ValueError
 ]
 
 

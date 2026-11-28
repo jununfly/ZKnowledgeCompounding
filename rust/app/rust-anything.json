@@ -10,7 +10,8 @@
     "unit-routing",
     "unit-cross-source",
     "unit-distill",
-    "unit-r14"
+    "unit-r14",
+    "unit-artifact-shaping"
   ],
   "units": [
     {
@@ -93,6 +94,15 @@
         "unit-r14"
       ],
       "switch": "RUST_ANYTHING_UNIT_R14_JUDGMENT"
+    },
+    {
+      "name": "artifact-shaping",
+      "crate": "artifact-shaping-rs",
+      "path": "../artifact-shaping-rs",
+      "commands": [
+        "unit-artifact-shaping"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_ARTIFACT_SHAPING"
     }
   ]
 }
