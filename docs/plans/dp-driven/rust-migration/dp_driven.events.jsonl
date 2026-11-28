@@ -30,3 +30,6 @@
 {"agent": null, "at": "2026-11-28 11:27:27", "kind": "finding", "payload": {"op": "add", "task_id": 2}, "ref_id": 20, "type": "membership", "value": null}
 {"agent": null, "at": "2026-11-28 11:47:41", "kind": "finding", "payload": {"op": "add", "task_id": 2}, "ref_id": 21, "type": "membership", "value": null}
 {"agent": null, "at": "2026-11-28 13:06:53", "kind": "finding", "payload": {"op": "add", "task_id": 4}, "ref_id": 22, "type": "membership", "value": null}
+{"agent": null, "at": "2026-11-28 13:26:03", "kind": "finding", "payload": {"op": "add", "task_id": 5}, "ref_id": 23, "type": "membership", "value": null}
+{"agent": null, "at": "2026-11-28 13:27:43", "kind": "finding", "payload": {"op": "add", "task_id": 3}, "ref_id": 24, "type": "membership", "value": null}
+{"agent": null, "at": "2026-11-28 13:27:43", "kind": "finding", "payload": {"op": "add", "task_id": 3}, "ref_id": 25, "type": "membership", "value": null}

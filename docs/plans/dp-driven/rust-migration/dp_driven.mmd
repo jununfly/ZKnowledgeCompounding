@@ -93,7 +93,7 @@ flowchart TD
     f1_T3["f1 未完成 ⟲"]:::overlap
     f2_T3["f2 未完成 ⟲"]:::overlap
     tk9_T3["tk9 未完成"]:::open
-    class T3 plan_paused
+    class T3 plan_inflight
   end
   subgraph T4["task4 app lift 与纯 Rust 收口 (被阻塞)"]
     direction TB
@@ -107,7 +107,8 @@ flowchart TD
   end
   subgraph T5["task5 scripts/ 运维脚本迁移（含动态代码 blocker） (未完成)"]
     direction TB
-    tk13_T5["tk13 未完成"]:::open
+    f23_T5["f23 未完成"]:::open
+    tk13_T5["tk13 已完成"]:::done
     class T5 plan_paused
   end
   subgraph ORPHANS["Orphan findings / 未收纳 items (R4)"]
