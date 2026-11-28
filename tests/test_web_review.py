@@ -233,7 +233,7 @@ class HigherDimReviewPureTest(unittest.TestCase):
                 created["cid"] = cid
                 return cid, uuid4()
 
-        import zkc.web.review as R
+        import zkc.review as R
         orig = R.ContextAssembler
         R.ContextAssembler = lambda store: FakeAsm()
         try:
@@ -256,7 +256,7 @@ class HigherDimReviewPureTest(unittest.TestCase):
             def create_higher_dim(self, prop):
                 raise AssertionError("闸门未过不应创建")
 
-        import zkc.web.review as R
+        import zkc.review as R
         orig = R.ContextAssembler
         R.ContextAssembler = lambda store: FakeAsm()
         try:
@@ -294,7 +294,7 @@ class HigherDimHttpTest(unittest.TestCase):
         self.assertIn("budget_status", body)
 
     def test_approve_and_dismiss_via_api(self):
-        import zkc.web.review as R
+        import zkc.review as R
 
         class FakeAsm:
             def propose_higher_dim(self, sid, k=5, llm=None):

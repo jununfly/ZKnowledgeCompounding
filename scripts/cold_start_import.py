@@ -101,7 +101,7 @@ def import_entries(entries: list[dict], *, store, mode: str) -> dict:
             stats["skipped"] += 1
             continue
         if mode == "route":
-            from zkc.web.app import build_routers
+            from zkc.routing import build_routers
 
             if routers is None:
                 routers = build_routers()

@@ -29,7 +29,7 @@ from zkc.faithfulness import (  # noqa: E402
 )
 from zkc.repository import get_storage  # noqa: E402
 from zkc.repository.models import Claim, Node  # noqa: E402
-from zkc.web.review import adjudicate_claim, faithfulness_queue_view  # noqa: E402
+from zkc.review import adjudicate_claim, faithfulness_queue_view  # noqa: E402
 
 CHECKS: list[tuple[str, bool, str]] = []
 

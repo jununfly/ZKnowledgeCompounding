@@ -33,7 +33,7 @@ class _LazyRouters:
 
     def __call__(self):
         if self._value is None:
-            from zkc.web.app import build_routers
+            from zkc.routing import build_routers
 
             decision_router, lexical_router = build_routers()
             self._value = (decision_router, lexical_router, True)

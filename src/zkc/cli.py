@@ -38,7 +38,7 @@ from zkc.calibration import (
     format_p64_human,
 )
 from zkc.repository import get_storage
-from zkc.web.review import (
+from zkc.review import (
     decide_review,
     record_daily_observation_auto,
     review_queue_view,

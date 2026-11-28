@@ -101,7 +101,7 @@ def do_observe_direct(store) -> dict:
 
     无需 HTTP 服务常驻（Risk A1 解决）：review 服务宕机不再阻塞每日收口。
     """
-    from zkc.web.review import record_daily_observation_auto
+    from zkc.review import record_daily_observation_auto
     return record_daily_observation_auto(store)
 
 

@@ -23,6 +23,7 @@ from zkc.routing import (
     DecisionRouter,
     LexicalRouter,
     OllamaClient,
+    build_routers,  # noqa: F401  re-export from domain (finding 26)
 )
 from zkc.repository import get_storage
 from zkc.web.review import register_review_routes
@@ -79,26 +80,6 @@ CAPTURE_HTML = """<!doctype html>
 </body>
 </html>
 """
-
-
-def build_routers(
-    lexical_corpus_path: Optional[str] = None,
-) -> tuple[DecisionRouter, Optional[LexicalRouter]]:
-    """构造双信号路由引擎（真实环境）。
-
-    词法语料存在则 fit 进 LexicalRouter；不存在则返回 None（路由引擎退化为 LLM 单信号提交，
-    由 ROUTING_REQUIRE_DUAL_SIGNAL 的「无词法交叉验证」分支兜底）。
-    """
-    client = OllamaClient()
-    dr = DecisionRouter(client)
-    lr: Optional[LexicalRouter] = None
-    path = lexical_corpus_path or os.environ.get("ZKC_LEXICAL_CORPUS", DEFAULT_LEXICAL_CORPUS_PATH)
-    if path:
-        examples = routing.load_lexical_corpus(path)
-        if examples:
-            lr = LexicalRouter()
-            lr.fit(examples)
-    return dr, lr
 
 
 def capture_note(

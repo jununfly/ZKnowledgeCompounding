@@ -400,3 +400,28 @@ def load_lexical_corpus(path: str) -> list[tuple[str, str]]:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     return [(row["text"], row["label"]) for row in data]
+
+
+# ----------------------------------------------------------------- 生产装配工厂（原在 zkc.web.app）
+
+def build_routers(
+    lexical_corpus_path: Optional[str] = None,
+) -> tuple[DecisionRouter, Optional[LexicalRouter]]:
+    """构造双信号路由引擎（真实环境）。
+
+    词法语料存在则 fit 进 LexicalRouter；不存在则返回 None（路由引擎退化为 LLM 单信号提交，
+    由 ROUTING_REQUIRE_DUAL_SIGNAL 的「无词法交叉验证」分支兜底）。
+
+    从 `zkc.web.app` 迁入（finding 26）：这是领域装配工厂，与 FastAPI 无关，迁出后
+    mcp/scripts 可 `from zkc.routing import build_routers` 而不触发 web/fastapi 导入链。
+    """
+    client = OllamaClient()
+    dr = DecisionRouter(client)
+    lr: Optional[LexicalRouter] = None
+    path = lexical_corpus_path or os.environ.get("ZKC_LEXICAL_CORPUS", DEFAULT_LEXICAL_CORPUS_PATH)
+    if path:
+        examples = load_lexical_corpus(path)
+        if examples:
+            lr = LexicalRouter()
+            lr.fit(examples)
+    return dr, lr
