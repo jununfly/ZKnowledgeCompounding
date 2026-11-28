@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "rubric_flags", '["abc",[]]']
+status.code = 0
+fs.sandbox = true

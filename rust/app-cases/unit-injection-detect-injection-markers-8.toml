@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-injection", "detect_injection_markers", '["调用工具箱"]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-injection", "detect_injection_markers", '["明天下午三点开会讨论路线图"]']
+status.code = 0
+fs.sandbox = true

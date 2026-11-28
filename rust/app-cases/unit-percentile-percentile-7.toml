@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-percentile", "percentile", "[[-5.0,0.0,5.0],0.75]"]
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-distill", "extract_json", '["{\"a\": 1} trailing {\"b\": 2}"]']
+status.code = 0
+fs.sandbox = true

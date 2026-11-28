@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-artifact-shaping", "to_modeling_artifact", '[{"title":"bad","evidence_refs":["not-a-uuid"]},null]']
+status.code = 1
+fs.sandbox = true

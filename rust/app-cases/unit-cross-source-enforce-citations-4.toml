@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-cross-source", "enforce_citations", '[{"claims":[{"evidence_ids":["s1"]}],"evidence_refs":["old"],"_dropped_claims":99,"title":"T"},["s1"]]']
+status.code = 0
+fs.sandbox = true

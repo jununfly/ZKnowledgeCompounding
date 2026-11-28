@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-scheduling", "adapt_interval_math", '[3.0,"too_late",false]']
+status.code = 0
+fs.sandbox = true

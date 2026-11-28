@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-transport", "is_notification", '[{"jsonrpc":"2.0","method":"x"}]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-context", "fallback_name", '[["a b c","a b d","中文"],3]']
+status.code = 0
+fs.sandbox = true

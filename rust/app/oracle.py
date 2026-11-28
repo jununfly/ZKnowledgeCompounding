@@ -9,6 +9,11 @@ spike aliases). The Rust port is never consulted here.
 
 Usage: python3 rust/app/oracle.py <unit> <fn> '<json-arguments>'
 Output: {"ok": <value>} on success, {"error": "<Type>: <text>"} on failure.
+
+The first argument may carry the front-door `unit-` prefix (e.g.
+`unit-transport`), so the same argv shape works for `rust-anything app
+record --inputs` cases and the wired Rust command `metrics-snapshot
+unit-transport`. The prefix is stripped before table lookup.
 """
 from __future__ import annotations
 
@@ -182,6 +187,8 @@ TABLES = {
 
 def main() -> int:
     unit, fn, raw = sys.argv[1:4]
+    if unit.startswith("unit-"):
+        unit = unit[len("unit-"):]
     args = json.loads(raw)
     try:
         module, name = TABLES[unit][fn]

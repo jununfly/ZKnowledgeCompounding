@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-routing", "tfidf_vector", '[["b","a","b","c"],{"c":1.0,"b":0.25,"a":3.0}]']
+status.code = 0
+fs.sandbox = true

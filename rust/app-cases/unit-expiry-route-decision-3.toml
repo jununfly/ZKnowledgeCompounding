@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-expiry", "route_decision", '["11111111-1111-4111-8111-111111111111",[{"id":"11111111-1111-4111-8111-111111111111","decay_score":0.8999999761581421,"captured":false,"conn_count":3,"self_loop_count":0,"higher_dim_count":0}],0.2]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-r14", "judge_r14", '[[{"completion_fired":true,"main_latency_ms":100.0,"completion_latency_ms":300.0},{"completion_fired":true,"main_latency_ms":100.0,"completion_latency_ms":300.0},{"completion_fired":true,"main_latency_ms":100.0,"completion_latency_ms":300.0}],10]']
+status.code = 0
+fs.sandbox = true

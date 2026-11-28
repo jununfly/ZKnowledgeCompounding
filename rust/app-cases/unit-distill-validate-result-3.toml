@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-distill", "validate_result", """[{"claims":[{"text":"it's fine","topic":"t","citations":[],"reverse_links":[]}],"notes":"","attempts":1}]"""]
+status.code = 1
+fs.sandbox = true

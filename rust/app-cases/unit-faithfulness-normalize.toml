@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "normalize", '["中文，。；：、！？“”‘’（）【】—-文本"]']
+status.code = 0
+fs.sandbox = true

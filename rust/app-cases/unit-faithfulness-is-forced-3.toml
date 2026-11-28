@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "is_forced", '["human_only"]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "ngrams", '["中文文本",2]']
+status.code = 0
+fs.sandbox = true

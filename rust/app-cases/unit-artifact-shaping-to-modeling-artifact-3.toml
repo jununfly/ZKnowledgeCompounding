@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-artifact-shaping", "to_modeling_artifact", "[{},null]"]
+status.code = 0
+fs.sandbox = true

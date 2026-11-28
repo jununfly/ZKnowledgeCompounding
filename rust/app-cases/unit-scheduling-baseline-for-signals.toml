@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-scheduling", "baseline_for_signals", '["dynamic",false,"完成任务",null,false,1,0,0]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-schedule-render", "build_task_action", '["\u001c"]']
+status.code = 1
+fs.sandbox = true

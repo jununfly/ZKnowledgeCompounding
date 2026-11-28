@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-distill", "extract_json", '["prefix {\"claims\": [{\"text\": \"结论\"}], \"x\": 1} suffix"]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-cross-source", "count_cross_source", '[[{"evidence_ids":["s1","s1"]}]]']
+status.code = 0
+fs.sandbox = true

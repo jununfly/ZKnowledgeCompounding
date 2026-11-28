@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-schedule-render", "build_register_command", '["C:\\Scripts\\daily_e1_driver.bat","ZKC Daily E1","23:50"]']
+status.code = 0
+fs.sandbox = true

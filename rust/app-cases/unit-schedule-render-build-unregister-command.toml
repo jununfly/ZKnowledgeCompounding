@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-schedule-render", "build_unregister_command", '["ZKC Daily E1"]']
+status.code = 0
+fs.sandbox = true

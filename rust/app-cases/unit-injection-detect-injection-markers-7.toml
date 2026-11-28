@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-injection", "detect_injection_markers", '["distill/trigger distill/trigger distill/trigger"]']
+status.code = 0
+fs.sandbox = true

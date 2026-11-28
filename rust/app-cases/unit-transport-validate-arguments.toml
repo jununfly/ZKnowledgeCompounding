@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-transport", "validate_arguments", '[{"type":"object","required":["a"],"properties":{"a":{"type":"string"}}},{"a":"x"}]']
+status.code = 0
+fs.sandbox = true

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "overlap", '["安全评审要求权限判断必须在服务端完成",["安全评审要求权限判断必须在服务端完成"]]']
+status.code = 0
+fs.sandbox = true

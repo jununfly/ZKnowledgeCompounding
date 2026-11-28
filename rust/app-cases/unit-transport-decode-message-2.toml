@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-transport", "decode_message", '["[]"]']
+status.code = 1
+fs.sandbox = true

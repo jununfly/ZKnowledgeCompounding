@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-routing", "tokenize", '["İstanbul STRASSE ß"]']
+status.code = 0
+fs.sandbox = true

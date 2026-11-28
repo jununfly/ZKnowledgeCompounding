@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-telemetry-validation", "validate_report", '[{"main_latency_ms":100.0}]']
+status.code = 1
+fs.sandbox = true

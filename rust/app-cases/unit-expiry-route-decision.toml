@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-expiry", "route_decision", '["not-a-uuid",[],0.5]']
+status.code = 1
+fs.sandbox = true

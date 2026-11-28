@@ -1,0 +1,1 @@
+{"ok":{"title":"T","kind":"methodology","claims":[{"statement":"x","level":"pattern","confidence":0.5,"evidence_ids":["s1","s2"]}],"local":[],"global":[],"evidence_refs":["s1","s2"],"_dropped_claims":1}}

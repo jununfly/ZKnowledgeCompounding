@@ -86,20 +86,29 @@ flowchart TD
     tk42_T2["tk42 已完成"]:::done
     tk43_T2["tk43 已完成"]:::done
     tk44_T2["tk44 已完成"]:::done
+    tk49_T2["tk49 未完成"]:::open
     class T2 plan_paused
   end
-  subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (未完成)"]
+  subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (被阻塞)"]
     direction TB
     f1_T3["f1 未完成 ⟲"]:::overlap
     f2_T3["f2 未完成 ⟲"]:::overlap
+    f25_T3["f25 未完成"]:::open
     tk9_T3["tk9 未完成"]:::open
-    class T3 plan_inflight
+    tk46_T3["tk46 未完成"]:::open
+    tk47_T3["tk47 未完成"]:::open
+    tk48_T3["tk48 未完成"]:::open
+    tk50_T3["tk50 被阻塞"]:::blocked
+    tk51_T3["tk51 被阻塞"]:::blocked
+    tk52_T3["tk52 被阻塞"]:::blocked
+    tk53_T3["tk53 被阻塞"]:::blocked
+    class T3 plan_paused
   end
   subgraph T4["task4 app lift 与纯 Rust 收口 (被阻塞)"]
     direction TB
     f2_T4["f2 未完成 ⟲"]:::overlap
     f22_T4["f22 未完成"]:::open
-    tk10_T4["tk10 未完成"]:::open
+    tk10_T4["tk10 已完成"]:::done
     tk11_T4["tk11 被阻塞"]:::blocked
     tk12_T4["tk12 被阻塞"]:::blocked
     tk45_T4["tk45 已完成"]:::done
@@ -114,6 +123,7 @@ flowchart TD
   subgraph ORPHANS["Orphan findings / 未收纳 items (R4)"]
     direction TB
     f3_ORPHAN["f3 已完成"]:::done
+    f24_ORPHAN["f24 已完成"]:::done
   end
   tk0_T0 -->|blocks| tk6_T1
   tk3_T0 -->|blocks| tk6_T1
@@ -157,6 +167,12 @@ flowchart TD
   tk37_T2 -->|blocks| tk8_T2
   tk38_T2 -->|blocks| tk8_T2
   tk39_T2 -->|blocks| tk8_T2
+  tk49_T2 -->|blocks| tk50_T3
+  tk49_T2 -->|blocks| tk51_T3
+  tk49_T2 -->|blocks| tk53_T3
+  tk47_T3 -->|blocks| tk53_T3
+  tk50_T3 -->|blocks| tk52_T3
+  tk51_T3 -->|blocks| tk52_T3
   tk8_T2 -->|parent| tk16_T2
   tk16_T2 -->|parent| tk17_T2
   tk16_T2 -->|parent| tk18_T2
@@ -186,6 +202,14 @@ flowchart TD
   tk8_T2 -->|parent| tk42_T2
   tk8_T2 -->|parent| tk43_T2
   tk8_T2 -->|parent| tk44_T2
+  tk9_T3 -->|parent| tk46_T3
+  tk9_T3 -->|parent| tk47_T3
+  tk9_T3 -->|parent| tk48_T3
+  tk9_T3 -->|parent| tk49_T2
+  tk9_T3 -->|parent| tk50_T3
+  tk9_T3 -->|parent| tk51_T3
+  tk9_T3 -->|parent| tk52_T3
+  tk9_T3 -->|parent| tk53_T3
   f9_T2 -.->|derived_from| tk16_T2
   f9_T2 -.->|derived_from| tk17_T2
   f9_T2 -.->|derived_from| tk18_T2
@@ -204,6 +228,8 @@ flowchart TD
   f20_T2 -.->|derived_from| tk41_T2
   f21_T2 -.->|derived_from| tk43_T2
   f22_T4 -.->|derived_from| tk45_T4
+  f25_T3 -.->|derived_from| tk46_T3
+  f24_ORPHAN -.->|derived_from| tk49_T2
   T0 -->|plan-dep| T1
   T0 -->|plan-dep| T2
   T0 -->|plan-dep| T3

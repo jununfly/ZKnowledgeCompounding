@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-transport", "error_response", '[1,-32601,"Method not found",null]']
+status.code = 0
+fs.sandbox = true

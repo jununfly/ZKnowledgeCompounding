@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-scheduling", "extract_horizon_days", '["明天交"]']
+status.code = 0
+fs.sandbox = true

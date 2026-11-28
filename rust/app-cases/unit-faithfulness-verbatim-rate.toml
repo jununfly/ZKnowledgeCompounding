@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "verbatim_rate", '["abc abc",["abc"]]']
+status.code = 0
+fs.sandbox = true

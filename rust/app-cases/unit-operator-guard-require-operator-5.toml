@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-operator-guard", "require_operator", '["\u001cZJ\u001c"]']
+status.code = 0
+fs.sandbox = true

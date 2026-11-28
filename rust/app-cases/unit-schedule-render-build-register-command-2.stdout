@@ -1,0 +1,1 @@
+{"ok":["schtasks","/create","/tn","ZKC Custom","/tr","\"C:\\Scripts\\d.bat\"","/sc","daily","/st","07:15","/f"]}

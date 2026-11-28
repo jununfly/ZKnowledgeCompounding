@@ -1,0 +1,1 @@
+{"ok":{"total":10,"fired":4,"trigger_rate":0.4,"completion_latency_median":300.0,"main_latency_median":100.0,"should_close_completion":false,"reason":"trigger_rate_within_budget"}}

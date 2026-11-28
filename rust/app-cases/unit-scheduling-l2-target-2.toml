@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-scheduling", "l2_target", '[null,"none"]']
+status.code = 0
+fs.sandbox = true

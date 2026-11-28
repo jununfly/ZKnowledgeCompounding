@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-routing", "cosine", '[{"a":1.0,"b":2.0},{"b":3.0,"a":4.0}]']
+status.code = 0
+fs.sandbox = true

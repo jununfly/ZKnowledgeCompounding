@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-faithfulness", "rubric_flags", '["完全一样的 claim",["完全一样的 claim"]]']
+status.code = 0
+fs.sandbox = true

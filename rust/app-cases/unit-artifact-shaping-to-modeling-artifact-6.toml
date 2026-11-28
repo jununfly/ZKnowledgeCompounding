@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-artifact-shaping", "to_modeling_artifact", '[{"title":"中文标题 🦀","kind":"methodology","note":"带 emoji","evidence_refs":[]},null]']
+status.code = 0
+fs.sandbox = true

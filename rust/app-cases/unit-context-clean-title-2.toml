@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-context", "clean_title", '["\n\n中文标题\n"]']
+status.code = 0
+fs.sandbox = true

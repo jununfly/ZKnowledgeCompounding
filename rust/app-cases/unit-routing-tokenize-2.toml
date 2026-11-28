@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-routing", "tokenize", '["mixed 中文, text。 and “quotes”"]']
+status.code = 0
+fs.sandbox = true

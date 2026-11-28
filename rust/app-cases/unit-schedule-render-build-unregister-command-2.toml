@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-schedule-render", "build_unregister_command", '[""]']
+status.code = 1
+fs.sandbox = true

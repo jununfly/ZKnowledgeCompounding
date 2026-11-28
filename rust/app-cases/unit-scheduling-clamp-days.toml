@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-scheduling", "clamp_days", "[500.0]"]
+status.code = 0
+fs.sandbox = true
