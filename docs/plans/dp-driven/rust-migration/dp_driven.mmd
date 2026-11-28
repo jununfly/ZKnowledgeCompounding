@@ -70,6 +70,7 @@ flowchart TD
     tk31_T2["tk31 已完成"]:::done
     tk32_T2["tk32 已完成"]:::done
     tk33_T2["tk33 已完成"]:::done
+    tk34_T2["tk34 已完成"]:::done
     class T2 plan_paused
   end
   subgraph T3["task3 adapters（CLI/MCP/Web）迁移 (被阻塞)"]
@@ -132,6 +133,7 @@ flowchart TD
   tk31_T2 -->|blocks| tk8_T2
   tk32_T2 -->|blocks| tk8_T2
   tk33_T2 -->|blocks| tk8_T2
+  tk34_T2 -->|blocks| tk8_T2
   tk8_T2 -->|parent| tk16_T2
   tk16_T2 -->|parent| tk17_T2
   tk16_T2 -->|parent| tk18_T2
@@ -150,6 +152,7 @@ flowchart TD
   tk8_T2 -->|parent| tk31_T2
   tk8_T2 -->|parent| tk32_T2
   tk8_T2 -->|parent| tk33_T2
+  tk8_T2 -->|parent| tk34_T2
   f9_T2 -.->|derived_from| tk16_T2
   f9_T2 -.->|derived_from| tk17_T2
   f9_T2 -.->|derived_from| tk18_T2
