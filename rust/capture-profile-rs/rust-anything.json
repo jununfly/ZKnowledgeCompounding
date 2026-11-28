@@ -1,0 +1,36 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-26-capture-profile/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "capture-profile-rs",
+  "exports": [
+    {
+      "name": "validate_capture_profile",
+      "file": "spikes/spike-26-capture-profile/pure_bridge.py",
+      "line": 28,
+      "params": [
+        {
+          "name": "allowed",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "forbidden",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

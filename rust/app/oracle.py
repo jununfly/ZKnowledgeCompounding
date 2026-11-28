@@ -91,6 +91,18 @@ SCHEDULE_RENDER_ALIAS = load_alias(
     REPO / "spikes" / "spike-24-schedule-render" / "pure_bridge.py",
     "zkc_schedule_render_oracle",
 )
+REVIEW_GATE_ALIAS = load_alias(
+    REPO / "spikes" / "spike-27-review-gate" / "pure_bridge.py",
+    "zkc_review_gate_oracle",
+)
+CAPTURE_PROFILE_ALIAS = load_alias(
+    REPO / "spikes" / "spike-26-capture-profile" / "pure_bridge.py",
+    "zkc_capture_profile_oracle",
+)
+MCP_EXPOSURE_ALIAS = load_alias(
+    REPO / "spikes" / "spike-25-mcp-exposure" / "pure_bridge.py",
+    "zkc_mcp_exposure_oracle",
+)
 
 TRANSPORT = {
     "contract_snapshot": ("zkc.transport.contract", "contract_snapshot"),
@@ -166,6 +178,16 @@ SCHEDULE_RENDER = {
     "build_register_command": (SCHEDULE_RENDER_ALIAS, "build_register_command"),
     "build_unregister_command": (SCHEDULE_RENDER_ALIAS, "build_unregister_command"),
 }
+REVIEW_GATE = {
+    "review_payload_gate": (REVIEW_GATE_ALIAS, "review_payload_gate"),
+}
+CAPTURE_PROFILE = {
+    "validate_capture_profile": (CAPTURE_PROFILE_ALIAS, "validate_capture_profile"),
+}
+MCP_EXPOSURE = {
+    "attack_surface_table": (MCP_EXPOSURE_ALIAS, "attack_surface_table"),
+    "entry_names": (MCP_EXPOSURE_ALIAS, "entry_names"),
+}
 TABLES = {
     "transport": TRANSPORT,
     "context": CONTEXT,
@@ -182,6 +204,9 @@ TABLES = {
     "operator-guard": OPERATOR_GUARD,
     "telemetry-validation": TELEMETRY_VALIDATION,
     "schedule-render": SCHEDULE_RENDER,
+    "review-gate": REVIEW_GATE,
+    "capture-profile": CAPTURE_PROFILE,
+    "mcp-exposure": MCP_EXPOSURE,
 }
 
 

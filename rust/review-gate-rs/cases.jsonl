@@ -1,0 +1,10 @@
+{"fn": "review_payload_gate", "args": ["changed", null, null], "error": "ValueError: changed 需要内容载荷（--content），且只能由人工逐条给出；缺失即拒收"}
+{"fn": "review_payload_gate", "args": ["changed", "修正内容", null], "ok": true}
+{"fn": "review_payload_gate", "args": ["stale", null, "purge"], "ok": true}
+{"fn": "review_payload_gate", "args": ["stale", null, "cover"], "error": "ValueError: stale cover 需要内容载荷（--content）；缺失即拒收"}
+{"fn": "review_payload_gate", "args": ["stale", "覆盖内容", "cover"], "ok": true}
+{"fn": "review_payload_gate", "args": ["stale", null, "bogus"], "error": "ValueError: stale 需要 --stale-branch cover|purge，且只能由人工逐条给出；缺失或非法即拒收，绝不默认 purge"}
+{"fn": "review_payload_gate", "args": ["still_valid", null, null], "ok": true}
+{"fn": "review_payload_gate", "args": ["browse", null, null], "ok": true}
+{"fn": "review_payload_gate", "args": ["browse", "x", null], "error": "ValueError: browse 不接受 --content / --stale-branch；请仅用于 changed / stale"}
+{"fn": "review_payload_gate", "args": ["weird", null, null], "error": "ValueError: unknown outcome: weird"}

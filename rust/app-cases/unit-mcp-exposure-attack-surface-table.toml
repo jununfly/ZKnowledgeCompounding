@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-mcp-exposure", "attack_surface_table", "[]"]
+status.code = 0
+fs.sandbox = true

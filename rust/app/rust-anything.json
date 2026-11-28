@@ -16,7 +16,10 @@
     "unit-percentile",
     "unit-operator-guard",
     "unit-telemetry-validation",
-    "unit-schedule-render"
+    "unit-schedule-render",
+    "unit-review-gate",
+    "unit-capture-profile",
+    "unit-mcp-exposure"
   ],
   "units": [
     {
@@ -153,6 +156,33 @@
         "unit-schedule-render"
       ],
       "switch": "RUST_ANYTHING_UNIT_SCHEDULE_RENDER"
+    },
+    {
+      "name": "review-gate",
+      "crate": "review-gate-rs",
+      "path": "../review-gate-rs",
+      "commands": [
+        "unit-review-gate"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_REVIEW_GATE"
+    },
+    {
+      "name": "capture-profile",
+      "crate": "capture-profile-rs",
+      "path": "../capture-profile-rs",
+      "commands": [
+        "unit-capture-profile"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_CAPTURE_PROFILE"
+    },
+    {
+      "name": "mcp-exposure",
+      "crate": "mcp-exposure-rs",
+      "path": "../mcp-exposure-rs",
+      "commands": [
+        "unit-mcp-exposure"
+      ],
+      "switch": "RUST_ANYTHING_UNIT_MCP_EXPOSURE"
     }
   ]
 }

@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-review-gate", "review_payload_gate", "[\"changed\",\"x\",null]"]
+status.code = 0
+fs.sandbox = true

@@ -17,13 +17,16 @@ use clap::ArgMatches;
 use serde_json::{Value, json};
 
 mod artifact_shaping;
+mod capture_profile;
 mod cross_source;
 mod distill_parse;
 mod injection_detection;
+mod mcp_exposure;
 mod metrics_report;
 mod operator_guard;
 mod percentile;
 mod r14_judgment;
+mod review_gate;
 mod schedule_render;
 mod telemetry_validation;
 mod zkc_context_pure;
@@ -300,6 +303,39 @@ pub fn dispatch(command: &str, matches: &ArgMatches) -> Option<ExitCode> {
                 Some(original_unit("schedule-render", &name, &raw))
             } else {
                 Some(schedule_render::run(&name, &args))
+            }
+        }
+        "unit-review-gate" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("REVIEW_GATE") {
+                Some(original_unit("review-gate", &name, &raw))
+            } else {
+                Some(review_gate::run(&name, &args))
+            }
+        }
+        "unit-capture-profile" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("CAPTURE_PROFILE") {
+                Some(original_unit("capture-profile", &name, &raw))
+            } else {
+                Some(capture_profile::run(&name, &args))
+            }
+        }
+        "unit-mcp-exposure" => {
+            let (name, raw, args) = match unit_args(matches) {
+                Ok(parsed) => parsed,
+                Err(code) => return Some(code),
+            };
+            if sent_to_original("MCP_EXPOSURE") {
+                Some(original_unit("mcp-exposure", &name, &raw))
+            } else {
+                Some(mcp_exposure::run(&name, &args))
             }
         }
         crate::cli::ROOT => {

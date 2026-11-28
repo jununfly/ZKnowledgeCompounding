@@ -1,0 +1,13 @@
+{"fn": "parse_argv", "args": [["daily", "--storage", "memory"]], "ok": {"command": "daily", "storage": "memory"}}
+{"fn": "parse_argv", "args": [["daily"]], "ok": {"command": "daily", "storage": "pg"}}
+{"fn": "parse_argv", "args": [["meter"]], "ok": {"command": "meter", "storage": "pg", "json": false}}
+{"fn": "parse_argv", "args": [["meter", "--json"]], "ok": {"command": "meter", "storage": "pg", "json": true}}
+{"fn": "parse_argv", "args": [["p64", "--storage", "pg", "--json"]], "ok": {"command": "p64", "storage": "pg", "json": true}}
+{"fn": "parse_argv", "args": [["decide"]], "ok": {"command": "decide", "storage": "pg", "id": null, "verdict": null, "content": null, "stale_branch": null, "list": false, "json": false}}
+{"fn": "parse_argv", "args": [["decide", "--id", "X", "--verdict", "changed", "--content", "c"]], "ok": {"command": "decide", "storage": "pg", "id": "X", "verdict": "changed", "content": "c", "stale_branch": null, "list": false, "json": false}}
+{"fn": "parse_argv", "args": [["decide", "--id", "X", "--verdict", "stale", "--stale-branch", "cover", "--content", "c", "--json", "--list"]], "ok": {"command": "decide", "storage": "pg", "id": "X", "verdict": "stale", "content": "c", "stale_branch": "cover", "list": true, "json": true}}
+{"fn": "parse_argv", "args": [["archive", "--corpus", "--dry-run", "--json"]], "ok": {"command": "archive", "storage": "pg", "corpus": true, "dry_run": true, "json": true}}
+{"fn": "parse_argv", "args": [["tombstone", "mark", "--id", "X", "--operator", "zj", "--reason", "r"]], "ok": {"command": "tombstone", "tombstone_action": "mark", "id": "X", "operator": "zj", "reason": "r", "storage": "pg", "json": false}}
+{"fn": "parse_argv", "args": [["tombstone", "restore", "--id", "Y", "--operator", "zj"]], "ok": {"command": "tombstone", "tombstone_action": "restore", "id": "Y", "operator": "zj", "reason": null, "storage": "pg", "json": false}}
+{"fn": "parse_argv", "args": [["tombstone", "sweep", "--dry-run"]], "ok": {"command": "tombstone", "tombstone_action": "sweep", "operator": "daily-automation", "dry_run": true, "storage": "pg", "json": false}}
+{"fn": "parse_argv", "args": [["embed", "--json"]], "ok": {"command": "embed", "storage": "pg", "dry_run": false, "json": true}}

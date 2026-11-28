@@ -442,6 +442,23 @@ CASES = [
     ("schedule-render", "build_register_command", ["C:\\Scripts\\d.bat", "   ", "23:50"]),  # blank task name -> ValueError
     ("schedule-render", "build_unregister_command", ["ZKC Daily E1"]),  # delete contract
     ("schedule-render", "build_unregister_command", [""]),  # empty -> ValueError
+    # review gate (decide_review Human-only payload gate, ticket 49): accept + each reject.
+    ("review-gate", "review_payload_gate", ["changed", None, None]),  # missing content -> ValueError
+    ("review-gate", "review_payload_gate", ["changed", "x", None]),  # accept
+    ("review-gate", "review_payload_gate", ["stale", None, "cover"]),  # cover needs content
+    ("review-gate", "review_payload_gate", ["stale", "c", "cover"]),  # accept
+    ("review-gate", "review_payload_gate", ["stale", None, "purge"]),  # accept
+    ("review-gate", "review_payload_gate", ["stale", None, "bogus"]),  # illegal branch
+    ("review-gate", "review_payload_gate", ["browse", "x", None]),  # carries payload -> ValueError
+    ("review-gate", "review_payload_gate", ["weird", None, None]),  # unknown outcome
+    # capture profile (CaptureProfile write-set overlap invariant, ticket 48).
+    ("capture-profile", "validate_capture_profile", [["node"], ["meta_claim"]]),  # disjoint
+    ("capture-profile", "validate_capture_profile", [["node", "meta_claim"], ["meta_claim"]]),  # overlap
+    ("capture-profile", "validate_capture_profile", [[], ["interval_adjustment"]]),  # empty allowed
+    ("capture-profile", "validate_capture_profile", [["a", "b", "c"], ["c", "d"]]),  # sorted overlap
+    # mcp exposure (attack-surface table, ticket 46; zero-arg deterministic).
+    ("mcp-exposure", "attack_surface_table", []),
+    ("mcp-exposure", "entry_names", []),
 ]
 
 

@@ -1,0 +1,42 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-27-review-gate/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "review-gate-rs",
+  "exports": [
+    {
+      "name": "review_payload_gate",
+      "file": "spikes/spike-27-review-gate/pure_bridge.py",
+      "line": 40,
+      "params": [
+        {
+          "name": "outcome",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "content",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        },
+        {
+          "name": "stale_branch",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

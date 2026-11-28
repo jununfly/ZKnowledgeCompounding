@@ -1,0 +1,30 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-28-cli-parser/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "cli-parser-rs",
+  "exports": [
+    {
+      "name": "parse_argv",
+      "file": "spikes/spike-28-cli-parser/pure_bridge.py",
+      "line": 26,
+      "params": [
+        {
+          "name": "argv",
+          "ts_type": "unknown",
+          "optional": false,
+          "rest": false
+        }
+      ],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

@@ -29,5 +29,8 @@ percentile-rs = { path = "../percentile-rs" }
 operator-guard-rs = { path = "../operator-guard-rs" }
 telemetry-validation-rs = { path = "../telemetry-validation-rs" }
 schedule-render-rs = { path = "../schedule-render-rs" }
+review-gate-rs = { path = "../review-gate-rs" }
+capture-profile-rs = { path = "../capture-profile-rs" }
+mcp-exposure-rs = { path = "../mcp-exposure-rs" }
 
 [workspace]

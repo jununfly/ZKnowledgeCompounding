@@ -1,0 +1,34 @@
+{
+  "schema": "rust-anything/bridge@1",
+  "root": "/Users/bilibili/Documents/workspace/github/jununfly/ZKnowledgeCompounding",
+  "unit": "spikes/spike-25-mcp-exposure/pure_bridge.py",
+  "language": "python",
+  "kind": "pyo3",
+  "crate_name": "mcp-exposure-rs",
+  "exports": [
+    {
+      "name": "attack_surface_table",
+      "file": "spikes/spike-25-mcp-exposure/pure_bridge.py",
+      "line": 40,
+      "params": [],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    },
+    {
+      "name": "entry_names",
+      "file": "spikes/spike-25-mcp-exposure/pure_bridge.py",
+      "line": 44,
+      "params": [],
+      "returns": "unknown",
+      "is_async": false,
+      "is_generator": false,
+      "type_params": [],
+      "uses_instanceof": false
+    }
+  ],
+  "classes": [],
+  "js_only": []
+}

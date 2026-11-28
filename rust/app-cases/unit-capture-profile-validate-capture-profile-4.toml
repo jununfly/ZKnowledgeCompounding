@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-capture-profile", "validate_capture_profile", "[[\"a\",\"b\",\"c\"],[\"c\",\"d\"]]"]
+status.code = 1
+fs.sandbox = true

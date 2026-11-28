@@ -1,0 +1,1 @@
+{"error":"ValueError: stale 需要 --stale-branch cover|purge，且只能由人工逐条给出；缺失或非法即拒收，绝不默认 purge"}

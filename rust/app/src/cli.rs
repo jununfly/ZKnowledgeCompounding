@@ -23,6 +23,9 @@ pub const UNIT_COMMANDS: &[&str] = &[
     "unit-operator-guard",
     "unit-telemetry-validation",
     "unit-schedule-render",
+    "unit-review-gate",
+    "unit-capture-profile",
+    "unit-mcp-exposure",
 ];
 
 fn rest() -> Arg {

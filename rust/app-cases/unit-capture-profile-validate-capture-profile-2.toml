@@ -1,0 +1,4 @@
+bin.name = "metrics-snapshot"
+args = ["unit-capture-profile", "validate_capture_profile", "[[\"node\",\"meta_claim\"],[\"meta_claim\"]]"]
+status.code = 1
+fs.sandbox = true

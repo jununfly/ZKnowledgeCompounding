@@ -125,6 +125,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "776dfebd015e2d8732c684a2c71003674ccb49457b539b9e82151ba38e96dd7c"
 
 [[package]]
+name = "capture-profile-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -636,6 +645,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
+name = "mcp-exposure-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "md-5"
 version = "0.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -656,13 +674,16 @@ name = "metrics-snapshot"
 version = "0.1.0"
 dependencies = [
  "artifact-shaping-rs",
+ "capture-profile-rs",
  "clap",
  "cross-source-rs",
  "distill-parse-rs",
  "injection-detection-rs",
+ "mcp-exposure-rs",
  "operator-guard-rs",
  "percentile-rs",
  "r14-judgment-rs",
+ "review-gate-rs",
  "schedule-render-rs",
  "serde_json",
  "sqlx",
@@ -957,6 +978,15 @@ name = "regex-syntax"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d902046e6a28a1e4c3cab97258a0ce11e994903f01c2d97a9447a0b3df85f4f6"
+
+[[package]]
+name = "review-gate-rs"
+version = "0.1.0"
+dependencies = [
+ "pyo3",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "schedule-render-rs"

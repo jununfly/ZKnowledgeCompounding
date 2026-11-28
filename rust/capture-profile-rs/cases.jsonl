@@ -1,0 +1,6 @@
+{"fn": "validate_capture_profile", "args": [["node"], ["meta_claim"]], "ok": true}
+{"fn": "validate_capture_profile", "args": [["node", "meta_claim"], ["meta_claim"]], "error": "ValueError: capture profile 写集合自相矛盾：['meta_claim']"}
+{"fn": "validate_capture_profile", "args": [[], ["interval_adjustment"]], "ok": true}
+{"fn": "validate_capture_profile", "args": [["node"], []], "ok": true}
+{"fn": "validate_capture_profile", "args": [["node"], ["node"]], "error": "ValueError: capture profile 写集合自相矛盾：['node']"}
+{"fn": "validate_capture_profile", "args": [["a", "b", "c"], ["c", "d"]], "error": "ValueError: capture profile 写集合自相矛盾：['c']"}
